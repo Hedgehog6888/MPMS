@@ -1,0 +1,6 @@
+@MPMS.API_HostAddress = http://localhost:5147
+
+GET {{MPMS.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
