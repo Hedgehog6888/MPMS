@@ -41,9 +41,11 @@ public class AuthService : IAuthService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var session = await db.AuthSessions.FirstOrDefaultAsync();
 
-        if (session is null || session.ExpiresAt <= DateTime.UtcNow)
-            return false;
+        if (session is null) return false;
 
+        // Allow restoring an expired session when offline:
+        // the user can continue working with cached local data.
+        // On next successful API call the session will be refreshed.
         _current = new AuthResponse(
             session.UserId, session.UserName, session.Username,
             session.UserRole, session.Token, session.ExpiresAt);
