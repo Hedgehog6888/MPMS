@@ -248,10 +248,10 @@ public class ApplicationDbContext : DbContext
 
         // ── Seed: Roles ───────────────────────────────────────────────────
         modelBuilder.Entity<Role>().HasData(
-            new Role { Id = new Guid("10000000-0000-0000-0000-000000000001"), Name = "Administrator",    Description = "Full system access" },
-            new Role { Id = new Guid("10000000-0000-0000-0000-000000000002"), Name = "Project Manager",  Description = "Manage projects and tasks" },
-            new Role { Id = new Guid("10000000-0000-0000-0000-000000000003"), Name = "Worker",           Description = "View and update assigned tasks" },
-            new Role { Id = new Guid("10000000-0000-0000-0000-000000000004"), Name = "Viewer",           Description = "Read-only access" }
+            new Role { Id = new Guid("10000000-0000-0000-0000-000000000001"), Name = "Administrator",   Description = "Полный доступ к системе" },
+            new Role { Id = new Guid("10000000-0000-0000-0000-000000000002"), Name = "Project Manager", Description = "Управление проектами и задачами" },
+            new Role { Id = new Guid("10000000-0000-0000-0000-000000000003"), Name = "Foreman",         Description = "Управление этапами, назначение работников" },
+            new Role { Id = new Guid("10000000-0000-0000-0000-000000000004"), Name = "Worker",          Description = "Просмотр и обновление назначенных задач и этапов" }
         );
     }
 }
