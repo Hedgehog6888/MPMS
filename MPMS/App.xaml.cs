@@ -57,12 +57,15 @@ public partial class App : Application
         services.AddTransient<MainViewModel>();
     }
 
+    private const string LocalDbConnectionString = "Data Source=mpms_local.db";
+
     private static void EnsureLocalDatabase()
     {
         using var scope = Services.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         using var db = factory.CreateDbContext();
         db.Database.EnsureCreated();
+        LocalSchemaMigrator.Apply(LocalDbConnectionString);
     }
 
     public static void OpenMainWindow()
