@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace MPMS.Infrastructure;
 
@@ -26,6 +27,27 @@ public class BoolToVisibilityConverter : IValueConverter
 
         if (Invert) flag = !flag;
         return flag ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts a hex color string (e.g. "#C0392B") to a SolidColorBrush.</summary>
+public class HexToBrushConverter : IValueConverter
+{
+    public static readonly HexToBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        try
+        {
+            if (value is string hex)
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        }
+        catch { /* fall through */ }
+
+        return new SolidColorBrush(Colors.Gray);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

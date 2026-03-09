@@ -9,8 +9,11 @@ public class User
     [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [Required, MaxLength(255)]
-    public string Email { get; set; } = string.Empty;
+    [Required, MaxLength(50)]
+    public string Username { get; set; } = string.Empty;
+
+    [MaxLength(255)]
+    public string? Email { get; set; }
 
     [Required, MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;

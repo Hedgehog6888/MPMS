@@ -87,16 +87,17 @@ public class SyncService : ISyncService
             {
                 if (existing.TryGetValue(u.Id, out var local))
                 {
-                    local.Name = u.Name; local.Email = u.Email;
+                    local.Name = u.Name; local.Username = u.Username;
+                    local.Email = u.Email;
                     local.RoleName = u.Role; local.IsSynced = true;
                 }
                 else
                 {
                     db.Users.Add(new LocalUser
                     {
-                        Id = u.Id, Name = u.Name, Email = u.Email,
-                        RoleName = u.Role, IsSynced = true,
-                        CreatedAt = u.CreatedAt
+                        Id = u.Id, Name = u.Name, Username = u.Username,
+                        Email = u.Email, RoleName = u.Role,
+                        IsSynced = true, CreatedAt = u.CreatedAt
                     });
                 }
             }

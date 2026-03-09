@@ -8,6 +8,7 @@ public class LocalDbContext : DbContext
     public LocalDbContext(DbContextOptions<LocalDbContext> options) : base(options) { }
 
     public DbSet<AuthSession>        AuthSessions     => Set<AuthSession>();
+    public DbSet<RecentAccount>      RecentAccounts   => Set<RecentAccount>();
     public DbSet<LocalRole>          Roles            => Set<LocalRole>();
     public DbSet<LocalUser>          Users            => Set<LocalUser>();
     public DbSet<LocalProject>       Projects         => Set<LocalProject>();

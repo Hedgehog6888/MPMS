@@ -29,7 +29,7 @@ public class UsersController : ControllerBase
 
         var users = await query
             .OrderBy(u => u.Name)
-            .Select(u => new UserResponse(u.Id, u.Name, u.Email, u.Role.Name, u.CreatedAt))
+            .Select(u => new UserResponse(u.Id, u.Name, u.Username, u.Email, u.Role.Name, u.CreatedAt))
             .ToListAsync();
 
         return Ok(users);

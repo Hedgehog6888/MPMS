@@ -111,4 +111,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+await MPMS.API.Data.DatabaseSeeder.SeedAsync(app.Services);
+
 app.Run();

@@ -22,16 +22,16 @@ public class AuthController : ControllerBase
         _jwt = jwt;
     }
 
-    /// <summary>Login and receive JWT token</summary>
+    /// <summary>Login by username and receive JWT token</summary>
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
     {
         var user = await _db.Users
             .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Username == request.Username);
 
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            return Unauthorized(new { message = "Неверный email или пароль" });
+            return Unauthorized(new { message = "Неверный логин или пароль" });
 
         return Ok(BuildAuthResponse(user));
     }
@@ -40,8 +40,8 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
     {
-        if (await _db.Users.AnyAsync(u => u.Email == request.Email))
-            return Conflict(new { message = "Пользователь с таким email уже существует" });
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username))
+            return Conflict(new { message = "Пользователь с таким логином уже существует" });
 
         var roleExists = await _db.Roles.AnyAsync(r => r.Id == request.RoleId);
         if (!roleExists)
@@ -50,6 +50,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Name = request.Name,
+            Username = request.Username,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             RoleId = request.RoleId,
@@ -59,7 +60,6 @@ public class AuthController : ControllerBase
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
-
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Created($"/api/users/{user.Id}", BuildAuthResponse(user));
@@ -77,7 +77,8 @@ public class AuthController : ControllerBase
 
         if (user is null) return NotFound();
 
-        return Ok(new UserResponse(user.Id, user.Name, user.Email, user.Role.Name, user.CreatedAt));
+        return Ok(new UserResponse(user.Id, user.Name, user.Username,
+            user.Email, user.Role.Name, user.CreatedAt));
     }
 
     /// <summary>Change password</summary>
@@ -89,7 +90,6 @@ public class AuthController : ControllerBase
         var user = await _db.Users.FindAsync(userId);
 
         if (user is null) return NotFound();
-
         if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
             return BadRequest(new { message = "Текущий пароль неверен" });
 
@@ -111,6 +111,6 @@ public class AuthController : ControllerBase
     }
 
     private AuthResponse BuildAuthResponse(User user) =>
-        new(user.Id, user.Name, user.Email, user.Role.Name,
+        new(user.Id, user.Name, user.Username, user.Role.Name,
             _jwt.GenerateToken(user), _jwt.GetExpiryTime());
 }

@@ -20,7 +20,8 @@ public class LocalRole
 public class LocalUser : LocalEntity
 {
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
-    [MaxLength(255)] public string Email { get; set; } = string.Empty;
+    [MaxLength(50)]  public string Username { get; set; } = string.Empty;
+    [MaxLength(255)] public string? Email { get; set; }
     public Guid RoleId { get; set; }
     [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
@@ -115,8 +116,48 @@ public class AuthSession
     public string Token { get; set; } = string.Empty;
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
-    public string UserEmail { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
     public string UserRole { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
     public string ApiBaseUrl { get; set; } = "http://localhost:5147/";
+}
+
+/// <summary>Stores the last N accounts that logged in — shown in the login window</summary>
+public class RecentAccount
+{
+    public int Id { get; set; }
+    [MaxLength(50)]  public string Username { get; set; } = string.Empty;
+    [MaxLength(100)] public string DisplayName { get; set; } = string.Empty;
+    [MaxLength(50)]  public string Role { get; set; } = string.Empty;
+    [MaxLength(20)]  public string AvatarColor { get; set; } = "#1B6EC2";
+    [MaxLength(5)]   public string Initials { get; set; } = "?";
+    public DateTime LastLoginAt { get; set; }
+
+    /// <summary>Derive initials and color from name and role</summary>
+    public static RecentAccount From(string username, string displayName, string role)
+    {
+        var parts = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : displayName.Length > 0 ? $"{displayName[0]}" : "?";
+
+        var color = role switch
+        {
+            "Administrator"   => "#C0392B",
+            "Project Manager" => "#2980B9",
+            "Foreman"         => "#27AE60",
+            "Worker"          => "#E67E22",
+            _                 => "#1B6EC2"
+        };
+
+        return new RecentAccount
+        {
+            Username = username,
+            DisplayName = displayName,
+            Role = role,
+            AvatarColor = color,
+            Initials = initials.ToUpper(),
+            LastLoginAt = DateTime.UtcNow
+        };
+    }
 }

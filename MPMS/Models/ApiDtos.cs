@@ -1,9 +1,9 @@
 namespace MPMS.Models;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-public record LoginRequest(string Email, string Password);
-public record RegisterRequest(string Name, string Email, string Password, Guid RoleId);
-public record AuthResponse(Guid UserId, string Name, string Email, string Role,
+public record LoginRequest(string Username, string Password);
+public record RegisterRequest(string Name, string Username, string? Email, string Password, Guid RoleId);
+public record AuthResponse(Guid UserId, string Name, string Username, string Role,
     string Token, DateTime ExpiresAt);
 public record RoleDto(Guid Id, string Name, string? Description);
 
@@ -69,4 +69,4 @@ public record FileDto(Guid Id, string FileName, string FileType, long FileSize,
     Guid? ProjectId, Guid? TaskId, Guid? StageId, DateTime CreatedAt);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
-public record UserResponse(Guid Id, string Name, string Email, string Role, DateTime CreatedAt);
+public record UserResponse(Guid Id, string Name, string Username, string? Email, string Role, DateTime CreatedAt);

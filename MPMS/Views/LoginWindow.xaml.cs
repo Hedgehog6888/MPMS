@@ -1,31 +1,34 @@
 using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
+using System.Windows.Input;
 using MPMS.ViewModels;
 
 namespace MPMS.Views;
 
 public partial class LoginWindow : Window
 {
-    private LoginViewModel ViewModel => (LoginViewModel)DataContext;
+    private readonly LoginViewModel _vm;
 
-    public LoginWindow(LoginViewModel viewModel)
+    public LoginWindow(LoginViewModel vm)
     {
         InitializeComponent();
-        DataContext = viewModel;
+        _vm = vm;
+        DataContext = vm;
+
+        // When account card selected — focus password field
+        vm.PasswordFocusRequested += (_, _) =>
+        {
+            Dispatcher.BeginInvoke(() => PwdBox.Focus());
+        };
     }
 
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
-    {
-        ViewModel.Password = PwdBox.Password;
-    }
+        => _vm.Password = PwdBox.Password;
 
-    private void DragBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        DragMove();
+        if (e.ClickCount == 1) DragMove();
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
-    {
-        Application.Current.Shutdown();
-    }
+        => Application.Current.Shutdown();
 }

@@ -3,7 +3,8 @@ namespace MPMS.API.DTOs;
 public record UserResponse(
     Guid Id,
     string Name,
-    string Email,
+    string Username,
+    string? Email,
     string Role,
     DateTime CreatedAt
 );
