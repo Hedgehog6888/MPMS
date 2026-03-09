@@ -23,6 +23,7 @@ namespace MPMS
         public MainWindow()
         {
             InitializeComponent();
+            Console.WriteLine("Hello world!");
         }
     }
 }
