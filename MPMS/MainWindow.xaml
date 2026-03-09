@@ -1,12 +1,320 @@
-﻿<Window x:Class="MPMS.MainWindow"
+<Window x:Class="MPMS.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MPMS"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        xmlns:infra="clr-namespace:MPMS.Infrastructure"
+        Title="MPMS — Montage Project Management System"
+        Height="768" Width="1280"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.Resources>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
+        <infra:BoolToVisibilityConverter x:Key="StringToVis" IsStringMode="True"/>
+
+        <!-- Nav button style -->
+        <Style x:Key="NavButton" TargetType="RadioButton">
+            <Setter Property="Background"     Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"     Value="#8CA3C0"/>
+            <Setter Property="FontSize"       Value="13"/>
+            <Setter Property="Padding"        Value="0"/>
+            <Setter Property="Height"         Value="44"/>
+            <Setter Property="Cursor"         Value="Hand"/>
+            <Setter Property="GroupName"      Value="Navigation"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6"
+                                Margin="8,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="Icon" Grid.Column="0"
+                                           Text="{TemplateBinding Tag}"
+                                           FontSize="18" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"/>
+                                <TextBlock x:Name="Label" Grid.Column="1"
+                                           Text="{TemplateBinding Content}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           FontSize="13"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarHoverBrush}"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="White"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarActiveBrush}"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="White"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="Auto"/>
+            <!-- Content -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             SIDEBAR
+        ════════════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Width" Value="220"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                            <Setter Property="Width" Value="56"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="56"/>  <!-- Logo row -->
+                    <RowDefinition Height="*"/>   <!-- Nav items -->
+                    <RowDefinition Height="Auto"/><!-- Bottom: user + sync -->
+                </Grid.RowDefinitions>
+
+                <!-- Logo -->
+                <Border Grid.Row="0" Background="#0A1929"
+                        Padding="0,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Toggle button -->
+                        <Button Grid.Column="0" Click="ToggleSidebar_Click"
+                                Background="Transparent" BorderThickness="0"
+                                Cursor="Hand" ToolTip="Свернуть/развернуть меню">
+                            <TextBlock Text="☰" Foreground="White" FontSize="18"/>
+                        </Button>
+                        <!-- App name -->
+                        <TextBlock Grid.Column="1" Text="MPMS"
+                                   Foreground="White" FontWeight="Bold" FontSize="16"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding IsSidebarExpanded,
+                                       Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Navigation items -->
+                <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                    <RadioButton Content="Проекты"  Tag="📁" IsChecked="True"
+                                 Style="{StaticResource NavButton}"
+                                 Command="{Binding NavigateCommand}"
+                                 CommandParameter="Projects"/>
+                    <RadioButton Content="Задачи"   Tag="✓"
+                                 Style="{StaticResource NavButton}"
+                                 Command="{Binding NavigateCommand}"
+                                 CommandParameter="Tasks"/>
+                    <RadioButton Content="Календарь" Tag="📅"
+                                 Style="{StaticResource NavButton}"
+                                 Command="{Binding NavigateCommand}"
+                                 CommandParameter="Calendar"/>
+                    <RadioButton Content="Материалы" Tag="🔧"
+                                 Style="{StaticResource NavButton}"
+                                 Command="{Binding NavigateCommand}"
+                                 CommandParameter="Materials"/>
+                    <RadioButton Content="Файлы"    Tag="📎"
+                                 Style="{StaticResource NavButton}"
+                                 Command="{Binding NavigateCommand}"
+                                 CommandParameter="Files"/>
+                </StackPanel>
+
+                <!-- Bottom: user + status -->
+                <StackPanel Grid.Row="2" Margin="0,0,0,12">
+                    <!-- Online/Offline indicator -->
+                    <Border Margin="8,4" CornerRadius="6" Padding="8,4">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#1A5C3A"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                        <Setter Property="Background" Value="#7A2020"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#00C875"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                <Setter Property="Fill" Value="#FF6B6B"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Foreground="White" FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsSidebarExpanded,
+                                           Converter={StaticResource BoolToVis}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Онлайн"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                <Setter Property="Text" Value="Офлайн"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- User block -->
+                    <Border Margin="8,4" CornerRadius="6" Padding="6"
+                            Background="{StaticResource SidebarHoverBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Avatar circle -->
+                            <Border Grid.Column="0" Width="32" Height="32"
+                                    CornerRadius="16"
+                                    Background="{StaticResource PrimaryBrush}">
+                                <TextBlock Text="{Binding UserInitials}"
+                                           Foreground="White" FontSize="12"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <!-- Name + role -->
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Visibility="{Binding IsSidebarExpanded,
+                                            Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding UserName}"
+                                           Foreground="White" FontSize="12"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding UserRole}"
+                                           Foreground="#8CA3C0" FontSize="11"/>
+                            </StackPanel>
+                            <!-- Logout -->
+                            <Button Grid.Column="2" Content="⏻"
+                                    ToolTip="Выйти"
+                                    Command="{Binding LogoutCommand}"
+                                    Cursor="Hand"
+                                    Visibility="{Binding IsSidebarExpanded,
+                                        Converter={StaticResource BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background"     Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Foreground"     Value="#8CA3C0"/>
+                                        <Setter Property="FontSize"       Value="16"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             MAIN AREA
+        ════════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="56"/>  <!-- Top bar -->
+                <RowDefinition Height="*"/>   <!-- Content -->
+                <RowDefinition Height="Auto"/><!-- Status bar -->
+            </Grid.RowDefinitions>
+
+            <!-- Top bar -->
+            <Border Grid.Row="0" Background="White"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Search box -->
+                    <Border Grid.Column="0" Background="{StaticResource BackgroundBrush}"
+                            CornerRadius="6" Padding="10,0"
+                            MaxWidth="400" HorizontalAlignment="Left"
+                            VerticalAlignment="Center" Height="36">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="🔍" FontSize="14"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0" Background="Transparent"
+                                     VerticalAlignment="Center" FontSize="13"
+                                     Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right actions -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <!-- Sync button -->
+                        <Button Content="↻  Синхронизировать"
+                                Command="{Binding SyncNowCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                Height="32" FontSize="12" Padding="12,4"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content area -->
+            <Border Grid.Row="1" Background="{StaticResource BackgroundBrush}">
+                <!-- Page content will be placed here via ContentPresenter in future -->
+                <TextBlock Text="{Binding CurrentPage, StringFormat='Страница: {0}'}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="24" Foreground="{StaticResource TextSecondaryBrush}"/>
+            </Border>
+
+            <!-- Status bar -->
+            <Border Grid.Row="2" Background="White"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,1,0,0" Height="24"
+                    Visibility="{Binding StatusMessage,
+                        Converter={StaticResource StringToVis}}">
+                <TextBlock Text="{Binding StatusMessage}"
+                           Margin="16,0" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
     </Grid>
 </Window>
