@@ -7,7 +7,7 @@ public interface IApiService
     bool IsOnline { get; }
 
     // Auth
-    Task<AuthResponse?> LoginAsync(string email, string password);
+    Task<LoginResult> LoginAsync(string username, string password);
     Task<List<RoleDto>?> GetRolesAsync();
 
     // Projects

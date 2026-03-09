@@ -25,8 +25,36 @@ public class ApiService : IApiService
     public bool IsOnline { get; private set; } = true;
 
     // ── Auth ──────────────────────────────────────────────────────────────────
-    public async Task<AuthResponse?> LoginAsync(string email, string password)
-        => await PostAsync<AuthResponse>("auth/login", new LoginRequest(email, password));
+    public async Task<LoginResult> LoginAsync(string username, string password)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync(
+                "auth/login",
+                new LoginRequest(username, password),
+                JsonOpts);
+            IsOnline = true;
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return LoginResult.WrongCredentials();
+
+            if (!response.IsSuccessStatusCode)
+                return LoginResult.Fail($"Ошибка сервера: {(int)response.StatusCode}");
+
+            var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts);
+            return auth is not null ? LoginResult.Ok(auth) : LoginResult.Fail("Ошибка разбора ответа сервера.");
+        }
+        catch (HttpRequestException)
+        {
+            IsOnline = false;
+            return LoginResult.Offline();
+        }
+        catch (TaskCanceledException)
+        {
+            IsOnline = false;
+            return LoginResult.Fail("Превышено время ожидания.\nПроверьте, что API запущен.");
+        }
+    }
 
     public async Task<List<RoleDto>?> GetRolesAsync()
         => await GetAsync<List<RoleDto>>("auth/roles");

@@ -2,6 +2,16 @@ namespace MPMS.Models;
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 public record LoginRequest(string Username, string Password);
+
+/// <summary>Result of a login attempt — distinguishes network errors from wrong credentials.</summary>
+public record LoginResult(AuthResponse? Response, string? Error)
+{
+    public bool Success => Response is not null;
+    public static LoginResult Ok(AuthResponse r)           => new(r, null);
+    public static LoginResult Fail(string error)           => new(null, error);
+    public static LoginResult Offline()                    => Fail("Нет соединения с сервером.\nПроверьте, что API запущен (порт 5147).");
+    public static LoginResult WrongCredentials()           => Fail("Неверный логин или пароль.");
+}
 public record RegisterRequest(string Name, string Username, string? Email, string Password, Guid RoleId);
 public record AuthResponse(Guid UserId, string Name, string Username, string Role,
     string Token, DateTime ExpiresAt);

@@ -31,15 +31,15 @@ public partial class LoginViewModel : ViewModelBase
 
         try
         {
-            var response = await _api.LoginAsync(Username.Trim(), Password);
+            var result = await _api.LoginAsync(Username.Trim(), Password);
 
-            if (response is null)
+            if (!result.Success)
             {
-                SetError("Неверный логин или пароль.\nПроверьте данные или соединение с сервером.");
+                SetError(result.Error ?? "Неизвестная ошибка.");
                 return;
             }
 
-            _auth.SetSession(response);
+            _auth.SetSession(result.Response!);
             App.OpenMainWindow();
 
             foreach (System.Windows.Window w in System.Windows.Application.Current.Windows)
