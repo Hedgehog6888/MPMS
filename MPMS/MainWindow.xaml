@@ -155,35 +155,90 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Margin="0,0,6,0">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="#00C875"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#00C875"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Fill" Value="#FF6B6B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Foreground="White" FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding IsSidebarExpanded,
+                                               Converter={StaticResource BoolToVis}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Онлайн"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Text" Value="Офлайн"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            <Border Grid.Column="2" Margin="4,0,0,0" Cursor="Hand">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                <Setter Property="Fill" Value="#FF6B6B"/>
-                                            </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsOnline}" Value="False"/>
+                                                    <Condition Binding="{Binding IsSidebarExpanded}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
-                            <TextBlock Foreground="White" FontSize="11"
-                                       VerticalAlignment="Center"
-                                       Visibility="{Binding IsSidebarExpanded,
-                                           Converter={StaticResource BoolToVis}}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="Онлайн"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                <Setter Property="Text" Value="Офлайн"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </StackPanel>
+                                </Border.Style>
+                                <Button Content="↻" ToolTip="Проверить соединение"
+                                        Command="{Binding RefreshConnectionCommand}"
+                                        Padding="4,0"
+                                        Focusable="False"
+                                        Background="Transparent" BorderThickness="0"
+                                        Foreground="White" FontSize="12"
+                                        VerticalAlignment="Center"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                                Padding="{TemplateBinding Padding}"
+                                                                BorderThickness="0"
+                                                                Cursor="Hand">
+                                                            <ContentPresenter HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Border>
+                        </Grid>
                     </Border>
 
                     <!-- User block -->
@@ -255,7 +310,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="56"/>  <!-- Top bar -->
                 <RowDefinition Height="*"/>   <!-- Content -->
-                <RowDefinition Height="Auto"/><!-- Status bar -->
             </Grid.RowDefinitions>
 
             <!-- Top bar -->
@@ -305,18 +359,6 @@
             <ContentControl Grid.Row="1"
                             Content="{Binding CurrentPageViewModel}"
                             Background="{StaticResource BackgroundBrush}"/>
-
-            <!-- Status bar -->
-            <Border Grid.Row="2" Background="White"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="0,1,0,0" Height="24"
-                    Visibility="{Binding StatusMessage,
-                        Converter={StaticResource StringToVis}}">
-                <TextBlock Text="{Binding StatusMessage}"
-                           Margin="16,0" FontSize="11"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           VerticalAlignment="Center"/>
-            </Border>
         </Grid>
     </Grid>
 </Window>

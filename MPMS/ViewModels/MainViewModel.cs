@@ -9,6 +9,7 @@ namespace MPMS.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     private readonly IAuthService _auth;
+    private readonly IApiService _api;
     private readonly ISyncService _sync;
     private readonly IServiceProvider _sp;
     private readonly DispatcherTimer _onlineTimer;
@@ -29,9 +30,10 @@ public partial class MainViewModel : ViewModelBase
         ? string.Concat(name.Split(' ').Take(2).Select(w => w[0]))
         : "?";
 
-    public MainViewModel(IAuthService auth, ISyncService sync, IServiceProvider sp)
+    public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp)
     {
         _auth = auth;
+        _api = api;
         _sync = sync;
         _sp = sp;
 
@@ -97,6 +99,21 @@ public partial class MainViewModel : ViewModelBase
         await _sync.SyncAsync();
         SetStatus(IsOnline ? "Данные синхронизированы" : "Нет соединения с сервером");
         IsBusy = false;
+    }
+
+    [RelayCommand]
+    private async Task RefreshConnectionAsync()
+    {
+        await _api.ProbeAsync();
+        var online = _sync.IsOnline;
+        if (IsOnline != online)
+        {
+            IsOnline = online;
+            OnPropertyChanged(nameof(SwitchAccountTooltip));
+            SwitchAccountCommand.NotifyCanExecuteChanged();
+        }
+        if (online)
+            await _sync.SyncAsync();
     }
 
     /// <summary>
