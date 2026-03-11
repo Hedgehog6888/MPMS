@@ -24,6 +24,21 @@ public class ApiService : IApiService
 
     public bool IsOnline { get; private set; } = true;
 
+    public async Task ProbeAsync()
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        try
+        {
+            await _http.GetAsync("auth/roles",
+                HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            IsOnline = true;
+        }
+        catch
+        {
+            IsOnline = false;
+        }
+    }
+
     // ── Auth ──────────────────────────────────────────────────────────────────
     public async Task<LoginResult> LoginAsync(string username, string password)
     {
@@ -52,7 +67,7 @@ public class ApiService : IApiService
         catch (TaskCanceledException)
         {
             IsOnline = false;
-            return LoginResult.Fail("Превышено время ожидания.\nПроверьте, что API запущен.");
+            return LoginResult.Fail("Превышено время ожидания. Проверьте, что API запущен.");
         }
     }
 
@@ -179,7 +194,8 @@ public class ApiService : IApiService
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
         }
-        catch (HttpRequestException) { IsOnline = false; return default; }
+        catch (HttpRequestException)       { IsOnline = false; return default; }
+        catch (OperationCanceledException) { IsOnline = false; return default; }
     }
 
     private async Task<T?> PostAsync<T>(string url, object body)
@@ -192,7 +208,8 @@ public class ApiService : IApiService
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
         }
-        catch (HttpRequestException) { IsOnline = false; return default; }
+        catch (HttpRequestException)       { IsOnline = false; return default; }
+        catch (OperationCanceledException) { IsOnline = false; return default; }
     }
 
     private async Task<T?> PutAsync<T>(string url, object body)
@@ -205,7 +222,8 @@ public class ApiService : IApiService
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
         }
-        catch (HttpRequestException) { IsOnline = false; return default; }
+        catch (HttpRequestException)       { IsOnline = false; return default; }
+        catch (OperationCanceledException) { IsOnline = false; return default; }
     }
 
     private async Task<bool> DeleteAsync(string url)
@@ -217,7 +235,8 @@ public class ApiService : IApiService
             IsOnline = true;
             return response.IsSuccessStatusCode;
         }
-        catch (HttpRequestException) { IsOnline = false; return false; }
+        catch (HttpRequestException)       { IsOnline = false; return false; }
+        catch (OperationCanceledException) { IsOnline = false; return false; }
     }
 
     private static string BuildQuery(params (string key, string? value)[] pairs)

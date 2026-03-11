@@ -120,6 +120,15 @@ public class AuthSession
     public string UserRole { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
     public string ApiBaseUrl { get; set; } = "http://localhost:5147/";
+
+    /// <summary>BCrypt hash of the last entered password — allows offline login.</summary>
+    public string LocalPasswordHash { get; set; } = string.Empty;
+
+    /// <summary>
+    /// True while the user is actively logged in.
+    /// Set to false on logout (record is kept so offline re-login to the same account works).
+    /// </summary>
+    public bool IsActiveSession { get; set; } = true;
 }
 
 /// <summary>Stores the last N accounts that logged in — shown in the login window</summary>

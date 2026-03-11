@@ -6,6 +6,9 @@ public interface IApiService
 {
     bool IsOnline { get; }
 
+    /// <summary>Fast connectivity probe — updates IsOnline with a short timeout.</summary>
+    Task ProbeAsync();
+
     // Auth
     Task<LoginResult> LoginAsync(string username, string password);
     Task<List<RoleDto>?> GetRolesAsync();

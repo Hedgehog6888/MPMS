@@ -25,7 +25,7 @@ public class UsersController : ControllerBase
         var query = _db.Users.Include(u => u.Role).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(u => u.Name.Contains(search) || u.Email.Contains(search));
+            query = query.Where(u => u.Name.Contains(search) || (u.Email != null && u.Email.Contains(search)));
 
         var users = await query
             .OrderBy(u => u.Name)

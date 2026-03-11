@@ -1,0 +1,193 @@
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
+using MPMS.Data;
+using MPMS.Models;
+using MPMS.Services;
+using TaskStatus = MPMS.Models.TaskStatus;
+
+namespace MPMS.ViewModels;
+
+public partial class TasksViewModel : ViewModelBase, ILoadable
+{
+    private readonly IDbContextFactory<LocalDbContext> _dbFactory;
+    private readonly ISyncService _sync;
+
+    [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _plannedTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _inProgressTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _pausedTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _completedTasks = [];
+    [ObservableProperty] private string _viewMode = "List";
+    [ObservableProperty] private string _searchText = string.Empty;
+    [ObservableProperty] private string _statusFilter = "Все";
+    [ObservableProperty] private string _priorityFilter = "Все";
+    [ObservableProperty] private Guid? _projectFilter;
+    [ObservableProperty] private string _projectFilterName = "Все проекты";
+    [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
+
+    public IReadOnlyList<string> StatusOptions { get; } =
+        ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена"];
+
+    public IReadOnlyList<string> PriorityOptions { get; } =
+        ["Все", "Низкий", "Средний", "Высокий", "Критический"];
+
+    public TasksViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
+    {
+        _dbFactory = dbFactory;
+        _sync = sync;
+    }
+
+    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
+    partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
+    partial void OnPriorityFilterChanged(string value) => _ = LoadAsync();
+    partial void OnProjectFilterChanged(Guid? value) => _ = LoadAsync();
+
+    public async Task LoadAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var projectList = await db.Projects.OrderBy(p => p.Name).ToListAsync();
+        Projects = new ObservableCollection<LocalProject>(projectList);
+
+        var query = db.Tasks.AsQueryable();
+
+        if (ProjectFilter.HasValue)
+            query = query.Where(t => t.ProjectId == ProjectFilter.Value);
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+            query = query.Where(t => t.Name.Contains(SearchText));
+
+        if (StatusFilter != "Все")
+        {
+            var status = StatusFilter switch
+            {
+                "Запланирована"    => TaskStatus.Planned,
+                "Выполняется"      => TaskStatus.InProgress,
+                "Приостановлена"   => TaskStatus.Paused,
+                "Завершена"        => TaskStatus.Completed,
+                _                  => (TaskStatus?)null
+            };
+            if (status.HasValue) query = query.Where(t => t.Status == status.Value);
+        }
+
+        if (PriorityFilter != "Все")
+        {
+            var priority = PriorityFilter switch
+            {
+                "Низкий"        => TaskPriority.Low,
+                "Средний"       => TaskPriority.Medium,
+                "Высокий"       => TaskPriority.High,
+                "Критический"   => TaskPriority.Critical,
+                _               => (TaskPriority?)null
+            };
+            if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
+        }
+
+        var list = await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
+        Tasks = new ObservableCollection<LocalTask>(list);
+
+        PlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
+        InProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress));
+        PausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused));
+        CompletedTasks  = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Completed));
+    }
+
+    public void SetProjectFilter(LocalProject? project)
+    {
+        ProjectFilter = project?.Id;
+        ProjectFilterName = project?.Name ?? "Все проекты";
+    }
+
+    public async Task SaveNewTaskAsync(CreateTaskRequest req, Guid localId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var projectName = await db.Projects
+            .Where(p => p.Id == req.ProjectId)
+            .Select(p => p.Name)
+            .FirstOrDefaultAsync() ?? "—";
+
+        var assignedName = req.AssignedUserId.HasValue
+            ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
+                  .Select(u => u.Name).FirstOrDefaultAsync()
+            : null;
+
+        var task = new LocalTask
+        {
+            Id = localId,
+            ProjectId = req.ProjectId,
+            ProjectName = projectName,
+            Name = req.Name,
+            Description = req.Description,
+            AssignedUserId = req.AssignedUserId,
+            AssignedUserName = assignedName,
+            Priority = req.Priority,
+            DueDate = req.DueDate,
+            Status = TaskStatus.Planned,
+            IsSynced = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        db.Tasks.Add(task);
+        await db.SaveChangesAsync();
+
+        await _sync.QueueOperationAsync("Task", localId, SyncOperation.Create,
+            req with { Id = localId });
+
+        await LoadAsync();
+    }
+
+    public async Task SaveUpdatedTaskAsync(Guid id, UpdateTaskRequest req)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var task = await db.Tasks.FindAsync(id);
+        if (task is null) return;
+
+        var assignedName = req.AssignedUserId.HasValue
+            ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
+                  .Select(u => u.Name).FirstOrDefaultAsync()
+            : null;
+
+        task.Name = req.Name;
+        task.Description = req.Description;
+        task.AssignedUserId = req.AssignedUserId;
+        task.AssignedUserName = assignedName;
+        task.Priority = req.Priority;
+        task.DueDate = req.DueDate;
+        task.Status = req.Status;
+        task.IsSynced = false;
+        task.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task MoveTaskAsync((LocalTask task, Models.TaskStatus newStatus) args)
+    {
+        var (task, newStatus) = args;
+        var req = new UpdateTaskRequest(task.Name, task.Description, task.AssignedUserId,
+            task.Priority, task.DueDate, newStatus);
+        await SaveUpdatedTaskAsync(task.Id, req);
+    }
+
+    [RelayCommand]
+    private async Task DeleteTaskAsync(LocalTask task)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Tasks.FindAsync(task.Id);
+        if (entity is null) return;
+
+        db.Tasks.Remove(entity);
+        await db.SaveChangesAsync();
+
+        if (task.IsSynced)
+            await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
+
+        await LoadAsync();
+    }
+}

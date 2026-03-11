@@ -1,0 +1,327 @@
+<UserControl x:Class="MPMS.Views.Pages.TasksPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" Padding="24,16"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Задачи" FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding Tasks.Count, StringFormat='Всего: {0}'}"
+                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- View toggle -->
+                    <Border CornerRadius="6" BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="📋" IsChecked="True" Tag="List"
+                                         Click="ViewMode_Click"
+                                         ToolTip="Список"
+                                         Style="{StaticResource ViewToggleButton}"/>
+                            <RadioButton Content="📊" Tag="Kanban"
+                                         Click="ViewMode_Click"
+                                         ToolTip="Канбан"
+                                         Style="{StaticResource ViewToggleButton}"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Content="＋  Создать задачу"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="CreateTask_Click"
+                            Height="36" FontSize="13"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filters -->
+        <Border Grid.Row="1" Background="White" Padding="24,10"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <Border Background="{StaticResource BackgroundBrush}" CornerRadius="6"
+                        Padding="10,0" Width="250" Height="34" Margin="0,0,12,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center"
+                                   Margin="0,0,6,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent"
+                                 VerticalAlignment="Center" FontSize="13"/>
+                    </Grid>
+                </Border>
+
+                <TextBlock Text="Проект:" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding Projects}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+                          Width="160" Height="34" FontSize="12"
+                          SelectionChanged="Project_SelectionChanged"
+                          VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+
+                <TextBlock Text="Статус:" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding StatusOptions}"
+                          SelectedItem="{Binding StatusFilter}"
+                          Width="140" Height="34" FontSize="12"
+                          VerticalContentAlignment="Center" Margin="0,0,12,0"/>
+
+                <TextBlock Text="Приоритет:" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" Margin="0,0,6,0"/>
+                <ComboBox ItemsSource="{Binding PriorityOptions}"
+                          SelectedItem="{Binding PriorityFilter}"
+                          Width="130" Height="34" FontSize="12"
+                          VerticalContentAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="2">
+            <!-- List View -->
+            <ScrollViewer x:Name="ListPanel" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Tasks}" Margin="24,16">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
+                                    Padding="14,10"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                    Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding ProjectName}" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               Text="{Binding AssignedUserName}"
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+
+                                    <Border Grid.Column="2" CornerRadius="10" Padding="8,3"
+                                            VerticalAlignment="Center" HorizontalAlignment="Left"
+                                            Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}">
+                                        <TextBlock Text="{Binding Priority, Converter={StaticResource PriorityToString}}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                               Text="{Binding DueDate, Converter={StaticResource DateOnlyToString}}"
+                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+
+                                    <Border Grid.Column="4" CornerRadius="10" Padding="8,3"
+                                            VerticalAlignment="Center" HorizontalAlignment="Left"
+                                            Background="{Binding Status, Converter={StaticResource TaskStatusToBrush}}">
+                                        <TextBlock Text="{Binding Status, Converter={StaticResource TaskStatusToString}}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="5" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
+                                                   FontSize="11" HorizontalAlignment="Right"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
+                                        <ProgressBar Value="{Binding ProgressPercent}" Maximum="100" Height="4"
+                                                     Background="#E0E0E0"
+                                                     Foreground="{StaticResource SuccessBrush}"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="6" Orientation="Horizontal"
+                                                VerticalAlignment="Center" Margin="8,0,0,0">
+                                        <Button Content="✏" ToolTip="Редактировать"
+                                                Tag="{Binding}" Click="EditTask_Click"
+                                                Margin="0,0,4,0" Style="{StaticResource IconButton}"/>
+                                        <Button Content="🗑" ToolTip="Удалить"
+                                                Tag="{Binding}" Click="DeleteTask_Click"
+                                                Style="{StaticResource DangerIconButton}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Kanban View -->
+            <ScrollViewer x:Name="KanbanPanel"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled"
+                          Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Margin="24,16" VerticalAlignment="Top">
+                    <!-- Planned -->
+                    <Border Width="280" Margin="0,0,12,0">
+                        <StackPanel>
+                            <Border Background="#6B778C" CornerRadius="6,6,0,0" Padding="12,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Запланирована" Foreground="White"
+                                               FontWeight="SemiBold" FontSize="13"/>
+                                    <Border Background="#FFFFFF33" CornerRadius="10"
+                                            Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding PlannedTasks.Count}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#F4F5F7" CornerRadius="0,0,6,6" Padding="8" MinHeight="200">
+                                <ItemsControl ItemsSource="{Binding PlannedTasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="6"
+                                                    Margin="0,0,0,6" Padding="10,8"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                    Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="13"
+                                                               FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding ProjectName}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                        <Border CornerRadius="8" Padding="6,2"
+                                                                Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}">
+                                                            <TextBlock Text="{Binding Priority, Converter={StaticResource PriorityToString}}"
+                                                                       Foreground="White" FontSize="10"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- In Progress -->
+                    <Border Width="280" Margin="0,0,12,0">
+                        <StackPanel>
+                            <Border Background="#0082FF" CornerRadius="6,6,0,0" Padding="12,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Выполняется" Foreground="White"
+                                               FontWeight="SemiBold" FontSize="13"/>
+                                    <Border Background="#FFFFFF33" CornerRadius="10"
+                                            Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding InProgressTasks.Count}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#F4F5F7" CornerRadius="0,0,6,6" Padding="8" MinHeight="200">
+                                <ItemsControl ItemsSource="{Binding InProgressTasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="6"
+                                                    Margin="0,0,0,6" Padding="10,8"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                    Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="13"
+                                                               FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding ProjectName}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <ProgressBar Value="{Binding ProgressPercent}"
+                                                                 Maximum="100" Height="4" Margin="0,4,0,0"
+                                                                 Background="#E0E0E0"
+                                                                 Foreground="{StaticResource SuccessBrush}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Paused -->
+                    <Border Width="280" Margin="0,0,12,0">
+                        <StackPanel>
+                            <Border Background="#FF8B00" CornerRadius="6,6,0,0" Padding="12,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Приостановлена" Foreground="White"
+                                               FontWeight="SemiBold" FontSize="13"/>
+                                    <Border Background="#FFFFFF33" CornerRadius="10"
+                                            Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding PausedTasks.Count}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#F4F5F7" CornerRadius="0,0,6,6" Padding="8" MinHeight="200">
+                                <ItemsControl ItemsSource="{Binding PausedTasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="6"
+                                                    Margin="0,0,0,6" Padding="10,8"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                    Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                                <TextBlock Text="{Binding Name}" FontSize="13"
+                                                           FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Completed -->
+                    <Border Width="280">
+                        <StackPanel>
+                            <Border Background="#00875A" CornerRadius="6,6,0,0" Padding="12,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Завершена" Foreground="White"
+                                               FontWeight="SemiBold" FontSize="13"/>
+                                    <Border Background="#FFFFFF33" CornerRadius="10"
+                                            Padding="6,2" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding CompletedTasks.Count}"
+                                                   Foreground="White" FontSize="11"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#F4F5F7" CornerRadius="0,0,6,6" Padding="8" MinHeight="200">
+                                <ItemsControl ItemsSource="{Binding CompletedTasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="6"
+                                                    Margin="0,0,0,6" Padding="10,8"
+                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                    Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                                <TextBlock Text="{Binding Name}" FontSize="13"
+                                                           FontWeight="SemiBold" TextWrapping="Wrap" Opacity="0.7"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

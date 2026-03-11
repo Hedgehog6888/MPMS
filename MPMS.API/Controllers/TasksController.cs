@@ -118,6 +118,7 @@ public class TasksController : ControllerBase
 
         var task = new ProjectTask
         {
+            Id = request.Id ?? Guid.NewGuid(),
             ProjectId = request.ProjectId,
             Name = request.Name,
             Description = request.Description,

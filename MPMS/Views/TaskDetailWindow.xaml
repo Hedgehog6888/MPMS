@@ -1,0 +1,239 @@
+<Window x:Class="MPMS.Views.TaskDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Детали задачи"
+        Width="900" Height="700"
+        MinWidth="700" MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" Padding="24,16"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="{Binding Task.ProjectName}" FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text=" / " FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding Task.Name}" FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Task.Name}" FontSize="20" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
+                        <Border CornerRadius="10" Padding="8,3" VerticalAlignment="Center"
+                                Background="{Binding Task.Status, Converter={StaticResource TaskStatusToBrush}}">
+                            <TextBlock Text="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"
+                                       Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                        </Border>
+                        <Border CornerRadius="10" Padding="8,3" Margin="6,0,0,0" VerticalAlignment="Center"
+                                Background="{Binding Task.Priority, Converter={StaticResource PriorityToBrush}}">
+                            <TextBlock Text="{Binding Task.Priority, Converter={StaticResource PriorityToString}}"
+                                       Foreground="White" FontSize="11"/>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+                <Button Grid.Column="1" Content="＋  Добавить этап"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="CreateStage_Click"
+                        Height="34" FontSize="12"/>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Stages -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Этапы выполнения" FontSize="15" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextPrimaryBrush}" Margin="24,16,24,8"/>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Stages}" Margin="24,0,24,16">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="White" CornerRadius="8" Margin="0,0,0,8"
+                                        Padding="16,12"
+                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        Cursor="Hand">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="4"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Status indicator bar -->
+                                        <Border Grid.Column="0" CornerRadius="2"
+                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"
+                                                Margin="0,0,12,0"/>
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Description}" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" Margin="0,2,0,0"
+                                                       Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                <Border CornerRadius="10" Padding="8,3"
+                                                        Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}">
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource StageStatusToString}}"
+                                                               Foreground="White" FontSize="11"/>
+                                                </Border>
+                                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
+                                                    <Run Text="👤 "/>
+                                                    <Run Text="{Binding AssignedUserName}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Stage actions -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="✏" ToolTip="Редактировать"
+                                                        Tag="{Binding}" Click="EditStage_Click"
+                                                        Margin="0,0,4,0" Style="{StaticResource IconButton}"/>
+                                                <Button Content="🗑" ToolTip="Удалить"
+                                                        Tag="{Binding}" Click="DeleteStage_Click"
+                                                        Style="{StaticResource DangerIconButton}"/>
+                                            </StackPanel>
+
+                                            <!-- Quick status change -->
+                                            <ComboBox Margin="0,6,0,0" Width="120" FontSize="11"
+                                                      Height="28" Tag="{Binding}"
+                                                      SelectionChanged="StageStatus_Changed"
+                                                      VerticalContentAlignment="Center">
+                                                <ComboBoxItem Content="Запланирован" Tag="Planned"/>
+                                                <ComboBoxItem Content="Выполняется" Tag="InProgress"/>
+                                                <ComboBoxItem Content="Завершён" Tag="Completed"/>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Right: Task Info -->
+            <Border Grid.Column="1" Background="White"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20,16">
+                        <TextBlock Text="Информация" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="ОПИСАНИЕ" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding Task.Description}" TextWrapping="Wrap"
+                                       FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="ИСПОЛНИТЕЛЬ" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock FontSize="13" Foreground="{StaticResource TextPrimaryBrush}">
+                                <Run Text="👤 "/>
+                                <Run Text="{Binding Task.AssignedUserName}"/>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}}"
+                                       FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="ПРОГРЕСС" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Task.ProgressPercent, StringFormat='{}{0}%'}"
+                                           FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <ProgressBar Value="{Binding Task.ProgressPercent}"
+                                             Maximum="100" Height="8" Margin="0,4,0,4"
+                                             Background="#E0E0E0"
+                                             Foreground="{StaticResource SuccessBrush}"/>
+                                <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}">
+                                    <Run Text="{Binding Task.CompletedStages}"/>
+                                    <Run Text=" из "/>
+                                    <Run Text="{Binding Task.TotalStages}"/>
+                                    <Run Text=" этапов завершено"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Stage materials -->
+                        <StackPanel Margin="0,8,0,0"
+                                    Visibility="{Binding SelectedStageMaterials.Count,
+                                        Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="МАТЕРИАЛЫ ЭТАПА" FontSize="10" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                            <ItemsControl ItemsSource="{Binding SelectedStageMaterials}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="0,4"
+                                                BorderBrush="{StaticResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding MaterialName}"
+                                                           FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                <TextBlock Grid.Column="1" FontSize="12"
+                                                           Foreground="{StaticResource TextSecondaryBrush}">
+                                                    <Run Text="{Binding Quantity}"/>
+                                                    <Run Text=" "/>
+                                                    <Run Text="{Binding Unit}"/>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -87,6 +87,7 @@ public class ProjectsController : ControllerBase
 
         var project = new Project
         {
+            Id = request.Id ?? Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
             Client = request.Client,

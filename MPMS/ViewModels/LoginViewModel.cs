@@ -33,19 +33,34 @@ public partial class LoginViewModel : ViewModelBase
         {
             var result = await _api.LoginAsync(Username.Trim(), Password);
 
-            if (!result.Success)
+            if (result.Success)
             {
-                SetError(result.Error ?? "Неизвестная ошибка.");
+                await _auth.SetSessionAsync(result.Response!, Password);
+                OpenMainAndClose();
                 return;
             }
 
-            _auth.SetSession(result.Response!);
-            App.OpenMainWindow();
-
-            foreach (System.Windows.Window w in System.Windows.Application.Current.Windows)
+            // ── API недоступен → пробуем офлайн-вход ─────────────────────
+            if (!_api.IsOnline)
             {
-                if (w is Views.LoginWindow) { w.Close(); break; }
+                var offline = await _auth.TryOfflineLoginAsync(Username.Trim(), Password);
+                if (offline is not null)
+                {
+                    await _auth.SetSessionAsync(offline, Password);
+                    OpenMainAndClose();
+                    return;
+                }
+
+                // Distinguish between "no local cache" and "wrong password"
+                var hasCache = await _auth.HasLocalCacheAsync(Username.Trim());
+                if (!hasCache)
+                    SetError("Сервер недоступен. Для первого входа необходимо подключение к серверу. После успешного входа онлайн будет доступен офлайн-режим.");
+                else
+                    SetError("Сервер недоступен. Неверный пароль для офлайн-входа.");
+                return;
             }
+
+            SetError(result.Error ?? "Неизвестная ошибка.");
         }
         finally
         {
@@ -57,7 +72,6 @@ public partial class LoginViewModel : ViewModelBase
     private void SelectAccount(RecentAccount account)
     {
         Username = account.Username;
-        // Signal the view to focus the password field
         PasswordFocusRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -66,6 +80,15 @@ public partial class LoginViewModel : ViewModelBase
     private bool CanLogin() => !string.IsNullOrWhiteSpace(Username)
                              && !string.IsNullOrWhiteSpace(Password);
 
+    private void OpenMainAndClose()
+    {
+        App.OpenMainWindow();
+        foreach (System.Windows.Window w in System.Windows.Application.Current.Windows)
+        {
+            if (w is Views.LoginWindow) { w.Close(); break; }
+        }
+    }
+
     private async Task LoadRecentAccountsAsync()
     {
         var accounts = await _auth.GetRecentAccountsAsync();
@@ -73,6 +96,6 @@ public partial class LoginViewModel : ViewModelBase
         HasRecentAccounts = RecentAccounts.Count > 0;
     }
 
-    partial void OnUsernameChanged(string value)  => LoginCommand.NotifyCanExecuteChanged();
-    partial void OnPasswordChanged(string value)  => LoginCommand.NotifyCanExecuteChanged();
+    partial void OnUsernameChanged(string value) => LoginCommand.NotifyCanExecuteChanged();
+    partial void OnPasswordChanged(string value) => LoginCommand.NotifyCanExecuteChanged();
 }

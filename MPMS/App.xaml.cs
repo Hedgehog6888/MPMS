@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -5,6 +6,8 @@ using MPMS.Data;
 using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views;
+using MPMS.Views.Pages;
+using MPMS.Views.Dialogs;
 
 namespace MPMS;
 
@@ -12,7 +15,7 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
-    private void OnStartup(object sender, StartupEventArgs e)
+    private async void OnStartup(object sender, StartupEventArgs e)
     {
         var services = new ServiceCollection();
         ConfigureServices(services);
@@ -22,8 +25,11 @@ public partial class App : Application
 
         var authService = Services.GetRequiredService<IAuthService>();
 
-        if (authService.TryRestoreSessionAsync().GetAwaiter().GetResult())
+        if (await authService.TryRestoreSessionAsync())
         {
+            // Probe the server before showing the main window so the online/offline
+            // indicator is correct from the very first frame (no green→red flash).
+            await Services.GetRequiredService<IApiService>().ProbeAsync();
             OpenMainWindow();
         }
         else
@@ -40,21 +46,42 @@ public partial class App : Application
             options.UseSqlite("Data Source=mpms_local.db"));
 
         // ── HTTP Client ───────────────────────────────────────────────────────
-        services.AddHttpClient<IApiService, ApiService>(client =>
+        services.AddHttpClient("MPMS", client =>
         {
             client.BaseAddress = new Uri("http://localhost:5147/api/");
             client.Timeout = TimeSpan.FromSeconds(15);
+        });
+        services.AddSingleton<IApiService>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var http = factory.CreateClient("MPMS");
+            var auth = sp.GetRequiredService<IAuthService>();
+            return new ApiService(http, auth);
         });
 
         // ── Services ──────────────────────────────────────────────────────────
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<ISyncService, SyncService>();
 
+        // ── Page ViewModels ───────────────────────────────────────────────────
+        services.AddTransient<ProjectsViewModel>();
+        services.AddTransient<ProjectDetailViewModel>();
+        services.AddTransient<TasksViewModel>();
+        services.AddTransient<MaterialsViewModel>();
+        services.AddTransient<TaskDetailViewModel>();
+
         // ── Windows ───────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();
         services.AddTransient<LoginViewModel>();
-        services.AddTransient<MainWindow>();
-        services.AddTransient<MainViewModel>();
+        services.AddSingleton<MainWindow>();
+        services.AddSingleton<MainViewModel>();
+
+        // ── Dialogs ───────────────────────────────────────────────────────────
+        services.AddTransient<CreateProjectDialog>();
+        services.AddTransient<CreateTaskDialog>();
+        services.AddTransient(sp => new CreateMaterialDialog());
+        services.AddTransient<CreateStageDialog>();
+        services.AddTransient<TaskDetailWindow>();
     }
 
     private const string LocalDbConnectionString = "Data Source=mpms_local.db";
@@ -71,6 +98,8 @@ public partial class App : Application
     public static void OpenMainWindow()
     {
         var main = Services.GetRequiredService<MainWindow>();
+        // Refresh user info displayed in the sidebar (important after account switch)
+        Services.GetRequiredService<MainViewModel>().RefreshUserInfo();
         main.Show();
 
         // Start background sync
@@ -79,10 +108,15 @@ public partial class App : Application
 
     public static void NavigateToLogin()
     {
-        foreach (Window w in Current.Windows)
-            w.Close();
-
+        // Show login BEFORE hiding existing windows so the app never has zero visible windows,
+        // which would trigger OnLastWindowClose shutdown.
         var loginWindow = Services.GetRequiredService<LoginWindow>();
         loginWindow.Show();
+
+        foreach (Window w in Current.Windows.Cast<Window>().ToList())
+        {
+            if (w is not Views.LoginWindow)
+                w.Hide();
+        }
     }
 }

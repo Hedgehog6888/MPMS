@@ -9,7 +9,7 @@ public record LoginResult(AuthResponse? Response, string? Error)
     public bool Success => Response is not null;
     public static LoginResult Ok(AuthResponse r)           => new(r, null);
     public static LoginResult Fail(string error)           => new(null, error);
-    public static LoginResult Offline()                    => Fail("Нет соединения с сервером.\nПроверьте, что API запущен (порт 5147).");
+    public static LoginResult Offline()                    => Fail("Нет соединения с сервером. Проверьте, что API запущен (порт 5147).");
     public static LoginResult WrongCredentials()           => Fail("Неверный логин или пароль.");
 }
 public record RegisterRequest(string Name, string Username, string? Email, string Password, Guid RoleId);
@@ -19,7 +19,7 @@ public record RoleDto(Guid Id, string Name, string? Description);
 
 // ── Projects ──────────────────────────────────────────────────────────────────
 public record CreateProjectRequest(string Name, string? Description, string? Client,
-    string? Address, DateOnly? StartDate, DateOnly? EndDate, Guid ManagerId);
+    string? Address, DateOnly? StartDate, DateOnly? EndDate, Guid ManagerId, Guid? Id = null);
 
 public record UpdateProjectRequest(string Name, string? Description, string? Client,
     string? Address, DateOnly? StartDate, DateOnly? EndDate,
@@ -36,7 +36,7 @@ public record ProjectListResponse(Guid Id, string Name, string? Client,
 
 // ── Tasks ─────────────────────────────────────────────────────────────────────
 public record CreateTaskRequest(Guid ProjectId, string Name, string? Description,
-    Guid? AssignedUserId, TaskPriority Priority, DateOnly? DueDate);
+    Guid? AssignedUserId, TaskPriority Priority, DateOnly? DueDate, Guid? Id = null);
 
 public record UpdateTaskRequest(string Name, string? Description,
     Guid? AssignedUserId, TaskPriority Priority, DateOnly? DueDate, TaskStatus Status);
@@ -53,7 +53,7 @@ public record TaskResponse(Guid Id, Guid ProjectId, string ProjectName,
 
 // ── Stages ────────────────────────────────────────────────────────────────────
 public record CreateStageRequest(Guid TaskId, string Name, string? Description,
-    Guid? AssignedUserId);
+    Guid? AssignedUserId, Guid? Id = null);
 
 public record UpdateStageRequest(string Name, string? Description,
     Guid? AssignedUserId, StageStatus Status);
@@ -64,7 +64,7 @@ public record StageResponse(Guid Id, Guid TaskId, string Name, string? Descripti
     DateTime CreatedAt, DateTime UpdatedAt);
 
 // ── Materials ─────────────────────────────────────────────────────────────────
-public record CreateMaterialRequest(string Name, string? Unit, string? Description);
+public record CreateMaterialRequest(string Name, string? Unit, string? Description, Guid? Id = null);
 public record UpdateMaterialRequest(string Name, string? Unit, string? Description);
 public record MaterialResponse(Guid Id, string Name, string? Unit,
     string? Description, DateTime CreatedAt);

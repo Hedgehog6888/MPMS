@@ -16,17 +16,24 @@ public class AuthService : IAuthService
         _dbFactory = dbFactory;
     }
 
-    public bool IsAuthenticated => _current is not null && _current.ExpiresAt > DateTime.UtcNow;
+    public bool IsAuthenticated => _current is not null;
     public string? Token    => _current?.Token;
     public Guid?   UserId   => _current?.UserId;
     public string? UserName  => _current?.Name;
     public string? Username  => _current?.Username;
     public string? UserRole  => _current?.Role;
 
-    public void SetSession(AuthResponse response)
+    public async Task SetSessionAsync(AuthResponse response, string plainPassword)
     {
         _current = response;
-        _ = PersistSessionAsync(response);
+        await PersistSessionAsync(response, plainPassword);
+        _ = SaveRecentAccountAsync(response);
+    }
+
+    public void SetSession(AuthResponse response, string plainPassword)
+    {
+        _current = response;
+        _ = PersistSessionAsync(response, plainPassword);
         _ = SaveRecentAccountAsync(response);
     }
 
@@ -41,16 +48,46 @@ public class AuthService : IAuthService
         await using var db = await _dbFactory.CreateDbContextAsync();
         var session = await db.AuthSessions.FirstOrDefaultAsync();
 
-        if (session is null) return false;
+        // Only auto-restore if the user was actively logged in (didn't explicitly log out).
+        if (session is null || !session.IsActiveSession) return false;
 
-        // Allow restoring an expired session when offline:
-        // the user can continue working with cached local data.
-        // On next successful API call the session will be refreshed.
+        // Allow restoring session offline — user works with cached local data.
         _current = new AuthResponse(
             session.UserId, session.UserName, session.Username,
             session.UserRole, session.Token, session.ExpiresAt);
 
         return true;
+    }
+
+    /// <summary>
+    /// Attempts to authenticate using the locally cached password hash.
+    /// Only works if the user has previously logged in on this machine.
+    /// </summary>
+    public async Task<AuthResponse?> TryOfflineLoginAsync(string username, string plainPassword)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var session = await db.AuthSessions.FirstOrDefaultAsync();
+
+        if (session is null
+            || !string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrEmpty(session.LocalPasswordHash))
+            return null;
+
+        if (!BCrypt.Net.BCrypt.Verify(plainPassword, session.LocalPasswordHash))
+            return null;
+
+        return new AuthResponse(
+            session.UserId, session.UserName, session.Username,
+            session.UserRole, session.Token, session.ExpiresAt);
+    }
+
+    public async Task<bool> HasLocalCacheAsync(string username)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var session = await db.AuthSessions.FirstOrDefaultAsync();
+        return session is not null
+               && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
+               && !string.IsNullOrEmpty(session.LocalPasswordHash);
     }
 
     public async Task<List<RecentAccount>> GetRecentAccountsAsync()
@@ -63,10 +100,11 @@ public class AuthService : IAuthService
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
-    private async Task PersistSessionAsync(AuthResponse r)
+    private async Task PersistSessionAsync(AuthResponse r, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var existing = await db.AuthSessions.FirstOrDefaultAsync();
+        var pwdHash  = BCrypt.Net.BCrypt.HashPassword(plainPassword);
 
         if (existing is null)
         {
@@ -74,17 +112,21 @@ public class AuthService : IAuthService
             {
                 Id = 1, Token = r.Token, UserId = r.UserId,
                 UserName = r.Name, Username = r.Username,
-                UserRole = r.Role, ExpiresAt = r.ExpiresAt
+                UserRole = r.Role, ExpiresAt = r.ExpiresAt,
+                LocalPasswordHash = pwdHash,
+                IsActiveSession = true
             });
         }
         else
         {
-            existing.Token = r.Token;
-            existing.UserId = r.UserId;
-            existing.UserName = r.Name;
-            existing.Username = r.Username;
-            existing.UserRole = r.Role;
-            existing.ExpiresAt = r.ExpiresAt;
+            existing.Token             = r.Token;
+            existing.UserId            = r.UserId;
+            existing.UserName          = r.Name;
+            existing.Username          = r.Username;
+            existing.UserRole          = r.Role;
+            existing.ExpiresAt         = r.ExpiresAt;
+            existing.LocalPasswordHash = pwdHash;
+            existing.IsActiveSession   = true;
         }
 
         await db.SaveChangesAsync();
@@ -96,7 +138,10 @@ public class AuthService : IAuthService
         var session = await db.AuthSessions.FirstOrDefaultAsync();
         if (session is not null)
         {
-            db.AuthSessions.Remove(session);
+            // Mark as logged-out but keep the record so the same account
+            // can log back in offline using the cached password hash.
+            session.IsActiveSession = false;
+            session.Token = string.Empty;
             await db.SaveChangesAsync();
         }
     }
@@ -111,16 +156,14 @@ public class AuthService : IAuthService
         if (existing is not null)
         {
             existing.DisplayName = r.Name;
-            existing.Role = r.Role;
+            existing.Role        = r.Role;
             existing.LastLoginAt = DateTime.UtcNow;
-            // Refresh initials/color in case role changed
             var refreshed = RecentAccount.From(r.Username, r.Name, r.Role);
-            existing.Initials = refreshed.Initials;
+            existing.Initials    = refreshed.Initials;
             existing.AvatarColor = refreshed.AvatarColor;
         }
         else
         {
-            // Trim to MaxRecentAccounts - 1 before adding new
             var all = await db.RecentAccounts
                 .OrderBy(a => a.LastLoginAt)
                 .ToListAsync();

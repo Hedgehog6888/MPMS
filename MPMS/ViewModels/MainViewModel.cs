@@ -1,5 +1,7 @@
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using MPMS.Services;
 
 namespace MPMS.ViewModels;
@@ -8,12 +10,18 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly IAuthService _auth;
     private readonly ISyncService _sync;
+    private readonly IServiceProvider _sp;
+    private readonly DispatcherTimer _onlineTimer;
 
     [ObservableProperty] private string _currentPage = "Projects";
     [ObservableProperty] private bool _isSidebarExpanded = true;
-    [ObservableProperty] private bool _isOnline = true;
+    [ObservableProperty] private bool _isOnline;
     [ObservableProperty] private string _searchText = string.Empty;
-    [ObservableProperty] private object? _pageContent;
+    [ObservableProperty] private ViewModelBase? _currentPageViewModel;
+
+    public string SwitchAccountTooltip => IsOnline
+        ? "Сменить аккаунт"
+        : "Смена аккаунта доступна только в онлайн-режиме";
 
     public string UserName => _auth.UserName ?? "—";
     public string UserRole => _auth.UserRole ?? "—";
@@ -21,15 +29,34 @@ public partial class MainViewModel : ViewModelBase
         ? string.Concat(name.Split(' ').Take(2).Select(w => w[0]))
         : "?";
 
-    public MainViewModel(IAuthService auth, ISyncService sync)
+    public MainViewModel(IAuthService auth, ISyncService sync, IServiceProvider sp)
     {
         _auth = auth;
         _sync = sync;
-        _sync.OnlineStatusChanged += (_, online) =>
-        {
-            IsOnline = online;
-            StatusMessage = online ? string.Empty : "Офлайн режим";
-        };
+        _sp = sp;
+
+        // Read the real connectivity state immediately so the badge is correct
+        // on the very first frame, before the timer fires for the first time.
+        _isOnline = _sync.IsOnline;
+
+        // DispatcherTimer runs on the UI thread — no threading issues.
+        // Polls SyncService.IsOnline (which reads IApiService.IsOnline updated after every HTTP call).
+        _onlineTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _onlineTimer.Tick += OnOnlineTimerTick;
+        _onlineTimer.Start();
+
+        Navigate("Projects");
+    }
+
+    private void OnOnlineTimerTick(object? sender, EventArgs e)
+    {
+        var online = _sync.IsOnline;
+        if (IsOnline == online) return;
+
+        IsOnline = online;
+        OnPropertyChanged(nameof(SwitchAccountTooltip));
+        SwitchAccountCommand.NotifyCanExecuteChanged();
+        StatusMessage = online ? string.Empty : "Офлайн режим — данные не синхронизируются";
     }
 
     [RelayCommand]
@@ -39,7 +66,27 @@ public partial class MainViewModel : ViewModelBase
     private void Navigate(string page)
     {
         CurrentPage = page;
-        // In the next iteration each page will load its own ViewModel/View
+        ViewModelBase? vm = page switch
+        {
+            "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
+            "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
+            "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
+            _           => null
+        };
+
+        if (vm is ILoadable loadable)
+            _ = loadable.LoadAsync();
+
+        CurrentPageViewModel = vm;
+    }
+
+    public void NavigateToProject(Models.LocalProject project)
+    {
+        CurrentPage = "ProjectDetail";
+        var vm = _sp.GetRequiredService<ProjectDetailViewModel>();
+        vm.SetProject(project, () => Navigate("Projects"));
+        _ = vm.LoadAsync();
+        CurrentPageViewModel = vm;
     }
 
     [RelayCommand]
@@ -52,10 +99,26 @@ public partial class MainViewModel : ViewModelBase
         IsBusy = false;
     }
 
-    [RelayCommand]
-    private void Logout()
+    /// <summary>
+    /// Called by App.OpenMainWindow() after a new login so the sidebar reflects the current user.
+    /// </summary>
+    public void RefreshUserInfo()
+    {
+        OnPropertyChanged(nameof(UserName));
+        OnPropertyChanged(nameof(UserRole));
+        OnPropertyChanged(nameof(UserInitials));
+        OnPropertyChanged(nameof(SwitchAccountTooltip));
+        SwitchAccountCommand.NotifyCanExecuteChanged();
+        Navigate("Projects");
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSwitchAccount))]
+    private void SwitchAccount()
     {
         _auth.Logout();
         App.NavigateToLogin();
     }
+
+    private bool CanSwitchAccount() => IsOnline;
 }
+

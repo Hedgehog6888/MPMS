@@ -39,7 +39,12 @@ public class LocalDbContext : DbContext
             .Property(e => e.OperationType).HasConversion<string>();
 
         // AuthSession is a singleton row — always Id = 1
+        // UserName (display) and Username (login) differ only by case → SQLite sees duplicates.
+        // Map UserName to a distinct column name "UserDisplayName".
         modelBuilder.Entity<AuthSession>()
             .HasKey(e => e.Id);
+        modelBuilder.Entity<AuthSession>()
+            .Property(e => e.UserName)
+            .HasColumnName("UserDisplayName");
     }
 }

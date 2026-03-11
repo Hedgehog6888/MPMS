@@ -10,7 +10,8 @@ public record CreateProjectRequest(
     [MaxLength(500)] string? Address,
     DateOnly? StartDate,
     DateOnly? EndDate,
-    Guid ManagerId
+    Guid ManagerId,
+    Guid? Id = null
 );
 
 public record UpdateProjectRequest(

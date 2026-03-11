@@ -9,7 +9,8 @@ public record CreateTaskRequest(
     string? Description,
     Guid? AssignedUserId,
     TaskPriority Priority,
-    DateOnly? DueDate
+    DateOnly? DueDate,
+    Guid? Id = null
 );
 
 public record UpdateTaskRequest(

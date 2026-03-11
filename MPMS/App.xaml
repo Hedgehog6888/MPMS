@@ -2,6 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:pages="clr-namespace:MPMS.Views.Pages"
              Startup="OnStartup">
     <Application.Resources>
         <ResourceDictionary>
@@ -123,11 +125,136 @@
                 </Setter>
             </Style>
 
+            <!-- ── Button: Icon (small ghost) ─────────────────────── -->
+            <Style x:Key="IconButton" TargetType="Button">
+                <Setter Property="Background"      Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground"      Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="FontSize"        Value="16"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Padding"         Value="4,2"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── Button: Danger Icon ─────────────────────────────── -->
+            <Style x:Key="DangerIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- ── Tab-style RadioButton ──────────────────────────── -->
+            <Style x:Key="TabButton" TargetType="RadioButton">
+                <Setter Property="Background"      Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground"      Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Height"          Value="44"/>
+                <Setter Property="Padding"         Value="16,0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Bg" BorderThickness="0,0,0,2"
+                                    BorderBrush="Transparent"
+                                    Background="Transparent"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Bg" Property="BorderBrush"
+                                            Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── View Toggle RadioButton ───────────────────────── -->
+            <Style x:Key="ViewToggleButton" TargetType="RadioButton">
+                <Setter Property="Background"      Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground"      Value="{StaticResource TextSecondaryBrush}"/>
+                <Setter Property="FontSize"        Value="16"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Width"           Value="36"/>
+                <Setter Property="Height"          Value="36"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                    CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Bg" Property="Background"
+                                            Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background"
+                                            Value="{StaticResource BackgroundBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- ── Converters ──────────────────────────────────────── -->
-            <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
-            <infra:BoolToVisibilityConverter x:Key="BoolToVisInv"  Invert="True"/>
-            <infra:BoolToVisibilityConverter x:Key="StringToVis"   IsStringMode="True"/>
-            <infra:HexToBrushConverter       x:Key="HexToBrush"/>
+            <infra:BoolToVisibilityConverter   x:Key="BoolToVis"/>
+            <infra:BoolToVisibilityConverter   x:Key="BoolToVisInv"        Invert="True"/>
+            <infra:BoolToVisibilityConverter   x:Key="StringToVis"         IsStringMode="True"/>
+            <infra:HexToBrushConverter         x:Key="HexToBrush"/>
+            <infra:TaskStatusToBrushConverter  x:Key="TaskStatusToBrush"/>
+            <infra:ProjectStatusToBrushConverter x:Key="ProjectStatusToBrush"/>
+            <infra:PriorityToBrushConverter    x:Key="PriorityToBrush"/>
+            <infra:StageStatusToBrushConverter x:Key="StageStatusToBrush"/>
+            <infra:TaskStatusToStringConverter x:Key="TaskStatusToString"/>
+            <infra:ProjectStatusToStringConverter x:Key="ProjectStatusToString"/>
+            <infra:PriorityToStringConverter   x:Key="PriorityToString"/>
+            <infra:StageStatusToStringConverter x:Key="StageStatusToString"/>
+            <infra:DateOnlyToStringConverter   x:Key="DateOnlyToString"/>
+            <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
+
+            <!-- ── DataTemplates: ViewModel → View (UserControl) ─── -->
+            <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
+                <pages:ProjectsPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
+                <pages:ProjectDetailPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:TasksViewModel}">
+                <pages:TasksPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:MaterialsViewModel}">
+                <pages:MaterialsPage/>
+            </DataTemplate>
 
         </ResourceDictionary>
     </Application.Resources>

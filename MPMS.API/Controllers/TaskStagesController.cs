@@ -47,6 +47,7 @@ public class TaskStagesController : ControllerBase
 
         var stage = new TaskStage
         {
+            Id = request.Id ?? Guid.NewGuid(),
             TaskId = request.TaskId,
             Name = request.Name,
             Description = request.Description,

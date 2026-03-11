@@ -51,6 +51,7 @@ public class MaterialsController : ControllerBase
     {
         var material = new Material
         {
+            Id = request.Id ?? Guid.NewGuid(),
             Name = request.Name,
             Unit = request.Unit,
             Description = request.Description,

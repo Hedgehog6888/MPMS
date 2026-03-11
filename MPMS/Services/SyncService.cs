@@ -8,6 +8,7 @@ namespace MPMS.Services;
 public interface ISyncService
 {
     bool IsSyncing { get; }
+    bool IsOnline  { get; }
     event EventHandler<bool>? OnlineStatusChanged;
     Task SyncAsync();
     Task QueueOperationAsync(string entityType, Guid entityId,
@@ -24,6 +25,7 @@ public class SyncService : ISyncService
     private bool _isSyncing;
 
     public bool IsSyncing => _isSyncing;
+    public bool IsOnline  => _api.IsOnline;
     public event EventHandler<bool>? OnlineStatusChanged;
 
     public SyncService(IDbContextFactory<LocalDbContext> dbFactory,
@@ -44,11 +46,15 @@ public class SyncService : ISyncService
         {
             await ProcessPendingOperationsAsync();
             await PullFromServerAsync();
-
-            var wasOnline = _api.IsOnline;
-            OnlineStatusChanged?.Invoke(this, wasOnline);
         }
-        finally { _isSyncing = false; }
+        catch { /* errors are captured via _api.IsOnline */ }
+        finally
+        {
+            _isSyncing = false;
+            // Always fire so the UI reflects the current connectivity state,
+            // even when an exception interrupted the sync.
+            OnlineStatusChanged?.Invoke(this, _api.IsOnline);
+        }
     }
 
     public async Task QueueOperationAsync(string entityType, Guid entityId,
@@ -78,6 +84,7 @@ public class SyncService : ISyncService
 
         // Users (for dropdowns)
         var users = await _api.GetUsersAsync();
+        if (!_api.IsOnline) return;  // bail out early if the first request already failed
         if (users is not null)
         {
             var ids = users.Select(u => u.Id).ToHashSet();
@@ -187,6 +194,57 @@ public class SyncService : ISyncService
             }
         }
 
+        // Task Stages (pulled per task for all synced tasks)
+        var taskIds = await db.Tasks.Where(t => t.IsSynced).Select(t => t.Id).ToListAsync();
+        var existingStages = await db.TaskStages.ToDictionaryAsync(s => s.Id);
+        foreach (var taskId in taskIds)
+        {
+            var task = await _api.GetTaskAsync(taskId);
+            if (task?.Stages is null) continue;
+            foreach (var s in task.Stages)
+            {
+                if (existingStages.TryGetValue(s.Id, out var localStage))
+                {
+                    localStage.Name = s.Name; localStage.Description = s.Description;
+                    localStage.AssignedUserName = s.AssignedUserName;
+                    localStage.Status = Enum.Parse<StageStatus>(s.Status);
+                    localStage.IsSynced = true;
+                }
+                else
+                {
+                    db.TaskStages.Add(new LocalTaskStage
+                    {
+                        Id = s.Id, TaskId = s.TaskId, Name = s.Name,
+                        Description = s.Description, AssignedUserName = s.AssignedUserName,
+                        AssignedUserId = s.AssignedUserId,
+                        Status = Enum.Parse<StageStatus>(s.Status),
+                        IsSynced = true, CreatedAt = s.CreatedAt
+                    });
+                }
+
+                // Sync stage materials
+                foreach (var sm in s.Materials)
+                {
+                    var existingMat = await db.StageMaterials
+                        .FirstOrDefaultAsync(x => x.Id == sm.Id);
+                    if (existingMat is null)
+                    {
+                        db.StageMaterials.Add(new LocalStageMaterial
+                        {
+                            Id = sm.Id, StageId = s.Id,
+                            MaterialId = sm.MaterialId, MaterialName = sm.MaterialName,
+                            Unit = sm.Unit, Quantity = sm.Quantity, IsSynced = true
+                        });
+                    }
+                    else
+                    {
+                        existingMat.Quantity = sm.Quantity;
+                        existingMat.IsSynced = true;
+                    }
+                }
+            }
+        }
+
         await db.SaveChangesAsync();
     }
 
@@ -222,10 +280,11 @@ public class SyncService : ISyncService
         {
             return op.EntityType switch
             {
-                "Project" => await SyncProjectAsync(op),
-                "Task"    => await SyncTaskAsync(op),
-                "Stage"   => await SyncStageAsync(op),
-                _         => true
+                "Project"  => await SyncProjectAsync(op),
+                "Task"     => await SyncTaskAsync(op),
+                "Stage"    => await SyncStageAsync(op),
+                "Material" => await SyncMaterialAsync(op),
+                _          => true
             };
         }
         catch { return false; }
@@ -239,7 +298,10 @@ public class SyncService : ISyncService
         if (op.OperationType == SyncOperation.Create)
         {
             var req = JsonSerializer.Deserialize<CreateProjectRequest>(op.Payload);
-            return req is not null && await _api.CreateProjectAsync(req) is not null;
+            if (req is null) return false;
+            // Include the local ID so server creates with the same GUID
+            req = req with { Id = op.EntityId };
+            return await _api.CreateProjectAsync(req) is not null;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateProjectRequest>(op.Payload);
@@ -254,7 +316,9 @@ public class SyncService : ISyncService
         if (op.OperationType == SyncOperation.Create)
         {
             var req = JsonSerializer.Deserialize<CreateTaskRequest>(op.Payload);
-            return req is not null && await _api.CreateTaskAsync(req) is not null;
+            if (req is null) return false;
+            req = req with { Id = op.EntityId };
+            return await _api.CreateTaskAsync(req) is not null;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateTaskRequest>(op.Payload);
@@ -269,11 +333,30 @@ public class SyncService : ISyncService
         if (op.OperationType == SyncOperation.Create)
         {
             var req = JsonSerializer.Deserialize<CreateStageRequest>(op.Payload);
-            return req is not null && await _api.CreateStageAsync(req) is not null;
+            if (req is null) return false;
+            req = req with { Id = op.EntityId };
+            return await _api.CreateStageAsync(req) is not null;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateStageRequest>(op.Payload);
         return updateReq is not null && await _api.UpdateStageAsync(op.EntityId, updateReq) is not null;
+    }
+
+    private async Task<bool> SyncMaterialAsync(PendingOperation op)
+    {
+        if (op.OperationType == SyncOperation.Delete)
+            return await _api.DeleteMaterialAsync(op.EntityId);
+
+        if (op.OperationType == SyncOperation.Create)
+        {
+            var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload);
+            if (req is null) return false;
+            req = req with { Id = op.EntityId };
+            return await _api.CreateMaterialAsync(req) is not null;
+        }
+
+        var updateReq = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload);
+        return updateReq is not null && await _api.UpdateMaterialAsync(op.EntityId, updateReq) is not null;
     }
 
     private async Task RunPeriodicSyncAsync()

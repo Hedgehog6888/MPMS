@@ -7,7 +7,8 @@ public record CreateStageRequest(
     Guid TaskId,
     [Required, MaxLength(200)] string Name,
     string? Description,
-    Guid? AssignedUserId
+    Guid? AssignedUserId,
+    Guid? Id = null
 );
 
 public record UpdateStageRequest(

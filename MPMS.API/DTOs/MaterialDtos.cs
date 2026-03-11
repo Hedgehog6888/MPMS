@@ -5,7 +5,8 @@ namespace MPMS.API.DTOs;
 public record CreateMaterialRequest(
     [Required, MaxLength(200)] string Name,
     [MaxLength(50)] string? Unit,
-    string? Description
+    string? Description,
+    Guid? Id = null
 );
 
 public record UpdateMaterialRequest(

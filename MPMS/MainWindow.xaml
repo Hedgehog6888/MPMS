@@ -216,10 +216,10 @@
                                 <TextBlock Text="{Binding UserRole}"
                                            Foreground="#8CA3C0" FontSize="11"/>
                             </StackPanel>
-                            <!-- Logout -->
-                            <Button Grid.Column="2" Content="⏻"
-                                    ToolTip="Выйти"
-                                    Command="{Binding LogoutCommand}"
+                            <!-- Switch Account -->
+                            <Button Grid.Column="2" Content="⇄"
+                                    ToolTip="{Binding SwitchAccountTooltip}"
+                                    Command="{Binding SwitchAccountCommand}"
                                     Cursor="Hand"
                                     Visibility="{Binding IsSidebarExpanded,
                                         Converter={StaticResource BoolToVis}}">
@@ -228,10 +228,15 @@
                                         <Setter Property="Background"     Value="Transparent"/>
                                         <Setter Property="BorderThickness" Value="0"/>
                                         <Setter Property="Foreground"     Value="#8CA3C0"/>
-                                        <Setter Property="FontSize"       Value="16"/>
+                                        <Setter Property="FontSize"       Value="17"/>
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Foreground" Value="#3D5570"/>
+                                                <Setter Property="Opacity"    Value="0.4"/>
+                                                <Setter Property="Cursor"     Value="Arrow"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -297,12 +302,9 @@
             </Border>
 
             <!-- Content area -->
-            <Border Grid.Row="1" Background="{StaticResource BackgroundBrush}">
-                <!-- Page content will be placed here via ContentPresenter in future -->
-                <TextBlock Text="{Binding CurrentPage, StringFormat='Страница: {0}'}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           FontSize="24" Foreground="{StaticResource TextSecondaryBrush}"/>
-            </Border>
+            <ContentControl Grid.Row="1"
+                            Content="{Binding CurrentPageViewModel}"
+                            Background="{StaticResource BackgroundBrush}"/>
 
             <!-- Status bar -->
             <Border Grid.Row="2" Background="White"
