@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:MPMS.Infrastructure"
+        xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         Title="MPMS — Montage Project Management System"
         Height="768" Width="1280"
         MinHeight="600" MinWidth="900"
@@ -19,45 +20,32 @@
             <Setter Property="Background"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground"     Value="#172B4D"/>
-            <Setter Property="FontSize"       Value="13"/>
+            <Setter Property="FontSize"       Value="14"/>
             <Setter Property="FontWeight"     Value="SemiBold"/>
             <Setter Property="Padding"        Value="0"/>
-            <Setter Property="Height"         Value="40"/>
+            <Setter Property="Height"         Value="46"/>
             <Setter Property="Cursor"         Value="Hand"/>
             <Setter Property="GroupName"      Value="Navigation"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6"
-                                Margin="8,2">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="40"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="Icon" Grid.Column="0"
-                                           Text="{TemplateBinding Tag}"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16" HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"/>
-                                <TextBlock x:Name="Label" Grid.Column="1"
-                                           Text="{TemplateBinding Content}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{TemplateBinding Foreground}"
-                                           FontSize="13"/>
-                            </Grid>
+                        <Border x:Name="Bg"
+                                Background="Transparent"
+                                CornerRadius="6"
+                                Margin="8,2"
+                                Padding="0">
+                            <ContentPresenter VerticalAlignment="Center"
+                                              Margin="0"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg"    Property="Background" Value="#F4F5F7"/>
-                                <Setter TargetName="Icon"  Property="Foreground" Value="#172B4D"/>
-                                <Setter TargetName="Label" Property="Foreground" Value="#172B4D"/>
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                <Setter Property="Foreground" Value="#172B4D"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarNavActiveBrush}"/>
-                                <Setter TargetName="Icon"  Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-                                <Setter TargetName="Label" Property="Foreground" Value="#172B4D"/>
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource SidebarNavActiveBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -127,14 +115,14 @@
                 <Border Grid.Column="0"
                         Background="{StaticResource PrimaryBrush}"
                         CornerRadius="6"
-                        Padding="16,8"
+                        Padding="18,8"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left"
-                        Margin="0,0,24,0">
+                        Margin="8,0,24,0">
                     <TextBlock Text="MPMS"
                                Foreground="White"
                                FontWeight="Bold"
-                               FontSize="14"/>
+                               FontSize="15"/>
                 </Border>
 
                 <!-- Search box (center, фиксированная ширина) -->
@@ -248,7 +236,9 @@
                                 Style="{StaticResource IconButton}"
                                 FontSize="14"
                                 ToolTip="Проверить соединение">
-                            ↻
+                            <Image Width="18" Height="18"
+                                   Stretch="Uniform"
+                                   Source="{svgc:SvgImage Source=/icons/update.svg, AppName=MPMS}"/>
                         </Button>
                     </Border>
 
@@ -266,10 +256,11 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets"
-                                   FontSize="16" Foreground="#6B778C"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
+                        <Image Width="20" Height="20"
+                               Stretch="Uniform"
+                               Source="{svgc:SvgImage Source=/icons/settings.svg, AppName=MPMS}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
                     </Border>
 
                     <!-- Аватар без выделения при ховере -->
@@ -302,54 +293,245 @@
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,0,1,0">
             <StackPanel Margin="0,16,0,0">
-                <!-- Проекты (document stack icon E8A5) -->
-                <RadioButton Content="Проекты" Tag="&#xE8A5;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Projects, Mode=OneWay}"
+                <!-- Проекты -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Projects, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Projects"/>
-                <!-- Задачи (checkbox E73A) -->
-                <RadioButton Content="Задачи" Tag="&#xE73A;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Tasks, Mode=OneWay}"
+                             CommandParameter="Projects">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Проекты"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Задачи -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Tasks, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Tasks"/>
-                <!-- Kanban (grid E8A1) -->
-                <RadioButton Content="Kanban" Tag="&#xE8A1;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Kanban, Mode=OneWay}"
+                             CommandParameter="Tasks">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Задачи"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Kanban -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Kanban, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Kanban"/>
-                <!-- Gantt (chart E9D9) -->
-                <RadioButton Content="Gantt" Tag="&#xE9D9;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
+                             CommandParameter="Kanban">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/kanban.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Kanban"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Gantt -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Gantt"/>
-                <!-- Календарь (calendar E787) -->
-                <RadioButton Content="Календарь" Tag="&#xE787;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Calendar, Mode=OneWay}"
+                             CommandParameter="Gantt">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/gantt.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Gantt"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Календарь -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Calendar, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Calendar"/>
-                <!-- Материалы (package E8BF) -->
-                <RadioButton Content="Материалы" Tag="&#xE8BF;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Materials, Mode=OneWay}"
+                             CommandParameter="Calendar">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Календарь"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Материалы -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Materials, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Materials"/>
-                <!-- Файлы (document E8A5) -->
-                <RadioButton Content="Файлы" Tag="&#xE8A5;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Files, Mode=OneWay}"
+                             CommandParameter="Materials">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Материалы"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Файлы -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Files, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Files"/>
-                <!-- Журнал (history E81C) -->
-                <RadioButton Content="Журнал" Tag="&#xE81C;"
-                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Journal, Mode=OneWay}"
+                             CommandParameter="Files">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Файлы"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Журнал -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Journal, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Journal"/>
+                             CommandParameter="Journal">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/journal.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock Text="Журнал"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
             </StackPanel>
         </Border>
 
