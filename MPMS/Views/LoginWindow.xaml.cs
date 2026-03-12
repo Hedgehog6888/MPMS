@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using MPMS.ViewModels;
@@ -55,11 +57,9 @@ public partial class LoginWindow : Window
             PwdBox.Password          = text;
             _vm.Password             = text;
             PwdBox.Focus();
-            // PasswordBox resets caret to 0 on programmatic set —
-            // SelectAll moves selection so caret ends up at the right edge.
-            Dispatcher.BeginInvoke(
-                System.Windows.Threading.DispatcherPriority.Input,
-                new Action(() => PwdBox.SelectAll()));
+            // Run before next render so user doesn't see caret jump from start to end.
+            Dispatcher.Invoke(() => SetPasswordBoxCaretEnd(PwdBox),
+                System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
 
@@ -78,6 +78,13 @@ public partial class LoginWindow : Window
 
     private void PwdBox_LostFocus(object sender, RoutedEventArgs e)
         => PasswordContainer.BorderBrush = NormalBrush;
+
+    private static void SetPasswordBoxCaretEnd(PasswordBox box)
+    {
+        box.GetType()
+            .GetMethod("Select", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(box, new object[] { box.Password.Length, 0 });
+    }
 
     // ── Window drag ───────────────────────────────────────────────────────────
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
