@@ -43,8 +43,9 @@
                                 <Setter Property="Foreground" Value="#172B4D"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource SidebarNavActiveBrush}"/>
-                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <!-- Активный пункт без синего цвета -->
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                <Setter Property="Foreground" Value="#172B4D"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -113,7 +114,7 @@
 
                 <!-- MPMS rectangle (не кнопка) -->
                 <Border Grid.Column="0"
-                        Background="{StaticResource PrimaryBrush}"
+                        Background="Black"
                         CornerRadius="6"
                         Padding="18,8"
                         VerticalAlignment="Center"
