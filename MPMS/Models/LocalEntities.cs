@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MPMS.Models;
 
@@ -40,6 +41,14 @@ public class LocalProject : LocalEntity
     [MaxLength(100)] public string ManagerName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    [NotMapped] public int TotalTasks { get; set; }
+    [NotMapped] public int CompletedTasks { get; set; }
+    [NotMapped] public int ProgressPercent => TotalTasks == 0 ? 0
+        : (int)Math.Round((double)CompletedTasks / TotalTasks * 100);
+    [NotMapped] public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
+        string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2).Select(w => w[0].ToString().ToUpper()));
 }
 
 public class LocalTask : LocalEntity
@@ -93,6 +102,7 @@ public class LocalStageMaterial : LocalEntity
     [MaxLength(200)] public string MaterialName { get; set; } = string.Empty;
     [MaxLength(50)]  public string? Unit { get; set; }
     public decimal Quantity { get; set; }
+    [NotMapped] public string StageName { get; set; } = string.Empty;
 }
 
 public class LocalFile : LocalEntity
@@ -107,6 +117,66 @@ public class LocalFile : LocalEntity
     public Guid? TaskId { get; set; }
     public Guid? StageId { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>Project member — users assigned to a project (executors).</summary>
+public class LocalProjectMember
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid ProjectId { get; set; }
+    public Guid UserId { get; set; }
+    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+    [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
+
+    [NotMapped]
+    public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
+        : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
+}
+
+/// <summary>Task assignee — supports multiple assignees per task.</summary>
+public class LocalTaskAssignee
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TaskId { get; set; }
+    public Guid UserId { get; set; }
+    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+}
+
+/// <summary>Stage assignee — only users from parent task's assignees.</summary>
+public class LocalStageAssignee
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid StageId { get; set; }
+    public Guid UserId { get; set; }
+    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+}
+
+/// <summary>Message/comment on a task or project.</summary>
+public class LocalMessage
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid? TaskId { get; set; }
+    public Guid? ProjectId { get; set; }
+    public Guid UserId { get; set; }
+    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+    [MaxLength(5)] public string UserInitials { get; set; } = "?";
+    [MaxLength(20)] public string UserColor { get; set; } = "#1B6EC2";
+    [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>
+public class LocalActivityLog
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+    [MaxLength(5)]   public string UserInitials { get; set; } = "?";
+    [MaxLength(20)]  public string UserColor { get; set; } = "#1B6EC2";
+    [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
+    [MaxLength(50)]  public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>Stores the JWT token and current user info between sessions</summary>

@@ -1,0 +1,131 @@
+<UserControl x:Class="MPMS.Views.Overlays.CreateTaskOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="20,16"
+                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+            <Grid>
+                <StackPanel>
+                    <TextBlock x:Name="TitleLabel" Text="Создать задачу"
+                               FontSize="18" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Добавьте задачу для отслеживания выполнения"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="Cancel_Click" Width="28" Height="28">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="14">
+                                <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Form content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20">
+
+                <!-- Task name -->
+                <TextBlock Text="Название задачи *" Style="{StaticResource FormLabel}"/>
+                <TextBox x:Name="NameBox" Style="{StaticResource FormInput}"
+                         Margin="0,0,0,16" Height="38"
+/>
+
+                <!-- Description -->
+                <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
+                <TextBox x:Name="DescriptionBox" Style="{StaticResource FormInput}"
+                         Margin="0,0,0,16" Height="80"
+                         TextWrapping="Wrap" AcceptsReturn="True"
+                         VerticalContentAlignment="Top"
+                         Padding="10,8"
+                         VerticalScrollBarVisibility="Auto"/>
+
+                <!-- Project -->
+                <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
+                <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
+                          Margin="0,0,0,16"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"/>
+
+                <!-- Priority + Status row -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Приоритет *" Style="{StaticResource FormLabel}"/>
+                        <ComboBox x:Name="PriorityCombo" Style="{StaticResource FormCombo}">
+                            <ComboBoxItem Content="Низкий" Tag="Low"/>
+                            <ComboBoxItem Content="Средний" Tag="Medium" IsSelected="True"/>
+                            <ComboBoxItem Content="Высокий" Tag="High"/>
+                            <ComboBoxItem Content="Критический" Tag="Critical"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" x:Name="StatusRow" Visibility="Collapsed">
+                        <TextBlock Text="Статус" Style="{StaticResource FormLabel}"/>
+                        <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}">
+                            <ComboBoxItem Content="Запланирована" Tag="Planned"/>
+                            <ComboBoxItem Content="Выполняется" Tag="InProgress"/>
+                            <ComboBoxItem Content="Приостановлена" Tag="Paused"/>
+                            <ComboBoxItem Content="Завершена" Tag="Completed"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Assignee -->
+                <TextBlock Text="Исполнитель" Style="{StaticResource FormLabel}"/>
+                <ComboBox x:Name="AssigneeCombo" Style="{StaticResource FormCombo}"
+                          Margin="0,0,0,16"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"/>
+
+                <!-- Due date -->
+                <TextBlock Text="Срок выполнения *" Style="{StaticResource FormLabel}"/>
+                <DatePicker x:Name="DueDatePicker" Margin="0,0,0,16"/>
+
+                <!-- Error -->
+                <Border x:Name="ErrorPanel" Background="#FFF3CD"
+                        CornerRadius="6" Padding="12,10"
+                        Margin="0,0,0,4" Visibility="Collapsed"
+                        BorderBrush="#FFC107" BorderThickness="1">
+                    <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#856404"
+                               TextWrapping="Wrap"/>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Padding="16,12"
+                BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button x:Name="SaveButton" Content="Создать задачу"
+                        HorizontalAlignment="Right"
+                        Click="Save_Click" Style="{StaticResource BlackBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -7,7 +7,6 @@ using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views;
 using MPMS.Views.Pages;
-using MPMS.Views.Dialogs;
 
 namespace MPMS;
 
@@ -69,6 +68,7 @@ public partial class App : Application
         services.AddTransient<TasksViewModel>();
         services.AddTransient<MaterialsViewModel>();
         services.AddTransient<TaskDetailViewModel>();
+        services.AddTransient<StagesViewModel>();
 
         // ── Windows ───────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();
@@ -76,12 +76,8 @@ public partial class App : Application
         services.AddSingleton<MainWindow>();
         services.AddSingleton<MainViewModel>();
 
-        // ── Dialogs ───────────────────────────────────────────────────────────
-        services.AddTransient<CreateProjectDialog>();
-        services.AddTransient<CreateTaskDialog>();
-        services.AddTransient(sp => new CreateMaterialDialog());
-        services.AddTransient<CreateStageDialog>();
-        services.AddTransient<TaskDetailWindow>();
+        // ── Dialogs (kept for materials dialog) ──────────────────────────────
+        services.AddTransient(sp => new MPMS.Views.Dialogs.CreateMaterialDialog());
     }
 
     private const string LocalDbConnectionString = "Data Source=mpms_local.db";

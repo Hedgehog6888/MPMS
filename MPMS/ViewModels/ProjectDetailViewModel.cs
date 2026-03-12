@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using MPMS.Controls;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
@@ -13,6 +15,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
+    private readonly IAuthService _auth;
     private Action? _goBackAction;
 
     [ObservableProperty] private LocalProject? _project;
@@ -23,15 +26,22 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<LocalTask> _completedTasks = [];
     [ObservableProperty] private string _activeTab = "Tasks";
     [ObservableProperty] private string _taskViewMode = "List";
+    [ObservableProperty] private ObservableCollection<LocalTaskStage> _allStages = [];
+    [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
+    [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
     [ObservableProperty] private int _totalTasks;
     [ObservableProperty] private int _completedTasksCount;
     [ObservableProperty] private int _inProgressTasksCount;
     [ObservableProperty] private int _overdueTasksCount;
+    [ObservableProperty] private int _projectProgressPercent;
+    [ObservableProperty] private IList<DonutSegment> _taskStatsSegments = [];
+    [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
 
-    public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
+    public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _sync = sync;
+        _auth = auth;
     }
 
     public void SetProject(LocalProject project, Action? goBackAction = null)
@@ -61,6 +71,75 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         CompletedTasksCount = tasks.Count(t => t.Status == TaskStatus.Completed);
         InProgressTasksCount = tasks.Count(t => t.Status == TaskStatus.InProgress);
         OverdueTasksCount = tasks.Count(t => t.IsOverdue);
+        ProjectProgressPercent = TotalTasks == 0 ? 0
+            : (int)Math.Round((double)CompletedTasksCount / TotalTasks * 100);
+
+        int plannedCount = tasks.Count(t => t.Status == TaskStatus.Planned);
+        TaskStatsSegments = new List<DonutSegment>
+        {
+            new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
+            new() { Label = "В процессе",   Value = InProgressTasksCount, Color = Color.FromRgb(0xEA, 0xB3, 0x08) },
+            new() { Label = "Просрочено",   Value = OverdueTasksCount,    Color = Color.FromRgb(0xEF, 0x44, 0x44) },
+            new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
+        };
+
+        // Load all stages for the project
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId))
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync();
+        AllStages = new ObservableCollection<LocalTaskStage>(stages);
+
+        // Load files
+        var files = await db.Files
+            .Where(f => f.ProjectId == Project.Id)
+            .OrderByDescending(f => f.CreatedAt)
+            .ToListAsync();
+        Files = new ObservableCollection<LocalFile>(files);
+
+        // Load project members (executors)
+        var members = await db.ProjectMembers
+            .Where(m => m.ProjectId == Project.Id)
+            .OrderBy(m => m.UserName)
+            .ToListAsync();
+        Members = new ObservableCollection<LocalProjectMember>(members);
+
+        // Load project messages (discussion)
+        var messages = await db.Messages
+            .Where(m => m.ProjectId == Project.Id)
+            .OrderBy(m => m.CreatedAt)
+            .ToListAsync();
+        Messages = new ObservableCollection<LocalMessage>(messages);
+    }
+
+    public async Task UpdateProjectAsync(Guid id, UpdateProjectRequest req)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(id);
+        if (project is null) return;
+
+        var managerName = await db.Users
+            .Where(u => u.Id == req.ManagerId)
+            .Select(u => u.Name).FirstOrDefaultAsync() ?? project.ManagerName;
+
+        project.Name = req.Name;
+        project.Description = req.Description;
+        project.Client = req.Client;
+        project.Address = req.Address;
+        project.StartDate = req.StartDate;
+        project.EndDate = req.EndDate;
+        project.Status = req.Status;
+        project.ManagerId = req.ManagerId;
+        project.ManagerName = managerName;
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
+
+        Project = project;
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -104,6 +183,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Task", localId, SyncOperation.Create,
             req with { Id = localId });
 
+        await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId);
         await LoadAsync();
     }
 
@@ -130,6 +210,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id);
         await LoadAsync();
     }
 
@@ -155,6 +236,58 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (task.IsSynced)
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
+        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
         await LoadAsync();
+    }
+
+    public async Task SendMessageAsync(string text)
+    {
+        if (Project is null || string.IsNullOrWhiteSpace(text)) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var userName = _auth.UserName ?? "—";
+        var initials = string.IsNullOrEmpty(userName) ? "?"
+            : string.Concat(userName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpperInvariant() : ""));
+        if (string.IsNullOrEmpty(initials)) initials = "?";
+
+        var msg = new LocalMessage
+        {
+            ProjectId = Project.Id,
+            UserId = _auth.UserId ?? Guid.Empty,
+            UserName = userName,
+            UserInitials = initials,
+            UserColor = "#1B6EC2",
+            UserRole = _auth.UserRole ?? "—",
+            Text = text.Trim(),
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Messages.Add(msg);
+        await db.SaveChangesAsync();
+
+        await LogActivityAsync(db, $"Сообщение в обсуждении проекта «{Project.Name}»", "Message", msg.Id);
+        Messages.Add(msg);
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        db.ActivityLogs.Add(new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
     }
 }

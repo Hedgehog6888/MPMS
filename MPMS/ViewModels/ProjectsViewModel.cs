@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
+using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.ViewModels;
 
@@ -15,6 +16,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
+    [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все";
 
@@ -56,7 +58,24 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         }
 
         var list = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+
+        // Populate progress stats for each project
+        var allTasks = await db.Tasks.ToListAsync();
+        foreach (var project in list)
+        {
+            var projTasks = allTasks.Where(t => t.ProjectId == project.Id).ToList();
+            project.TotalTasks = projTasks.Count;
+            project.CompletedTasks = projTasks.Count(t => t.Status == TaskStatus.Completed);
+        }
+
         Projects = new ObservableCollection<LocalProject>(list);
+
+        // Load recent activity log (last 10 entries)
+        var activities = await db.ActivityLogs
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(10)
+            .ToListAsync();
+        RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
     }
 
     public async Task SaveNewProjectAsync(CreateProjectRequest req, Guid localId)
@@ -90,6 +109,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Project", localId, SyncOperation.Create,
             req with { Id = localId });
 
+        await LogActivityAsync(db, $"Создан проект «{req.Name}»", "Project", localId);
         await LoadAsync();
     }
 
@@ -119,6 +139,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
+        await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id);
         await LoadAsync();
     }
 
@@ -136,5 +157,29 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Delete, new { });
 
         await LoadAsync();
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText,
+        string entityType, Guid entityId)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        db.ActivityLogs.Add(new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
     }
 }

@@ -1,0 +1,140 @@
+<UserControl x:Class="MPMS.Views.Overlays.CreateProjectOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Header -->
+            <RowDefinition Height="*"/>     <!-- Form content -->
+            <RowDefinition Height="Auto"/>  <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="20,16"
+                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+            <Grid>
+                <StackPanel>
+                    <TextBlock x:Name="TitleLabel" Text="Создать проект"
+                               FontSize="18" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Заполните информацию о монтажном проекте"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="Cancel_Click" Width="28" Height="28">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="14">
+                                <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Form -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20">
+
+                <!-- Name -->
+                <TextBlock Text="Название проекта *" Style="{StaticResource FormLabel}"/>
+                <TextBox x:Name="NameBox" Style="{StaticResource FormInput}"
+                         Margin="0,0,0,16" Height="38"
+/>
+
+                <!-- Description -->
+                <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
+                <TextBox x:Name="DescriptionBox" Style="{StaticResource FormInput}"
+                         Margin="0,0,0,16" Height="80"
+                         TextWrapping="Wrap" AcceptsReturn="True"
+                         VerticalContentAlignment="Top"
+                         Padding="10,8"
+                         VerticalScrollBarVisibility="Auto"/>
+
+                <!-- Client + Address row -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Заказчик *" Style="{StaticResource FormLabel}"/>
+                        <TextBox x:Name="ClientBox" Style="{StaticResource FormInput}"
+                                 Height="38"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Адрес объекта" Style="{StaticResource FormLabel}"/>
+                        <TextBox x:Name="AddressBox" Style="{StaticResource FormInput}"
+                                 Height="38"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Start + End dates row -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Дата начала *" Style="{StaticResource FormLabel}"/>
+                        <DatePicker x:Name="StartDatePicker"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Дата завершения *" Style="{StaticResource FormLabel}"/>
+                        <DatePicker x:Name="EndDatePicker"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Status (edit mode only) -->
+                <StackPanel x:Name="StatusRow" Margin="0,0,0,16" Visibility="Collapsed">
+                    <TextBlock Text="Статус" Style="{StaticResource FormLabel}"/>
+                    <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}">
+                        <ComboBoxItem Content="Планирование" Tag="Planning"/>
+                        <ComboBoxItem Content="В работе" Tag="InProgress"/>
+                        <ComboBoxItem Content="Завершён" Tag="Completed"/>
+                        <ComboBoxItem Content="Отменён" Tag="Cancelled"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Manager -->
+                <TextBlock Text="Ответственный менеджер" Style="{StaticResource FormLabel}"/>
+                <ComboBox x:Name="ManagerCombo" Style="{StaticResource FormCombo}"
+                          Margin="0,0,0,16"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"/>
+
+                <!-- Error message -->
+                <Border x:Name="ErrorPanel" Background="#FFF3CD"
+                        CornerRadius="6" Padding="12,10"
+                        Margin="0,0,0,12" Visibility="Collapsed"
+                        BorderBrush="#FFC107" BorderThickness="1">
+                    <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#856404"
+                               TextWrapping="Wrap"/>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Padding="16,12"
+                BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button x:Name="SaveButton" Content="Создать проект"
+                        HorizontalAlignment="Right"
+                        Click="Save_Click" Style="{StaticResource BlackBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

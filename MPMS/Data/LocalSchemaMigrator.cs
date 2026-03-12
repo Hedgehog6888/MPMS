@@ -15,6 +15,11 @@ public static class LocalSchemaMigrator
 
         CreateRecentAccountsTable(conn);
         AddUsernameColumnToAuthSessions(conn);
+        CreateActivityLogsTable(conn);
+        CreateProjectMembersTable(conn);
+        CreateTaskAssigneesTable(conn);
+        CreateStageAssigneesTable(conn);
+        CreateMessagesTable(conn);
     }
 
     private static void CreateRecentAccountsTable(SqliteConnection conn)
@@ -47,6 +52,77 @@ public static class LocalSchemaMigrator
         // Kept on logout so the same account can re-login offline (1 = active, 0 = logged out)
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"IsActiveSession\" INTEGER NOT NULL DEFAULT 1;");
+    }
+
+    private static void CreateActivityLogsTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "ActivityLogs" (
+                "Id"          TEXT    NOT NULL CONSTRAINT "PK_ActivityLogs" PRIMARY KEY,
+                "UserName"    TEXT    NOT NULL DEFAULT '',
+                "UserInitials" TEXT   NOT NULL DEFAULT '?',
+                "UserColor"   TEXT    NOT NULL DEFAULT '#1B6EC2',
+                "ActionText"  TEXT    NOT NULL DEFAULT '',
+                "EntityType"  TEXT    NOT NULL DEFAULT '',
+                "EntityId"    TEXT    NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+                "CreatedAt"   TEXT    NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
+    }
+
+    private static void CreateProjectMembersTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "ProjectMembers" (
+                "Id"        TEXT NOT NULL CONSTRAINT "PK_ProjectMembers" PRIMARY KEY,
+                "ProjectId" TEXT NOT NULL,
+                "UserId"    TEXT NOT NULL,
+                "UserName"  TEXT NOT NULL DEFAULT '',
+                "UserRole"  TEXT NOT NULL DEFAULT ''
+            );
+            """);
+    }
+
+    private static void CreateTaskAssigneesTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "TaskAssignees" (
+                "Id"      TEXT NOT NULL CONSTRAINT "PK_TaskAssignees" PRIMARY KEY,
+                "TaskId"  TEXT NOT NULL,
+                "UserId"  TEXT NOT NULL,
+                "UserName" TEXT NOT NULL DEFAULT ''
+            );
+            """);
+    }
+
+    private static void CreateStageAssigneesTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "StageAssignees" (
+                "Id"      TEXT NOT NULL CONSTRAINT "PK_StageAssignees" PRIMARY KEY,
+                "StageId" TEXT NOT NULL,
+                "UserId"  TEXT NOT NULL,
+                "UserName" TEXT NOT NULL DEFAULT ''
+            );
+            """);
+    }
+
+    private static void CreateMessagesTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "Messages" (
+                "Id"          TEXT NOT NULL CONSTRAINT "PK_Messages" PRIMARY KEY,
+                "TaskId"      TEXT,
+                "ProjectId"   TEXT,
+                "UserId"      TEXT NOT NULL,
+                "UserName"    TEXT NOT NULL DEFAULT '',
+                "UserInitials" TEXT NOT NULL DEFAULT '?',
+                "UserColor"   TEXT NOT NULL DEFAULT '#1B6EC2',
+                "UserRole"    TEXT NOT NULL DEFAULT '',
+                "Text"        TEXT NOT NULL DEFAULT '',
+                "CreatedAt"   TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

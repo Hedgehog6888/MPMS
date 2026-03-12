@@ -264,6 +264,31 @@
                                VerticalAlignment="Center"/>
                     </Border>
 
+                    <!-- Switch profile button -->
+                    <Border Width="36" Height="36" Cursor="Hand" Margin="0,0,4,0"
+                            ToolTip="{Binding SwitchAccountTooltip}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="CornerRadius" Value="4"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Button Command="{Binding SwitchAccountCommand}"
+                                Style="{StaticResource IconButton}">
+                            <TextBlock Text="&#xE748;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       Foreground="#6B778C"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Button>
+                    </Border>
+
                     <!-- Аватар без выделения при ховере -->
                     <Border Width="36" Height="36" Cursor="Hand"
                             ToolTip="{Binding UserName}">
@@ -294,11 +319,12 @@
                 BorderBrush="{StaticResource BorderBrush}"
                 BorderThickness="0,0,1,0">
             <StackPanel Margin="0,16,0,0">
-                <!-- Проекты -->
+                <!-- Проекты (скрыт для Работника) -->
                 <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Projects, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Projects">
+                             CommandParameter="Projects"
+                             Visibility="{Binding IsProjectsVisible, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
                         <Image Width="20" Height="20"
                                Margin="12,0,8,0"
@@ -349,6 +375,39 @@
                             </Image.Style>
                         </Image>
                         <TextBlock Text="Задачи"
+                                   FontSize="14"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <!-- Этапы -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Stages, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Stages">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE762;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16" Width="20" Height="20"
+                                   Margin="12,0,8,0"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#97A0AF"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Foreground" Value="#172B4D"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Foreground" Value="#172B4D"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="Этапы"
                                    FontSize="14"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
@@ -540,5 +599,33 @@
         <ContentControl Grid.Row="1" Grid.Column="1"
                         Content="{Binding CurrentPageViewModel}"
                         Background="{StaticResource BackgroundBrush}"/>
+
+        <!-- ═══════ OVERLAY / DRAWER LAYER ════════════════════════════ -->
+        <Grid x:Name="OverlayLayer"
+              Grid.Row="0" Grid.Column="0"
+              Grid.RowSpan="2" Grid.ColumnSpan="2"
+              Panel.ZIndex="200"
+              Visibility="Collapsed">
+
+            <!-- Backdrop -->
+            <Border x:Name="OverlayBackdrop"
+                    Background="#80000000"
+                    Opacity="0"
+                    MouseLeftButtonDown="Backdrop_Click"/>
+
+            <!-- Drawer panel slides from right -->
+            <Border x:Name="DrawerPanel"
+                    Background="White"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Stretch"
+                    Width="520"
+                    Margin="520,0,0,0">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="40"
+                                      Opacity="0.18" Direction="180" ShadowDepth="0"/>
+                </Border.Effect>
+                <ContentPresenter x:Name="DrawerContentPresenter"/>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

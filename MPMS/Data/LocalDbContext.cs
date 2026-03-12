@@ -17,6 +17,11 @@ public class LocalDbContext : DbContext
     public DbSet<LocalMaterial>      Materials        => Set<LocalMaterial>();
     public DbSet<LocalStageMaterial> StageMaterials   => Set<LocalStageMaterial>();
     public DbSet<LocalFile>          Files            => Set<LocalFile>();
+    public DbSet<LocalActivityLog>   ActivityLogs     => Set<LocalActivityLog>();
+    public DbSet<LocalProjectMember> ProjectMembers    => Set<LocalProjectMember>();
+    public DbSet<LocalTaskAssignee>  TaskAssignees     => Set<LocalTaskAssignee>();
+    public DbSet<LocalStageAssignee> StageAssignees    => Set<LocalStageAssignee>();
+    public DbSet<LocalMessage>       Messages          => Set<LocalMessage>();
     public DbSet<PendingOperation>   PendingOperations => Set<PendingOperation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

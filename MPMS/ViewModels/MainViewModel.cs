@@ -22,15 +22,16 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private ViewModelBase? _currentPageViewModel;
 
-    public string SwitchAccountTooltip => IsOnline
-        ? "Сменить аккаунт"
-        : "Смена аккаунта доступна только в онлайн-режиме";
+    public string SwitchAccountTooltip => "Сменить аккаунт";
 
     public string UserName => _auth.UserName ?? "—";
     public string UserRole => _auth.UserRole ?? "—";
     public string UserInitials => _auth.UserName is { Length: > 0 } name
         ? string.Concat(name.Split(' ').Take(2).Select(w => w[0]))
         : "?";
+
+    public bool IsProjectsVisible =>
+        !string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
     public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp)
     {
@@ -49,7 +50,7 @@ public partial class MainViewModel : ViewModelBase
         _onlineTimer.Tick += OnOnlineTimerTick;
         _onlineTimer.Start();
 
-        Navigate("Projects");
+        Navigate(IsProjectsVisible ? "Projects" : "Tasks");
     }
 
     private void OnOnlineTimerTick(object? sender, EventArgs e)
@@ -58,8 +59,6 @@ public partial class MainViewModel : ViewModelBase
         if (IsOnline == online) return;
 
         IsOnline = online;
-        OnPropertyChanged(nameof(SwitchAccountTooltip));
-        SwitchAccountCommand.NotifyCanExecuteChanged();
         StatusMessage = online ? string.Empty : "Офлайн режим — данные не синхронизируются";
     }
 
@@ -76,6 +75,7 @@ public partial class MainViewModel : ViewModelBase
             "Tasks" or "Kanban" or "Gantt" or "Calendar" or "Files" or "Journal"
                 => _sp.GetRequiredService<TasksViewModel>(),
             "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
+            "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
             _           => null
         };
 
@@ -89,6 +89,7 @@ public partial class MainViewModel : ViewModelBase
     private void Create()
     {
         var window = Application.Current.MainWindow;
+        
         var dialog = _sp.GetRequiredService<CreateProjectDialog>();
         dialog.Owner = window;
         if (dialog.ShowDialog() == true && dialog.Result is not null)
@@ -126,8 +127,6 @@ public partial class MainViewModel : ViewModelBase
         if (IsOnline != online)
         {
             IsOnline = online;
-            OnPropertyChanged(nameof(SwitchAccountTooltip));
-            SwitchAccountCommand.NotifyCanExecuteChanged();
         }
         if (online)
             await _sync.SyncAsync();
@@ -141,18 +140,16 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(UserName));
         OnPropertyChanged(nameof(UserRole));
         OnPropertyChanged(nameof(UserInitials));
-        OnPropertyChanged(nameof(SwitchAccountTooltip));
-        SwitchAccountCommand.NotifyCanExecuteChanged();
-        Navigate("Projects");
+        OnPropertyChanged(nameof(IsProjectsVisible));
+        // Workers go to Tasks page by default
+        Navigate(IsProjectsVisible ? "Projects" : "Tasks");
     }
 
-    [RelayCommand(CanExecute = nameof(CanSwitchAccount))]
+    [RelayCommand]
     private void SwitchAccount()
     {
         _auth.Logout();
         App.NavigateToLogin();
     }
-
-    private bool CanSwitchAccount() => IsOnline;
 }
 

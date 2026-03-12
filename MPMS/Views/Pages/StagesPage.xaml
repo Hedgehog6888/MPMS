@@ -1,0 +1,244 @@
+<UserControl x:Class="MPMS.Views.Pages.StagesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="StageRow" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Cursor"     Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F4F5F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- PAGE HEADER -->
+        <Border Grid.Row="0" Background="White" Padding="24,16"
+                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Все этапы задач проектов"
+                               FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
+                </StackPanel>
+                <Button x:Name="CreateStageBtn" Grid.Column="1"
+                        Click="CreateStage_Click"
+                        Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#111111" CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="+ " FontSize="16" Foreground="White" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Добавить этап" Foreground="White"
+                                               VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- BODY -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,24">
+
+                <!-- Search + Filter bar -->
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        Padding="16,10" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Search -->
+                        <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
+                                Padding="10,0" Height="36" Margin="0,0,12,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE721;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14" VerticalAlignment="Center"
+                                           Margin="0,0,8,0" Foreground="#6B778C"/>
+                                <Grid Grid.Column="1">
+                                    <TextBlock Text="Поиск по этапу, задаче или проекту..."
+                                               Foreground="#6B778C" FontSize="12"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalAlignment="Center" FontSize="13"
+                                             Foreground="#172B4D"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Status filter -->
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding StatusFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160"/>
+                    </Grid>
+                </Border>
+
+                <!-- Stages list -->
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        ClipToBounds="True">
+                    <StackPanel>
+
+                        <!-- Column headers -->
+                        <Border Background="#F8F9FA" Padding="16,10"
+                                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Название этапа"
+                                           FontSize="11" FontWeight="SemiBold" Foreground="#6B778C"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Действия"
+                                           FontSize="11" FontWeight="SemiBold" Foreground="#6B778C"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Rows (grouped by task) -->
+                        <ItemsControl ItemsSource="{Binding StageGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <!-- Task header -->
+                                        <Border Background="#F4F5F7" Padding="16,8"
+                                                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+                                            <TextBlock FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#6B778C">
+                                                <Run Text="{Binding TaskName, Mode=OneWay}"/>
+                                                <Run Text=" — " Foreground="#C1C7D0"/>
+                                                <Run Text="{Binding ProjectName, Mode=OneWay}" Foreground="#6B778C"/>
+                                            </TextBlock>
+                                        </Border>
+                                        <!-- Stages in task -->
+                                        <ItemsControl ItemsSource="{Binding Stages}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource StageRow}"
+                                                            Padding="0" Cursor="Hand"
+                                                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1"
+                                                            MouseLeftButtonDown="Stage_Click">
+                                                        <Grid Margin="16,12">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                                <TextBlock Text="{Binding Stage.Name}"
+                                                                           FontSize="13" FontWeight="SemiBold"
+                                                                           Foreground="#172B4D" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock Text="{Binding Stage.AssignedUserName}"
+                                                                           FontSize="11" Foreground="#6B778C"
+                                                                           Margin="0,2,0,0"
+                                                                           Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                                            </StackPanel>
+
+                                                            <!-- Status action buttons -->
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center">
+                                                                <Button x:Name="StartBtn" Content="▶ Начать" Tag="{Binding}"
+                                                                        Click="StartStage_Click" Margin="0,0,4,0"
+                                                                        Style="{StaticResource IconButton}" FontSize="12"
+                                                                        Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Planned}"/>
+                                                                <Button x:Name="CompleteBtn" Content="✓ Завершить" Tag="{Binding}"
+                                                                        Click="CompleteStage_Click" Margin="0,0,4,0"
+                                                                        Style="{StaticResource IconButton}" FontSize="12"
+                                                                        Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}"/>
+                                                                <Border Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Completed}"
+                                                                        CornerRadius="4" Padding="8,4" Background="#E8F5E9">
+                                                                    <TextBlock Text="✓ Завершено" FontSize="11" Foreground="#1B5E20" FontWeight="SemiBold"/>
+                                                                </Border>
+                                                            </StackPanel>
+
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                                <Button Content="✏" ToolTip="Редактировать" Tag="{Binding}"
+                                                                        Click="EditStage_Click" Margin="0,0,4,0"
+                                                                        Style="{StaticResource IconButton}"/>
+                                                                <Button Content="🗑" ToolTip="Удалить" Tag="{Binding}"
+                                                                        Click="DeleteStage_Click"
+                                                                        Style="{StaticResource DangerIconButton}"/>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty state -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                    Visibility="{Binding StageGroups.Count, Converter={StaticResource IntToVisInv}}">
+                            <TextBlock Text="&#xE762;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="48" HorizontalAlignment="Center"
+                                       Foreground="#DFE1E6"/>
+                            <TextBlock Text="Этапы не найдены" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>
+                            <TextBlock Text="Создайте первый этап или измените фильтры"
+                                       FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Loading indicator -->
+        <Border Grid.Row="1" Background="#80FFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Загрузка..." FontSize="16" Foreground="#6B778C"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

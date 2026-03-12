@@ -194,9 +194,8 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Bg" Property="BorderBrush"
-                                            Value="{StaticResource PrimaryBrush}"/>
-                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#172B4D"/>
+                                    <Setter Property="Foreground" Value="#172B4D"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -226,13 +225,541 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Bg" Property="Background"
-                                            Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#111111"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="Bg" Property="Background"
                                             Value="{StaticResource BackgroundBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ══ Form shared styles (used in all overlay panels) ══════════ -->
+
+            <!-- Label -->
+            <Style x:Key="FormLabel" TargetType="TextBlock">
+                <Setter Property="FontSize"   Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="#172B4D"/>
+                <Setter Property="Margin"     Value="0,0,0,6"/>
+            </Style>
+
+            <!-- Single-line / multi-line TextBox -->
+            <Style x:Key="FormInput" TargetType="TextBox">
+                <Setter Property="Background"      Value="White"/>
+                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="BorderBrush"     Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="10,9"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="CaretBrush"      Value="#172B4D"/>
+                <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="Bg"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    MinHeight="38">
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              Margin="{TemplateBinding Padding}"
+                                              VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalAlignment="Stretch"
+                                              Focusable="False"
+                                              Foreground="{TemplateBinding Foreground}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#1B6EC2"/>
+                                    <Setter TargetName="Bg" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#1B6EC2" BlurRadius="6"
+                                                              Opacity="0.2" ShadowDepth="0"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#B0BEC5"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ComboBox with rounded corners, custom dropdown popup -->
+            <Style x:Key="FormCombo" TargetType="ComboBox">
+                <Setter Property="Background"      Value="White"/>
+                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="BorderBrush"     Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="Height"          Value="38"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="ItemContainerStyle">
+                    <Setter.Value>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="FontSize"   Value="13"/>
+                            <Setter Property="Foreground" Value="#172B4D"/>
+                            <Setter Property="Padding"    Value="10,8"/>
+                            <Setter Property="Cursor"     Value="Hand"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ComboBoxItem">
+                                        <Border x:Name="Bg" Background="Transparent"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsHighlighted" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
+                                                <Setter Property="Foreground" Value="#1B6EC2"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ComboBox">
+                            <Grid>
+                                <Border x:Name="MainBorder"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="30"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ContentPresenter x:Name="contentPresenter"
+                                                          Grid.Column="0"
+                                                          Margin="10,0,0,0"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Left"
+                                                          Content="{TemplateBinding SelectionBoxItem}"
+                                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                                          IsHitTestVisible="False"/>
+                                        <Path x:Name="Arrow" Grid.Column="1"
+                                              Data="M 0 0 L 5 4 L 10 0"
+                                              Stroke="#6B778C" StrokeThickness="1.5"
+                                              StrokeLineJoin="Round"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              IsHitTestVisible="False"/>
+                                    </Grid>
+                                </Border>
+                                <!-- Transparent toggle over the whole control -->
+                                <ToggleButton Focusable="False"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                                  RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <!-- Dropdown popup -->
+                                <Popup x:Name="PART_Popup"
+                                       AllowsTransparency="True"
+                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       Placement="Bottom"
+                                       StaysOpen="False"
+                                       Focusable="False">
+                                    <Border MinWidth="{Binding ActualWidth,
+                                                RelativeSource={RelativeSource TemplatedParent}}"
+                                            Background="White"
+                                            BorderBrush="#DFE1E6" BorderThickness="1"
+                                            CornerRadius="6" MaxHeight="220"
+                                            Margin="0,2,0,0">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="10" Opacity="0.12"
+                                                              ShadowDepth="2" Direction="270"/>
+                                        </Border.Effect>
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsDropDownOpen" Value="True">
+                                    <Setter TargetName="MainBorder" Property="BorderBrush" Value="#1B6EC2"/>
+                                    <Setter TargetName="Arrow" Property="Stroke" Value="#1B6EC2"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="MainBorder" Property="BorderBrush" Value="#B0BEC5"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.6"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Outline (cancel) button -->
+            <Style x:Key="OutlineBtn" TargetType="Button">
+                <Setter Property="Background"      Value="White"/>
+                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="BorderBrush"     Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding"         Value="16,9"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="FontWeight"      Value="SemiBold"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Black (save) button -->
+            <Style x:Key="BlackBtn" TargetType="Button">
+                <Setter Property="Background"      Value="#111111"/>
+                <Setter Property="Foreground"      Value="White"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding"         Value="20,9"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="FontWeight"      Value="SemiBold"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#333333"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.6"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── Styled ContextMenu for status changes ──────────── -->
+            <Style x:Key="StatusMenu" TargetType="ContextMenu">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" Opacity="0.12"
+                                                      ShadowDepth="2" Direction="270"/>
+                                </Border.Effect>
+                                <StackPanel IsItemsHost="True"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="StatusMenuItem" TargetType="MenuItem">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Foreground" Value="#172B4D"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="5"
+                                    Padding="12,8" Margin="0,1">
+                                <ContentPresenter ContentSource="Header"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ── Styled ScrollBar ──────────────────────────────────── -->
+            <Style x:Key="ModernScrollBarThumb" TargetType="Thumb">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border x:Name="ThumbBg" CornerRadius="3" Background="#C1C7D0" Margin="2"/>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ThumbBg" Property="Background" Value="#97A0AF"/>
+                                </Trigger>
+                                <Trigger Property="IsDragging" Value="True">
+                                    <Setter TargetName="ThumbBg" Property="Background" Value="#6B778C"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="ScrollBar">
+                <Grid Width="8">
+                    <Border Background="Transparent" CornerRadius="4"/>
+                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource ModernScrollBarThumb}"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+
+            <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="ScrollBar">
+                <Grid Height="8">
+                    <Border Background="Transparent" CornerRadius="4"/>
+                    <Track x:Name="PART_Track">
+                        <Track.DecreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False"/>
+                        </Track.DecreaseRepeatButton>
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource ModernScrollBarThumb}"/>
+                        </Track.Thumb>
+                        <Track.IncreaseRepeatButton>
+                            <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False"/>
+                        </Track.IncreaseRepeatButton>
+                    </Track>
+                </Grid>
+            </ControlTemplate>
+
+            <Style TargetType="ScrollBar">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Vertical">
+                        <Setter Property="Width"    Value="8"/>
+                        <Setter Property="MinWidth" Value="8"/>
+                        <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}"/>
+                    </Trigger>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Height"    Value="8"/>
+                        <Setter Property="MinHeight" Value="8"/>
+                        <Setter Property="Template"  Value="{StaticResource HorizontalScrollBarTemplate}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- ── Modern DatePicker ─────────────────────────────────── -->
+            <Style x:Key="ModernCalendarDayButton" TargetType="CalendarDayButton">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Width"    Value="30"/>
+                <Setter Property="Height"   Value="28"/>
+                <Setter Property="Margin"   Value="1"/>
+                <Setter Property="Cursor"   Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CalendarDayButton">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="4">
+                                <TextBlock x:Name="Content"
+                                           Text="{TemplateBinding Content}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="12" Foreground="#172B4D"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsToday" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#1B6EC2"/>
+                                    <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#172B4D"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="White"/>
+                                    <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                                <Trigger Property="IsInactive" Value="True">
+                                    <Setter TargetName="Content" Property="Foreground" Value="#C1C7D0"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernCalendarButton" TargetType="CalendarButton">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Width"    Value="54"/>
+                <Setter Property="Height"   Value="30"/>
+                <Setter Property="Cursor"   Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="CalendarButton">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="4">
+                                <TextBlock x:Name="Content"
+                                           Text="{TemplateBinding Content}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="12" Foreground="#172B4D"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernCalendar" TargetType="Calendar">
+                <Setter Property="CalendarDayButtonStyle" Value="{StaticResource ModernCalendarDayButton}"/>
+                <Setter Property="CalendarButtonStyle"    Value="{StaticResource ModernCalendarButton}"/>
+                <Setter Property="Background"      Value="White"/>
+                <Setter Property="BorderBrush"     Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Calendar">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8" Padding="8">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" Opacity="0.12"
+                                                      ShadowDepth="2" Direction="270"/>
+                                </Border.Effect>
+                                <CalendarItem x:Name="PART_CalendarItem"
+                                              Background="{TemplateBinding Background}"
+                                              BorderBrush="{TemplateBinding BorderBrush}"
+                                              BorderThickness="0"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="DatePicker">
+                <Setter Property="Background"      Value="White"/>
+                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="BorderBrush"     Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize"        Value="13"/>
+                <Setter Property="Height"          Value="38"/>
+                <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="CalendarStyle"   Value="{StaticResource ModernCalendar}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePicker">
+                            <Border x:Name="Bg"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DatePickerTextBox x:Name="PART_TextBox"
+                                                       Grid.Column="0"
+                                                       Background="Transparent"
+                                                       BorderThickness="0"
+                                                       Foreground="{TemplateBinding Foreground}"
+                                                       FontSize="{TemplateBinding FontSize}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="10,0,0,0"
+                                                       Focusable="True"/>
+                                    <Button x:Name="PART_Button"
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            Focusable="False"
+                                            Width="28" Height="28">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="BtnBg" Background="Transparent" CornerRadius="4">
+                                                    <TextBlock Text="&#xE787;"
+                                                               FontFamily="Segoe MDL2 Assets"
+                                                               FontSize="14" Foreground="#6B778C"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="BtnBg" Property="Background" Value="#F4F5F7"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                    <Popup x:Name="PART_Popup"
+                                           AllowsTransparency="True"
+                                           Placement="Bottom"
+                                           StaysOpen="False">
+                                        <Calendar x:Name="PART_Calendar"
+                                                  Style="{StaticResource ModernCalendar}"/>
+                                    </Popup>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#B0BEC5"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -255,6 +782,11 @@
             <infra:StageStatusToStringConverter x:Key="StageStatusToString"/>
             <infra:DateOnlyToStringConverter   x:Key="DateOnlyToString"/>
             <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
+            <infra:IntGreaterThanZeroConverter x:Key="IntToVis"/>
+            <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
+            <infra:StageCountToStringConverter x:Key="StageCountToString"/>
+            <infra:DateTimeToRelativeConverter x:Key="DateTimeToRelative"/>
+            <infra:EqualityToVisibilityConverter x:Key="EqualityToVis"/>
 
             <!-- ── DataTemplates: ViewModel → View (UserControl) ─── -->
             <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
@@ -268,6 +800,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:MaterialsViewModel}">
                 <pages:MaterialsPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:StagesViewModel}">
+                <pages:StagesPage/>
             </DataTemplate>
 
         </ResourceDictionary>

@@ -15,6 +15,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     private readonly ISyncService _sync;
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
+    [ObservableProperty] private ObservableCollection<ProjectTaskGroup> _taskGroups = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _plannedTasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _inProgressTasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _pausedTasks = [];
@@ -26,6 +27,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private Guid? _projectFilter;
     [ObservableProperty] private string _projectFilterName = "Все проекты";
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
+    [ObservableProperty] private ObservableCollection<ProjectFilterOption> _projectFilterOptions = [];
 
     public IReadOnlyList<string> StatusOptions { get; } =
         ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена"];
@@ -50,6 +52,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var projectList = await db.Projects.OrderBy(p => p.Name).ToListAsync();
         Projects = new ObservableCollection<LocalProject>(projectList);
+        var filterOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
+        filterOpts.AddRange(projectList.Select(p => new ProjectFilterOption(p.Id, p.Name)));
+        ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(filterOpts);
 
         var query = db.Tasks.AsQueryable();
 
@@ -88,6 +93,13 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var list = await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
         Tasks = new ObservableCollection<LocalTask>(list);
 
+        var groups = list
+            .GroupBy(t => new { t.ProjectId, t.ProjectName })
+            .OrderBy(g => g.Key.ProjectName)
+            .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—", g.ToList()))
+            .ToList();
+        TaskGroups = new ObservableCollection<ProjectTaskGroup>(groups);
+
         PlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
         InProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress));
         PausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused));
@@ -98,6 +110,17 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         ProjectFilter = project?.Id;
         ProjectFilterName = project?.Name ?? "Все проекты";
+    }
+
+    public async Task<LocalProject?> GetProjectForTaskAsync(Guid projectId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(projectId);
+        if (project is null) return null;
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        project.TotalTasks = tasks.Count;
+        project.CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed);
+        return project;
     }
 
     public async Task SaveNewTaskAsync(CreateTaskRequest req, Guid localId)
@@ -163,6 +186,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id);
         await LoadAsync();
     }
 
@@ -188,6 +212,56 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         if (task.IsSynced)
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
+        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
         await LoadAsync();
+    }
+
+    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        db.ActivityLogs.Add(new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+}
+
+public class ProjectTaskGroup
+{
+    public Guid ProjectId { get; }
+    public string ProjectName { get; }
+    public List<LocalTask> Tasks { get; }
+
+    public ProjectTaskGroup(Guid projectId, string projectName, List<LocalTask> tasks)
+    {
+        ProjectId = projectId;
+        ProjectName = projectName;
+        Tasks = tasks;
+    }
+}
+
+public class ProjectFilterOption
+{
+    public Guid? Id { get; }
+    public string Name { get; }
+
+    public ProjectFilterOption(Guid? id, string name)
+    {
+        Id = id;
+        Name = name;
     }
 }

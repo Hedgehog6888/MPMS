@@ -3,186 +3,360 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:MPMS.ViewModels">
 
-    <Grid Background="{StaticResource BackgroundBrush}">
+    <UserControl.Resources>
+        <!-- Row hover style -->
+        <Style x:Key="ProjectRow" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Slim ProgressBar template -->
+        <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
+            <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                <Border x:Name="PART_Track" CornerRadius="3">
+                    <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Left" CornerRadius="3"/>
+                </Border>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Column header text style -->
+        <Style x:Key="ColHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Cell text style -->
+        <Style x:Key="CellText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <!-- Secondary cell text -->
+        <Style x:Key="CellTextSec" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        
+    </UserControl.Resources>
+
+    <Grid Background="#F4F5F7">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/> <!-- Header bar -->
+            <RowDefinition Height="*"/>    <!-- Content -->
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
         <Border Grid.Row="0" Background="White" Padding="24,16"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Проекты" FontSize="22" FontWeight="Bold"
-                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBlock Text="{Binding Projects.Count, StringFormat='Всего: {0}'}"
-                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,2,0,0"/>
+                    <TextBlock Text="Проекты" FontSize="24" FontWeight="Bold"
+                               Foreground="#172B4D"/>
+                    <TextBlock Text="Управление монтажными проектами"
+                               FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
                 </StackPanel>
-                <Button Grid.Column="1" Content="＋  Создать проект"
-                        Style="{StaticResource PrimaryButton}"
-                        Click="CreateProject_Click"
-                        Height="36" FontSize="13"/>
+                <!-- Create button -->
+                <Button x:Name="CreateProjectBtn" Grid.Column="1" Click="CreateProject_Click"
+                        Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#111111" CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="+ " FontSize="16" Foreground="White"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="Создать проект" Foreground="White"
+                                               VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
             </Grid>
         </Border>
 
-        <!-- Filters -->
-        <Border Grid.Row="1" Background="White" Padding="24,10"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal">
-                <!-- Search -->
-                <Border Background="{StaticResource BackgroundBrush}" CornerRadius="6"
-                        Padding="10,0" Width="280" Height="34" Margin="0,0,12,0">
+        <!-- ── SCROLLABLE BODY ─────────────────────────────────────── -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,24">
+
+                <!-- ACTIVITY FEED ──────────────────────────────────── -->
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        Padding="20,16" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Последние действия"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                   Margin="0,0,0,2"/>
+                        <TextBlock Text="Недавняя активность в системе"
+                                   FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+
+                        <!-- Activity list (max 5 items, scrollable) -->
+                        <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding RecentActivities}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Avatar -->
+                                        <Border Width="30" Height="30" CornerRadius="15"
+                                                Margin="0,0,10,0" VerticalAlignment="Top"
+                                                Background="#111111">
+                                            <TextBlock Text="{Binding UserInitials}"
+                                                       FontSize="10" FontWeight="Bold" Foreground="White"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Name + action -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                    MinWidth="0">
+                                            <TextBlock FontSize="13" Foreground="#172B4D"
+                                                       TextWrapping="NoWrap"
+                                                       TextTrimming="CharacterEllipsis">
+                                                <Run Text="{Binding UserName}" FontWeight="SemiBold"/>
+                                                <Run Text=" "/>
+                                                <Run Text="{Binding ActionText}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Time -->
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
+                                                   FontSize="11" Foreground="#6B778C"
+                                                   VerticalAlignment="Center" Margin="12,0,0,0"
+                                                   MinWidth="50"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Empty activities state -->
+                        <TextBlock Text="Действия появятся здесь после первых изменений"
+                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center"
+                                   Margin="0,8,0,0"
+                                   Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- SEARCH + FILTER BAR ─────────────────────────────── -->
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        Padding="16,10" Margin="0,0,0,1">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center"
-                                   Margin="0,0,6,0" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBox Grid.Column="1"
-                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 BorderThickness="0" Background="Transparent"
-                                 VerticalAlignment="Center" FontSize="13"/>
-                    </Grid>
-                </Border>
-                <!-- Status filter -->
-                <TextBlock Text="Статус:" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"
-                           Margin="0,0,8,0"/>
-                <ComboBox ItemsSource="{Binding StatusOptions}"
-                          SelectedItem="{Binding StatusFilter}"
-                          Width="150" Height="34" FontSize="13"
-                          VerticalContentAlignment="Center"/>
-            </StackPanel>
-        </Border>
 
-        <!-- Projects List -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Projects}" Margin="24,16">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="White" CornerRadius="8" Margin="0,0,0,8"
-                                Padding="16,12"
-                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
+                        <!-- Search box -->
+                        <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
+                                Padding="10,0" Height="36" Margin="0,0,12,0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="110"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-
-                                <!-- Name + Client -->
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" FontSize="15"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                               Cursor="Hand"
-                                               MouseLeftButtonDown="ProjectName_Click"/>
-                                    <TextBlock Text="{Binding Client}" FontSize="12"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               Margin="0,2,0,0"/>
-                                </StackPanel>
-
-                                <!-- Manager -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="Менеджер" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}"/>
-                                    <TextBlock Text="{Binding ManagerName}" FontSize="13"
-                                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-
-                                <!-- Start Date -->
-                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                    <TextBlock Text="Начало" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}"/>
-                                    <TextBlock Text="{Binding StartDate, Converter={StaticResource DateOnlyToString}}"
-                                               FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-
-                                <!-- End Date -->
-                                <StackPanel Grid.Column="3" VerticalAlignment="Center">
-                                    <TextBlock Text="Срок" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}"/>
-                                    <TextBlock Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"
-                                               FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-
-                                <!-- Status Badge -->
-                                <Border Grid.Column="4" VerticalAlignment="Center"
-                                        CornerRadius="12" Padding="10,4"
-                                        Background="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"
-                                        HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding Status, Converter={StaticResource ProjectStatusToString}}"
-                                               Foreground="White" FontSize="11" FontWeight="SemiBold"/>
-                                </Border>
-
-                                <!-- Actions -->
-                                <StackPanel Grid.Column="5" Orientation="Horizontal"
-                                            VerticalAlignment="Center" Margin="8,0,0,0">
-                                    <Button Content="✏" ToolTip="Редактировать"
-                                            Tag="{Binding}"
-                                            Click="EditProject_Click"
-                                            Margin="0,0,4,0">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Setter Property="BorderThickness" Value="0"/>
-                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                                <Setter Property="FontSize" Value="16"/>
-                                                <Setter Property="Cursor" Value="Hand"/>
-                                                <Setter Property="Padding" Value="4"/>
+                                <TextBlock Grid.Column="0" Text="&#xE721;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Foreground="#6B778C"/>
+                                <Grid Grid.Column="1">
+                                    <TextBlock Text="Поиск по названию или заказчику..."
+                                               Foreground="#6B778C" FontSize="12"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
                                                 <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-                                                    </Trigger>
+                                                    <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Button.Style>
-                                    </Button>
-                                    <Button Content="🗑" ToolTip="Удалить"
-                                            Tag="{Binding}"
-                                            Click="DeleteProject_Click">
-                                        <Button.Style>
-                                            <Style TargetType="Button">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Setter Property="BorderThickness" Value="0"/>
-                                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
-                                                <Setter Property="FontSize" Value="16"/>
-                                                <Setter Property="Cursor" Value="Hand"/>
-                                                <Setter Property="Padding" Value="4"/>
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                    </Button>
-                                </StackPanel>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalAlignment="Center" FontSize="13"
+                                             Foreground="#172B4D"/>
+                                </Grid>
                             </Grid>
                         </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+
+                        <!-- Status filter -->
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding StatusFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160"/>
+                    </Grid>
+                </Border>
+
+                <!-- PROJECTS TABLE ──────────────────────────────────── -->
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        ClipToBounds="True">
+                    <StackPanel>
+
+                        <!-- Column headers -->
+                        <Border Background="#F8F9FA" Padding="16,10"
+                                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>          <!-- Name -->
+                                    <ColumnDefinition Width="140"/>        <!-- Client -->
+                                    <ColumnDefinition Width="100"/>        <!-- Start -->
+                                    <ColumnDefinition Width="110"/>        <!-- End -->
+                                    <ColumnDefinition Width="110"/>        <!-- Status -->
+                                    <ColumnDefinition Width="150"/>        <!-- Progress -->
+                                    <ColumnDefinition Width="150"/>        <!-- Manager -->
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Название проекта"   Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="1" Text="Заказчик"           Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="2" Text="Дата начала"        Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="3" Text="Дата завершения"    Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="4" Text="Статус"             Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="5" Text="Прогресс"           Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="6" Text="Менеджер"           Style="{StaticResource ColHeader}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Project rows -->
+                        <ItemsControl ItemsSource="{Binding Projects}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource ProjectRow}"
+                                            Padding="0"
+                                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1"
+                                            MouseLeftButtonDown="ProjectRow_Click">
+                                        <Grid Margin="16,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="140"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="150"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Project name -->
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"
+                                                       Cursor="Hand"
+                                                       Margin="0,0,12,0"
+                                                       MouseLeftButtonDown="ProjectName_Click"/>
+
+                                            <!-- Client -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Client}"
+                                                       Style="{StaticResource CellText}"
+                                                       Margin="0,0,8,0"/>
+
+                                            <!-- Start date -->
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding StartDate, Converter={StaticResource DateOnlyToString}}"
+                                                       Style="{StaticResource CellTextSec}"/>
+
+                                            <!-- End date -->
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"
+                                                       Style="{StaticResource CellTextSec}"/>
+
+                                            <!-- Status badge -->
+                                            <Border Grid.Column="4"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    CornerRadius="4" Padding="8,4"
+                                                    Background="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}">
+                                                <TextBlock Text="{Binding Status, Converter={StaticResource ProjectStatusToString}}"
+                                                           Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                                            </Border>
+
+                                            <!-- Progress -->
+                                            <StackPanel Grid.Column="5" VerticalAlignment="Center"
+                                                        Margin="0,0,12,0">
+                                                <Grid Margin="0,0,0,4">
+                                                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
+                                                                 Maximum="100" Height="6"
+                                                                 Background="#E9ECEF"
+                                                                 Foreground="#111111"
+                                                                 Template="{StaticResource SlimPB}"/>
+                                                </Grid>
+                                                <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
+                                                           FontSize="11" Foreground="#6B778C"/>
+                                            </StackPanel>
+
+                                            <!-- Manager -->
+                                            <StackPanel Grid.Column="6" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <Border Width="28" Height="28" CornerRadius="14"
+                                                        Background="#E8E9EC" Margin="0,0,8,0">
+                                                    <TextBlock Text="{Binding ManagerInitials}"
+                                                               FontSize="10" FontWeight="Bold"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="#172B4D"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding ManagerName}"
+                                                           FontSize="12" Foreground="#172B4D"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxWidth="110"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty state -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                    Visibility="{Binding Projects.Count, Converter={StaticResource IntToVisInv}}">
+                            <TextBlock Text="📂" FontSize="48" HorizontalAlignment="Center"
+                                       Foreground="#DFE1E6"/>
+                            <TextBlock Text="Проекты не найдены" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>
+                            <TextBlock Text="Создайте первый проект или измените фильтры"
+                                       FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

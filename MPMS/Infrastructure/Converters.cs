@@ -47,6 +47,19 @@ public class EqualityToBoolConverter : IValueConverter
         => Binding.DoNothing;
 }
 
+/// <summary>Converts to Visibility: Visible when value equals parameter (string comparison).</summary>
+public class EqualityToVisibilityConverter : IValueConverter
+{
+    public static readonly EqualityToVisibilityConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.OrdinalIgnoreCase)
+            ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Converts a hex color string (e.g. "#C0392B") to a SolidColorBrush.</summary>
 public class HexToBrushConverter : IValueConverter
 {
@@ -221,12 +234,95 @@ public class StageStatusToStringConverter : IValueConverter
 /// <summary>Converts DateOnly? to a display string for WPF binding.</summary>
 public class DateOnlyToStringConverter : IValueConverter
 {
+    private static readonly System.Globalization.CultureInfo RuCulture =
+        System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+
     public static readonly DateOnlyToStringConverter Instance = new();
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is DateOnly d) return d.ToString("dd.MM.yyyy");
-        return "—";
+        if (value is not DateOnly d) return "—";
+        string fmt = parameter as string ?? "short";
+        return fmt switch
+        {
+            "long"    => d.ToString("d MMMM yyyy", RuCulture),
+            "dayname" => d.DayOfWeek switch
+            {
+                DayOfWeek.Monday    => "понедельник",
+                DayOfWeek.Tuesday   => "вторник",
+                DayOfWeek.Wednesday => "среда",
+                DayOfWeek.Thursday  => "четверг",
+                DayOfWeek.Friday    => "пятница",
+                DayOfWeek.Saturday  => "суббота",
+                DayOfWeek.Sunday    => "воскресенье",
+                _                   => d.DayOfWeek.ToString()
+            },
+            _ => d.ToString("dd.MM.yyyy")
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts int to bool: true if value > 0.</summary>
+public class IntGreaterThanZeroConverter : IValueConverter
+{
+    public static readonly IntGreaterThanZeroConverter Instance = new();
+    public bool Invert { get; init; }
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool result = value is int i && i > 0;
+        if (Invert) result = !result;
+        if (targetType == typeof(Visibility))
+            return result ? Visibility.Visible : Visibility.Collapsed;
+        return result;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts int (stage count) to localized string like "3 этапа".</summary>
+public class StageCountToStringConverter : IValueConverter
+{
+    public static readonly StageCountToStringConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not int count) return "0 этапов";
+        return count switch
+        {
+            0 => "0 этапов",
+            1 => "1 этап",
+            2 or 3 or 4 => $"{count} этапа",
+            _ => $"{count} этапов"
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts a DateTime to a relative or formatted time string.</summary>
+public class DateTimeToRelativeConverter : IValueConverter
+{
+    public static readonly DateTimeToRelativeConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not DateTime dt) return "";
+        var local = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+        var diff = DateTime.Now - local;
+
+        if (diff.TotalMinutes < 1) return "только что";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} мин. назад";
+        if (diff.TotalHours < 24 && local.Date == DateTime.Today) return local.ToString("HH:mm");
+        var ru = new System.Globalization.CultureInfo("ru-RU");
+        if (local.Date == DateTime.Today) return local.ToString("HH:mm");
+        if (diff.TotalDays < 7) return local.ToString("d MMM, HH:mm", ru);
+        return local.ToString("dd MMM yyyy, HH:mm", ru);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
