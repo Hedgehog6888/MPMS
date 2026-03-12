@@ -1,8 +1,10 @@
+using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Services;
+using MPMS.Views.Dialogs;
 
 namespace MPMS.ViewModels;
 
@@ -71,7 +73,8 @@ public partial class MainViewModel : ViewModelBase
         ViewModelBase? vm = page switch
         {
             "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
-            "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
+            "Tasks" or "Kanban" or "Gantt" or "Calendar" or "Files" or "Journal"
+                => _sp.GetRequiredService<TasksViewModel>(),
             "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
             _           => null
         };
@@ -80,6 +83,20 @@ public partial class MainViewModel : ViewModelBase
             _ = loadable.LoadAsync();
 
         CurrentPageViewModel = vm;
+    }
+
+    [RelayCommand]
+    private void Create()
+    {
+        var window = Application.Current.MainWindow;
+        var dialog = _sp.GetRequiredService<CreateProjectDialog>();
+        dialog.Owner = window;
+        if (dialog.ShowDialog() == true && dialog.Result is not null)
+        {
+            var projectsVm = _sp.GetRequiredService<ProjectsViewModel>();
+            _ = projectsVm.SaveNewProjectAsync(dialog.Result, Guid.NewGuid());
+            Navigate("Projects");
+        }
     }
 
     public void NavigateToProject(Models.LocalProject project)

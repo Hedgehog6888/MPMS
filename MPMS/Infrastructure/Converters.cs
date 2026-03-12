@@ -35,6 +35,18 @@ public class BoolToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Converts value to bool: true when value equals parameter (string comparison).</summary>
+public class EqualityToBoolConverter : IValueConverter
+{
+    public static readonly EqualityToBoolConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
 /// <summary>Converts a hex color string (e.g. "#C0392B") to a SolidColorBrush.</summary>
 public class HexToBrushConverter : IValueConverter
 {

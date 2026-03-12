@@ -14,6 +14,7 @@
             <Color x:Key="SidebarColor">#0F2038</Color>
             <Color x:Key="SidebarHoverColor">#1A3A5C</Color>
             <Color x:Key="SidebarActiveColor">#1B6EC2</Color>
+            <Color x:Key="SidebarNavActiveColor">#E3F2FD</Color>
             <Color x:Key="TopBarColor">#FFFFFF</Color>
             <Color x:Key="BackgroundColor">#F4F5F7</Color>
             <Color x:Key="CardColor">#FFFFFF</Color>
@@ -29,6 +30,7 @@
             <SolidColorBrush x:Key="SidebarBrush"          Color="{StaticResource SidebarColor}"/>
             <SolidColorBrush x:Key="SidebarHoverBrush"     Color="{StaticResource SidebarHoverColor}"/>
             <SolidColorBrush x:Key="SidebarActiveBrush"    Color="{StaticResource SidebarActiveColor}"/>
+            <SolidColorBrush x:Key="SidebarNavActiveBrush" Color="{StaticResource SidebarNavActiveColor}"/>
             <SolidColorBrush x:Key="BackgroundBrush"       Color="{StaticResource BackgroundColor}"/>
             <SolidColorBrush x:Key="CardBrush"             Color="{StaticResource CardColor}"/>
             <SolidColorBrush x:Key="TextPrimaryBrush"      Color="{StaticResource TextPrimaryColor}"/>
@@ -133,17 +135,29 @@
                 <Setter Property="FontSize"        Value="16"/>
                 <Setter Property="Cursor"          Value="Hand"/>
                 <Setter Property="Padding"         Value="4,2"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Focusable"       Value="False"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border x:Name="BtnRoot"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="4"
+                                    Padding="{TemplateBinding Padding}"
+                                    Cursor="Hand">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
+                                <!-- Hover -->
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
-                                    <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                    <Setter TargetName="BtnRoot" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                </Trigger>
+                                <!-- Нажатие: такое же выделение, как при ховере -->
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                    <Setter TargetName="BtnRoot" Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

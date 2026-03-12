@@ -12,15 +12,17 @@
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
         <infra:BoolToVisibilityConverter x:Key="StringToVis" IsStringMode="True"/>
+        <infra:EqualityToBoolConverter x:Key="EqualityToBool"/>
 
-        <!-- Nav button style -->
+        <!-- Nav button style (light theme, white sidebar) -->
         <Style x:Key="NavButton" TargetType="RadioButton">
             <Setter Property="Background"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground"     Value="#8CA3C0"/>
+            <Setter Property="Foreground"     Value="#172B4D"/>
             <Setter Property="FontSize"       Value="13"/>
+            <Setter Property="FontWeight"     Value="SemiBold"/>
             <Setter Property="Padding"        Value="0"/>
-            <Setter Property="Height"         Value="44"/>
+            <Setter Property="Height"         Value="40"/>
             <Setter Property="Cursor"         Value="Hand"/>
             <Setter Property="GroupName"      Value="Navigation"/>
             <Setter Property="Template">
@@ -30,12 +32,13 @@
                                 Margin="8,2">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="40"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock x:Name="Icon" Grid.Column="0"
                                            Text="{TemplateBinding Tag}"
-                                           FontSize="18" HorizontalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16" HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Foreground="{TemplateBinding Foreground}"/>
                                 <TextBlock x:Name="Label" Grid.Column="1"
@@ -47,14 +50,44 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarHoverBrush}"/>
-                                <Setter TargetName="Icon"  Property="Foreground" Value="White"/>
-                                <Setter TargetName="Label" Property="Foreground" Value="White"/>
+                                <Setter TargetName="Bg"    Property="Background" Value="#F4F5F7"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="#172B4D"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="#172B4D"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarActiveBrush}"/>
-                                <Setter TargetName="Icon"  Property="Foreground" Value="White"/>
-                                <Setter TargetName="Label" Property="Foreground" Value="White"/>
+                                <Setter TargetName="Bg"    Property="Background" Value="{StaticResource SidebarNavActiveBrush}"/>
+                                <Setter TargetName="Icon"  Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter TargetName="Label" Property="Foreground" Value="#172B4D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Black create button for top bar -->
+        <Style x:Key="TopCreateButton" TargetType="Button">
+            <Setter Property="Background"      Value="Black"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="12,4"/>
+            <Setter Property="FontSize"        Value="12"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#222222"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -65,119 +98,107 @@
     </Window.Resources>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <!-- Top bar spanning full width -->
+            <RowDefinition Height="56"/>
+            <!-- Main content -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <!-- Sidebar -->
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="220"/>
             <!-- Content -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ═══════════════════════════════════════════════════════════════
-             SIDEBAR
-        ════════════════════════════════════════════════════════════════ -->
-        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Width" Value="220"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
-                            <Setter Property="Width" Value="56"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
+        <!-- MAIN NAVIGATION BAR (общая верхняя панель) -->
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Background="White"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid Margin="0,0,16,0">
+                <Grid.ColumnDefinitions>
+                    <!-- Левая зона совпадает по ширине с сайдбаром -->
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="56"/>  <!-- Logo row -->
-                    <RowDefinition Height="*"/>   <!-- Nav items -->
-                    <RowDefinition Height="Auto"/><!-- Bottom: user + sync -->
-                </Grid.RowDefinitions>
+                <!-- MPMS rectangle (не кнопка) -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource PrimaryBrush}"
+                        CornerRadius="6"
+                        Padding="16,8"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Margin="0,0,24,0">
+                    <TextBlock Text="MPMS"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="14"/>
+                </Border>
 
-                <!-- Logo -->
-                <Border Grid.Row="0" Background="#0A1929"
-                        Padding="0,0,0,0">
+                <!-- Search box (center, фиксированная ширина) -->
+                <Border Grid.Column="1" Background="#F4F5F7"
+                        CornerRadius="6" Padding="10,0"
+                        Width="520"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center" Height="36">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Toggle button -->
-                        <Button Grid.Column="0" Click="ToggleSidebar_Click"
-                                Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" ToolTip="Свернуть/развернуть меню">
-                            <TextBlock Text="☰" Foreground="White" FontSize="18"/>
-                        </Button>
-                        <!-- App name -->
-                        <TextBlock Grid.Column="1" Text="MPMS"
-                                   Foreground="White" FontWeight="Bold" FontSize="16"
-                                   VerticalAlignment="Center"
-                                   Visibility="{Binding IsSidebarExpanded,
-                                       Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Grid.Column="0" Text="&#xE721;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" VerticalAlignment="Center"
+                                   Margin="0,0,8,0"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <Grid Grid.Column="1">
+                            <TextBlock Text="Поиск проектов, задач..."
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="13" VerticalAlignment="Center"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0" Background="Transparent"
+                                     VerticalAlignment="Center" FontSize="13"
+                                     Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </Grid>
                     </Grid>
                 </Border>
 
-                <!-- Navigation items -->
-                <StackPanel Grid.Row="1" Margin="0,12,0,0">
-                    <RadioButton Content="Проекты"  Tag="📁" IsChecked="True"
-                                 Style="{StaticResource NavButton}"
-                                 Command="{Binding NavigateCommand}"
-                                 CommandParameter="Projects"/>
-                    <RadioButton Content="Задачи"   Tag="✓"
-                                 Style="{StaticResource NavButton}"
-                                 Command="{Binding NavigateCommand}"
-                                 CommandParameter="Tasks"/>
-                    <RadioButton Content="Календарь" Tag="📅"
-                                 Style="{StaticResource NavButton}"
-                                 Command="{Binding NavigateCommand}"
-                                 CommandParameter="Calendar"/>
-                    <RadioButton Content="Материалы" Tag="🔧"
-                                 Style="{StaticResource NavButton}"
-                                 Command="{Binding NavigateCommand}"
-                                 CommandParameter="Materials"/>
-                    <RadioButton Content="Файлы"    Tag="📎"
-                                 Style="{StaticResource NavButton}"
-                                 Command="{Binding NavigateCommand}"
-                                 CommandParameter="Files"/>
-                </StackPanel>
+                <!-- Right: Create + icons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <!-- Create button (чёрная) -->
+                    <Button Command="{Binding CreateCommand}"
+                            Style="{StaticResource TopCreateButton}"
+                            Margin="0,0,16,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" Foreground="White"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock Text="Создать" Foreground="White"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-                <!-- Bottom: user + status -->
-                <StackPanel Grid.Row="2" Margin="0,0,0,12">
-                    <!-- Online/Offline indicator -->
-                    <Border Margin="8,4" CornerRadius="6" Padding="8,4">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#1A5C3A"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                        <Setter Property="Background" Value="#7A2020"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Margin="0,0,6,0">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="#00C875"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                    <Setter Property="Fill" Value="#FF6B6B"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                                <TextBlock Foreground="White" FontSize="11"
-                                           VerticalAlignment="Center"
-                                           Visibility="{Binding IsSidebarExpanded,
-                                               Converter={StaticResource BoolToVis}}">
+                    <!-- Кружок онлайн/офлайн (не кнопка) -->
+                    <Border Width="36" Height="36"
+                            Margin="0,0,4,0">
+                        <Border.ToolTip>
+                            <ToolTip>
+                                <TextBlock>
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Text" Value="Онлайн"/>
@@ -189,176 +210,152 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                            </StackPanel>
-                            <Border Grid.Column="2" Margin="4,0,0,0" Cursor="Hand">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
+                            </ToolTip>
+                        </Border.ToolTip>
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Ellipse Width="10" Height="10">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#00C875"/>
                                         <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsOnline}" Value="False"/>
-                                                    <Condition Binding="{Binding IsSidebarExpanded}" Value="True"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </MultiDataTrigger>
+                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                <Setter Property="Fill" Value="#FF6B6B"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Border.Style>
-                                <Button Content="↻" ToolTip="Проверить соединение"
-                                        Command="{Binding RefreshConnectionCommand}"
-                                        Padding="4,0"
-                                        Focusable="False"
-                                        Background="Transparent" BorderThickness="0"
-                                        Foreground="White" FontSize="12"
-                                        VerticalAlignment="Center"
-                                        Cursor="Hand">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                Padding="{TemplateBinding Padding}"
-                                                                BorderThickness="0"
-                                                                Cursor="Hand">
-                                                            <ContentPresenter HorizontalAlignment="Center"
-                                                                              VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <Trigger Property="IsEnabled" Value="False">
-                                                    <Setter Property="Cursor" Value="Hand"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </Border>
+                                </Ellipse.Style>
+                            </Ellipse>
                         </Grid>
                     </Border>
 
-                    <!-- User block -->
-                    <Border Margin="8,4" CornerRadius="6" Padding="6"
-                            Background="{StaticResource SidebarHoverBrush}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <!-- Avatar circle -->
-                            <Border Grid.Column="0" Width="32" Height="32"
-                                    CornerRadius="16"
-                                    Background="{StaticResource PrimaryBrush}">
+                    <!-- Кнопка обновления (доступна всегда) -->
+                    <Border Width="36" Height="36" Margin="0,0,4,0"
+                            Cursor="Hand">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="CornerRadius" Value="4"/>
+                                <Style.Triggers>
+                                    <!-- Подсветка сохраняется и при нажатии,
+                                         т.к. ховер висит на всём бордере -->
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Button Command="{Binding RefreshConnectionCommand}"
+                                Style="{StaticResource IconButton}"
+                                FontSize="14"
+                                ToolTip="Проверить соединение">
+                            ↻
+                        </Button>
+                    </Border>
+
+                    <!-- Иконка настроек -->
+                    <Border Width="36" Height="36" Cursor="Hand" Margin="0,0,4,0"
+                            ToolTip="Настройки">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="CornerRadius" Value="4"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16" Foreground="#6B778C"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Аватар без выделения при ховере -->
+                    <Border Width="36" Height="36" Cursor="Hand"
+                            ToolTip="{Binding UserName}">
+                        <Border Background="Transparent"
+                                Width="36" Height="36"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                            <Border Background="{StaticResource PrimaryBrush}"
+                                    Width="28" Height="28" CornerRadius="14"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
                                 <TextBlock Text="{Binding UserInitials}"
-                                           Foreground="White" FontSize="12"
+                                           Foreground="White" FontSize="11"
                                            FontWeight="Bold"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
                             </Border>
-                            <!-- Name + role -->
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"
-                                        Visibility="{Binding IsSidebarExpanded,
-                                            Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="{Binding UserName}"
-                                           Foreground="White" FontSize="12"
-                                           FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding UserRole}"
-                                           Foreground="#8CA3C0" FontSize="11"/>
-                            </StackPanel>
-                            <!-- Switch Account -->
-                            <Button Grid.Column="2" Content="⇄"
-                                    ToolTip="{Binding SwitchAccountTooltip}"
-                                    Command="{Binding SwitchAccountCommand}"
-                                    Cursor="Hand"
-                                    Visibility="{Binding IsSidebarExpanded,
-                                        Converter={StaticResource BoolToVis}}">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background"     Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Foreground"     Value="#8CA3C0"/>
-                                        <Setter Property="FontSize"       Value="17"/>
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Foreground" Value="White"/>
-                                            </Trigger>
-                                            <Trigger Property="IsEnabled" Value="False">
-                                                <Setter Property="Foreground" Value="#3D5570"/>
-                                                <Setter Property="Opacity"    Value="0.4"/>
-                                                <Setter Property="Cursor"     Value="Arrow"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </Grid>
+                        </Border>
                     </Border>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- ═══════════════════════════════════════════════════════════════
-             MAIN AREA
+             SITE NAVIGATION BAR (боковая панель)
         ════════════════════════════════════════════════════════════════ -->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="56"/>  <!-- Top bar -->
-                <RowDefinition Height="*"/>   <!-- Content -->
-            </Grid.RowDefinitions>
+        <Border Grid.Row="1" Grid.Column="0" Background="White"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,16,0,0">
+                <!-- Проекты (document stack icon E8A5) -->
+                <RadioButton Content="Проекты" Tag="&#xE8A5;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Projects, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Projects"/>
+                <!-- Задачи (checkbox E73A) -->
+                <RadioButton Content="Задачи" Tag="&#xE73A;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Tasks, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Tasks"/>
+                <!-- Kanban (grid E8A1) -->
+                <RadioButton Content="Kanban" Tag="&#xE8A1;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Kanban, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Kanban"/>
+                <!-- Gantt (chart E9D9) -->
+                <RadioButton Content="Gantt" Tag="&#xE9D9;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Gantt"/>
+                <!-- Календарь (calendar E787) -->
+                <RadioButton Content="Календарь" Tag="&#xE787;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Calendar, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Calendar"/>
+                <!-- Материалы (package E8BF) -->
+                <RadioButton Content="Материалы" Tag="&#xE8BF;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Materials, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Materials"/>
+                <!-- Файлы (document E8A5) -->
+                <RadioButton Content="Файлы" Tag="&#xE8A5;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Files, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Files"/>
+                <!-- Журнал (history E81C) -->
+                <RadioButton Content="Журнал" Tag="&#xE81C;"
+                             IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Journal, Mode=OneWay}"
+                             Style="{StaticResource NavButton}"
+                             Command="{Binding NavigateCommand}"
+                             CommandParameter="Journal"/>
+            </StackPanel>
+        </Border>
 
-            <!-- Top bar -->
-            <Border Grid.Row="0" Background="White"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="0,0,0,1">
-                <Grid Margin="16,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Search box -->
-                    <Border Grid.Column="0" Background="{StaticResource BackgroundBrush}"
-                            CornerRadius="6" Padding="10,0"
-                            MaxWidth="400" HorizontalAlignment="Left"
-                            VerticalAlignment="Center" Height="36">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="🔍" FontSize="14"
-                                       VerticalAlignment="Center" Margin="0,0,8,0"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBox Grid.Column="1"
-                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0" Background="Transparent"
-                                     VerticalAlignment="Center" FontSize="13"
-                                     Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Right actions -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <!-- Sync button -->
-                        <Button Content="↻  Синхронизировать"
-                                Command="{Binding SyncNowCommand}"
-                                Style="{StaticResource PrimaryButton}"
-                                Height="32" FontSize="12" Padding="12,4"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Content area -->
-            <ContentControl Grid.Row="1"
-                            Content="{Binding CurrentPageViewModel}"
-                            Background="{StaticResource BackgroundBrush}"/>
-        </Grid>
+        <!-- Основной контент -->
+        <ContentControl Grid.Row="1" Grid.Column="1"
+                        Content="{Binding CurrentPageViewModel}"
+                        Background="{StaticResource BackgroundBrush}"/>
     </Grid>
 </Window>
