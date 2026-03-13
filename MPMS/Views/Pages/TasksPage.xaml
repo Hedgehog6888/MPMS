@@ -137,36 +137,70 @@
                 <Border Background="White" CornerRadius="8"
                         BorderBrush="#DFE1E6" BorderThickness="1"
                         Padding="16,10" Margin="0,0,0,16">
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Search (animated expand on focus) -->
-                        <Border x:Name="SearchBorder" Background="#F4F5F7" CornerRadius="6"
-                                Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Search box (максимальной ширины, как в проектах) -->
+                        <Border Grid.Column="0"
+                                Background="#F4F5F7" CornerRadius="6"
+                                Padding="10,0" Height="36" Margin="0,0,10,0"
+                                VerticalAlignment="Center" HorizontalAlignment="Stretch">
                             <Grid>
-                                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="14" Foreground="#6B778C"
-                                           HorizontalAlignment="Left" VerticalAlignment="Center"
-                                           Margin="10,0,0,0"/>
-                                <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         BorderThickness="0" Background="Transparent"
-                                         VerticalAlignment="Center" FontSize="13"
-                                         Foreground="#172B4D" Margin="36,0,10,0"
-                                         GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus"/>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="&#xE721;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Foreground="#6B778C"/>
+                                <Grid Grid.Column="1">
+                                    <TextBlock Text="Поиск по названию задачи или описанию..."
+                                               Foreground="#6B778C" FontSize="12"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Background="Transparent" BorderThickness="0"
+                                             VerticalAlignment="Center" FontSize="13"
+                                             Foreground="#172B4D"/>
+                                </Grid>
                             </Grid>
                         </Border>
-                        <ComboBox ItemsSource="{Binding StatusOptions}"
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding StatusOptions}"
                                   SelectedItem="{Binding StatusFilter}"
                                   Style="{StaticResource FormCombo}"
                                   Width="160" Margin="0,0,10,0"/>
-                        <ComboBox ItemsSource="{Binding PriorityOptions}"
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding PriorityOptions}"
                                   SelectedItem="{Binding PriorityFilter}"
                                   Style="{StaticResource FormCombo}"
                                   Width="160" Margin="0,0,10,0"/>
-                        <ComboBox ItemsSource="{Binding ProjectFilterOptions}"
+                        <ComboBox Grid.Column="3"
+                                  ItemsSource="{Binding ProjectFilterOptions}"
                                   DisplayMemberPath="Name" SelectedValuePath="Id"
                                   SelectedValue="{Binding ProjectFilter}"
                                   Style="{StaticResource FormCombo}"
                                   Width="180"/>
-                    </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- LIST VIEW panel -->

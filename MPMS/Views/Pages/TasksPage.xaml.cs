@@ -2,7 +2,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Models;
 using MPMS.Services;
@@ -96,20 +95,6 @@ public partial class TasksPage : UserControl
             }
         }
         MainWindow.Instance?.ShowDrawer(leftPanel, overlay, 900);
-    }
-
-    private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-    {
-        var anim = new DoubleAnimation(36, 220, TimeSpan.FromMilliseconds(250))
-        { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-        SearchBorder.BeginAnimation(FrameworkElement.WidthProperty, anim);
-    }
-
-    private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        var anim = new DoubleAnimation(220, 36, TimeSpan.FromMilliseconds(200))
-        { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn } };
-        SearchBorder.BeginAnimation(FrameworkElement.WidthProperty, anim);
     }
 
     private void KanbanCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
