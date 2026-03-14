@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using MPMS.ViewModels;
 
@@ -97,4 +98,64 @@ public partial class MainWindow : Window
 
     private void Backdrop_Click(object sender, MouseButtonEventArgs e)
         => HideDrawer();
+
+    private void UserPanel_Click(object sender, RoutedEventArgs e)
+    {
+        if (UserContextMenu is not null)
+        {
+            UserContextMenu.PlacementTarget = UserPanelBorder;
+            UserContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            UserContextMenu.IsOpen = true;
+        }
+    }
+
+    private void SyncStatus_Click(object sender, RoutedEventArgs e)
+    {
+        if (SyncPopupMenu is not null)
+        {
+            SyncPopupMenu.PlacementTarget = SyncStatusBorder;
+            SyncPopupMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            SyncPopupMenu.IsOpen = true;
+        }
+    }
+
+    private static readonly SolidColorBrush _searchFocusBrush = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
+    private static readonly SolidColorBrush _searchNormalBrush = new(Colors.Transparent);
+    private static readonly SolidColorBrush _searchFocusBg = new(Color.FromRgb(0xFF, 0xFF, 0xFF));
+    private static readonly SolidColorBrush _searchNormalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+
+    private void GlobalSearch_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (SearchBorder is null) return;
+        SearchBorder.BorderBrush = _searchFocusBrush;
+        SearchBorder.Background = _searchFocusBg;
+        SearchBorder.Effect = new System.Windows.Media.Effects.DropShadowEffect
+        {
+            Color = Color.FromRgb(0x1B, 0x6E, 0xC2),
+            BlurRadius = 6, Opacity = 0.18, ShadowDepth = 0
+        };
+    }
+
+    private void GlobalSearch_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (SearchBorder is null) return;
+        SearchBorder.BorderBrush = _searchNormalBrush;
+        SearchBorder.Background = _searchNormalBg;
+        SearchBorder.Effect = null;
+    }
+
+    private void GlobalSearch_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && DataContext is MainViewModel vm)
+        {
+            // Navigate to the page most relevant to the search query
+            if (!string.IsNullOrWhiteSpace(vm.SearchText))
+                vm.NavigateCommand.Execute("Projects");
+        }
+        else if (e.Key == Key.Escape)
+        {
+            if (DataContext is MainViewModel vm2) vm2.SearchText = string.Empty;
+            Keyboard.ClearFocus();
+        }
+    }
 }

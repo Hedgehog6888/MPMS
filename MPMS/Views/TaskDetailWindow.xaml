@@ -218,27 +218,30 @@
         </Border>
 
         <!-- ── Row 4: Inner tabs (Stages, Materials, Files) ── -->
-        <Border Grid.Row="4" Background="White"
+        <Border Grid.Row="4" Background="White" Padding="8,6"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,1">
-            <StackPanel Orientation="Horizontal" Margin="8,0">
-                <RadioButton IsChecked="True" Tag="Stages" Click="InnerTab_Click"
-                             Style="{StaticResource InnerTabButton}">
-                    <TextBlock VerticalAlignment="Center">
-                        <Run Text="Этапы "/>
-                        <Run Text="("/>
-                        <Run Text="{Binding Stages.Count}"/>
-                        <Run Text=")"/>
-                    </TextBlock>
-                </RadioButton>
-                <RadioButton Tag="Materials" Click="InnerTab_Click"
-                             Style="{StaticResource InnerTabButton}">
-                    <TextBlock Text="Материалы" VerticalAlignment="Center"/>
-                </RadioButton>
-                <RadioButton Tag="Files" Click="InnerTab_Click"
-                             Style="{StaticResource InnerTabButton}">
-                    <TextBlock Text="Файлы" VerticalAlignment="Center"/>
-                </RadioButton>
-            </StackPanel>
+            <Border Background="#F4F5F7" CornerRadius="10" Padding="3"
+                    HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton IsChecked="True" Tag="Stages" Click="InnerTab_Click"
+                                 Style="{StaticResource TabButton}">
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Этапы "/>
+                            <Run Text="("/>
+                            <Run Text="{Binding Stages.Count}"/>
+                            <Run Text=")"/>
+                        </TextBlock>
+                    </RadioButton>
+                    <RadioButton Tag="Materials" Click="InnerTab_Click"
+                                 Style="{StaticResource TabButton}">
+                        <TextBlock Text="Материалы" VerticalAlignment="Center"/>
+                    </RadioButton>
+                    <RadioButton Tag="Files" Click="InnerTab_Click"
+                                 Style="{StaticResource TabButton}">
+                        <TextBlock Text="Файлы" VerticalAlignment="Center"/>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
         </Border>
 
         <!-- ── Row 5: Tab Content ── -->

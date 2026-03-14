@@ -26,6 +26,15 @@ public partial class MainViewModel : ViewModelBase
 
     public string UserName => _auth.UserName ?? "—";
     public string UserRole => _auth.UserRole ?? "—";
+    public string UserRoleDisplay => _auth.UserRole switch
+    {
+        "Administrator" or "Admin"          => "Администратор",
+        "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
+        "Foreman"                           => "Прораб",
+        "Worker"                            => "Работник",
+        { } r                               => r,
+        _                                   => "—"
+    };
     public string UserInitials => _auth.UserName is { Length: > 0 } name
         ? string.Concat(name.Split(' ').Take(2).Select(w => w[0]))
         : "?";
@@ -139,6 +148,7 @@ public partial class MainViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(UserName));
         OnPropertyChanged(nameof(UserRole));
+        OnPropertyChanged(nameof(UserRoleDisplay));
         OnPropertyChanged(nameof(UserInitials));
         OnPropertyChanged(nameof(IsProjectsVisible));
         // Workers go to Tasks page by default

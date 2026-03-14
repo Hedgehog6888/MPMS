@@ -20,6 +20,7 @@ public static class LocalSchemaMigrator
         CreateTaskAssigneesTable(conn);
         CreateStageAssigneesTable(conn);
         CreateMessagesTable(conn);
+        AddIsMarkedForDeletionColumns(conn);
     }
 
     private static void CreateRecentAccountsTable(SqliteConnection conn)
@@ -123,6 +124,13 @@ public static class LocalSchemaMigrator
                 "CreatedAt"   TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
             );
             """);
+    }
+
+    private static void AddIsMarkedForDeletionColumns(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Projects\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"Tasks\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

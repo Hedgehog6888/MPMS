@@ -126,18 +126,20 @@
                                FontSize="15"/>
                 </Border>
 
-                <!-- Search box (center, фиксированная ширина) -->
-                <Border Grid.Column="1" Background="#F4F5F7"
+                <!-- Search box with focus animation -->
+                <Border x:Name="SearchBorder" Grid.Column="1"
+                        Background="#F4F5F7"
                         CornerRadius="6" Padding="10,0"
                         Width="520"
                         HorizontalAlignment="Left"
-                        VerticalAlignment="Center" Height="36">
+                        VerticalAlignment="Center" Height="36"
+                        BorderThickness="1.5" BorderBrush="Transparent">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="&#xE721;"
+                        <TextBlock x:Name="SearchIcon" Grid.Column="0" Text="&#xE721;"
                                    FontFamily="Segoe MDL2 Assets"
                                    FontSize="14" VerticalAlignment="Center"
                                    Margin="0,0,8,0"
@@ -158,10 +160,14 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                            <TextBox x:Name="GlobalSearchBox"
+                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      BorderThickness="0" Background="Transparent"
                                      VerticalAlignment="Center" FontSize="13"
-                                     Foreground="{StaticResource TextPrimaryBrush}"/>
+                                     Foreground="{StaticResource TextPrimaryBrush}"
+                                     GotFocus="GlobalSearch_GotFocus"
+                                     LostFocus="GlobalSearch_LostFocus"
+                                     KeyDown="GlobalSearch_KeyDown"/>
                         </Grid>
                     </Grid>
                 </Border>
@@ -172,7 +178,7 @@
                     <!-- Create button (чёрная) -->
                     <Button Command="{Binding CreateCommand}"
                             Style="{StaticResource TopCreateButton}"
-                            Margin="0,0,16,0">
+                            Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
                                        FontSize="14" Foreground="White"
@@ -182,18 +188,31 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- Кружок онлайн/офлайн (не кнопка) -->
-                    <Border Width="36" Height="36"
-                            Margin="0,0,4,0">
+                    <!-- Divider -->
+                    <Border Width="1" Height="20" Background="#DFE1E6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+
+                    <!-- Sync/connection status button with popup -->
+                    <Border x:Name="SyncStatusBorder" Width="36" Height="36" Margin="0,0,4,0"
+                            Cursor="Hand" CornerRadius="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Border.ToolTip>
                             <ToolTip>
                                 <TextBlock>
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Онлайн"/>
+                                            <Setter Property="Text" Value="Онлайн — синхронизация активна"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                    <Setter Property="Text" Value="Офлайн"/>
+                                                    <Setter Property="Text" Value="Офлайн — нет подключения к серверу"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -201,55 +220,59 @@
                                 </TextBlock>
                             </ToolTip>
                         </Border.ToolTip>
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse Width="10" Height="10">
-                                <Ellipse.Style>
-                                    <Style TargetType="Ellipse">
-                                        <Setter Property="Fill" Value="#00C875"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                <Setter Property="Fill" Value="#FF6B6B"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Ellipse.Style>
-                            </Ellipse>
-                        </Grid>
-                    </Border>
-
-                    <!-- Кнопка обновления (доступна всегда) -->
-                    <Border Width="36" Height="36" Margin="0,0,4,0"
-                            Cursor="Hand">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="CornerRadius" Value="4"/>
-                                <Style.Triggers>
-                                    <!-- Подсветка сохраняется и при нажатии,
-                                         т.к. ховер висит на всём бордере -->
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Button Command="{Binding RefreshConnectionCommand}"
-                                Style="{StaticResource IconButton}"
-                                FontSize="14"
-                                ToolTip="Проверить соединение">
-                            <Image Width="18" Height="18"
-                                   Stretch="Uniform"
-                                   Source="{svgc:SvgImage Source=/icons/update.svg, AppName=MPMS}"/>
+                        <Button Click="SyncStatus_Click" Style="{StaticResource IconButton}">
+                            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Image Width="16" Height="16" Stretch="Uniform"
+                                       Source="{svgc:SvgImage Source=/icons/update.svg, AppName=MPMS}">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Opacity" Value="0.7"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Opacity" Value="0.4"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <!-- Online/offline dot -->
+                                <Ellipse Width="7" Height="7" HorizontalAlignment="Right"
+                                         VerticalAlignment="Bottom" Margin="0,0,-1,-1">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#00C875"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Fill" Value="#FF6B6B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </Grid>
                         </Button>
+                        <!-- Sync popup -->
+                        <Border.ContextMenu>
+                            <ContextMenu x:Name="SyncPopupMenu" Style="{StaticResource StatusMenu}">
+                                <MenuItem Header="Синхронизировать сейчас"
+                                          Command="{Binding SyncNowCommand}"
+                                          Style="{StaticResource StatusMenuItem}"/>
+                                <MenuItem Header="Проверить соединение"
+                                          Command="{Binding RefreshConnectionCommand}"
+                                          Style="{StaticResource StatusMenuItem}"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
                     </Border>
 
-                    <!-- Иконка настроек -->
-                    <Border Width="36" Height="36" Cursor="Hand" Margin="0,0,4,0"
-                            ToolTip="Настройки">
+                    <!-- Divider -->
+                    <Border Width="1" Height="20" Background="#DFE1E6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+
+                    <!-- User panel: name + role + avatar — opens popup on click -->
+                    <Border x:Name="UserPanelBorder" Cursor="Hand"
+                            Margin="0,0,0,0" CornerRadius="6" Padding="8,4">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="CornerRadius" Value="4"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter Property="Background" Value="#F4F5F7"/>
@@ -257,56 +280,54 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <Image Width="20" Height="20"
-                               Stretch="Uniform"
-                               Source="{svgc:SvgImage Source=/icons/settings.svg, AppName=MPMS}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"/>
-                    </Border>
-
-                    <!-- Switch profile button -->
-                    <Border Width="36" Height="36" Cursor="Hand" Margin="0,0,4,0"
-                            ToolTip="{Binding SwitchAccountTooltip}">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="CornerRadius" Value="4"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#F4F5F7"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <Button Command="{Binding SwitchAccountCommand}"
-                                Style="{StaticResource IconButton}">
-                            <TextBlock Text="&#xE748;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="14"
-                                       Foreground="#6B778C"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                        <Border.ContextMenu>
+                            <ContextMenu x:Name="UserContextMenu" Style="{StaticResource StatusMenu}">
+                                <MenuItem Style="{StaticResource StatusMenuItem}" IsEnabled="False">
+                                    <MenuItem.Header>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"/>
+                                            <TextBlock Text="{Binding UserRoleDisplay}"
+                                                       FontSize="11" Foreground="#1B6EC2"
+                                                       Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </MenuItem.Header>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Выйти из аккаунта"
+                                          Command="{Binding SwitchAccountCommand}"
+                                          Style="{StaticResource StatusMenuItem}"
+                                          Foreground="#DE350B"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                        <Button x:Name="UserPanelBtn" Click="UserPanel_Click"
+                                Style="{StaticResource IconButton}" Padding="0" Background="Transparent">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Name + Role stacked -->
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding UserName}"
+                                               FontSize="12" FontWeight="SemiBold"
+                                               Foreground="#172B4D" MaxWidth="120"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding UserRoleDisplay}"
+                                               FontSize="10" Foreground="#6B778C"
+                                               MaxWidth="120"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <!-- Avatar circle -->
+                                <Border Background="{StaticResource PrimaryBrush}"
+                                        Width="30" Height="30" CornerRadius="15"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding UserInitials}"
+                                               Foreground="White" FontSize="11"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </StackPanel>
                         </Button>
-                    </Border>
-
-                    <!-- Аватар без выделения при ховере -->
-                    <Border Width="36" Height="36" Cursor="Hand"
-                            ToolTip="{Binding UserName}">
-                        <Border Background="Transparent"
-                                Width="36" Height="36"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center">
-                            <Border Background="{StaticResource PrimaryBrush}"
-                                    Width="28" Height="28" CornerRadius="14"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding UserInitials}"
-                                           Foreground="White" FontSize="11"
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                            </Border>
-                        </Border>
                     </Border>
                 </StackPanel>
             </Grid>

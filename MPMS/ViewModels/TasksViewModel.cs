@@ -13,6 +13,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
+    private readonly IAuthService _auth;
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<ProjectTaskGroup> _taskGroups = [];
@@ -35,10 +36,11 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     public IReadOnlyList<string> PriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
 
-    public TasksViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
+    public TasksViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _sync = sync;
+        _auth = auth;
     }
 
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
@@ -57,6 +59,11 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(filterOpts);
 
         var query = db.Tasks.AsQueryable();
+
+        // Role-based filtering: Workers only see tasks assigned to them
+        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+        if (isWorker && _auth.UserId.HasValue)
+            query = query.Where(t => t.AssignedUserId == _auth.UserId.Value);
 
         if (ProjectFilter.HasValue)
             query = query.Where(t => t.ProjectId == ProjectFilter.Value);
