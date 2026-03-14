@@ -55,7 +55,12 @@ public partial class CreateTaskOverlay : UserControl
         var projects = await db.Projects.OrderBy(p => p.Name).ToListAsync();
         ProjectCombo.ItemsSource = projects;
 
-        var users = await db.Users.OrderBy(u => u.Name).ToListAsync();
+        // Only allow assigning Foreman/Worker roles
+        var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
+        var users = await db.Users
+            .Where(u => workerRoles.Contains(u.RoleName))
+            .OrderBy(u => u.Name)
+            .ToListAsync();
         AssigneeCombo.ItemsSource = users;
 
         // Preselect project

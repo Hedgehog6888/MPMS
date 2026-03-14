@@ -25,11 +25,33 @@ public partial class CreateStageDialog : Window
     private async Task LoadUsersAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var users = await db.Users.OrderBy(u => u.Name).ToListAsync();
+        var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
+        var users = await db.Users
+            .Where(u => workerRoles.Contains(u.RoleName))
+            .OrderBy(u => u.Name)
+            .ToListAsync();
         AssigneeCombo.ItemsSource = users;
     }
 
-    public void SetTask(Guid taskId) => _taskId = taskId;
+    public void SetTask(Guid taskId)
+    {
+        _taskId = taskId;
+        _ = LoadProjectNameAsync(taskId);
+    }
+
+    private async Task LoadProjectNameAsync(Guid taskId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var task = await db.Tasks.FindAsync(taskId);
+        if (task is null)
+        {
+            ProjectNameBox.Text = "—";
+            return;
+        }
+
+        var project = await db.Projects.FindAsync(task.ProjectId);
+        ProjectNameBox.Text = project?.Name ?? "—";
+    }
 
     public void SetEditMode(LocalTaskStage stage)
     {
