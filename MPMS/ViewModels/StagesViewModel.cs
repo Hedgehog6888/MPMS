@@ -30,7 +30,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _statusFilter = "Все статусы";
 
     public List<string> StatusOptions { get; } =
-        ["Все статусы", "Запланирован", "Выполняется", "Завершён"];
+        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
 
     public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
     {
@@ -95,7 +95,11 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 s.ProjectName.ToLower().Contains(term));
         }
 
-        if (StatusFilter != "Все статусы")
+        if (StatusFilter == "Пометка удалить")
+        {
+            query = query.Where(s => s.Stage.IsMarkedForDeletion);
+        }
+        else if (StatusFilter != "Все статусы")
         {
             var targetStatus = StatusFilter switch
             {
