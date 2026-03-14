@@ -1,6 +1,7 @@
 <Window x:Class="MPMS.Views.TaskDetailWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         Title="Детали задачи"
         Width="460" Height="720"
         MinWidth="420" MinHeight="500"
@@ -182,8 +183,11 @@
                     <StackPanel Orientation="Horizontal">
                         <Border Width="34" Height="34" CornerRadius="17"
                                 Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
-                            <TextBlock Text="👤" FontSize="14"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}"
+                                   Width="16" Height="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.8"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="{Binding Task.AssignedUserName}" FontSize="13" FontWeight="SemiBold"
@@ -199,7 +203,10 @@
                     <TextBlock Text="Срок выполнения" FontSize="11"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📅" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
+                               Width="16" Height="16" Margin="0,0,8,0"
+                               VerticalAlignment="Center"
+                               Opacity="0.5"/>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}}"
                                        FontSize="14" FontWeight="Bold"
@@ -216,7 +223,7 @@
             <StackPanel Orientation="Horizontal" Margin="8,0">
                 <RadioButton IsChecked="True" Tag="Stages" Click="InnerTab_Click"
                              Style="{StaticResource InnerTabButton}">
-                    <TextBlock>
+                    <TextBlock VerticalAlignment="Center">
                         <Run Text="Этапы "/>
                         <Run Text="("/>
                         <Run Text="{Binding Stages.Count}"/>
@@ -224,9 +231,13 @@
                     </TextBlock>
                 </RadioButton>
                 <RadioButton Tag="Materials" Click="InnerTab_Click"
-                             Style="{StaticResource InnerTabButton}" Content="Материалы"/>
+                             Style="{StaticResource InnerTabButton}">
+                    <TextBlock Text="Материалы" VerticalAlignment="Center"/>
+                </RadioButton>
                 <RadioButton Tag="Files" Click="InnerTab_Click"
-                             Style="{StaticResource InnerTabButton}" Content="Файлы"/>
+                             Style="{StaticResource InnerTabButton}">
+                    <TextBlock Text="Файлы" VerticalAlignment="Center"/>
+                </RadioButton>
             </StackPanel>
         </Border>
 
@@ -293,12 +304,22 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Top">
                                             <StackPanel Orientation="Horizontal">
-                                                <Button Content="✏" ToolTip="Редактировать"
+                                                <Button ToolTip="Редактировать"
                                                         Tag="{Binding}" Click="EditStage_Click"
-                                                        Margin="0,0,4,0" Style="{StaticResource IconButton}"/>
-                                                <Button Content="🗑" ToolTip="Удалить"
+                                                        Margin="0,0,4,0" Style="{StaticResource IconButton}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
+                                                           Width="14" Height="14"
+                                                           VerticalAlignment="Center"
+                                                           Opacity="0.85"/>
+                                                </Button>
+                                                <Button ToolTip="Удалить"
                                                         Tag="{Binding}" Click="DeleteStage_Click"
-                                                        Style="{StaticResource DangerIconButton}"/>
+                                                        Style="{StaticResource DangerIconButton}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
+                                                           Width="14" Height="14"
+                                                           VerticalAlignment="Center"
+                                                           Opacity="0.9"/>
+                                                </Button>
                                             </StackPanel>
                                             <ComboBox Margin="0,6,0,0" Width="120" FontSize="11"
                                                       Height="28" Tag="{Binding}"
@@ -411,22 +432,23 @@
                             <Border Width="72" Height="72" CornerRadius="36"
                                     Background="{StaticResource BackgroundBrush}"
                                     HorizontalAlignment="Center" Margin="0,0,0,12">
-                                <TextBlock Text="🖼" FontSize="32"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="36" Height="36"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.5"/>
                             </Border>
                             <TextBlock Text="Файлы ещё не загружены" FontSize="14"
                                        Foreground="{StaticResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                            <Button Content="Загрузить файлы" Click="UploadFiles_Click"
-                                    Height="34" Padding="16,0" HorizontalAlignment="Center"
+                            <Button Click="UploadFiles_Click" Height="34" Padding="16,0" HorizontalAlignment="Center"
                                     FontSize="13">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="Bg" Background="White" CornerRadius="6"
                                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                                 Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                              TextElement.Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Image Source="{svgc:SvgImage Source=/icons/upload.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Загрузить файлы" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
@@ -455,15 +477,18 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Add stage button -->
-                <Button Grid.Column="0" Content="+ Этап" Height="34" Padding="12,0"
+                <Button Grid.Column="0" Height="34" Padding="12,0"
                         Click="CreateStage_Click" HorizontalAlignment="Left" FontSize="13">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bg" Background="White" CornerRadius="6"
                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                     Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                  TextElement.Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Image Source="{svgc:SvgImage Source=/icons/plus_black.svg, AppName=MPMS}"
+                                           Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Этап" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
