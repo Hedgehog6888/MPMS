@@ -32,9 +32,9 @@ public partial class StageDetailOverlay : UserControl
         DescriptionText.Text = item.Stage.Description ?? "—";
         AssigneeText.Text = item.Stage.AssignedUserName ?? "—";
 
-        var statusBrush = StageStatusToBrushConverter.Instance.Convert(item.Stage.Status, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush;
+        var statusBrush = StageStatusToBrushConverter.Instance.Convert(item.Stage.Status, typeof(Brush), null!, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;
-        StatusText.Text = StageStatusToStringConverter.Instance.Convert(item.Stage.Status, typeof(string), null, CultureInfo.InvariantCulture) as string ?? "—";
+        StatusText.Text = StageStatusToStringConverter.Instance.Convert(item.Stage.Status, typeof(string), null!, CultureInfo.InvariantCulture) as string ?? "—";
 
         _ = LoadMaterialsAsync();
     }
@@ -61,10 +61,11 @@ public partial class StageDetailOverlay : UserControl
     {
         if (_stage is null || _task is null) return;
         var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(_stage, _task, async () =>
+        overlay.SetEditMode(_stage, _task, () =>
         {
             _onClosed?.Invoke();
             MainWindow.Instance?.HideDrawer();
+            return System.Threading.Tasks.Task.CompletedTask;
         });
         MainWindow.Instance?.ShowDrawer(overlay);
     }
