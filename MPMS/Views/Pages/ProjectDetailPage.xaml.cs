@@ -102,7 +102,11 @@ public partial class ProjectDetailPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         var overlay = new CreateTaskOverlay();
-        overlay.SetEditMode(task, async () => await VM.LoadAsync());
+        var currentTask = task;
+        overlay.SetEditMode(
+            currentTask,
+            onSaved: async () => await VM.LoadAsync(),
+            onAfterSave: () => OpenTaskDetail(currentTask));
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 

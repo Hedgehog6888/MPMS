@@ -26,6 +26,8 @@ public partial class MainWindow : Window
 
     public void ShowDrawer(UIElement content, double width = 520)
     {
+        // Detach previous content first to avoid "child must be detached from parent Visual" when the same or related element is reparented
+        DrawerContentPresenter.Content = null;
         DrawerContentPresenter.Content = content;
         DrawerPanel.Width = width;
 
@@ -54,6 +56,9 @@ public partial class MainWindow : Window
     /// <summary>Shows a dual-panel drawer: left panel (e.g. project context) + right panel (e.g. task detail).</summary>
     public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 900)
     {
+        // Clear drawer first so leftContent/rightContent can be reparented if they are the current drawer content
+        DrawerContentPresenter.Content = null;
+
         UIElement content;
         if (leftContent is not null)
         {

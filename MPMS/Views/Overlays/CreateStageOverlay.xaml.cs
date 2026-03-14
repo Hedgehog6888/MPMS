@@ -148,7 +148,14 @@ public partial class CreateStageOverlay : UserControl
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
-        => MainWindow.Instance?.HideDrawer();
+    {
+        // Для контекстов с двойным оверлеем (этап в задаче)
+        // возвращаемся к предыдущему состоянию через onAfterSave.
+        if (_onAfterSave is not null)
+            _onAfterSave();
+        else
+            MainWindow.Instance?.HideDrawer();
+    }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {

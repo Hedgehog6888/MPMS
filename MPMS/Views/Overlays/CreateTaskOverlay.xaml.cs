@@ -97,7 +97,14 @@ public partial class CreateTaskOverlay : UserControl
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
-        => MainWindow.Instance?.HideDrawer();
+    {
+        // Если задан специальный сценарий (например, вернуть два оверлея),
+        // вызываем его; иначе просто закрываем drawer.
+        if (_onAfterSave is not null)
+            _onAfterSave();
+        else
+            MainWindow.Instance?.HideDrawer();
+    }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
