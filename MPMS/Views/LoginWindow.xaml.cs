@@ -43,7 +43,8 @@ public partial class LoginWindow : Window
             PwdVisibleBox.Text       = PwdBox.Password;
             PwdBox.Visibility        = Visibility.Collapsed;
             PwdVisibleBox.Visibility = Visibility.Visible;
-            EyeIcon.Text             = "\uED1A";
+            EyeOnIcon.Visibility     = Visibility.Visible;
+            EyeOffIcon.Visibility    = Visibility.Collapsed;
             PwdVisibleBox.Focus();
             PwdVisibleBox.CaretIndex = PwdVisibleBox.Text.Length;
         }
@@ -53,7 +54,8 @@ public partial class LoginWindow : Window
             var text = PwdVisibleBox.Text;
             PwdBox.Visibility        = Visibility.Visible;
             PwdVisibleBox.Visibility = Visibility.Collapsed;
-            EyeIcon.Text             = "\uE7B3";
+            EyeOnIcon.Visibility     = Visibility.Collapsed;
+            EyeOffIcon.Visibility    = Visibility.Visible;
             PwdBox.Password          = text;
             _vm.Password             = text;
             PwdBox.Focus();
