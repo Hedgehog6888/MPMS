@@ -115,10 +115,14 @@
         </Border>
 
         <!-- Tabs -->
-        <Border Grid.Row="1" Background="White"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1"
-                Padding="24,8">
-            <Border Background="#F4F5F7" CornerRadius="10" Padding="3"
+        <Border Grid.Row="1"
+                Background="{StaticResource BackgroundBrush}"
+                Padding="24,4">
+            <Border Background="White"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="6,4"
                     HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="Общая информация" Tag="Info" IsChecked="True"
@@ -433,14 +437,22 @@
                 </Grid.RowDefinitions>
 
                 <!-- View toggle -->
-                <Border Grid.Row="0" Background="White" Padding="24,10"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <StackPanel Orientation="Horizontal">
-                        <RadioButton Content="Список" Tag="List" IsChecked="True"
-                                     Style="{StaticResource TabButton}" Click="TaskView_Click"/>
-                        <RadioButton Content="Kanban" Tag="Kanban"
-                                     Style="{StaticResource TabButton}" Click="TaskView_Click"/>
-                    </StackPanel>
+                <Border Grid.Row="0"
+                        Background="{StaticResource BackgroundBrush}"
+                        Padding="24,2,24,4">
+                    <Border Background="White"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="6,4"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="Список" Tag="List" IsChecked="True"
+                                         Style="{StaticResource TabButton}" Click="TaskView_Click"/>
+                            <RadioButton Content="Kanban" Tag="Kanban"
+                                         Style="{StaticResource TabButton}" Click="TaskView_Click"/>
+                        </StackPanel>
+                    </Border>
                 </Border>
 
                 <!-- Tasks content with common filter bar for list & kanban -->

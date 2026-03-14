@@ -214,22 +214,20 @@
                                 <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
+                                <!-- Active tab: solid black background -->
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
-                                    <Setter TargetName="Bg" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="#000000" BlurRadius="4" Opacity="0.08" ShadowDepth="1"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="Foreground" Value="#172B4D"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                    <Setter TargetName="Bg" Property="Effect" Value="{x:Null}"/>
+                                    <Setter Property="Foreground" Value="White"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
+                                <!-- Hover for inactive tab: light background, dark text -->
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
                                         <Condition Property="IsChecked" Value="False"/>
                                     </MultiTrigger.Conditions>
-                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                     <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                                 </MultiTrigger>
                             </ControlTemplate.Triggers>
