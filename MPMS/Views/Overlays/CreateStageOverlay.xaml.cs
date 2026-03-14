@@ -14,6 +14,7 @@ public partial class CreateStageOverlay : UserControl
     private LocalTask? _task;
     private LocalTaskStage? _editStage;
     private Func<System.Threading.Tasks.Task>? _onSaved;
+    private Action? _onAfterSave;
 
     public CreateStageOverlay()
     {
@@ -45,13 +46,40 @@ public partial class CreateStageOverlay : UserControl
         _ = LoadProjectsAndUsersAsync();
     }
 
-    public void SetEditMode(LocalTaskStage stage, LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null)
+    public void SetCreateModeForProject(Guid projectId, Func<System.Threading.Tasks.Task>? onSaved = null)
+    {
+        _task = null;
+        _vm = null;
+        _editStage = null;
+        _onSaved = onSaved;
+        TitleLabel.Text = "Добавить этап";
+        SaveButton.Content = "Добавить этап";
+        TaskNameLabel.Text = "Выберите задачу";
+        ProjectTaskPickerRow.Visibility = Visibility.Visible;
+        StatusRow.Visibility = Visibility.Collapsed;
+        ProjectCombo.Visibility = Visibility.Collapsed;
+        _ = LoadProjectTasksAndUsersAsync(projectId);
+    }
+
+    private async System.Threading.Tasks.Task LoadProjectTasksAndUsersAsync(Guid projectId)
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
+        TaskCombo.ItemsSource = tasks;
+        if (tasks.Count > 0)
+            TaskCombo.SelectedIndex = 0;
+        await LoadUsersAsync();
+    }
+
+    public void SetEditMode(LocalTaskStage stage, LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)
     {
         _editStage = stage;
         _task = task;
         _vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         _vm.SetTask(task);
         _onSaved = onSaved;
+        _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать этап";
         SaveButton.Content = "Сохранить";
         StatusRow.Visibility = Visibility.Visible;
@@ -169,7 +197,11 @@ public partial class CreateStageOverlay : UserControl
             }
 
             if (_onSaved is not null) await _onSaved();
-            MainWindow.Instance?.HideDrawer();
+
+            if (_onAfterSave is not null)
+                _onAfterSave();
+            else
+                MainWindow.Instance?.HideDrawer();
         }
         catch (Exception ex)
         {

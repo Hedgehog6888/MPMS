@@ -46,12 +46,13 @@
                 <!-- Stage name -->
                 <TextBlock Text="Название этапа *" Style="{StaticResource FormLabel}"/>
                 <TextBox x:Name="NameBox" Style="{StaticResource FormInput}"
-                         Margin="0,0,0,16" Height="38"
-/>
+                         Foreground="#172B4D" Background="White"
+                         Margin="0,0,0,16" Height="38"/>
 
                 <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
                 <TextBox x:Name="DescriptionBox" Style="{StaticResource FormInput}"
+                         Foreground="#172B4D" Background="White"
                          Margin="0,0,0,16" Height="80"
                          TextWrapping="Wrap" AcceptsReturn="True"
                          VerticalContentAlignment="Top"

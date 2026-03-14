@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using MPMS.Models;
 
 namespace MPMS.Data;
@@ -51,5 +52,16 @@ public class LocalDbContext : DbContext
         modelBuilder.Entity<AuthSession>()
             .Property(e => e.UserName)
             .HasColumnName("UserDisplayName");
+    }
+}
+
+public class LocalDbContextFactory : IDesignTimeDbContextFactory<LocalDbContext>
+{
+    public LocalDbContext CreateDbContext(string[] args)
+    {
+        var options = new DbContextOptionsBuilder<LocalDbContext>()
+            .UseSqlite("Data Source=mpms_design.db")
+            .Options;
+        return new LocalDbContext(options);
     }
 }

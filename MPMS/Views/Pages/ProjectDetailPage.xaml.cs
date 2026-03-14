@@ -48,13 +48,21 @@ public partial class ProjectDetailPage : UserControl
         if (sender is not RadioButton rb || rb.Tag is not string tab) return;
         VM?.SwitchTabCommand.Execute(tab);
 
-        InfoPanel.Visibility      = tab == "Info"      ? Visibility.Visible : Visibility.Collapsed;
-        TasksPanel.Visibility     = tab == "Tasks"     ? Visibility.Visible : Visibility.Collapsed;
-        StagesPanel.Visibility    = tab == "Stages"    ? Visibility.Visible : Visibility.Collapsed;
-        FilesPanel.Visibility     = tab == "Files"     ? Visibility.Visible : Visibility.Collapsed;
-        MaterialsPanel.Visibility = tab == "Materials" ? Visibility.Visible : Visibility.Collapsed;
+        InfoPanel.Visibility       = tab == "Info"       ? Visibility.Visible : Visibility.Collapsed;
+        TasksPanel.Visibility      = tab == "Tasks"      ? Visibility.Visible : Visibility.Collapsed;
+        StagesPanel.Visibility     = tab == "Stages"     ? Visibility.Visible : Visibility.Collapsed;
+        DiscussionPanel.Visibility = tab == "Discussion" ? Visibility.Visible : Visibility.Collapsed;
+        FilesPanel.Visibility      = tab == "Files"      ? Visibility.Visible : Visibility.Collapsed;
+        MaterialsPanel.Visibility  = tab == "Materials"  ? Visibility.Visible : Visibility.Collapsed;
 
         CreateTaskBtn.Visibility = (tab == "Tasks" && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
+
+        if (tab == "Discussion")
+        {
+            Dispatcher.InvokeAsync(() =>
+                ProjectMessagesScrollViewer.ScrollToBottom(),
+                System.Windows.Threading.DispatcherPriority.Loaded);
+        }
     }
 
     private void TaskView_Click(object sender, RoutedEventArgs e)
@@ -103,6 +111,12 @@ public partial class ProjectDetailPage : UserControl
             "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result == MessageBoxResult.Yes)
             await VM.DeleteTaskCommand.ExecuteAsync(task);
+    }
+
+    private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
+        await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)
@@ -236,6 +250,16 @@ public partial class ProjectDetailPage : UserControl
         }
     }
 
+    private void AddProjectStage_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.Project is null) return;
+        var overlay = new CreateStageOverlay();
+        var vm = VM;
+        overlay.SetCreateModeForProject(vm.Project.Id,
+            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
+        MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
     private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)
     {
         if (VM is null || ProjectMessageInput is null) return;
@@ -243,6 +267,9 @@ public partial class ProjectDetailPage : UserControl
         if (string.IsNullOrWhiteSpace(text)) return;
         ProjectMessageInput.Text = "";
         await VM.SendMessageAsync(text);
+        _ = Dispatcher.InvokeAsync(() =>
+            ProjectMessagesScrollViewer.ScrollToBottom(),
+            System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private void ProjectMessageInput_KeyDown(object sender, KeyEventArgs e)

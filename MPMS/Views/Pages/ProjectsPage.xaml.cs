@@ -17,11 +17,13 @@ public partial class ProjectsPage : UserControl
         Loaded += OnLoaded;
     }
 
+    private string _userRole = "";
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
-        string role = auth.UserRole ?? "";
-        bool canCreate = role is "Admin" or "Administrator"
+        _userRole = auth.UserRole ?? "";
+        bool canCreate = _userRole is "Admin" or "Administrator"
                               or "ProjectManager" or "Manager" or "Project Manager";
         CreateProjectBtn.Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -56,6 +58,12 @@ public partial class ProjectsPage : UserControl
             MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result == MessageBoxResult.Yes)
             await VM.DeleteProjectCommand.ExecuteAsync(project);
+    }
+
+    private async void MarkProjectForDeletion_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
+        await VM.MarkProjectForDeletionCommand.ExecuteAsync(project);
     }
 
     private void ProjectName_Click(object sender, MouseButtonEventArgs e)

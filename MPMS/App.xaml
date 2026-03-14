@@ -82,6 +82,7 @@
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
                 <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
+                <Setter Property="SelectionTextBrush" Value="{StaticResource TextPrimaryBrush}"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
@@ -97,7 +98,9 @@
                                               HorizontalScrollBarVisibility="Hidden"
                                               VerticalAlignment="Stretch"
                                               Focusable="False"
-                                              Foreground="{TemplateBinding Foreground}"/>
+                                              Background="Transparent"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsFocused" Value="True">
@@ -198,26 +201,37 @@
                 <Setter Property="Foreground"      Value="{StaticResource TextSecondaryBrush}"/>
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Cursor"          Value="Hand"/>
-                <Setter Property="Height"          Value="44"/>
-                <Setter Property="Padding"         Value="16,0"/>
+                <Setter Property="Height"          Value="32"/>
+                <Setter Property="Padding"         Value="14,0"/>
+                <Setter Property="Margin"          Value="1"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="RadioButton">
-                            <Border x:Name="Bg" BorderThickness="0,0,0,2"
-                                    BorderBrush="Transparent"
+                            <Border x:Name="Bg" CornerRadius="8"
                                     Background="Transparent"
+                                    BorderThickness="0"
                                     Padding="{TemplateBinding Padding}">
-                                <ContentPresenter VerticalAlignment="Center"/>
+                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#172B4D"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
+                                    <Setter TargetName="Bg" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#000000" BlurRadius="4" Opacity="0.08" ShadowDepth="1"/>
+                                        </Setter.Value>
+                                    </Setter>
                                     <Setter Property="Foreground" Value="#172B4D"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsChecked" Value="False"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
                                     <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                </Trigger>
+                                </MultiTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
@@ -280,6 +294,7 @@
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="CaretBrush"      Value="#172B4D"/>
                 <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
+                <Setter Property="SelectionTextBrush" Value="#172B4D"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
@@ -295,7 +310,9 @@
                                               HorizontalScrollBarVisibility="Hidden"
                                               VerticalAlignment="Stretch"
                                               Focusable="False"
-                                              Foreground="{TemplateBinding Foreground}"/>
+                                              Background="Transparent"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsFocused" Value="True">
@@ -808,6 +825,9 @@
             <infra:StageCountToStringConverter x:Key="StageCountToString"/>
             <infra:DateTimeToRelativeConverter x:Key="DateTimeToRelative"/>
             <infra:EqualityToVisibilityConverter x:Key="EqualityToVis"/>
+            <infra:EntityTypeToAccentBrushConverter     x:Key="EntityTypeToAccentBrush"/>
+            <infra:EntityTypeToBadgeLabelConverter      x:Key="EntityTypeToLabel"/>
+            <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
 
             <!-- ── DataTemplates: ViewModel → View (UserControl) ─── -->
             <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">

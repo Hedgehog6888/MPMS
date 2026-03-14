@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -24,6 +25,25 @@ public partial class TaskDetailOverlay : UserControl
         _vm.SetTask(task);
         DataContext = _vm;
         _ = LoadDataAsync();
+        ApplyRoleRestrictions();
+    }
+
+    private void ApplyRoleRestrictions()
+    {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        string role = auth.UserRole ?? "";
+        bool isWorker   = string.Equals(role, "Worker",   StringComparison.OrdinalIgnoreCase);
+        bool isForeman  = string.Equals(role, "Foreman",  StringComparison.OrdinalIgnoreCase);
+        bool isManager  = role is "Manager" or "ProjectManager" or "Project Manager";
+        bool isAdmin    = role is "Admin" or "Administrator";
+
+        if (isWorker)
+        {
+            EditTaskBtn.Visibility    = Visibility.Collapsed;
+            ChangeStatusBtn.Visibility = Visibility.Collapsed;
+            AddStageBtn.Visibility    = Visibility.Collapsed;
+        }
+
     }
 
     private async System.Threading.Tasks.Task LoadDataAsync()
@@ -71,13 +91,17 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         var overlay = new CreateTaskOverlay();
-        overlay.SetEditMode(_vm.Task, async () =>
-        {
-            await _vm.LoadAsync();
-            UpdateStagesTabLabel();
-            UpdateEmptyStates();
-            _onClosed?.Invoke();
-        });
+        var self = this;
+        overlay.SetEditMode(
+            _vm.Task,
+            onSaved: async () =>
+            {
+                await _vm.LoadAsync();
+                UpdateStagesTabLabel();
+                UpdateEmptyStates();
+                _onClosed?.Invoke();
+            },
+            onAfterSave: () => MainWindow.Instance?.ShowDrawer(self, 500));
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 
@@ -142,6 +166,20 @@ public partial class TaskDetailOverlay : UserControl
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
     }
 
+    private async void RevertStage_Click(object sender, RoutedEventArgs e)
+    {
+        // InProgress → Planned (cancel/revert action)
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Planned));
+    }
+
+    private async void ReopenStage_Click(object sender, RoutedEventArgs e)
+    {
+        // Completed → InProgress (reopen stage)
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
+    }
+
     private async void SendMessage_Click(object sender, RoutedEventArgs e)
     {
         if (_vm is null || string.IsNullOrWhiteSpace(MessageInput.Text)) return;
@@ -159,16 +197,36 @@ public partial class TaskDetailOverlay : UserControl
         }
     }
 
+    private async void MarkStageForDeletion_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
+    }
+
+    private async void DeleteStage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        var result = MessageBox.Show($"Удалить этап «{stage.Name}»?",
+            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (result == MessageBoxResult.Yes)
+            await _vm.DeleteStageCommand.ExecuteAsync(stage);
+    }
+
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
         var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(stage, _vm.Task, async () =>
-        {
-            await _vm.LoadAsync();
-            UpdateStagesTabLabel();
-            UpdateEmptyStates();
-        });
+        var self = this;
+        overlay.SetEditMode(
+            stage,
+            _vm.Task,
+            onSaved: async () =>
+            {
+                await _vm.LoadAsync();
+                UpdateStagesTabLabel();
+                UpdateEmptyStates();
+            },
+            onAfterSave: () => MainWindow.Instance?.ShowDrawer(self, 500));
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 }

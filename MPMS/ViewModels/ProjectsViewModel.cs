@@ -14,6 +14,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private CancellationTokenSource _loadCts = new();
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
@@ -36,16 +37,45 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        var query = db.Projects.AsQueryable();
+        // Cancel any previous in-flight load
+        _loadCts.Cancel();
+        _loadCts = new CancellationTokenSource();
+        var ct = _loadCts.Token;
 
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            query = query.Where(p => p.Name.Contains(SearchText) ||
-                (p.Client != null && p.Client.Contains(SearchText)));
-
-        if (StatusFilter != "Все")
+        try
         {
-            var status = StatusFilter switch
+            await using var db = await _dbFactory.CreateDbContextAsync(ct);
+            var query = db.Projects.AsQueryable();
+
+            // Foreman sees only projects they are a member of
+            bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+            if (isForeman && _auth.UserId.HasValue)
+            {
+                var userId = _auth.UserId.Value;
+                var assignedProjectIds = await db.ProjectMembers
+                    .Where(m => m.UserId == userId)
+                    .Select(m => m.ProjectId)
+                    .ToListAsync(ct);
+                query = query.Where(p => assignedProjectIds.Contains(p.Id));
+            }
+
+            await LoadInternalAsync(db, query, ct);
+        }
+        catch (OperationCanceledException) { /* newer call superseded this one */ }
+    }
+
+    private async Task LoadInternalAsync(LocalDbContext db, IQueryable<LocalProject> query, CancellationToken ct)
+    {
+        var searchSnapshot = SearchText;
+        var statusSnapshot = StatusFilter;
+
+        if (!string.IsNullOrWhiteSpace(searchSnapshot))
+            query = query.Where(p => p.Name.Contains(searchSnapshot) ||
+                (p.Client != null && p.Client.Contains(searchSnapshot)));
+
+        if (statusSnapshot != "Все")
+        {
+            var status = statusSnapshot switch
             {
                 "Планирование" => ProjectStatus.Planning,
                 "В работе"     => ProjectStatus.InProgress,
@@ -57,10 +87,12 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 query = query.Where(p => p.Status == status.Value);
         }
 
-        var list = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+        var list = await query.OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
 
         // Populate progress stats for each project
-        var allTasks = await db.Tasks.ToListAsync();
+        var allTasks = await db.Tasks.ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
         foreach (var project in list)
         {
             var projTasks = allTasks.Where(t => t.ProjectId == project.Id).ToList();
@@ -74,7 +106,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         var activities = await db.ActivityLogs
             .OrderByDescending(a => a.CreatedAt)
             .Take(10)
-            .ToListAsync();
+            .ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
         RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
     }
 
@@ -156,6 +189,23 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         if (project.IsSynced)
             await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Delete, new { });
 
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task MarkProjectForDeletionAsync(LocalProject project)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Projects.FindAsync(project.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id);
         await LoadAsync();
     }
 

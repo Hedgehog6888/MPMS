@@ -185,7 +185,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             req with { Id = localId });
 
         await LoadAsync();
-        UpdateTaskProgress(db);
+        await UpdateTaskProgressAsync();
     }
 
     public async Task SaveUpdatedStageAsync(Guid id, UpdateStageRequest req)
@@ -205,7 +205,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         await _sync.QueueOperationAsync("Stage", id, SyncOperation.Update, req);
         await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id);
         await LoadAsync();
-        UpdateTaskProgress(db);
+        await UpdateTaskProgressAsync();
     }
 
     public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)
@@ -253,6 +253,23 @@ public partial class TaskDetailViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.TaskStages.FindAsync(stage.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
     private async Task DeleteStageAsync(LocalTaskStage stage)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -267,22 +284,30 @@ public partial class TaskDetailViewModel : ViewModelBase
 
         await LogActivityAsync(db, $"Удалён этап «{stage.Name}»", "Stage", stage.Id);
         await LoadAsync();
-        UpdateTaskProgress(db);
+        await UpdateTaskProgressAsync();
     }
 
-    private void UpdateTaskProgress(LocalDbContext db)
+    private async System.Threading.Tasks.Task UpdateTaskProgressAsync()
     {
         if (Task is null) return;
         var taskId = Task.Id;
-        _ = System.Threading.Tasks.Task.Run(async () =>
+        await using var ctx = await _dbFactory.CreateDbContextAsync();
+        var taskEntity = await ctx.Tasks.FindAsync(taskId);
+        if (taskEntity is null) return;
+        var stages = await ctx.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
+        taskEntity.TotalStages = stages.Count;
+        taskEntity.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+        await ctx.SaveChangesAsync();
+
+        // Update the in-memory Task so the UI reflects the new progress immediately
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            await using var ctx = await _dbFactory.CreateDbContextAsync();
-            var taskEntity = await ctx.Tasks.FindAsync(taskId);
-            if (taskEntity is null) return;
-            var stages = await ctx.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
-            taskEntity.TotalStages = stages.Count;
-            taskEntity.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
-            await ctx.SaveChangesAsync();
+            if (Task is not null)
+            {
+                Task.TotalStages = taskEntity.TotalStages;
+                Task.CompletedStages = taskEntity.CompletedStages;
+                OnPropertyChanged(nameof(Task));
+            }
         });
     }
 }

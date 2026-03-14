@@ -56,8 +56,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var tasks = await db.Tasks
-            .Where(t => t.ProjectId == Project.Id)
+        var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id);
+
+        // Workers only see tasks assigned to them
+        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+        if (isWorker && _auth.UserId.HasValue)
+            tasksQuery = tasksQuery.Where(t => t.AssignedUserId == _auth.UserId.Value);
+
+        var tasks = await tasksQuery
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
@@ -89,6 +95,12 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .Where(s => taskIds.Contains(s.TaskId))
             .OrderBy(s => s.CreatedAt)
             .ToListAsync();
+
+        // Populate TaskName for each stage
+        var taskNameDict = tasks.ToDictionary(t => t.Id, t => t.Name);
+        foreach (var stage in stages)
+            stage.TaskName = taskNameDict.GetValueOrDefault(stage.TaskId, "—");
+
         AllStages = new ObservableCollection<LocalTaskStage>(stages);
 
         // Load files
@@ -237,6 +249,23 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task MarkTaskForDeletionAsync(LocalTask task)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Tasks.FindAsync(task.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id);
         await LoadAsync();
     }
 

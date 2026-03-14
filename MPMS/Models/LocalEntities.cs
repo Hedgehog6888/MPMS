@@ -41,6 +41,7 @@ public class LocalProject : LocalEntity
     [MaxLength(100)] public string ManagerName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool IsMarkedForDeletion { get; set; } = false;
 
     [NotMapped] public int TotalTasks { get; set; }
     [NotMapped] public int CompletedTasks { get; set; }
@@ -66,6 +67,7 @@ public class LocalTask : LocalEntity
     public int CompletedStages { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool IsMarkedForDeletion { get; set; } = false;
 
     public int ProgressPercent => TotalStages == 0 ? 0
         : (int)Math.Round((double)CompletedStages / TotalStages * 100);
@@ -85,6 +87,8 @@ public class LocalTaskStage : LocalEntity
     public StageStatus Status { get; set; } = StageStatus.Planned;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool IsMarkedForDeletion { get; set; } = false;
+    [NotMapped] public string TaskName { get; set; } = string.Empty;
 }
 
 public class LocalMaterial : LocalEntity

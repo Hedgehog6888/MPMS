@@ -15,6 +15,7 @@ public partial class CreateTaskOverlay : UserControl
     private LocalTask? _editTask;
     private Guid? _fixedProjectId;
     private Func<System.Threading.Tasks.Task>? _onSaved;
+    private Action? _onAfterSave; // Optional: custom navigation after save (e.g. reopen detail overlay)
 
     public CreateTaskOverlay()
     {
@@ -32,10 +33,11 @@ public partial class CreateTaskOverlay : UserControl
         _ = LoadDataAsync(null, null);
     }
 
-    public void SetEditMode(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null)
+    public void SetEditMode(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)
     {
         _editTask = task;
         _onSaved = onSaved;
+        _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать задачу";
         SaveButton.Content = "Сохранить изменения";
         StatusRow.Visibility = Visibility.Visible;
@@ -134,7 +136,11 @@ public partial class CreateTaskOverlay : UserControl
                 await taskDetailVm.EditTaskAsync(_editTask.Id, req);
                 if (_onSaved is not null) await _onSaved();
             }
-            MainWindow.Instance?.HideDrawer();
+
+            if (_onAfterSave is not null)
+                _onAfterSave();
+            else
+                MainWindow.Instance?.HideDrawer();
         }
         catch (Exception ex)
         {

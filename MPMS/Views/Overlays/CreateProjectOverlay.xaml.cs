@@ -14,6 +14,7 @@ public partial class CreateProjectOverlay : UserControl
     private ProjectsViewModel? _vm;
     private LocalProject? _editProject;
     private Func<System.Threading.Tasks.Task>? _onSaved;
+    private Action? _onAfterSave;
 
     public CreateProjectOverlay()
     {
@@ -29,11 +30,12 @@ public partial class CreateProjectOverlay : UserControl
     }
 
     public void SetEditMode(ProjectsViewModel vm, LocalProject project,
-        Func<System.Threading.Tasks.Task>? onSaved = null)
+        Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)
     {
         _vm = vm;
         _editProject = project;
         _onSaved = onSaved;
+        _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать проект";
         SaveButton.Content = "Сохранить изменения";
         StatusRow.Visibility = Visibility.Visible;
@@ -162,7 +164,11 @@ public partial class CreateProjectOverlay : UserControl
                 await _vm!.SaveUpdatedProjectAsync(_editProject.Id, req);
                 if (_onSaved is not null) await _onSaved();
             }
-            MainWindow.Instance?.HideDrawer();
+
+            if (_onAfterSave is not null)
+                _onAfterSave();
+            else
+                MainWindow.Instance?.HideDrawer();
         }
         catch (Exception ex)
         {

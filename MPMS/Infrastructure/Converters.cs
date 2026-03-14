@@ -346,3 +346,70 @@ public class DateOnlyToDateTimeConverter : IValueConverter
         return null;
     }
 }
+
+/// <summary>
+/// Converts a required role string to Visibility based on current user's role.
+/// Parameter: comma-separated list of roles that should see Visible (e.g., "Admin,Administrator").
+/// </summary>
+public class RequiredRoleToVisibilityConverter : IValueConverter
+{
+    public static readonly RequiredRoleToVisibilityConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (parameter is not string requiredRoles) return Visibility.Collapsed;
+        var auth = App.Services?.GetService(typeof(MPMS.Services.IAuthService)) as MPMS.Services.IAuthService;
+        if (auth is null) return Visibility.Collapsed;
+        string userRole = auth.UserRole ?? "";
+        var roles = requiredRoles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        bool matches = roles.Any(r => string.Equals(r, userRole, StringComparison.OrdinalIgnoreCase));
+        return matches ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps EntityType string to an accent SolidColorBrush for activity log items.</summary>
+public class EntityTypeToAccentBrushConverter : IValueConverter
+{
+    public static readonly EntityTypeToAccentBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush ProjectBrush  = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
+    private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xEA, 0xB3, 0x08));
+    private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
+    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            "Project"  => ProjectBrush,
+            "Task"     => TaskBrush,
+            "Stage"    => StageBrush,
+            "Message"  => MessageBrush,
+            _          => DefaultBrush
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps EntityType string to a localized Russian label for activity log badges.</summary>
+public class EntityTypeToBadgeLabelConverter : IValueConverter
+{
+    public static readonly EntityTypeToBadgeLabelConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            "Project"  => "Проект",
+            "Task"     => "Задача",
+            "Stage"    => "Этап",
+            "Message"  => "Сообщение",
+            _          => "—"
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
