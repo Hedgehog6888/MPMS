@@ -71,6 +71,8 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- Search -->
@@ -109,8 +111,26 @@
                             </Grid>
                         </Border>
 
-                        <!-- Status filter -->
+                        <!-- Project filter -->
                         <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding ProjectFilterOptions}"
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding ProjectFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="200" Margin="0,0,8,0"/>
+
+                        <!-- Task filter -->
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding TaskFilterOptions}"
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding TaskFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="220" Margin="0,0,8,0"/>
+
+                        <!-- Status filter -->
+                        <ComboBox Grid.Column="3"
                                   ItemsSource="{Binding StatusOptions}"
                                   SelectedItem="{Binding StatusFilter}"
                                   Style="{StaticResource FormCombo}"
