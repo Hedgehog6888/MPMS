@@ -245,10 +245,14 @@
                                     <Setter TargetName="Bg" Property="Background" Value="#111111"/>
                                     <Setter Property="Foreground" Value="White"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsChecked" Value="False"/>
+                                    </MultiTrigger.Conditions>
                                     <Setter TargetName="Bg" Property="Background"
                                             Value="{StaticResource BackgroundBrush}"/>
-                                </Trigger>
+                                </MultiTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
