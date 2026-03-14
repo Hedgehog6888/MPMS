@@ -88,6 +88,28 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
+                    <!-- Create stage button (same style as task) -->
+                    <Button Click="AddProjectStage_Click"
+                            Height="36" Padding="14,0" FontSize="13"
+                            x:Name="CreateStageBtn" Margin="8,0,0,0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="Black" CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}"
+                                               Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.9"/>
+                                        <TextBlock Text="Создать этап" Foreground="White" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#333"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -921,29 +943,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <!-- Stages toolbar -->
-                <Border Grid.Row="0" Background="White" Padding="24,12"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-                    <Button x:Name="AddProjectStageBtn" Click="AddProjectStage_Click" Height="34" Padding="14,0" FontSize="13">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Bg" Background="{StaticResource PrimaryBrush}" CornerRadius="6"
-                                        BorderThickness="0"
-                                        Padding="{TemplateBinding Padding}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="+" FontSize="16" Foreground="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Создать этап" Foreground="White" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#1558A8"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                </Border>
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24,16">
 
