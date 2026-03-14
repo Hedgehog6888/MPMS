@@ -28,6 +28,8 @@ public partial class CreateStageOverlay : UserControl
         _vm.SetTask(task);
         _onSaved = onSaved;
         TaskNameLabel.Text = $"Задача: {task.Name}";
+        ProjectNameRow.Visibility = Visibility.Visible;
+        ProjectNameBox.Text = task.ProjectName ?? "—";
         ProjectTaskPickerRow.Visibility = Visibility.Collapsed;
         _ = LoadUsersAsync(taskId: task.Id);
     }
@@ -58,6 +60,7 @@ public partial class CreateStageOverlay : UserControl
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
         StatusRow.Visibility = Visibility.Collapsed;
         ProjectCombo.Visibility = Visibility.Collapsed;
+        ProjectNameRow.Visibility = Visibility.Visible;
         _ = LoadProjectTasksAndUsersAsync(projectId);
     }
 
@@ -65,6 +68,8 @@ public partial class CreateStageOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(projectId);
+        ProjectNameBox.Text = project?.Name ?? "—";
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
         TaskCombo.ItemsSource = tasks;
         if (tasks.Count > 0)
@@ -143,7 +148,14 @@ public partial class CreateStageOverlay : UserControl
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
-        => MainWindow.Instance?.HideDrawer();
+    {
+        // Для контекстов с двойным оверлеем (этап в задаче)
+        // возвращаемся к предыдущему состоянию через onAfterSave.
+        if (_onAfterSave is not null)
+            _onAfterSave();
+        else
+            MainWindow.Instance?.HideDrawer();
+    }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {

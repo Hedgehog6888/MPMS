@@ -19,14 +19,48 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private Action? _goBackAction;
 
     [ObservableProperty] private LocalProject? _project;
+
+    // ─── Tasks collections ──────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _plannedTasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _inProgressTasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _pausedTasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _completedTasks = [];
+
+    // Filtered views for UI (list + kanban)
+    [ObservableProperty] private ObservableCollection<LocalTask> _filteredTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _filteredPlannedTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _filteredInProgressTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _filteredPausedTasks = [];
+    [ObservableProperty] private ObservableCollection<LocalTask> _filteredCompletedTasks = [];
+
+    // ─── Task filters ──────────────────────────────────────────────────────────
+    [ObservableProperty] private string _taskSearchText = string.Empty;
+    [ObservableProperty] private string _taskStatusFilter = "Все";
+    [ObservableProperty] private string _taskPriorityFilter = "Все";
+
+    public IReadOnlyList<string> TaskStatusOptions { get; } =
+        ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена", "Пометка удалить"];
+
+    public IReadOnlyList<string> TaskPriorityOptions { get; } =
+        ["Все", "Низкий", "Средний", "Высокий", "Критический"];
+
+    // ─── Stages collections & filters ─────────────────────────────────────────
+    [ObservableProperty] private ObservableCollection<LocalTaskStage> _allStages = [];
+    [ObservableProperty] private ObservableCollection<LocalTaskStage> _filteredStages = [];
+    [ObservableProperty] private string _stageSearchText = string.Empty;
+    [ObservableProperty] private string _stageStatusFilter = "Все статусы";
+
+    // Фильтр этапов по задаче внутри проекта
+    [ObservableProperty] private Guid? _stageTaskFilter;
+    [ObservableProperty] private ObservableCollection<TaskFilterOption> _stageTaskFilterOptions = [];
+
+    public List<string> StageStatusOptions { get; } =
+        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
+
+    // ─── UI state and other entities ──────────────────────────────────────────
     [ObservableProperty] private string _activeTab = "Tasks";
     [ObservableProperty] private string _taskViewMode = "List";
-    [ObservableProperty] private ObservableCollection<LocalTaskStage> _allStages = [];
     [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
     [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
     [ObservableProperty] private int _totalTasks;
@@ -43,6 +77,15 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         _sync = sync;
         _auth = auth;
     }
+
+    // ─── Filter change handlers ────────────────────────────────────────────────
+    partial void OnTaskSearchTextChanged(string value) => ApplyTaskFilter();
+    partial void OnTaskStatusFilterChanged(string value) => ApplyTaskFilter();
+    partial void OnTaskPriorityFilterChanged(string value) => ApplyTaskFilter();
+
+    partial void OnStageSearchTextChanged(string value) => ApplyStageFilter();
+    partial void OnStageStatusFilterChanged(string value) => ApplyStageFilter();
+    partial void OnStageTaskFilterChanged(Guid? value) => ApplyStageFilter();
 
     public void SetProject(LocalProject project, Action? goBackAction = null)
     {
@@ -72,6 +115,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         InProgressTasks = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.InProgress));
         PausedTasks     = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Paused));
         CompletedTasks  = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Completed));
+
+        // Initialize filtered task collections based on current filters
+        ApplyTaskFilter();
 
         TotalTasks = tasks.Count;
         CompletedTasksCount = tasks.Count(t => t.Status == TaskStatus.Completed);
@@ -103,6 +149,18 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         AllStages = new ObservableCollection<LocalTaskStage>(stages);
 
+        // Построить опции фильтра задач для вкладки "Этапы" проекта
+        var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
+        taskOpts.AddRange(stages
+            .Where(s => s.TaskId != Guid.Empty)
+            .GroupBy(s => new { s.TaskId, s.TaskName })
+            .OrderBy(g => g.Key.TaskName)
+            .Select(g => new TaskFilterOption(g.Key.TaskId, g.Key.TaskName ?? "—")));
+        StageTaskFilterOptions = new ObservableCollection<TaskFilterOption>(taskOpts);
+
+        // Initialize filtered stages based on current filters
+        ApplyStageFilter();
+
         // Load files
         var files = await db.Files
             .Where(f => f.ProjectId == Project.Id)
@@ -123,6 +181,95 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
         Messages = new ObservableCollection<LocalMessage>(messages);
+    }
+
+    private void ApplyTaskFilter()
+    {
+        var query = Tasks.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(TaskSearchText))
+        {
+            var term = TaskSearchText.Trim();
+            query = query.Where(t =>
+                (!string.IsNullOrEmpty(t.Name) && t.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(t.Description) && t.Description.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        if (TaskStatusFilter == "Пометка удалить")
+        {
+            query = query.Where(t => t.IsMarkedForDeletion);
+        }
+        else if (TaskStatusFilter != "Все")
+        {
+            var status = TaskStatusFilter switch
+            {
+                "Запланирована"  => TaskStatus.Planned,
+                "Выполняется"    => TaskStatus.InProgress,
+                "Приостановлена" => TaskStatus.Paused,
+                "Завершена"      => TaskStatus.Completed,
+                _                => (TaskStatus?)null
+            };
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+        }
+
+        if (TaskPriorityFilter != "Все")
+        {
+            var priority = TaskPriorityFilter switch
+            {
+                "Низкий"      => TaskPriority.Low,
+                "Средний"     => TaskPriority.Medium,
+                "Высокий"     => TaskPriority.High,
+                "Критический" => TaskPriority.Critical,
+                _             => (TaskPriority?)null
+            };
+            if (priority.HasValue)
+                query = query.Where(t => t.Priority == priority.Value);
+        }
+
+        var list = query.OrderByDescending(t => t.CreatedAt).ToList();
+
+        FilteredTasks           = new ObservableCollection<LocalTask>(list);
+        FilteredPlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
+        FilteredInProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress));
+        FilteredPausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused));
+        FilteredCompletedTasks  = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Completed));
+    }
+
+    private void ApplyStageFilter()
+    {
+        var query = AllStages.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(StageSearchText))
+        {
+            var term = StageSearchText.Trim().ToLowerInvariant();
+            query = query.Where(s =>
+                (!string.IsNullOrEmpty(s.Name) && s.Name.ToLowerInvariant().Contains(term)) ||
+                (!string.IsNullOrEmpty(s.TaskName) && s.TaskName.ToLowerInvariant().Contains(term)));
+        }
+
+        if (StageTaskFilter.HasValue)
+            query = query.Where(s => s.TaskId == StageTaskFilter.Value);
+
+        if (StageStatusFilter == "Пометка удалить")
+        {
+            query = query.Where(s => s.IsMarkedForDeletion);
+        }
+        else if (StageStatusFilter != "Все статусы")
+        {
+            var targetStatus = StageStatusFilter switch
+            {
+                "Запланирован" => StageStatus.Planned,
+                "Выполняется"  => StageStatus.InProgress,
+                "Завершён"     => StageStatus.Completed,
+                _              => (StageStatus?)null
+            };
+            if (targetStatus.HasValue)
+                query = query.Where(s => s.Status == targetStatus.Value);
+        }
+
+        var list = query.ToList();
+        FilteredStages = new ObservableCollection<LocalTaskStage>(list);
     }
 
     public async Task UpdateProjectAsync(Guid id, UpdateProjectRequest req)

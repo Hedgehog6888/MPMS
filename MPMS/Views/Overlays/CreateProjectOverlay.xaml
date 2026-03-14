@@ -45,19 +45,23 @@
 
                 <!-- Name -->
                 <TextBlock Text="Название проекта *" Style="{StaticResource FormLabel}"/>
-                <TextBox x:Name="NameBox" Style="{StaticResource FormInput}"
-                         Foreground="#172B4D" Background="White"
-                         Margin="0,0,0,16" Height="38"/>
+                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                        CornerRadius="6" Padding="10,9" Margin="0,0,0,16" Height="38">
+                    <TextBox x:Name="NameBox" BorderThickness="0" Background="Transparent"
+                             Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                             Padding="0"/>
+                </Border>
 
                 <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
-                <TextBox x:Name="DescriptionBox" Style="{StaticResource FormInput}"
-                         Foreground="#172B4D" Background="White"
-                         Margin="0,0,0,16" Height="80"
-                         TextWrapping="Wrap" AcceptsReturn="True"
-                         VerticalContentAlignment="Top"
-                         Padding="10,8"
-                         VerticalScrollBarVisibility="Auto"/>
+                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                        CornerRadius="6" Padding="10,8" Margin="0,0,0,16">
+                    <TextBox x:Name="DescriptionBox" BorderThickness="0" Background="Transparent"
+                             Foreground="#172B4D" FontSize="13"
+                             Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                             VerticalContentAlignment="Top" Padding="0"
+                             VerticalScrollBarVisibility="Auto"/>
+                </Border>
 
                 <!-- Client + Address row -->
                 <Grid Margin="0,0,0,16">
@@ -68,15 +72,21 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Заказчик *" Style="{StaticResource FormLabel}"/>
-                        <TextBox x:Name="ClientBox" Style="{StaticResource FormInput}"
-                                 Foreground="#172B4D" Background="White"
-                                 Height="38"/>
+                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="6" Padding="10,9" Height="38">
+                            <TextBox x:Name="ClientBox" BorderThickness="0" Background="Transparent"
+                                     Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                                     Padding="0"/>
+                        </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="Адрес объекта" Style="{StaticResource FormLabel}"/>
-                        <TextBox x:Name="AddressBox" Style="{StaticResource FormInput}"
-                                 Foreground="#172B4D" Background="White"
-                                 Height="38"/>
+                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="6" Padding="10,9" Height="38">
+                            <TextBox x:Name="AddressBox" BorderThickness="0" Background="Transparent"
+                                     Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                                     Padding="0"/>
+                        </Border>
                     </StackPanel>
                 </Grid>
 

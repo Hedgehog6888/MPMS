@@ -22,7 +22,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _statusFilter = "Все";
 
     public IReadOnlyList<string> StatusOptions { get; } =
-        ["Все", "Планирование", "В работе", "Завершён", "Отменён"];
+        ["Все", "Планирование", "В работе", "Завершён", "Отменён", "Пометка удалить"];
 
     public ProjectsViewModel(IDbContextFactory<LocalDbContext> dbFactory,
         ISyncService sync, IAuthService auth)
@@ -73,7 +73,11 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             query = query.Where(p => p.Name.Contains(searchSnapshot) ||
                 (p.Client != null && p.Client.Contains(searchSnapshot)));
 
-        if (statusSnapshot != "Все")
+        if (statusSnapshot == "Пометка удалить")
+        {
+            query = query.Where(p => p.IsMarkedForDeletion);
+        }
+        else if (statusSnapshot != "Все")
         {
             var status = statusSnapshot switch
             {

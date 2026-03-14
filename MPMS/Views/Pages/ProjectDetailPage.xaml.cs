@@ -33,6 +33,7 @@ public partial class ProjectDetailPage : UserControl
                         or "ProjectManager" or "Manager" or "Project Manager";
         EditProjectBtn.Visibility      = _canEdit ? Visibility.Visible : Visibility.Collapsed;
         CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
+        CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
         CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -55,7 +56,8 @@ public partial class ProjectDetailPage : UserControl
         FilesPanel.Visibility      = tab == "Files"      ? Visibility.Visible : Visibility.Collapsed;
         MaterialsPanel.Visibility  = tab == "Materials"  ? Visibility.Visible : Visibility.Collapsed;
 
-        CreateTaskBtn.Visibility = (tab == "Tasks" && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
+        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
+        CreateStageBtn.Visibility = (tab == "Stages" && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
         {
@@ -100,7 +102,11 @@ public partial class ProjectDetailPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         var overlay = new CreateTaskOverlay();
-        overlay.SetEditMode(task, async () => await VM.LoadAsync());
+        var currentTask = task;
+        overlay.SetEditMode(
+            currentTask,
+            onSaved: async () => await VM.LoadAsync(),
+            onAfterSave: () => OpenTaskDetail(currentTask));
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 

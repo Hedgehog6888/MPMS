@@ -214,22 +214,20 @@
                                 <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
+                                <!-- Active tab: solid black background -->
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
-                                    <Setter TargetName="Bg" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="#000000" BlurRadius="4" Opacity="0.08" ShadowDepth="1"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="Foreground" Value="#172B4D"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                    <Setter TargetName="Bg" Property="Effect" Value="{x:Null}"/>
+                                    <Setter Property="Foreground" Value="White"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
+                                <!-- Hover for inactive tab: light background, dark text -->
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
                                         <Condition Property="IsChecked" Value="False"/>
                                     </MultiTrigger.Conditions>
-                                    <Setter TargetName="Bg" Property="Background" Value="White"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                     <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                                 </MultiTrigger>
                             </ControlTemplate.Triggers>
@@ -283,7 +281,7 @@
                 <Setter Property="Margin"     Value="0,0,0,6"/>
             </Style>
 
-            <!-- Single-line / multi-line TextBox -->
+            <!-- Single-line / multi-line TextBox - uses default template to avoid text visibility issues -->
             <Style x:Key="FormInput" TargetType="TextBox">
                 <Setter Property="Background"      Value="White"/>
                 <Setter Property="Foreground"      Value="#172B4D"/>
@@ -295,46 +293,6 @@
                 <Setter Property="CaretBrush"      Value="#172B4D"/>
                 <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
                 <Setter Property="SelectionTextBrush" Value="#172B4D"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="TextBox">
-                            <Border x:Name="Bg"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6"
-                                    MinHeight="38">
-                                <ScrollViewer x:Name="PART_ContentHost"
-                                              Margin="{TemplateBinding Padding}"
-                                              VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"
-                                              HorizontalScrollBarVisibility="Hidden"
-                                              VerticalAlignment="Stretch"
-                                              Focusable="False"
-                                              Background="Transparent"
-                                              Foreground="{TemplateBinding Foreground}"
-                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsFocused" Value="True">
-                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#1B6EC2"/>
-                                    <Setter TargetName="Bg" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect Color="#1B6EC2" BlurRadius="6"
-                                                              Opacity="0.2" ShadowDepth="0"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#B0BEC5"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.5"/>
-                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
             </Style>
 
             <!-- ComboBox with rounded corners, custom dropdown popup -->

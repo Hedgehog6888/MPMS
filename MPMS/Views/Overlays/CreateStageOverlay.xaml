@@ -43,20 +43,42 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="20">
 
+                <!-- Project name (read-only, for fixed project context) -->
+                <StackPanel x:Name="ProjectNameRow" Margin="0,0,0,16" Visibility="Collapsed">
+                    <TextBlock Text="Проект" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="6" Padding="10,9" Height="38">
+                        <TextBox x:Name="ProjectNameBox"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Foreground="#172B4D"
+                                 FontSize="13"
+                                 VerticalContentAlignment="Center"
+                                 Padding="0"
+                                 IsReadOnly="True"
+                                 IsHitTestVisible="False"/>
+                    </Border>
+                </StackPanel>
+
                 <!-- Stage name -->
                 <TextBlock Text="Название этапа *" Style="{StaticResource FormLabel}"/>
-                <TextBox x:Name="NameBox" Style="{StaticResource FormInput}"
-                         Foreground="#172B4D" Background="White"
-                         Margin="0,0,0,16" Height="38"/>
+                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                        CornerRadius="6" Padding="10,9" Margin="0,0,0,16" Height="38">
+                    <TextBox x:Name="NameBox" BorderThickness="0" Background="Transparent"
+                             Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                             Padding="0"/>
+                </Border>
 
                 <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
-                <TextBox x:Name="DescriptionBox" Style="{StaticResource FormInput}"
-                         Foreground="#172B4D" Background="White"
-                         Margin="0,0,0,16" Height="80"
-                         TextWrapping="Wrap" AcceptsReturn="True"
-                         VerticalContentAlignment="Top"
-                         VerticalScrollBarVisibility="Auto"/>
+                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                        CornerRadius="6" Padding="10,8" Margin="0,0,0,16">
+                    <TextBox x:Name="DescriptionBox" BorderThickness="0" Background="Transparent"
+                             Foreground="#172B4D" FontSize="13"
+                             Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                             VerticalContentAlignment="Top" Padding="0"
+                             VerticalScrollBarVisibility="Auto"/>
+                </Border>
 
                 <!-- Project + Task picker (when creating from StagesPage) -->
                 <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,16" Visibility="Collapsed">

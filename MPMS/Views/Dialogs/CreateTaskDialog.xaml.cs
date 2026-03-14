@@ -26,7 +26,11 @@ public partial class CreateTaskDialog : Window
     private async Task LoadDataAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var users = await db.Users.OrderBy(u => u.Name).ToListAsync();
+        var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
+        var users = await db.Users
+            .Where(u => workerRoles.Contains(u.RoleName))
+            .OrderBy(u => u.Name)
+            .ToListAsync();
         AssigneeCombo.ItemsSource = users;
 
         var projects = await db.Projects.OrderBy(p => p.Name).ToListAsync();

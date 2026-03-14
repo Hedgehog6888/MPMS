@@ -26,11 +26,19 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
     [ObservableProperty] private ObservableCollection<TaskStageGroup> _stageGroups = [];
+
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все статусы";
 
+    // Фильтры по проектам и задачам
+    [ObservableProperty] private Guid? _projectFilter;
+    [ObservableProperty] private Guid? _taskFilter;
+
+    [ObservableProperty] private ObservableCollection<ProjectFilterOption> _projectFilterOptions = [];
+    [ObservableProperty] private ObservableCollection<TaskFilterOption> _taskFilterOptions = [];
+
     public List<string> StatusOptions { get; } =
-        ["Все статусы", "Запланирован", "Выполняется", "Завершён"];
+        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
 
     public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
     {
@@ -40,6 +48,13 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnStatusFilterChanged(string value) => ApplyFilter();
+    partial void OnProjectFilterChanged(Guid? value)
+    {
+        UpdateTaskFilterOptions();
+        ApplyFilter();
+    }
+
+    partial void OnTaskFilterChanged(Guid? value) => ApplyFilter();
 
     public async Task LoadAsync()
     {
@@ -70,6 +85,18 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             }).ToList();
 
             Stages = new ObservableCollection<StageItem>(items);
+
+            // Построение опций фильтров по проектам и задачам
+            var projectOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
+            projectOpts.AddRange(items
+                .Where(i => i.ProjectId != Guid.Empty)
+                .GroupBy(i => new { i.ProjectId, i.ProjectName })
+                .OrderBy(g => g.Key.ProjectName)
+                .Select(g => new ProjectFilterOption(g.Key.ProjectId, g.Key.ProjectName)));
+            ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(projectOpts);
+
+            UpdateTaskFilterOptions();
+
             ApplyFilter();
         }
         catch (Exception ex)
@@ -95,7 +122,17 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 s.ProjectName.ToLower().Contains(term));
         }
 
-        if (StatusFilter != "Все статусы")
+        if (ProjectFilter.HasValue)
+            query = query.Where(s => s.ProjectId == ProjectFilter.Value);
+
+        if (TaskFilter.HasValue)
+            query = query.Where(s => s.TaskId == TaskFilter.Value);
+
+        if (StatusFilter == "Пометка удалить")
+        {
+            query = query.Where(s => s.Stage.IsMarkedForDeletion);
+        }
+        else if (StatusFilter != "Все статусы")
         {
             var targetStatus = StatusFilter switch
             {
@@ -117,6 +154,27 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName, g.ToList()))
             .ToList();
         StageGroups = new ObservableCollection<TaskStageGroup>(groups);
+    }
+
+    private void UpdateTaskFilterOptions()
+    {
+        IEnumerable<StageItem> source = Stages;
+
+        if (ProjectFilter.HasValue)
+            source = source.Where(i => i.ProjectId == ProjectFilter.Value);
+
+        var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
+        taskOpts.AddRange(source
+            .Where(i => i.TaskId != Guid.Empty)
+            .GroupBy(i => new { i.TaskId, i.TaskName })
+            .OrderBy(g => g.Key.TaskName)
+            .Select(g => new TaskFilterOption(g.Key.TaskId, g.Key.TaskName)));
+
+        TaskFilterOptions = new ObservableCollection<TaskFilterOption>(taskOpts);
+
+        // Сбросить текущий фильтр задачи, если он больше не доступен
+        if (!TaskFilterOptions.Any(o => o.Id == TaskFilter))
+            TaskFilter = null;
     }
 
     [RelayCommand]
@@ -195,5 +253,17 @@ public class TaskStageGroup
         ProjectId = projectId;
         ProjectName = projectName;
         Stages = stages;
+    }
+}
+
+public class TaskFilterOption
+{
+    public Guid? Id { get; }
+    public string Name { get; }
+
+    public TaskFilterOption(Guid? id, string name)
+    {
+        Id = id;
+        Name = name;
     }
 }

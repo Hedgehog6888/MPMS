@@ -122,9 +122,15 @@
             </Grid>
         </Border>
 
-        <!-- ── SCROLLABLE CONTENT ──────────────────────────────────── -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20,16,20,16">
+        <!-- ── CONTENT (no overlay scroll; only tab lists scroll) ───── -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Fixed: title, description, progress, assignee, tabs -->
+            <StackPanel Grid.Row="0" Margin="20,16,20,12">
 
                 <!-- Task title -->
                 <TextBlock Text="{Binding Task.Name}"
@@ -238,219 +244,233 @@
                     </Border>
                 </Border>
 
+            </StackPanel>
+
+            <!-- Tab content area: only list scrolls, buttons/input at bottom -->
+            <Grid Grid.Row="1" Margin="20,0,20,16" MinHeight="200">
                 <!-- STAGES tab content -->
-                <StackPanel x:Name="StagesPanel" Margin="0,12,0,0">
-                    <ItemsControl ItemsSource="{Binding Stages}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <!-- Stage card with colored left border by status -->
-                                <Border Margin="0,0,0,10" CornerRadius="8"
-                                        BorderBrush="#DFE1E6" BorderThickness="1"
-                                        Background="White">
-                                    <Grid>
-                                        <!-- Status color strip -->
-                                        <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8"
-                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
-                                        <StackPanel Margin="18,12,12,12">
-                                            <!-- Row 1: Name + status badge + actions -->
-                                            <Grid Margin="0,0,0,6">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontSize="13" FontWeight="SemiBold"
-                                                           Foreground="#172B4D"
-                                                           TextWrapping="Wrap"
-                                                           VerticalAlignment="Center"/>
-                                                <!-- Status badge -->
-                                                <Border Grid.Column="1" CornerRadius="4" Padding="8,3"
-                                                        Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Status, Converter={StaticResource StageStatusToString}}"
-                                                               FontSize="10" FontWeight="SemiBold"
-                                                               Foreground="White"/>
-                                                </Border>
-                                                <!-- Deletion mark badge -->
-                                                <Border Grid.Column="1" CornerRadius="4" Padding="6,3"
-                                                        Background="#FFEBE6" VerticalAlignment="Center"
-                                                        HorizontalAlignment="Right" Margin="8,0,0,0"
-                                                        Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                    <TextBlock Text="К удалению" FontSize="10" FontWeight="SemiBold"
-                                                               Foreground="#BF2600"/>
-                                                </Border>
-                                            </Grid>
+                <Grid x:Name="StagesPanel" Margin="0,0,0,0" MinHeight="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                                            <!-- Description -->
-                                            <TextBlock Text="{Binding Description}"
-                                                       FontSize="12" Foreground="#6B778C"
-                                                       TextWrapping="Wrap" Margin="0,0,0,8"
-                                                       Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                    <!-- Scrollable list / empty state -->
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding Stages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Stage card with colored left border by status -->
+                                        <Border Margin="0,0,0,10" CornerRadius="8"
+                                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                                Background="White">
+                                            <Grid>
+                                                <!-- Status color strip -->
+                                                <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8"
+                                                        Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                                <StackPanel Margin="18,12,12,12">
+                                                    <!-- Row 1: Name + status badge + actions -->
+                                                    <Grid Margin="0,0,0,6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="13" FontWeight="SemiBold"
+                                                                   Foreground="#172B4D"
+                                                                   TextWrapping="Wrap"
+                                                                   VerticalAlignment="Center"/>
+                                                        <!-- Status badge -->
+                                                        <Border Grid.Column="1" CornerRadius="4" Padding="8,3"
+                                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Status, Converter={StaticResource StageStatusToString}}"
+                                                                       FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="White"/>
+                                                        </Border>
+                                                        <!-- Deletion mark badge -->
+                                                        <Border Grid.Column="1" CornerRadius="4" Padding="6,3"
+                                                                Background="#FFEBE6" VerticalAlignment="Center"
+                                                                HorizontalAlignment="Right" Margin="8,0,0,0"
+                                                                Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="К удалению" FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="#BF2600"/>
+                                                        </Border>
+                                                    </Grid>
 
-                                            <!-- Assignee -->
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
-                                                        Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
-                                                <Border Width="22" Height="22" CornerRadius="11"
-                                                        Background="#E8E9EC" Margin="0,0,6,0">
-                                                    <TextBlock FontSize="8" FontWeight="Bold"
-                                                               Foreground="#172B4D"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Text="{Binding AssignedUserName}"/>
-                                                </Border>
-                                                <TextBlock Text="{Binding AssignedUserName}"
-                                                           FontSize="12" Foreground="#6B778C"
-                                                           VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                                    <!-- Description -->
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="12" Foreground="#6B778C"
+                                                               TextWrapping="Wrap" Margin="0,0,0,8"
+                                                               Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
 
-                                            <!-- Action buttons row -->
-                                            <StackPanel Orientation="Horizontal">
-                                                <!-- Start: Planned → InProgress -->
-                                                <Button Tag="{Binding}"
-                                                        Click="StartStage_Click" Margin="0,0,6,0"
-                                                        Height="28" Padding="10,0"
-                                                        Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Planned}">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bg" Background="#EBF2FF" CornerRadius="4"
-                                                                    Padding="{TemplateBinding Padding}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <Image Source="{svgc:SvgImage Source=/icons/play.svg, AppName=MPMS}" Width="11" Height="11" Margin="0,0,4,0" VerticalAlignment="Center" Opacity="0.9"/>
-                                                                    <TextBlock Text="Начать" FontSize="11" FontWeight="SemiBold"
-                                                                               Foreground="#1B6EC2" VerticalAlignment="Center"/>
-                                                                </StackPanel>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bg" Property="Background" Value="#D0E8FF"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
+                                                    <!-- Assignee -->
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                                                Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
+                                                        <Border Width="22" Height="22" CornerRadius="11"
+                                                                Background="#E8E9EC" Margin="0,0,6,0">
+                                                            <TextBlock FontSize="8" FontWeight="Bold"
+                                                                       Foreground="#172B4D"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Text="{Binding AssignedUserName}"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding AssignedUserName}"
+                                                                   FontSize="12" Foreground="#6B778C"
+                                                                   VerticalAlignment="Center"/>
+                                                    </StackPanel>
 
-                                                <!-- Complete: InProgress → Completed -->
-                                                <Button Tag="{Binding}"
-                                                        Click="CompleteStage_Click" Margin="0,0,6,0"
-                                                        Height="28" Padding="10,0"
-                                                        Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bg" Background="#E8F5E9" CornerRadius="4"
-                                                                    Padding="{TemplateBinding Padding}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}" Width="10" Height="10" Margin="0,0,4,0" VerticalAlignment="Center" Opacity="0.9"/>
-                                                                    <TextBlock Text="Завершить" FontSize="11" FontWeight="SemiBold"
-                                                                               Foreground="#00875A" VerticalAlignment="Center"/>
-                                                                </StackPanel>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bg" Property="Background" Value="#C8EDD6"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
+                                                    <!-- Action buttons row -->
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <!-- Start: Planned → InProgress -->
+                                                        <Button Tag="{Binding}"
+                                                                Click="StartStage_Click" Margin="0,0,6,0"
+                                                                Height="28" Padding="10,0"
+                                                                Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Planned}">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="Bg" Background="#EBF2FF" CornerRadius="4"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <Image Source="{svgc:SvgImage Source=/icons/play.svg, AppName=MPMS}" Width="11" Height="11" Margin="0,0,4,0" VerticalAlignment="Center" Opacity="0.9"/>
+                                                                            <TextBlock Text="Начать" FontSize="11" FontWeight="SemiBold"
+                                                                                       Foreground="#1B6EC2" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Bg" Property="Background" Value="#D0E8FF"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
 
-                                                <!-- Cancel / Revert: InProgress → Planned -->
-                                                <Button Tag="{Binding}"
-                                                        Click="RevertStage_Click" Margin="0,0,6,0"
-                                                        Height="28" Padding="10,0"
-                                                        ToolTip="Вернуть в запланированные"
-                                                        Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="4"
-                                                                    Padding="{TemplateBinding Padding}">
-                                                                <TextBlock Text="Отменить" FontSize="11" FontWeight="SemiBold"
-                                                                           Foreground="#6B778C" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bg" Property="Background" Value="#E0E3E8"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
+                                                        <!-- Complete: InProgress → Completed -->
+                                                        <Button Tag="{Binding}"
+                                                                Click="CompleteStage_Click" Margin="0,0,6,0"
+                                                                Height="28" Padding="10,0"
+                                                                Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="Bg" Background="#E8F5E9" CornerRadius="4"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}" Width="10" Height="10" Margin="0,0,4,0" VerticalAlignment="Center" Opacity="0.9"/>
+                                                                            <TextBlock Text="Завершить" FontSize="11" FontWeight="SemiBold"
+                                                                                       Foreground="#00875A" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Bg" Property="Background" Value="#C8EDD6"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
 
-                                                <!-- Reopen: Completed → InProgress -->
-                                                <Button Tag="{Binding}"
-                                                        Click="ReopenStage_Click" Margin="0,0,6,0"
-                                                        Height="28" Padding="10,0"
-                                                        ToolTip="Открыть снова"
-                                                        Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Completed}">
-                                                    <Button.Template>
-                                                        <ControlTemplate TargetType="Button">
-                                                            <Border x:Name="Bg" Background="#FFF8E1" CornerRadius="4"
-                                                                    Padding="{TemplateBinding Padding}">
-                                                                <TextBlock Text="Переоткрыть" FontSize="11" FontWeight="SemiBold"
-                                                                           Foreground="#856404" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <ControlTemplate.Triggers>
-                                                                <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter TargetName="Bg" Property="Background" Value="#FFE082"/>
-                                                                </Trigger>
-                                                            </ControlTemplate.Triggers>
-                                                        </ControlTemplate>
-                                                    </Button.Template>
-                                                </Button>
+                                                        <!-- Cancel / Revert: InProgress → Planned -->
+                                                        <Button Tag="{Binding}"
+                                                                Click="RevertStage_Click" Margin="0,0,6,0"
+                                                                Height="28" Padding="10,0"
+                                                                ToolTip="Вернуть в запланированные"
+                                                                Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="4"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <TextBlock Text="Отменить" FontSize="11" FontWeight="SemiBold"
+                                                                                   Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Bg" Property="Background" Value="#E0E3E8"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
 
-                                                <!-- Spacer -->
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                                            Width="Auto" Margin="0,0,0,0">
-                                                    <!-- Mark for deletion (Worker only) -->
-                                                    <Button ToolTip="Пометить для удаления"
-                                                            Tag="{Binding}" Click="MarkStageForDeletion_Click"
-                                                            Style="{StaticResource IconButton}"
-                                                            Width="26" Height="26" Margin="0,0,2,0"
-                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker'}">
-                                                        <TextBlock Text="🗑" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                                   Opacity="0.6"/>
-                                                    </Button>
-                                                    <!-- Delete stage (Admin/Manager) -->
-                                                    <Button ToolTip="Удалить этап"
-                                                            Tag="{Binding}" Click="DeleteStage_Click"
-                                                            Style="{StaticResource IconButton}"
-                                                            Width="26" Height="26" Margin="0,0,2,0"
-                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Admin,Administrator,Manager,ProjectManager,Project Manager'}">
-                                                        <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                               Width="12" Height="12" Opacity="0.6"/>
-                                                    </Button>
-                                                    <!-- Edit button -->
-                                                    <Button x:Name="EditStageBtn" ToolTip="Редактировать этап" Tag="{Binding}"
-                                                            Click="EditStage_Click"
-                                                            Style="{StaticResource IconButton}"
-                                                            Width="26" Height="26">
-                                                        <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
-                                                               Width="12" Height="12" Opacity="0.7"/>
-                                                    </Button>
+                                                        <!-- Reopen: Completed → InProgress -->
+                                                        <Button Tag="{Binding}"
+                                                                Click="ReopenStage_Click" Margin="0,0,6,0"
+                                                                Height="28" Padding="10,0"
+                                                                ToolTip="Открыть снова"
+                                                                Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Completed}">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="Bg" Background="#FFF8E1" CornerRadius="4"
+                                                                            Padding="{TemplateBinding Padding}">
+                                                                        <TextBlock Text="Переоткрыть" FontSize="11" FontWeight="SemiBold"
+                                                                                   Foreground="#856404" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Bg" Property="Background" Value="#FFE082"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
+
+                                                        <!-- Spacer -->
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                                                    Width="Auto" Margin="0,0,0,0">
+                                                            <!-- Mark for deletion (Worker only) -->
+                                                            <Button ToolTip="Пометить для удаления"
+                                                                    Tag="{Binding}" Click="MarkStageForDeletion_Click"
+                                                                    Style="{StaticResource IconButton}"
+                                                                    Width="26" Height="26" Margin="0,0,2,0"
+                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker'}">
+                                                                <TextBlock Text="🗑" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                           Opacity="0.6"/>
+                                                            </Button>
+                                                            <!-- Delete stage (Admin/Manager) -->
+                                                            <Button ToolTip="Удалить этап"
+                                                                    Tag="{Binding}" Click="DeleteStage_Click"
+                                                                    Style="{StaticResource IconButton}"
+                                                                    Width="26" Height="26" Margin="0,0,2,0"
+                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Admin,Administrator,Manager,ProjectManager,Project Manager'}">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
+                                                                       Width="12" Height="12" Opacity="0.6"/>
+                                                            </Button>
+                                                            <!-- Edit button -->
+                                                            <Button x:Name="EditStageBtn" ToolTip="Редактировать этап" Tag="{Binding}"
+                                                                    Click="EditStage_Click"
+                                                                    Style="{StaticResource IconButton}"
+                                                                    Width="26" Height="26">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
+                                                                       Width="12" Height="12" Opacity="0.7"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </StackPanel>
                                                 </StackPanel>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Grid>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Empty state for stages -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
+                                        Visibility="{Binding HasNoStages, Converter={StaticResource BoolToVis}}">
+                                <Border Width="56" Height="56" CornerRadius="28" Background="#F4F5F7"
+                                        HorizontalAlignment="Center" Margin="0,0,0,8">
+                                    <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}"
+                                           Width="28" Height="28" HorizontalAlignment="Center" Opacity="0.35"/>
                                 </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                <TextBlock Text="Этапы ещё не добавлены" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                <TextBlock Text="Разбейте задачу на этапы для лучшего отслеживания" FontSize="12"
+                                           Foreground="#97A0AF" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                    <!-- Empty state for stages -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
-                                Visibility="{Binding HasNoStages, Converter={StaticResource BoolToVis}}">
-                        <Border Width="56" Height="56" CornerRadius="28" Background="#F4F5F7"
-                                HorizontalAlignment="Center" Margin="0,0,0,8">
-                            <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}"
-                                   Width="28" Height="28" HorizontalAlignment="Center" Opacity="0.35"/>
-                        </Border>
-                        <TextBlock Text="Этапы ещё не добавлены" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-                        <TextBlock Text="Разбейте задачу на этапы для лучшего отслеживания" FontSize="12"
-                                   Foreground="#97A0AF" HorizontalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- Add stage button -->
-                    <Button x:Name="AddStageBtn" Click="AddStage_Click"
+                    <!-- Add stage button pinned to bottom of tab area -->
+                    <Button x:Name="AddStageBtn" Grid.Row="1" Click="AddStage_Click"
                             Margin="0,10,0,0" Height="36" FontSize="13"
                             Style="{StaticResource OutlineBtn}"
                             HorizontalAlignment="Left">
@@ -460,84 +480,95 @@
                             <TextBlock Text="Добавить этап" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                </StackPanel>
+                </Grid>
 
-                <!-- MATERIALS tab content -->
-                <StackPanel x:Name="MaterialsPanel" Visibility="Collapsed" Margin="0,12,0,0">
-                    <ItemsControl ItemsSource="{Binding AllMaterials}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
-                                        Padding="14,12"
-                                        BorderBrush="#DFE1E6" BorderThickness="1">
-                                    <Grid>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding MaterialName}"
-                                                           FontSize="13" FontWeight="SemiBold"
-                                                           Foreground="#172B4D"/>
-                                                <TextBlock Text="{Binding StageName, StringFormat='Этап: {0}'}"
-                                                           FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                <!-- MATERIALS tab content: scroll only list -->
+                <Grid x:Name="MaterialsPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding AllMaterials}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
+                                                Padding="14,12"
+                                                BorderBrush="#DFE1E6" BorderThickness="1">
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding MaterialName}"
+                                                                   FontSize="13" FontWeight="SemiBold"
+                                                                   Foreground="#172B4D"/>
+                                                        <TextBlock Text="{Binding StageName, StringFormat='Этап: {0}'}"
+                                                                   FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <TextBlock HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
+                                                           FontSize="14" FontWeight="SemiBold"
+                                                           Foreground="#172B4D">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0} {1}">
+                                                            <Binding Path="Quantity"/>
+                                                            <Binding Path="Unit"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Empty materials -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
+                                        Visibility="{Binding HasNoMaterials, Converter={StaticResource BoolToVis}}">
+                                <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
+                                <TextBlock Text="Материалы ещё не добавлены" FontSize="13"
+                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- FILES tab content: scroll only list, button at bottom -->
+                <Grid x:Name="FilesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding Files}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
+                                                Padding="14,12"
+                                                BorderBrush="#DFE1E6" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Image Source="{svgc:SvgImage Source=/icons/file.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FileName}" FontSize="13"
+                                                               FontWeight="SemiBold" Foreground="#172B4D"/>
+                                                    <TextBlock Text="{Binding FileType}" FontSize="11"
+                                                               Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
-                                        <TextBlock HorizontalAlignment="Right"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14" FontWeight="SemiBold"
-                                                   Foreground="#172B4D">
-                                            <TextBlock.Text>
-                                                <MultiBinding StringFormat="{}{0} {1}">
-                                                    <Binding Path="Quantity"/>
-                                                    <Binding Path="Unit"/>
-                                                </MultiBinding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                    <!-- Empty materials -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
-                                Visibility="{Binding HasNoMaterials, Converter={StaticResource BoolToVis}}">
-                        <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
-                        <TextBlock Text="Материалы ещё не добавлены" FontSize="13"
-                                   Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- FILES tab content -->
-                <StackPanel x:Name="FilesPanel" Visibility="Collapsed" Margin="0,12,0,0">
-                    <ItemsControl ItemsSource="{Binding Files}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
-                                        Padding="14,12"
-                                        BorderBrush="#DFE1E6" BorderThickness="1">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Image Source="{svgc:SvgImage Source=/icons/file.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding FileName}" FontSize="13"
-                                                       FontWeight="SemiBold" Foreground="#172B4D"/>
-                                            <TextBlock Text="{Binding FileType}" FontSize="11"
-                                                       Foreground="#6B778C" Margin="0,2,0,0"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <!-- Empty files -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
-                                Visibility="{Binding HasNoFiles, Converter={StaticResource BoolToVis}}">
-                        <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
-                        <TextBlock Text="Файлы ещё не загружены" FontSize="13"
-                                   Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                    </StackPanel>
-
-                    <Button Click="UploadFiles_Click" Margin="0,8,0,0" Height="36" FontSize="13"
+                            <!-- Empty files -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
+                                        Visibility="{Binding HasNoFiles, Converter={StaticResource BoolToVis}}">
+                                <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
+                                <TextBlock Text="Файлы ещё не загружены" FontSize="13"
+                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Button Grid.Row="1" Click="UploadFiles_Click" Margin="0,10,0,0" Height="36" FontSize="13"
                             Style="{StaticResource OutlineBtn}"
                             HorizontalAlignment="Left">
                         <StackPanel Orientation="Horizontal">
@@ -545,10 +576,10 @@
                             <TextBlock Text="Загрузить файлы" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                </StackPanel>
+                </Grid>
 
-                <!-- MESSAGES tab content — chat-like design -->
-                <Grid x:Name="MessagesPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                <!-- MESSAGES tab content: scroll only messages, input at bottom -->
+                <Grid x:Name="MessagesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
@@ -556,7 +587,7 @@
 
                     <!-- Messages list -->
                     <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
-                                  VerticalScrollBarVisibility="Auto" MaxHeight="280">
+                                  VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding Messages}">
                                 <ItemsControl.ItemTemplate>
@@ -665,8 +696,8 @@
                     </Border>
                 </Grid>
 
-            </StackPanel>
-        </ScrollViewer>
+            </Grid>
+        </Grid>
 
         <!-- ── FOOTER ─────────────────────────────────────────────── -->
         <Border Grid.Row="2" Padding="16,12"

@@ -32,9 +32,9 @@ public partial class StageDetailOverlay : UserControl
         DescriptionText.Text = item.Stage.Description ?? "—";
         AssigneeText.Text = item.Stage.AssignedUserName ?? "—";
 
-        var statusBrush = StageStatusToBrushConverter.Instance.Convert(item.Stage.Status, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush;
+        var statusBrush = StageStatusToBrushConverter.Instance.Convert(item.Stage.Status, typeof(Brush), null!, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;
-        StatusText.Text = StageStatusToStringConverter.Instance.Convert(item.Stage.Status, typeof(string), null, CultureInfo.InvariantCulture) as string ?? "—";
+        StatusText.Text = StageStatusToStringConverter.Instance.Convert(item.Stage.Status, typeof(string), null!, CultureInfo.InvariantCulture) as string ?? "—";
 
         _ = LoadMaterialsAsync();
     }
@@ -61,11 +61,41 @@ public partial class StageDetailOverlay : UserControl
     {
         if (_stage is null || _task is null) return;
         var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(_stage, _task, async () =>
-        {
-            _onClosed?.Invoke();
-            MainWindow.Instance?.HideDrawer();
-        });
+        overlay.SetEditMode(
+            _stage,
+            _task,
+            onSaved: () =>
+            {
+                // обновляем список этапов через колбэк страницы
+                _onClosed?.Invoke();
+                return System.Threading.Tasks.Task.CompletedTask;
+            },
+            onAfterSave: () => _ = ReopenStageDetailDualAsync());
         MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
+    private async System.Threading.Tasks.Task ReopenStageDetailDualAsync()
+    {
+        if (_stage is null || _task is null) return;
+
+        // Левый оверлей — краткая информация по задаче
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(_task);
+
+        // Правый оверлей — детальная информация по этапу
+        var item = new MPMS.ViewModels.StageItem
+        {
+            Stage       = _stage,
+            TaskId      = _task.Id,
+            TaskName    = _task.Name,
+            ProjectId   = _task.ProjectId,
+            ProjectName = _task.ProjectName ?? "—"
+        };
+
+        var stageOverlay = new StageDetailOverlay();
+        stageOverlay.SetStage(item, _task, _onClosed);
+
+        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, 850);
+        await System.Threading.Tasks.Task.CompletedTask;
     }
 }

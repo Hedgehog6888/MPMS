@@ -20,6 +20,11 @@
         </Border>
 
         <StackPanel Grid.Row="1" Margin="24,16">
+            <TextBlock Text="Проект" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+            <TextBox x:Name="ProjectNameBox" Style="{StaticResource ModernTextBox}"
+                     IsReadOnly="True" IsHitTestVisible="False" Margin="0,0,0,12"/>
+
             <TextBlock Text="Название *" FontSize="12" FontWeight="SemiBold"
                        Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
             <TextBox x:Name="NameBox" Style="{StaticResource ModernTextBox}" Margin="0,0,0,12"/>

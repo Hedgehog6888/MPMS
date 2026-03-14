@@ -31,7 +31,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<ProjectFilterOption> _projectFilterOptions = [];
 
     public IReadOnlyList<string> StatusOptions { get; } =
-        ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена"];
+        ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена", "Пометка удалить"];
 
     public IReadOnlyList<string> PriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
@@ -71,7 +71,11 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         if (!string.IsNullOrWhiteSpace(SearchText))
             query = query.Where(t => t.Name.Contains(SearchText));
 
-        if (StatusFilter != "Все")
+        if (StatusFilter == "Пометка удалить")
+        {
+            query = query.Where(t => t.IsMarkedForDeletion);
+        }
+        else if (StatusFilter != "Все")
         {
             var status = StatusFilter switch
             {

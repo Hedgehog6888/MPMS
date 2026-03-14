@@ -91,7 +91,6 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         var overlay = new CreateTaskOverlay();
-        var self = this;
         overlay.SetEditMode(
             _vm.Task,
             onSaved: async () =>
@@ -101,8 +100,32 @@ public partial class TaskDetailOverlay : UserControl
                 UpdateEmptyStates();
                 _onClosed?.Invoke();
             },
-            onAfterSave: () => MainWindow.Instance?.ShowDrawer(self, 500));
+            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
+
+        // При редактировании скрываем текущую пару оверлеев
+        // и показываем только окно редактирования.
         MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
+    private async System.Threading.Tasks.Task ReopenTaskDetailDualAsync()
+    {
+        if (_vm?.Task is null) return;
+
+        // Загружаем проект задачи для левой панели.
+        var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
+        var project = await tasksVm.GetProjectForTaskAsync(_vm.Task.ProjectId);
+
+        UIElement? leftPanel = null;
+        if (project is not null)
+        {
+            var projectPanel = new ProjectSummaryPanel();
+            projectPanel.SetProject(project);
+            leftPanel = projectPanel;
+        }
+
+        var detail = new TaskDetailOverlay();
+        detail.SetTask(_vm.Task, _onClosed);
+        MainWindow.Instance?.ShowDrawer(leftPanel, detail, 900);
     }
 
     private void ChangeStatus_Click(object sender, RoutedEventArgs e)
@@ -215,8 +238,12 @@ public partial class TaskDetailOverlay : UserControl
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
+
+        // Новый экземпляр оверлея задачи слева.
+        var leftDetail = new TaskDetailOverlay();
+        leftDetail.SetTask(_vm.Task, _onClosed);
+
         var overlay = new CreateStageOverlay();
-        var self = this;
         overlay.SetEditMode(
             stage,
             _vm.Task,
@@ -226,7 +253,14 @@ public partial class TaskDetailOverlay : UserControl
                 UpdateStagesTabLabel();
                 UpdateEmptyStates();
             },
-            onAfterSave: () => MainWindow.Instance?.ShowDrawer(self, 500));
-        MainWindow.Instance?.ShowDrawer(overlay);
+            onAfterSave: () =>
+            {
+                if (_vm?.Task is null) return;
+                var detail = new TaskDetailOverlay();
+                detail.SetTask(_vm.Task, _onClosed);
+                MainWindow.Instance?.ShowDrawer(detail, 500);
+            });
+
+        MainWindow.Instance?.ShowDrawer(leftDetail, overlay, 850);
     }
 }
