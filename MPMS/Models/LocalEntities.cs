@@ -185,6 +185,17 @@ public class LocalMessage
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>Action type for activity log — used for styling and filtering.</summary>
+public static class ActivityActionKind
+{
+    public const string Created = "Created";
+    public const string Updated = "Updated";
+    public const string Deleted = "Deleted";
+    public const string MarkedForDeletion = "MarkedForDeletion";
+    public const string UnmarkedForDeletion = "UnmarkedForDeletion";
+    public const string Message = "Message";
+}
+
 /// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>
 public class LocalActivityLog
 {
@@ -192,6 +203,7 @@ public class LocalActivityLog
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)]   public string UserInitials { get; set; } = "?";
     [MaxLength(20)]  public string UserColor { get; set; } = "#1B6EC2";
+    [MaxLength(50)]  public string? ActionType { get; set; }
     [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
     [MaxLength(50)]  public string EntityType { get; set; } = string.Empty;
     public Guid EntityId { get; set; }

@@ -371,7 +371,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id);
+        var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id, actionType);
         await LoadAsync();
     }
 
@@ -385,7 +386,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
         if (stage.IsSynced)
             await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Delete, new { });
-        await LogActivityAsync(db, $"Удалён этап «{stage.Name}»", "Stage", stage.Id);
+        await LogActivityAsync(db, $"Удалён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -422,7 +423,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             req with { Id = localId });
 
         await RecalcProjectStatusAsync(db);
-        await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId);
+        await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId, ActivityActionKind.Created);
         await LoadAsync();
     }
 
@@ -456,7 +457,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
         await RecalcProjectStatusAsync(db);
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
-        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
         await LoadAsync();
     }
 
@@ -484,7 +485,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
         await RecalcProjectStatusAsync(db);
-        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
+        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -511,7 +512,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id);
+        var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id, actionType);
         await LoadAsync();
     }
 
@@ -549,7 +551,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         Project.IsMarkedForDeletion = project.IsMarkedForDeletion;
         var action = project.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id);
+        var actionType = project.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
         await LoadAsync();
     }
 
@@ -577,11 +580,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
 
-        await LogActivityAsync(db, $"Сообщение в обсуждении проекта «{Project.Name}»", "Message", msg.Id);
+        await LogActivityAsync(db, $"Сообщение в обсуждении проекта «{Project.Name}»", "Message", msg.Id, ActivityActionKind.Message);
         Messages.Add(msg);
     }
 
-    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId)
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -596,6 +599,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",
+            ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,
             EntityId = entityId,

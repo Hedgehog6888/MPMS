@@ -247,7 +247,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
-        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
         await LoadAsync();
     }
 
@@ -274,7 +274,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         if (task.IsSynced)
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
-        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
+        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -300,11 +300,12 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id);
+        var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id, actionType);
         await LoadAsync();
     }
 
-    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId)
+    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -319,6 +320,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",
+            ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,
             EntityId = entityId,

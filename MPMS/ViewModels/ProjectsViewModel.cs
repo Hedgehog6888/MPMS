@@ -177,7 +177,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Project", localId, SyncOperation.Create,
             req with { Id = localId });
 
-        await LogActivityAsync(db, $"Создан проект «{req.Name}»", "Project", localId);
+        await LogActivityAsync(db, $"Создан проект «{req.Name}»", "Project", localId, ActivityActionKind.Created);
         await LoadAsync();
     }
 
@@ -207,7 +207,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
-        await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id);
+        await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id, ActivityActionKind.Updated);
         await LoadAsync();
     }
 
@@ -224,6 +224,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         if (project.IsSynced)
             await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Delete, new { });
 
+        await LogActivityAsync(db, $"Удалён проект «{project.Name}»", "Project", project.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -259,12 +260,13 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id);
+        var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
         await LoadAsync();
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText,
-        string entityType, Guid entityId)
+        string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -279,6 +281,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",
+            ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,
             EntityId = entityId,

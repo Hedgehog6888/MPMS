@@ -191,7 +191,8 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен к удалению" : "Снята пометка удаления";
-        await LogActivityAsync(db, $"{action}: этап «{item.Stage.Name}»", "Stage", item.Stage.Id);
+        var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
+        await LogActivityAsync(db, $"{action}: этап «{item.Stage.Name}»", "Stage", item.Stage.Id, actionType);
         await LoadAsync();
     }
 
@@ -208,11 +209,11 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         if (item.Stage.IsSynced)
             await _sync.QueueOperationAsync("Stage", item.Stage.Id, SyncOperation.Delete, new { });
 
-        await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id);
+        await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
-    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId)
+    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -227,6 +228,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",
+            ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,
             EntityId = entityId,

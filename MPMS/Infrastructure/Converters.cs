@@ -444,6 +444,55 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Maps LocalActivityLog to accent Brush — prefers ActionType (Deleted, MarkedForDeletion, etc.) over EntityType.</summary>
+public class ActivityLogToAccentBrushConverter : IValueConverter
+{
+    public static readonly ActivityLogToAccentBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush DeletedBrush         = new(Color.FromRgb(0xEF, 0x44, 0x44));
+    private static readonly SolidColorBrush MarkedForDeletionBrush = new(Color.FromRgb(0xF9, 0x73, 0x16));
+    private static readonly SolidColorBrush UnmarkedBrush       = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush CreatedBrush        = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
+    private static readonly SolidColorBrush MessageBrush        = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
+    private static readonly SolidColorBrush ProjectBrush        = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
+    private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xEA, 0xB3, 0x08));
+    private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not MPMS.Models.LocalActivityLog log)
+            return DefaultBrush;
+
+        var actionType = log.ActionType;
+        if (!string.IsNullOrEmpty(actionType))
+        {
+            return actionType switch
+            {
+                MPMS.Models.ActivityActionKind.Deleted           => DeletedBrush,
+                MPMS.Models.ActivityActionKind.MarkedForDeletion => MarkedForDeletionBrush,
+                MPMS.Models.ActivityActionKind.UnmarkedForDeletion => UnmarkedBrush,
+                MPMS.Models.ActivityActionKind.Created          => CreatedBrush,
+                MPMS.Models.ActivityActionKind.Message          => MessageBrush,
+                _ => EntityToBrush(log.EntityType)
+            };
+        }
+        return EntityToBrush(log.EntityType);
+    }
+
+    private static SolidColorBrush EntityToBrush(string entityType) => entityType switch
+    {
+        "Project"  => ProjectBrush,
+        "Task"     => TaskBrush,
+        "Stage"    => StageBrush,
+        "Message"  => MessageBrush,
+        _          => DefaultBrush
+    };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Maps EntityType string to a localized Russian label for activity log badges.</summary>
 public class EntityTypeToBadgeLabelConverter : IValueConverter
 {

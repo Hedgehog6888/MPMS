@@ -22,6 +22,12 @@ public static class LocalSchemaMigrator
         CreateMessagesTable(conn);
         AddIsMarkedForDeletionColumns(conn);
         AddAvatarPathColumn(conn);
+        AddActionTypeToActivityLogs(conn);
+    }
+
+    private static void AddActionTypeToActivityLogs(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"ActionType\" TEXT NULL;");
     }
 
     private static void CreateRecentAccountsTable(SqliteConnection conn)
