@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.ViewModels;
 
@@ -233,17 +234,27 @@ public partial class MainWindow : Window
             var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
             await using var db = await dbFactory.CreateDbContextAsync(ct);
 
-            var projects = await db.Projects
-                .Where(p => p.Name.Contains(query) || (p.Client != null && p.Client.Contains(query)))
-                .Take(5).ToListAsync(ct);
+            var searchTerm = SearchHelper.Normalize(query);
+            var projects = searchTerm is null
+                ? new List<LocalProject>()
+                : (await db.Projects.ToListAsync(ct))
+                    .Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(p.Client, searchTerm))
+                    .Take(5).ToList();
 
-            var tasks = await db.Tasks
-                .Where(t => t.Name.Contains(query) || (t.Description != null && t.Description.Contains(query)))
-                .Take(5).ToListAsync(ct);
+            var tasks = searchTerm is null
+                ? new List<LocalTask>()
+                : (await db.Tasks.ToListAsync(ct))
+                    .Where(t => SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(t.Description, searchTerm))
+                    .Take(5).ToList();
 
-            var stages = await db.TaskStages
-                .Where(s => s.Name.Contains(query) || (s.Description != null && s.Description.Contains(query)))
-                .Take(5).ToListAsync(ct);
+            var stages = searchTerm is null
+                ? new List<LocalTaskStage>()
+                : (await db.TaskStages.ToListAsync(ct))
+                    .Where(s => SearchHelper.ContainsIgnoreCase(s.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(s.Description, searchTerm))
+                    .Take(5).ToList();
 
             // Populate TaskName for stages
             var taskIds = stages.Select(s => s.TaskId).Distinct().ToList();

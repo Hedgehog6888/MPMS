@@ -187,13 +187,14 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="&#xE721;"
                                            FontFamily="Segoe MDL2 Assets"
                                            FontSize="14"
                                            VerticalAlignment="Center" Margin="0,0,8,0"
                                            Foreground="#6B778C"/>
-                                <Grid Grid.Column="1">
+                                <Grid Grid.Column="1" Margin="0,0,4,0">
                                     <TextBlock Text="Поиск по названию задачи или описанию..."
                                                Foreground="#6B778C" FontSize="12"
                                                VerticalAlignment="Center"
@@ -216,6 +217,13 @@
                                              GotFocus="SearchBox_GotFocus"
                                              LostFocus="SearchBox_LostFocus"/>
                                 </Grid>
+                                <Button Grid.Column="2" Click="ClearSearch_Click"
+                                        Visibility="{Binding SearchText, Converter={StaticResource StringToVis}}"
+                                        Width="20" Height="20" Margin="0,0,0,0"
+                                        Style="{StaticResource IconButton}">
+                                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="11" Foreground="#6B778C"/>
+                                </Button>
                             </Grid>
                         </Border>
 

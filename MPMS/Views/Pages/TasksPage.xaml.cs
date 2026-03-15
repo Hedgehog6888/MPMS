@@ -41,32 +41,40 @@ public partial class TasksPage : UserControl
         Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
     };
 
+    private static Border? FindSearchBorder(DependencyObject element)
+    {
+        var current = System.Windows.Media.VisualTreeHelper.GetParent(element);
+        while (current is not null)
+        {
+            if (current is Border b) return b;
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+        return null;
+    }
+
     private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is TextBox tb)
+        if (sender is TextBox tb && FindSearchBorder(tb) is { } border)
         {
-            var parent = System.Windows.Media.VisualTreeHelper.GetParent(tb);
-            if (System.Windows.Media.VisualTreeHelper.GetParent(parent) is Border border)
-            {
-                border.BorderBrush = _focusBrush;
-                border.Background = _focusBg;
-                border.Effect = _focusShadow;
-            }
+            border.BorderBrush = _focusBrush;
+            border.Background = _focusBg;
+            border.Effect = _focusShadow;
         }
     }
 
     private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is TextBox tb)
+        if (sender is TextBox tb && FindSearchBorder(tb) is { } border)
         {
-            var parent = System.Windows.Media.VisualTreeHelper.GetParent(tb);
-            if (System.Windows.Media.VisualTreeHelper.GetParent(parent) is Border border)
-            {
-                border.BorderBrush = _normalBrush;
-                border.Background = _normalBg;
-                border.Effect = null;
-            }
+            border.BorderBrush = _normalBrush;
+            border.Background = _normalBg;
+            border.Effect = null;
         }
+    }
+
+    private void ClearSearch_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM is not null) VM.SearchText = string.Empty;
     }
 
     private void ViewMode_Click(object sender, RoutedEventArgs e)

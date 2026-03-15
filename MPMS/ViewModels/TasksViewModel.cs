@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -68,9 +69,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         if (ProjectFilter.HasValue)
             query = query.Where(t => t.ProjectId == ProjectFilter.Value);
 
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            query = query.Where(t => t.Name.Contains(SearchText));
-
         if (StatusFilter == "Пометка удалить")
         {
             query = query.Where(t => t.IsMarkedForDeletion);
@@ -101,7 +99,13 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
         }
 
-        var list = (await query.ToListAsync())
+        var list = await query.ToListAsync();
+        var searchTerm = SearchHelper.Normalize(SearchText);
+        if (searchTerm is not null)
+            list = list.Where(t => SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
+                SearchHelper.ContainsIgnoreCase(t.Description, searchTerm)).ToList();
+
+        list = list
             .OrderBy(t => t.IsMarkedForDeletion)
             .ThenBy(t => t.Status switch
             {

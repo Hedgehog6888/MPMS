@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 
@@ -27,13 +28,11 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
     public async Task LoadAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var query = db.Materials.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(SearchText))
-            query = query.Where(m => m.Name.Contains(SearchText) ||
-                (m.Description != null && m.Description.Contains(SearchText)));
-
-        var list = await query.OrderBy(m => m.Name).ToListAsync();
+        var list = await db.Materials.OrderBy(m => m.Name).ToListAsync();
+        var searchTerm = SearchHelper.Normalize(SearchText);
+        if (searchTerm is not null)
+            list = list.Where(m => SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
+                SearchHelper.ContainsIgnoreCase(m.Description, searchTerm)).ToList();
         Materials = new ObservableCollection<LocalMaterial>(list);
     }
 

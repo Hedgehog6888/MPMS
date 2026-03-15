@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 
@@ -113,13 +114,12 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     {
         var query = Stages.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        if (SearchHelper.Normalize(SearchText) is { } term)
         {
-            var term = SearchText.Trim().ToLower();
             query = query.Where(s =>
-                s.Stage.Name.ToLower().Contains(term) ||
-                s.TaskName.ToLower().Contains(term) ||
-                s.ProjectName.ToLower().Contains(term));
+                SearchHelper.ContainsIgnoreCase(s.Stage.Name, term) ||
+                SearchHelper.ContainsIgnoreCase(s.TaskName, term) ||
+                SearchHelper.ContainsIgnoreCase(s.ProjectName, term));
         }
 
         if (ProjectFilter.HasValue)

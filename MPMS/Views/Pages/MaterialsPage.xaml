@@ -34,19 +34,31 @@
         <!-- Search -->
         <Border Grid.Row="1" Background="White" Padding="24,10"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-            <Border Background="{StaticResource BackgroundBrush}" CornerRadius="6"
-                    Padding="10,0" Width="280" Height="34" HorizontalAlignment="Left">
+            <Border Background="#F4F5F7" CornerRadius="6"
+                    Padding="10,0" Width="280" Height="36" HorizontalAlignment="Left"
+                    BorderThickness="1.5" BorderBrush="Transparent">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="🔍" FontSize="12" VerticalAlignment="Center"
-                               Margin="0,0,6,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="#6B778C"/>
                     <TextBox Grid.Column="1"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              BorderThickness="0" Background="Transparent"
-                             VerticalAlignment="Center" FontSize="13"/>
+                             VerticalAlignment="Center" FontSize="13" Foreground="#172B4D"
+                             GotFocus="SearchBox_GotFocus"
+                             LostFocus="SearchBox_LostFocus"/>
+                    <Button Grid.Column="2" Click="ClearSearch_Click"
+                            Visibility="{Binding SearchText, Converter={StaticResource StringToVis}}"
+                            Width="20" Height="20" Margin="4,0,0,0"
+                            Style="{StaticResource IconButton}">
+                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11" Foreground="#6B778C"/>
+                    </Button>
                 </Grid>
             </Border>
         </Border>

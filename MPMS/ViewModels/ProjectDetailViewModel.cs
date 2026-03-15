@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Controls;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -227,13 +228,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         var query = Tasks.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(TaskSearchText))
-        {
-            var term = TaskSearchText.Trim();
+        if (SearchHelper.Normalize(TaskSearchText) is { } taskTerm)
             query = query.Where(t =>
-                (!string.IsNullOrEmpty(t.Name) && t.Name.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(t.Description) && t.Description.Contains(term, StringComparison.OrdinalIgnoreCase)));
-        }
+                SearchHelper.ContainsIgnoreCase(t.Name, taskTerm) ||
+                SearchHelper.ContainsIgnoreCase(t.Description, taskTerm));
 
         if (TaskStatusFilter == "Пометка удалить")
         {
@@ -294,13 +292,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         var query = AllStages.AsEnumerable();
 
-        if (!string.IsNullOrWhiteSpace(StageSearchText))
-        {
-            var term = StageSearchText.Trim().ToLowerInvariant();
+        if (SearchHelper.Normalize(StageSearchText) is { } stageTerm)
             query = query.Where(s =>
-                (!string.IsNullOrEmpty(s.Name) && s.Name.ToLowerInvariant().Contains(term)) ||
-                (!string.IsNullOrEmpty(s.TaskName) && s.TaskName.ToLowerInvariant().Contains(term)));
-        }
+                SearchHelper.ContainsIgnoreCase(s.Name, stageTerm) ||
+                SearchHelper.ContainsIgnoreCase(s.TaskName, stageTerm));
 
         if (StageTaskFilter.HasValue)
             query = query.Where(s => s.TaskId == StageTaskFilter.Value);

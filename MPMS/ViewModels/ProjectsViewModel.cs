@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -66,12 +67,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
     private async Task LoadInternalAsync(LocalDbContext db, IQueryable<LocalProject> query, CancellationToken ct)
     {
-        var searchSnapshot = SearchText;
+        var searchTerm = SearchHelper.Normalize(SearchText);
         var statusSnapshot = StatusFilter;
-
-        if (!string.IsNullOrWhiteSpace(searchSnapshot))
-            query = query.Where(p => p.Name.Contains(searchSnapshot) ||
-                (p.Client != null && p.Client.Contains(searchSnapshot)));
 
         if (statusSnapshot == "Пометка удалить")
         {
@@ -93,6 +90,10 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         var list = (await query.ToListAsync(ct)).ToList();
         ct.ThrowIfCancellationRequested();
+
+        if (searchTerm is not null)
+            list = list.Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
+                SearchHelper.ContainsIgnoreCase(p.Client, searchTerm)).ToList();
 
         // Populate progress stats for each project (TotalTasks, CompletedTasks, InProgressTasks — как в ProjectDetailViewModel)
         var allTasks = await db.Tasks.ToListAsync(ct);

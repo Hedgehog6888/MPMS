@@ -460,4 +460,14 @@ public partial class ProjectDetailPage : UserControl
             }
         }
     }
+
+    private void ClearTaskSearch_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProjectDetailViewModel vm) vm.TaskSearchText = string.Empty;
+    }
+
+    private void ClearStageSearch_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ProjectDetailViewModel vm) vm.StageSearchText = string.Empty;
+    }
 }
