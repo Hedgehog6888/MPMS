@@ -107,8 +107,9 @@
                     <!-- Client -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
-                            <TextBlock Text="🏢" FontSize="13" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}"
+                                   Width="16" Height="16" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="ЗАКАЗЧИК" Style="{StaticResource SectionLabel}"/>
@@ -120,8 +121,9 @@
                     <!-- Address -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
-                            <TextBlock Text="📍" FontSize="13" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/location.svg, AppName=MPMS}"
+                                   Width="16" Height="16" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Top">
                             <TextBlock Text="АДРЕС ОБЪЕКТА" Style="{StaticResource SectionLabel}"/>
@@ -133,8 +135,9 @@
                     <!-- Dates -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
-                            <TextBlock Text="📅" FontSize="13" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
+                                   Width="16" Height="16" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="СРОКИ" Style="{StaticResource SectionLabel}"/>

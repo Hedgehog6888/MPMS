@@ -579,7 +579,8 @@
 
                                     <!-- Due date -->
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                        <TextBlock Text="📅 " FontSize="11" VerticalAlignment="Center" Opacity="0.6"/>
+                                        <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
+                                               Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,4,0" Opacity="0.6"/>
                                         <TextBlock Text="{Binding DueDate, Converter={StaticResource DateOnlyToString}}"
                                                    FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                     </StackPanel>
