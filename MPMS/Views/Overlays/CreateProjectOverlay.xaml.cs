@@ -164,6 +164,39 @@ public partial class CreateProjectOverlay : UserControl
         SelectedForemanPanel.Visibility = Visibility.Collapsed;
     }
 
+    private async System.Threading.Tasks.Task RemoveWorkerAsync(Guid userId, string workerName)
+    {
+        if (_selectedWorkerIds.Count <= 1)
+        {
+            ShowError("В проекте должен остаться хотя бы один работник.");
+            return;
+        }
+        if (_editProject is not null)
+        {
+            var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var taskIds = await db.Tasks.Where(t => t.ProjectId == _editProject.Id).Select(t => t.Id).ToListAsync();
+            var hasTaskAssign = await db.TaskAssignees.AnyAsync(ta => taskIds.Contains(ta.TaskId) && ta.UserId == userId);
+            var stageIds = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
+            var hasStageAssign = await db.StageAssignees.AnyAsync(sa => stageIds.Contains(sa.StageId) && sa.UserId == userId);
+            if (hasTaskAssign || hasStageAssign)
+            {
+                var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+                var ok = Dialogs.ConfirmDeleteDialog.Show(owner,
+                    "работника из проекта",
+                    workerName,
+                    "С этим работником связаны назначения на задачи и этапы. Они будут удалены. Продолжить?");
+                if (!ok) return;
+            }
+        }
+        _selectedWorkerIds.Remove(userId);
+        var updated = _workerUsers
+            .Where(u => _selectedWorkerIds.Contains(u.Id))
+            .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
+            .ToList();
+        RefreshWorkerChips(updated);
+    }
+
     private void WorkerItem_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border b || b.Tag is not UserPickerItem item) return;
@@ -239,20 +272,13 @@ public partial class CreateProjectOverlay : UserControl
             BorderThickness = new Thickness(0),
             Cursor = System.Windows.Input.Cursors.Hand,
             Margin = new Thickness(6, 0, 0, 0),
-            Tag = info.UserId
+            Tag = (info.UserId, info.Name)
         };
         removeBtn.Template = CreateRemoveBtnTemplate();
-        removeBtn.Click += (s, _) =>
+        removeBtn.Click += async (s, _) =>
         {
-            if (s is Button btn && btn.Tag is Guid uid)
-            {
-                _selectedWorkerIds.Remove(uid);
-                var updated = _workerUsers
-                    .Where(u => _selectedWorkerIds.Contains(u.Id))
-                    .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
-                    .ToList();
-                RefreshWorkerChips(updated);
-            }
+            if (s is Button btn && btn.Tag is (Guid uid, string name))
+                await RemoveWorkerAsync(uid, name);
         };
         sp.Children.Add(removeBtn);
         chip.Child = sp;
@@ -291,6 +317,8 @@ public partial class CreateProjectOverlay : UserControl
 
         if (_editProject is null && _selectedForeman is null && _selectedWorkerIds.Count == 0)
         { ShowError("Назначьте прораба или хотя бы одного работника на проект."); return; }
+        if (_editProject is not null && _selectedWorkerIds.Count == 0)
+        { ShowError("В проекте должен остаться хотя бы один работник."); return; }
 
         var startDate = DateOnly.FromDateTime(StartDatePicker.SelectedDate.Value);
         var endDate   = DateOnly.FromDateTime(EndDatePicker.SelectedDate.Value);
@@ -350,13 +378,18 @@ public partial class CreateProjectOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // Remove all existing members for this project
+        var newMemberIds = new HashSet<Guid>();
+        if (_selectedForeman is not null) newMemberIds.Add(_selectedForeman.Id);
+        foreach (var uid in _selectedWorkerIds) newMemberIds.Add(uid);
+
         var existing = await db.ProjectMembers
             .Where(m => m.ProjectId == projectId)
             .ToListAsync();
+        var removedIds = existing.Where(m => !newMemberIds.Contains(m.UserId)).Select(m => m.UserId).ToList();
+
         db.ProjectMembers.RemoveRange(existing);
 
-        // Add foreman
+        // Add foreman (можно убрать — при редактировании разрешено сохранять без прораба)
         if (_selectedForeman is not null)
         {
             db.ProjectMembers.Add(new LocalProjectMember
@@ -382,6 +415,21 @@ public partial class CreateProjectOverlay : UserControl
                 UserName = worker.Name,
                 UserRole = "Worker"
             });
+        }
+
+        // Снять назначения с задач/этапов для удалённых из проекта
+        if (removedIds.Count > 0)
+        {
+            var taskIds = await db.Tasks.Where(t => t.ProjectId == projectId).Select(t => t.Id).ToListAsync();
+            var toRemoveTask = await db.TaskAssignees
+                .Where(ta => taskIds.Contains(ta.TaskId) && removedIds.Contains(ta.UserId))
+                .ToListAsync();
+            db.TaskAssignees.RemoveRange(toRemoveTask);
+            var stageIds = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
+            var toRemoveStage = await db.StageAssignees
+                .Where(sa => stageIds.Contains(sa.StageId) && removedIds.Contains(sa.UserId))
+                .ToListAsync();
+            db.StageAssignees.RemoveRange(toRemoveStage);
         }
 
         await db.SaveChangesAsync();

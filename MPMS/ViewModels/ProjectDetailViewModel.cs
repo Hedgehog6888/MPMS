@@ -133,16 +133,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             task.TotalStages = taskStages.Count;
             task.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
             task.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
-            // Auto task status: Completed=all done, InProgress=any in progress OR any completed (partial), Planned=all planned
+            // Статус задачи: завершённый + планируемый = в работе (StatusCalculator)
             if (taskStages.Count > 0)
-            {
-                if (taskStages.All(s => s.Status == StageStatus.Completed))
-                    task.Status = TaskStatus.Completed;
-                else if (taskStages.Any(s => s.Status == StageStatus.InProgress) || taskStages.Any(s => s.Status == StageStatus.Completed))
-                    task.Status = TaskStatus.InProgress;
-                else
-                    task.Status = TaskStatus.Planned;
-            }
+                task.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
         }
 
         // Persist task status changes and recalc project status
@@ -158,14 +151,19 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Initialize filtered task collections based on current filters
         ApplyTaskFilter();
 
-        // Progress: exclude tasks marked for deletion. Weighted: Completed=1, InProgress=0.5, Planned=0
+        // Progress: exclude tasks marked for deletion. ProgressCalculator — единая формула с ProjectsViewModel
         var activeTasks = tasks.Where(t => !t.IsMarkedForDeletion).ToList();
         TotalTasks = activeTasks.Count;
         CompletedTasksCount = activeTasks.Count(t => t.Status == TaskStatus.Completed);
         InProgressTasksCount = activeTasks.Count(t => t.Status == TaskStatus.InProgress);
         OverdueTasksCount = tasks.Count(t => t.IsOverdue);
-        ProjectProgressPercent = TotalTasks == 0 ? 0
-            : (int)Math.Round((CompletedTasksCount * 1.0 + InProgressTasksCount * 0.5) / TotalTasks * 100);
+        ProjectProgressPercent = (int)Math.Round(ProgressCalculator.GetProjectProgressPercent(CompletedTasksCount, InProgressTasksCount, TotalTasks));
+        if (Project is not null)
+        {
+            Project.TotalTasks = TotalTasks;
+            Project.CompletedTasks = CompletedTasksCount;
+            Project.InProgressTasks = InProgressTasksCount;
+        }
 
         int plannedCount = activeTasks.Count(t => t.Status == TaskStatus.Planned);
         TaskStatsSegments = new List<DonutSegment>
@@ -447,14 +445,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
         task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
         if (stages.Count > 0)
-        {
-            if (stages.All(s => s.Status == StageStatus.Completed))
-                task.Status = TaskStatus.Completed;
-            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
-                task.Status = TaskStatus.InProgress;
-            else
-                task.Status = TaskStatus.Planned;
-        }
+            task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
         task.IsSynced = false;
         task.UpdatedAt = DateTime.UtcNow;
 
@@ -625,7 +616,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
     }
 
-    /// <summary>Recalculates and saves the project's status based on its tasks. Excludes tasks marked for deletion.</summary>
+    /// <summary>Recalculates and saves the project's status based on its tasks. Excludes tasks marked for deletion. StatusCalculator.</summary>
     private async Task RecalcProjectStatusAsync(LocalDbContext db)
     {
         if (Project is null) return;
@@ -633,22 +624,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (project is null) return;
 
         var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion).ToListAsync();
-        if (tasks.Count == 0)
-        {
-            project.Status = ProjectStatus.Planning;
-        }
-        else if (tasks.All(t => t.Status == Models.TaskStatus.Completed))
-        {
-            project.Status = ProjectStatus.Completed;
-        }
-        else if (tasks.Any(t => t.Status == Models.TaskStatus.InProgress || t.Status == Models.TaskStatus.Paused || t.Status == Models.TaskStatus.Completed))
-        {
-            project.Status = ProjectStatus.InProgress;
-        }
-        else
-        {
-            project.Status = ProjectStatus.Planning;
-        }
+        project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
 
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;

@@ -133,6 +133,9 @@ public partial class MainWindow : Window
         {
             DrawerContentPresenter.Content = null;
             OverlayLayer.Visibility = Visibility.Collapsed;
+            // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
+            if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
+                _ = loadable.LoadAsync();
         };
         DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, slideOut);
 

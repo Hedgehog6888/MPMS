@@ -522,9 +522,10 @@
                     </Button.Template>
                 </Button>
 
-                <!-- Change status -->
+                <!-- Статус задачи вычисляется автоматически из этапов — кнопка скрыта -->
                 <Button Grid.Column="2" Content="Изменить статус" Height="34" Padding="14,0"
-                        Margin="0,0,8,0" Click="ChangeStatus_Click" FontSize="13">
+                        Margin="0,0,8,0" Click="ChangeStatus_Click" FontSize="13"
+                        Visibility="Collapsed">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bg" Background="White" CornerRadius="6"

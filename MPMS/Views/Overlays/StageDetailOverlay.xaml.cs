@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -210,14 +211,7 @@ public partial class StageDetailOverlay : UserControl
         task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
 
         if (stages.Count > 0)
-        {
-            if (stages.All(s => s.Status == StageStatus.Completed))
-                task.Status = TaskStatus.Completed;
-            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
-                task.Status = TaskStatus.InProgress;
-            else
-                task.Status = TaskStatus.Planned;
-        }
+            task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
 
         task.IsSynced = false;
         task.UpdatedAt = DateTime.UtcNow;
@@ -231,14 +225,7 @@ public partial class StageDetailOverlay : UserControl
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
-        if (tasks.Count == 0)
-            project.Status = ProjectStatus.Planning;
-        else if (tasks.All(t => t.Status == TaskStatus.Completed))
-            project.Status = ProjectStatus.Completed;
-        else if (tasks.Any(t => t.Status == TaskStatus.InProgress || t.Status == TaskStatus.Paused || t.Status == TaskStatus.Completed))
-            project.Status = ProjectStatus.InProgress;
-        else
-            project.Status = ProjectStatus.Planning;
+        project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();

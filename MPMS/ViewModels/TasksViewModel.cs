@@ -180,15 +180,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
-        if (tasks.Count == 0)
-            project.Status = ProjectStatus.Planning;
-        else if (tasks.All(t => t.Status == TaskStatus.Completed))
-            project.Status = ProjectStatus.Completed;
-        else if (tasks.Any(t => t.Status == TaskStatus.InProgress || t.Status == TaskStatus.Paused || t.Status == TaskStatus.Completed))
-            project.Status = ProjectStatus.InProgress;
-        else
-            project.Status = ProjectStatus.Planning;
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
@@ -224,10 +217,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MoveTaskAsync((LocalTask task, Models.TaskStatus newStatus) args)
     {
-        var (task, newStatus) = args;
-        var req = new UpdateTaskRequest(task.Name, task.Description, task.AssignedUserId,
-            task.Priority, task.DueDate, newStatus);
-        await SaveUpdatedTaskAsync(task.Id, req);
+        // Статус задачи вычисляется автоматически из этапов — перетаскивание в Kanban игнорируется
+        await LoadAsync();
     }
 
     [RelayCommand]

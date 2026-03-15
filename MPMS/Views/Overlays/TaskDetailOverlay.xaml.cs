@@ -44,9 +44,10 @@ public partial class TaskDetailOverlay : UserControl
         if (isWorker)
         {
             EditTaskBtn.Visibility    = Visibility.Collapsed;
-            ChangeStatusBtn.Visibility = Visibility.Collapsed;
             AddStageBtn.Visibility    = Visibility.Collapsed;
         }
+        // Статус задачи вычисляется автоматически из этапов — ручное изменение скрыто
+        ChangeStatusBtn.Visibility = Visibility.Collapsed;
 
     }
 
@@ -263,6 +264,7 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
+        _onClosed?.Invoke(); // Синхронизация страницы проекта
     }
 
     private async void DeleteStage_Click(object sender, RoutedEventArgs e)
@@ -270,7 +272,10 @@ public partial class TaskDetailOverlay : UserControl
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         var owner = Window.GetWindow(this);
         if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
+        {
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
+            _onClosed?.Invoke(); // Синхронизация страницы проекта
+        }
     }
 
     private void EditStage_Click(object sender, RoutedEventArgs e)

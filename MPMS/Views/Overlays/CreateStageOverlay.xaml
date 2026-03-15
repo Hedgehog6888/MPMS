@@ -96,7 +96,6 @@
 
                 <!-- Project + Task picker (when creating from StagesPage) -->
                 <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,12" Visibility="Collapsed">
-                    <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
                               Margin="0,0,0,12" DisplayMemberPath="Name" SelectedValuePath="Id"
                               SelectionChanged="ProjectCombo_SelectionChanged"/>

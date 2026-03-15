@@ -76,6 +76,8 @@ public partial class CreateTaskOverlay : UserControl
             ProjectCombo.SelectedValue = preselectedProjectId.Value;
             await LoadAssigneesForProjectAsync(preselectedProjectId.Value);
         }
+        if (editTaskId.HasValue)
+            ProjectCombo.IsEnabled = false; // при редактировании задачи проект менять нельзя
 
         if (editTaskId.HasValue && _editTask is not null)
         {
@@ -287,7 +289,7 @@ public partial class CreateTaskOverlay : UserControl
         if (DueDatePicker.SelectedDate is null)
         { ShowError("Выберите срок выполнения."); return; }
 
-        if (_editTask is null && _selectedAssigneeIds.Count == 0)
+        if (_selectedAssigneeIds.Count == 0)
         { ShowError("Назначьте хотя бы одного исполнителя на задачу."); return; }
 
         var priority = GetPriority();

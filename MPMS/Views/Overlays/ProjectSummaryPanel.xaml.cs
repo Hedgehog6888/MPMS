@@ -63,7 +63,7 @@ public partial class ProjectSummaryPanel : UserControl
             DaysLeftText.Text = "";
         }
 
-        // Progress bar
+        // Progress bar (дробные % через ProgressCalculator)
         var pct = project.ProgressPercent;
         ProgressText.Text = $"{pct}%";
         CompletedTasksText.Text = project.CompletedTasks.ToString();

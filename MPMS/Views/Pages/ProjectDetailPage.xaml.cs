@@ -260,8 +260,11 @@ public partial class ProjectDetailPage : UserControl
         overlay.SetTask(task, () =>
         {
             if (vm != null)
-                _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(
-                    async () => await vm.LoadAsync());
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    await vm.LoadAsync();
+                    UpdateMarkProjectButton();
+                });
         });
         MainWindow.Instance?.ShowDrawer(overlay, 500);
     }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MPMS.Services;
 
 namespace MPMS.Models;
 
@@ -47,9 +48,9 @@ public class LocalProject : LocalEntity
     [NotMapped] public int TotalTasks { get; set; }
     [NotMapped] public int CompletedTasks { get; set; }
     [NotMapped] public int InProgressTasks { get; set; }
-    /// <summary>Weighted progress: Completed=1, InProgress=0.5, Planned=0. Formula: (Completed + InProgress*0.5) / Total * 100</summary>
-    [NotMapped] public int ProgressPercent => TotalTasks == 0 ? 0
-        : (int)Math.Round((CompletedTasks * 1.0 + InProgressTasks * 0.5) / TotalTasks * 100);
+    /// <summary>ProgressCalculator: целые % (37, 83), зависимость от распределения</summary>
+    [NotMapped] public int ProgressPercent => (int)Math.Round(ProgressCalculator.GetProjectProgressPercent(
+        CompletedTasks, InProgressTasks, TotalTasks));
     [NotMapped] public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
         string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2).Select(w => w[0].ToString().ToUpper()));
@@ -73,9 +74,9 @@ public class LocalTask : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
-    /// <summary>Weighted progress: Completed=1, InProgress=0.5, Planned=0. Formula: (Completed + InProgress*0.5) / Total * 100</summary>
-    public int ProgressPercent => TotalStages == 0 ? 0
-        : (int)Math.Round((CompletedStages * 1.0 + InProgressStages * 0.5) / TotalStages * 100);
+    /// <summary>ProgressCalculator: целые % (37, 83), зависимость от распределения</summary>
+    public int ProgressPercent => (int)Math.Round(ProgressCalculator.GetTaskProgressPercent(
+        CompletedStages, InProgressStages, TotalStages));
 
     public bool IsOverdue => DueDate.HasValue
         && DueDate < DateOnly.FromDateTime(DateTime.Today)

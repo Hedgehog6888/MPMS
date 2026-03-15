@@ -106,14 +106,29 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             .ToList();
         ct.ThrowIfCancellationRequested();
 
-        // Populate progress stats for each project
+        // Populate progress stats for each project (TotalTasks, CompletedTasks, InProgressTasks — как в ProjectDetailViewModel)
         var allTasks = await db.Tasks.ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
+        var allStages = await db.TaskStages.ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
         foreach (var project in list)
         {
-            var projTasks = allTasks.Where(t => t.ProjectId == project.Id).ToList();
+            var projTasks = allTasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion).ToList();
+            var taskIds = projTasks.Select(t => t.Id).ToList();
+            var projStages = allStages.Where(s => taskIds.Contains(s.TaskId)).ToList();
+            foreach (var t in projTasks)
+            {
+                var stages = projStages.Where(s => s.TaskId == t.Id).ToList();
+                t.TotalStages = stages.Count;
+                t.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+                t.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
+                if (stages.Count > 0)
+                    t.Status = StatusCalculator.GetTaskStatusFromStages(stages);
+            }
             project.TotalTasks = projTasks.Count;
             project.CompletedTasks = projTasks.Count(t => t.Status == TaskStatus.Completed);
+            project.InProgressTasks = projTasks.Count(t => t.Status == TaskStatus.InProgress);
+            project.Status = StatusCalculator.GetProjectStatusFromTasks(projTasks);
         }
 
         Projects = new ObservableCollection<LocalProject>(list);

@@ -64,7 +64,7 @@ public partial class App : Application
 
         // ── Page ViewModels ───────────────────────────────────────────────────
         services.AddTransient<ProjectsViewModel>();
-        services.AddTransient<ProjectDetailViewModel>();
+        services.AddSingleton<ProjectDetailViewModel>();
         services.AddTransient<TasksViewModel>();
         services.AddTransient<MaterialsViewModel>();
         services.AddTransient<TaskDetailViewModel>();
