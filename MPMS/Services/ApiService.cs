@@ -182,6 +182,8 @@ public class ApiService : IApiService
     public async Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request)
         => await PutAsync<UserResponse>($"users/{id}", request);
 
+    public async Task<bool> DeleteUserAsync(Guid id) => await DeleteAsync($"users/{id}");
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AttachToken()
     {

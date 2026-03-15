@@ -88,6 +88,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
+    private readonly IApiService _api;
 
     // Events to open drawers (handled by AdminPage.xaml.cs)
     public event Action<AdminUserRow>? OpenUserInfoRequested;
@@ -198,10 +199,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         IsConfirmOverlayOpen = true;
     }
 
-    public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
+    public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api)
     {
         _dbFactory = dbFactory;
         _auth      = auth;
+        _api       = api;
     }
 
     public async Task LoadAsync()
@@ -342,6 +344,13 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         user.BlockedReason = newBlocked ? BlockReason.Trim() : null;
         user.LastModifiedLocally = DateTime.UtcNow;
 
+        var userName = !string.IsNullOrWhiteSpace(user.Name) ? user.Name : $"{user.FirstName} {user.LastName}".Trim();
+        var label = newBlocked ? "Заблокированный" : userName;
+        foreach (var m in await db.ProjectMembers.Where(x => x.UserId == row.Id).ToListAsync()) m.UserName = label;
+        foreach (var t in await db.TaskAssignees.Where(x => x.UserId == row.Id).ToListAsync()) t.UserName = label;
+        foreach (var s in await db.StageAssignees.Where(x => x.UserId == row.Id).ToListAsync()) s.UserName = label;
+        foreach (var m in await db.Messages.Where(x => x.UserId == row.Id).ToListAsync()) m.UserName = label;
+
         AddAdminLog(db,
             newBlocked ? ActivityActionKind.UserBlocked : ActivityActionKind.UserUnblocked,
             newBlocked
@@ -361,6 +370,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (row is null) return;
         if (row.Id == _auth.UserId) { SetStatus("Нельзя удалить текущего пользователя"); return; }
 
+        var userId = row.Id;
         SetupConfirm(
             "Удалить пользователя?",
             row.Name,
@@ -369,14 +379,41 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             async () =>
             {
                 await using var db = await _dbFactory.CreateDbContextAsync();
-                var user = await db.Users.FindAsync(row.Id);
+                var user = await db.Users.FindAsync(userId);
                 if (user is null) return;
-                AddAdminLog(db, ActivityActionKind.UserDeleted,
-                    $"Удалил пользователя {user.Name} ({user.Username})", "User", user.Id);
-                db.Users.Remove(user);
-                await db.SaveChangesAsync();
-                await LoadUsersAsync();
-                SetStatus($"Пользователь {user.Name} удалён");
+                try
+                {
+                    // Удалить в API (если онлайн), чтобы синхронизация не вернула пользователя
+                    var apiDeleted = !_api.IsOnline || await _api.DeleteUserAsync(userId);
+
+                    // Запомнить ID — синхронизация не должна вернуть пользователя
+                    if (!await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
+                        db.DeletedUserIds.Add(new DeletedUserId { Id = userId });
+
+                    // Обновить имя в связанных записях (оставляем их, вместо имени — «Удалённый пользователь»)
+                    const string deletedLabel = "Удалённый пользователь";
+                    foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
+                        m.UserName = deletedLabel;
+                    foreach (var t in await db.TaskAssignees.Where(x => x.UserId == userId).ToListAsync())
+                        t.UserName = deletedLabel;
+                    foreach (var s in await db.StageAssignees.Where(x => x.UserId == userId).ToListAsync())
+                        s.UserName = deletedLabel;
+                    foreach (var m in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
+                        m.UserName = deletedLabel;
+
+                    AddAdminLog(db, ActivityActionKind.UserDeleted,
+                        $"Удалил пользователя {user.Name} ({user.Username})", "User", user.Id);
+
+                    // Удалить напрямую через SQL (обходит возможные проблемы с трекером EF)
+                    await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
+                    await db.SaveChangesAsync();
+                    await LoadUsersAsync();
+                    SetStatus(apiDeleted ? $"Пользователь {user.Name} удалён" : $"Пользователь {user.Name} удалён локально (на сервере — возможно, руководитель проекта)");
+                }
+                catch (Exception ex)
+                {
+                    SetStatus($"Ошибка удаления: {ex.Message}");
+                }
             });
     }
 

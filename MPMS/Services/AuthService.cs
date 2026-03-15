@@ -51,7 +51,16 @@ public class AuthService : IAuthService
         // Only auto-restore if the user was actively logged in (didn't explicitly log out).
         if (session is null || !session.IsActiveSession) return false;
 
-        // Allow restoring session offline — user works with cached local data.
+        // Не восстанавливать сессию удалённого или заблокированного пользователя
+        var (allowed, _) = await CanUserLoginAsync(session.UserId);
+        if (!allowed)
+        {
+            session.IsActiveSession = false;
+            session.Token = string.Empty;
+            await db.SaveChangesAsync();
+            return false;
+        }
+
         _current = new AuthResponse(
             session.UserId, session.UserName, session.Username,
             session.UserRole, session.Token, session.ExpiresAt);
@@ -59,12 +68,29 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<(bool Allowed, string? BlockMessage)> CanUserLoginAsync(Guid userId)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        if (await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
+            return (false, "Пользователь удалён");
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return (true, null); // Нет в локальной БД — разрешаем
+        if (user.IsBlocked)
+        {
+            var reason = !string.IsNullOrWhiteSpace(user.BlockedReason)
+                ? $" Причина: {user.BlockedReason}"
+                : "";
+            return (false, $"Пользователь заблокирован.{reason}");
+        }
+        return (true, null);
+    }
+
     /// <summary>
     /// Attempts to authenticate using the locally cached password hash.
     /// First checks the active AuthSession (previously logged-in users),
     /// then falls back to LocalUser.PasswordHash (admin-created users).
     /// </summary>
-    public async Task<AuthResponse?> TryOfflineLoginAsync(string username, string plainPassword)
+    public async Task<(AuthResponse? Response, string? BlockMessage)> TryOfflineLoginAsync(string username, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -75,9 +101,11 @@ public class AuthService : IAuthService
             && !string.IsNullOrEmpty(session.LocalPasswordHash)
             && BCrypt.Net.BCrypt.Verify(plainPassword, session.LocalPasswordHash))
         {
-            return new AuthResponse(
+            var (allowed, blockMessage) = await CanUserLoginAsync(session.UserId);
+            if (!allowed) return (null, blockMessage);
+            return (new AuthResponse(
                 session.UserId, session.UserName, session.Username,
-                session.UserRole, session.Token, session.ExpiresAt);
+                session.UserRole, session.Token, session.ExpiresAt), null);
         }
 
         // Fallback: admin-created user with password stored in LocalUser.PasswordHash
@@ -86,11 +114,18 @@ public class AuthService : IAuthService
         if (localUser is null
             || string.IsNullOrEmpty(localUser.PasswordHash)
             || !BCrypt.Net.BCrypt.Verify(plainPassword, localUser.PasswordHash))
-            return null;
+            return (null, null);
+        if (localUser.IsBlocked)
+        {
+            var reason = !string.IsNullOrWhiteSpace(localUser.BlockedReason)
+                ? $" Причина: {localUser.BlockedReason}"
+                : "";
+            return (null, $"Пользователь заблокирован.{reason}");
+        }
 
-        return new AuthResponse(
+        return (new AuthResponse(
             localUser.Id, localUser.Name, localUser.Username,
-            localUser.RoleName, string.Empty, DateTime.UtcNow.AddDays(1));
+            localUser.RoleName, string.Empty, DateTime.UtcNow.AddDays(1)), null);
     }
 
     public async Task<bool> HasLocalCacheAsync(string username)

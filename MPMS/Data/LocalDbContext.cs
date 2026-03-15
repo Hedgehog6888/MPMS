@@ -24,6 +24,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalStageAssignee> StageAssignees    => Set<LocalStageAssignee>();
     public DbSet<LocalMessage>       Messages          => Set<LocalMessage>();
     public DbSet<PendingOperation>   PendingOperations => Set<PendingOperation>();
+    public DbSet<DeletedUserId>     DeletedUserIds   => Set<DeletedUserId>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

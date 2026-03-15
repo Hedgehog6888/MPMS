@@ -29,6 +29,16 @@ public static class LocalSchemaMigrator
         AddIsArchivedColumn(conn);
         AddPasswordHashColumn(conn);
         SplitUserNameToFirstLast(conn);
+        CreateDeletedUserIdsTable(conn);
+    }
+
+    private static void CreateDeletedUserIdsTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "DeletedUserIds" (
+                "Id" TEXT NOT NULL CONSTRAINT "PK_DeletedUserIds" PRIMARY KEY
+            );
+            """);
     }
 
     private static void AddActionTypeToActivityLogs(SqliteConnection conn)

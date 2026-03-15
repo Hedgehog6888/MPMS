@@ -39,6 +39,12 @@ public partial class LoginViewModel : ViewModelBase
 
             if (result.Success)
             {
+                var (allowed, blockMessage) = await _auth.CanUserLoginAsync(result.Response!.UserId);
+                if (!allowed)
+                {
+                    SetError(blockMessage ?? "Вход запрещён.");
+                    return;
+                }
                 await _auth.SetSessionAsync(result.Response!, Password);
                 OpenMainAndClose();
                 return;
@@ -47,11 +53,16 @@ public partial class LoginViewModel : ViewModelBase
             // ── API недоступен → пробуем офлайн-вход ─────────────────────
             if (!_api.IsOnline)
             {
-                var offline = await _auth.TryOfflineLoginAsync(Username.Trim(), Password);
-                if (offline is not null)
+                var (offlineResponse, blockMessage) = await _auth.TryOfflineLoginAsync(Username.Trim(), Password);
+                if (offlineResponse is not null)
                 {
-                    await _auth.SetSessionAsync(offline, Password);
+                    await _auth.SetSessionAsync(offlineResponse, Password);
                     OpenMainAndClose();
+                    return;
+                }
+                if (blockMessage is not null)
+                {
+                    SetError(blockMessage);
                     return;
                 }
 

@@ -101,11 +101,12 @@ public class SyncService : ISyncService
         if (!_api.IsOnline) return;  // bail out early if the first request already failed
         if (users is not null)
         {
-            var ids = users.Select(u => u.Id).ToHashSet();
+            var deletedIds = (await db.DeletedUserIds.Select(x => x.Id).ToListAsync()).ToHashSet();
             var existing = await db.Users.ToDictionaryAsync(u => u.Id);
 
             foreach (var u in users)
             {
+                if (deletedIds.Contains(u.Id)) continue; // Не возвращать локально удалённых
                 var fullName = $"{u.FirstName} {u.LastName}".Trim();
                 if (existing.TryGetValue(u.Id, out var local))
                 {

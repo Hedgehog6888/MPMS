@@ -50,4 +50,5 @@ public interface IApiService
     Task<List<UserResponse>?> GetUsersAsync(string? search = null);
     Task<UserResponse?> CreateUserAsync(CreateUserRequest request);
     Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request);
+    Task<bool> DeleteUserAsync(Guid id);
 }

@@ -19,7 +19,10 @@ public interface IAuthService
 
     void Logout();
     Task<bool> TryRestoreSessionAsync();
-    Task<AuthResponse?> TryOfflineLoginAsync(string username, string plainPassword);
+    /// <summary>Returns (response, null) on success; (null, blockMessage) if deleted/blocked; (null, null) if wrong password.</summary>
+    Task<(AuthResponse? Response, string? BlockMessage)> TryOfflineLoginAsync(string username, string plainPassword);
+    /// <summary>Returns (true, null) if login allowed; (false, message) if deleted or blocked.</summary>
+    Task<(bool Allowed, string? BlockMessage)> CanUserLoginAsync(Guid userId);
     Task<bool> HasLocalCacheAsync(string username);
     Task<List<RecentAccount>> GetRecentAccountsAsync();
 }

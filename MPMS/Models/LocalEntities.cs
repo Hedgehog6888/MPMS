@@ -296,6 +296,12 @@ public class LocalActivityLog
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+/// <summary>IDs of users deleted locally — prevents sync from re-adding them.</summary>
+public class DeletedUserId
+{
+    public Guid Id { get; set; }
+}
+
 /// <summary>Stores the JWT token and current user info between sessions</summary>
 public class AuthSession
 {

@@ -106,6 +106,22 @@ public class UsersController : ControllerBase
             user.Username, user.Email, user.Role.Name, user.CreatedAt));
     }
 
+    /// <summary>Delete user (admin only). Fails if user is a project manager.</summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult> Delete(Guid id)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user is null) return NotFound();
+
+        if (await _db.Projects.AnyAsync(p => p.ManagerId == id))
+            return BadRequest(new { message = "Нельзя удалить пользователя, который является руководителем проекта" });
+
+        await _db.ProjectMembers.Where(m => m.UserId == id).ExecuteDeleteAsync();
+        _db.Users.Remove(user);
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
     /// <summary>Get activity log (with filters)</summary>
     [HttpGet("/api/activity-log")]
     public async Task<ActionResult<List<ActivityLogResponse>>> GetActivityLog(
