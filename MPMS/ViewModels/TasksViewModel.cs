@@ -100,6 +100,24 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         }
 
         var list = await query.ToListAsync();
+
+        // Load stages and recalculate task status from stages (same as ProjectDetailViewModel)
+        var taskIds = list.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId))
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync();
+
+        foreach (var t in list)
+        {
+            var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
+            t.TotalStages = taskStages.Count;
+            t.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
+            t.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
+            if (taskStages.Count > 0)
+                t.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
+        }
+
         var searchTerm = SearchHelper.Normalize(SearchText);
         if (searchTerm is not null)
             list = list.Where(t => SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
