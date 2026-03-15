@@ -263,6 +263,38 @@ public partial class TaskDetailViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task MarkTaskForDeletionAsync()
+    {
+        if (Task is null) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Tasks.FindAsync(Task.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        var stages = await db.TaskStages.Where(s => s.TaskId == Task.Id).ToListAsync();
+        foreach (var stage in stages)
+        {
+            stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            stage.IsSynced = false;
+            stage.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: задача «{Task.Name}»", "Task", Task.Id);
+
+        Task.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+        foreach (var s in Stages)
+            s.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+        OnPropertyChanged(nameof(Task));
+
+        await LoadAsync();
+    }
+
+    [RelayCommand]
     private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

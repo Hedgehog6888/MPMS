@@ -129,10 +129,31 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
-                        <Border CornerRadius="12" Padding="10,4" VerticalAlignment="Center"
-                                Background="{Binding Project.Status, Converter={StaticResource ProjectStatusToBrush}}">
-                            <TextBlock Text="{Binding Project.Status, Converter={StaticResource ProjectStatusToString}}"
-                                       Foreground="White" FontSize="11" FontWeight="SemiBold"/>
+                        <Border CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{Binding Project.Status, Converter={StaticResource ProjectStatusToBrush}}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Project.IsMarkedForDeletion}" Value="True">
+                                            <Setter Property="Background" Value="#DE350B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock FontSize="11" FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding Project.Status, Converter={StaticResource ProjectStatusToString}}"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Project.IsMarkedForDeletion}" Value="True">
+                                                <Setter Property="Text" Value="Пометка удаления"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Border>
                     </StackPanel>
                 </StackPanel>
@@ -804,7 +825,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock Foreground="White" FontSize="11">
+                                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
@@ -1192,8 +1213,18 @@
                                             <ColumnDefinition Width="90"/>
                                         </Grid.ColumnDefinitions>
                                         <!-- Left status strip (matches TaskDetailOverlay stages) -->
-                                        <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8"
-                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                        <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <Setter Property="Background" Value="#DE350B"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
                                         <!-- Name + description (left margin for status strip) -->
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="18,0,0,0">
                                             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
@@ -1213,10 +1244,29 @@
 
                                         <!-- Status badge (rectangle) -->
                                         <Border Grid.Column="2" CornerRadius="4" Padding="8,3"
-                                                VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}">
-                                            <TextBlock Text="{Binding Status, Converter={StaticResource StageStatusToString}}"
-                                                       Foreground="White" FontSize="11"/>
+                                                VerticalAlignment="Center" HorizontalAlignment="Left">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <Setter Property="Background" Value="#DE350B"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding Status, Converter={StaticResource StageStatusToString}}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                <Setter Property="Text" Value="Пометка удаления"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
 
                                         <!-- Assignee -->

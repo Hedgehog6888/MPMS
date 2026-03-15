@@ -44,6 +44,36 @@
             </Setter>
         </Style>
 
+        <!-- Danger button style (mark for deletion) -->
+        <Style x:Key="DangerBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#DE350B"/>
+            <Setter Property="BorderBrush" Value="#FFBDAD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,9"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#FFEBE6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Black button style -->
         <Style x:Key="BlackBtn" TargetType="Button">
             <Setter Property="Background" Value="#111111"/>
@@ -150,6 +180,18 @@
                            TextWrapping="Wrap"
                            Margin="0,0,0,16"
                            Visibility="{Binding Task.Description, Converter={StaticResource StringToVis}}"/>
+
+                <!-- Deletion mark warning -->
+                <Border x:Name="DeletionWarningBorder" CornerRadius="8" Padding="14,10"
+                        Background="#FFEBE6" BorderBrush="#FFBDAD" BorderThickness="1"
+                        Margin="0,0,0,12" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚠" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"
+                                   Foreground="#BF2600"/>
+                        <TextBlock Text="Задача помечена для удаления" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#BF2600" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
@@ -504,11 +546,19 @@
                                                                 <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
                                                                        Width="12" Height="12" Opacity="0.6"/>
                                                             </Button>
-                                                            <!-- Edit button -->
+                                                            <!-- Edit button (hidden when marked for deletion) -->
                                                             <Button x:Name="EditStageBtn" ToolTip="Редактировать этап" Tag="{Binding}"
                                                                     Click="EditStage_Click"
-                                                                    Style="{StaticResource IconButton}"
                                                                     Width="26" Height="26">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
                                                                 <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                        Width="12" Height="12" Opacity="0.7"/>
                                                             </Button>
@@ -773,6 +823,11 @@
                 Background="White">
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button x:Name="MarkDeletionBtn" Click="MarkTaskForDeletion_Click"
+                            Style="{StaticResource DangerBtn}" Margin="0,0,8,0">
+                        <TextBlock x:Name="MarkDeletionBtnText" Text="Пометить к удалению"
+                                   Foreground="#DE350B" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </Button>
                     <Button Content="Закрыть" Click="Close_Click"
                             Style="{StaticResource OutlineBtn}" Margin="0,0,8,0"/>
                     <Button x:Name="ChangeStatusBtn" Click="ChangeStatus_Click"

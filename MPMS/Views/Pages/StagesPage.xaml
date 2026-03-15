@@ -231,10 +231,10 @@
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                         VerticalAlignment="Center">
                                                                 <!-- Marked for deletion badge -->
-                                                                <Border CornerRadius="4" Padding="8,4" Background="#FFEBE6"
+                                                                <Border CornerRadius="4" Padding="8,4" Background="#DE350B"
                                                                         Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
                                                                     <TextBlock Text="Пометка удаления" FontSize="11"
-                                                                               Foreground="#DE350B" FontWeight="SemiBold"/>
+                                                                               Foreground="White" FontWeight="SemiBold"/>
                                                                 </Border>
                                                                 <!-- Normal status buttons (hidden when marked) -->
                                                                 <StackPanel Orientation="Horizontal"
@@ -279,9 +279,17 @@
                                                             <StackPanel Grid.Column="2" Orientation="Horizontal">
                                                                 <!-- Edit (Foreman+, hidden when marked) -->
                                                                 <Button ToolTip="Редактировать" Tag="{Binding}"
-                                                                        Click="EditStage_Click" Margin="0,0,4,0"
-                                                                        Style="{StaticResource IconButton}"
-                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
+                                                                        Click="EditStage_Click" Margin="0,0,4,0">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
                                                                     <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                            Width="14" Height="14"
                                                                            VerticalAlignment="Center" Opacity="0.85"/>

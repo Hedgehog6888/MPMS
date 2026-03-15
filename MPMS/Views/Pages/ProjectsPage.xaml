@@ -344,7 +344,7 @@
                                                                         <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                                <Setter Property="Background" Value="#FFEBE6"/>
+                                                                                <Setter Property="Background" Value="#DE350B"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
@@ -357,7 +357,7 @@
                                                                             <Style.Triggers>
                                                                                 <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Text" Value="Пометка удаления"/>
-                                                                                    <Setter Property="Foreground" Value="#DE350B"/>
+                                                                                    <Setter Property="Foreground" Value="White"/>
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
                                                                         </Style>
