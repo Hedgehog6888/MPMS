@@ -278,7 +278,6 @@
                                                     <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
                                                         <Setter Property="BorderBrush" Value="#DE350B"/>
                                                         <Setter Property="Background" Value="#FFF5F5"/>
-                                                        <Setter Property="Opacity" Value="0.85"/>
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="BorderBrush" Value="#172B4D"/>
@@ -414,7 +413,7 @@
                                                                         </Style>
                                                                     </Button.Style>
                                                                     <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
-                                                                           Width="12" Height="12" Opacity="0.7"/>
+                                                                           Width="14" Height="14" VerticalAlignment="Center"/>
                                                                 </Button>
                                                                 <!-- Mark for deletion / Unmark (Manager role) -->
                                                                 <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click"
@@ -439,7 +438,7 @@
                                                                     </Button.ToolTip>
                                                                     <Grid>
                                                                         <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"
-                                                                               Width="12" Height="12" Opacity="0.5">
+                                                                               Width="14" Height="14" VerticalAlignment="Center">
                                                                             <Image.Style>
                                                                                 <Style TargetType="Image">
                                                                                     <Style.Triggers>
@@ -451,7 +450,7 @@
                                                                             </Image.Style>
                                                                         </Image>
                                                                         <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"
-                                                                               Width="12" Height="12">
+                                                                               Width="14" Height="14" VerticalAlignment="Center">
                                                                             <Image.Style>
                                                                                 <Style TargetType="Image">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -472,7 +471,7 @@
                                                                         ToolTip="Удалить проект"
                                                                         Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
                                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                                           Width="12" Height="12" Opacity="0.6"/>
+                                                                           Width="14" Height="14" VerticalAlignment="Center"/>
                                                                 </Button>
                                                             </StackPanel>
                                         </Grid>

@@ -511,7 +511,7 @@
                                                                 </Button.ToolTip>
                                                                 <Grid>
                                                                     <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"
-                                                                           Width="12" Height="12" Opacity="0.5">
+                                                                           Width="12" Height="12">
                                                                         <Image.Style>
                                                                             <Style TargetType="Image">
                                                                                 <Style.Triggers>

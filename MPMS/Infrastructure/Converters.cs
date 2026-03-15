@@ -343,12 +343,12 @@ public class DateTimeToRelativeConverter : IValueConverter
         if (value is not DateTime dt) return "";
         var local = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
         var diff = DateTime.Now - local;
-
-        if (diff.TotalMinutes < 1) return "только что";
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} мин. назад";
-        if (diff.TotalHours < 24 && local.Date == DateTime.Today) return local.ToString("HH:mm");
         var ru = new System.Globalization.CultureInfo("ru-RU");
-        if (local.Date == DateTime.Today) return local.ToString("HH:mm");
+        var dateStr = local.ToString("d MMM", ru);
+
+        if (diff.TotalMinutes < 1) return $"{dateStr}, только что";
+        if (diff.TotalMinutes < 60) return $"{dateStr}, {(int)diff.TotalMinutes} мин. назад";
+        if (local.Date == DateTime.Today) return $"{dateStr}, {local:HH:mm}";
         if (diff.TotalDays < 7) return local.ToString("d MMM, HH:mm", ru);
         return local.ToString("dd MMM yyyy, HH:mm", ru);
     }

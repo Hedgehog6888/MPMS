@@ -291,7 +291,6 @@
                                                         <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
                                                             <Setter Property="BorderBrush" Value="#DE350B"/>
                                                             <Setter Property="Background" Value="#FFF5F5"/>
-                                                            <Setter Property="Opacity" Value="0.85"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter Property="BorderBrush" Value="#172B4D"/>
@@ -451,7 +450,7 @@
                                                             </Style>
                                                         </Button.Style>
                                                         <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
-                                                               Width="14" Height="14" VerticalAlignment="Center" Opacity="0.85"/>
+                                                               Width="14" Height="14" VerticalAlignment="Center"/>
                                                     </Button>
                                                     <!-- Mark for deletion (Foreman+) -->
                                                     <Button Tag="{Binding}" Click="MarkTask_Click"
@@ -476,7 +475,7 @@
                                                         </Button.ToolTip>
                                                         <Grid>
                                                             <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"
-                                                                   Width="14" Height="14" VerticalAlignment="Center" Opacity="0.55">
+                                                                   Width="14" Height="14" VerticalAlignment="Center">
                                                                 <Image.Style>
                                                                     <Style TargetType="Image">
                                                                         <Style.Triggers>
@@ -508,7 +507,7 @@
                                                             Style="{StaticResource DangerIconButton}"
                                                             Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                         <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                               Width="14" Height="14" VerticalAlignment="Center" Opacity="0.9"/>
+                                                               Width="14" Height="14" VerticalAlignment="Center"/>
                                                     </Button>
                                                 </StackPanel>
                                             </Grid>
