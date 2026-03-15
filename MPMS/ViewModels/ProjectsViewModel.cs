@@ -139,7 +139,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         Projects = new ObservableCollection<LocalProject>(list);
 
         // Load recent activity log with role-based filtering
-        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 10, ct);
+        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 10, excludeAuthEvents: true, ct);
         RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
     }
 

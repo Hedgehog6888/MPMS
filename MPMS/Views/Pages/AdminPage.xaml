@@ -1258,9 +1258,20 @@
                                                         <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
                                                             <Setter Property="Background" Value="#DE350B"/>
                                                         </DataTrigger>
-                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ConfirmIsDestructive}" Value="False"/>
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
                                                             <Setter Property="Background" Value="#1E40AF"/>
-                                                        </Trigger>
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ConfirmIsDestructive}" Value="True"/>
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#BF2600"/>
+                                                        </MultiDataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>

@@ -8,16 +8,26 @@ namespace MPMS.Services;
 /// <summary>Filters activity log by role: Admin=all, Manager=all except admin, Foreman=self+collaborators, Worker=self only.</summary>
 public static class ActivityFilterService
 {
+    /// <summary>Action types shown only in admin History/Activity tabs (excluded from recent activity).</summary>
+    private static readonly HashSet<string> AdminOnlyEventKinds = new()
+    {
+        ActivityActionKind.Login, ActivityActionKind.Logout,
+        ActivityActionKind.PasswordChanged, ActivityActionKind.AvatarChanged,
+        ActivityActionKind.UserCreated, ActivityActionKind.UserEdited, ActivityActionKind.UserDeleted,
+        ActivityActionKind.UserBlocked, ActivityActionKind.UserUnblocked
+    };
+
     public static async Task<List<LocalActivityLog>> GetFilteredActivitiesAsync(
-        LocalDbContext db, IAuthService auth, int take = 10, CancellationToken ct = default)
+        LocalDbContext db, IAuthService auth, int take = 10, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
         var userRole = auth.UserRole ?? "";
         var currentUserId = auth.UserId;
 
-        var allActivities = await db.ActivityLogs
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(50)
-            .ToListAsync(ct);
+        IQueryable<LocalActivityLog> query = db.ActivityLogs.OrderByDescending(a => a.CreatedAt);
+        if (excludeAuthEvents)
+            query = query.Where(a => a.ActionType == null || !AdminOnlyEventKinds.Contains(a.ActionType));
+
+        var allActivities = await query.Take(50).ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
 
         // Admin: see all
@@ -66,9 +76,9 @@ public static class ActivityFilterService
 
     /// <summary>Returns the count of activities visible to the current user (for stats display). Uses a reasonable limit.</summary>
     public static async Task<int> GetFilteredActivityCountAsync(
-        LocalDbContext db, IAuthService auth, CancellationToken ct = default)
+        LocalDbContext db, IAuthService auth, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
-        var activities = await GetFilteredActivitiesAsync(db, auth, 500, ct);
+        var activities = await GetFilteredActivitiesAsync(db, auth, 500, excludeAuthEvents, ct);
         return activities.Count;
     }
 
