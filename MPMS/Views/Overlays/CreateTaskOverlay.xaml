@@ -296,12 +296,8 @@
                 <Border x:Name="NoProjHint" Background="#FFFBEB" CornerRadius="8"
                         Padding="12,10" Margin="0,0,0,12"
                         BorderBrush="#FCD34D" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="ℹ" FontSize="13" Margin="0,0,8,0"
-                                   Foreground="#92400E" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="NoProjHintText" Text="Выберите проект, чтобы увидеть доступных исполнителей"
-                                   FontSize="12" Foreground="#92400E" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <TextBlock x:Name="NoProjHintText" Text="Выберите проект, чтобы увидеть доступных исполнителей"
+                               FontSize="12" Foreground="#92400E" TextWrapping="Wrap"/>
                 </Border>
 
                 <!-- Selected assignees chips -->

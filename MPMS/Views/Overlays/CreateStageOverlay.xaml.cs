@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 
 namespace MPMS.Views.Overlays;
@@ -22,6 +23,7 @@ public partial class CreateStageOverlay : UserControl
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
+    private bool _isWorkerMode; // работник не выбирает исполнителей — автоматом он сам
 
     public CreateStageOverlay()
     {
@@ -38,6 +40,7 @@ public partial class CreateStageOverlay : UserControl
         ProjectNameRow.Visibility = Visibility.Visible;
         ProjectNameBox.Text = task.ProjectName ?? "—";
         ProjectTaskPickerRow.Visibility = Visibility.Collapsed;
+        _isWorkerMode = IsCurrentUserWorker();
         _ = LoadAssigneesFromTaskAsync(task.Id);
     }
 
@@ -47,11 +50,13 @@ public partial class CreateStageOverlay : UserControl
         _vm = null;
         _editStage = null;
         _onSaved = onSaved;
+        _isWorkerMode = IsCurrentUserWorker();
         TitleLabel.Text = "Добавить этап";
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите проект и задачу";
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
         StatusRow.Visibility = Visibility.Collapsed;
+        ApplyWorkerModeUi();
         _ = LoadProjectsAsync();
     }
 
@@ -61,6 +66,7 @@ public partial class CreateStageOverlay : UserControl
         _vm = null;
         _editStage = null;
         _onSaved = onSaved;
+        _isWorkerMode = IsCurrentUserWorker();
         TitleLabel.Text = "Добавить этап";
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите задачу";
@@ -68,6 +74,7 @@ public partial class CreateStageOverlay : UserControl
         StatusRow.Visibility = Visibility.Collapsed;
         ProjectCombo.Visibility = Visibility.Collapsed;
         ProjectNameRow.Visibility = Visibility.Visible;
+        ApplyWorkerModeUi();
         _ = LoadProjectTasksAsync(projectId);
     }
 
@@ -79,6 +86,7 @@ public partial class CreateStageOverlay : UserControl
         _vm.SetTask(task);
         _onSaved = onSaved;
         _onAfterSave = onAfterSave;
+        _isWorkerMode = IsCurrentUserWorker();
         TitleLabel.Text = "Редактировать этап";
         SaveButton.Content = "Сохранить";
         StatusRow.Visibility = Visibility.Visible;
@@ -91,12 +99,34 @@ public partial class CreateStageOverlay : UserControl
             if (item.Tag?.ToString() == stage.Status.ToString())
             { StatusCombo.SelectedItem = item; break; }
 
+        ApplyWorkerModeUi();
         _ = LoadAssigneesFromTaskAsync(task.Id, stage.Id);
+    }
+
+    private static bool IsCurrentUserWorker()
+    {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        return string.Equals(auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void ApplyWorkerModeUi()
+    {
+        if (_isWorkerMode)
+        {
+            AssigneesSection.Visibility = Visibility.Collapsed;
+            WorkerAutoAssignHint.Visibility = _editStage is null ? Visibility.Visible : Visibility.Collapsed;
+        }
+        else
+        {
+            AssigneesSection.Visibility = Visibility.Visible;
+            WorkerAutoAssignHint.Visibility = Visibility.Collapsed;
+        }
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesFromTaskAsync(Guid taskId, Guid? stageId = null)
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        var auth = App.Services.GetRequiredService<IAuthService>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
         // Get task assignees (people who can be assigned to stages of this task)
@@ -116,6 +146,24 @@ public partial class CreateStageOverlay : UserControl
                 UserId = taskEntity.AssignedUserId!.Value,
                 UserName = taskEntity.AssignedUserName ?? "—"
             });
+        }
+
+        // Работник при создании этапа: автоматом назначается он сам; добавляем в список если его нет
+        if (_isWorkerMode && !stageId.HasValue && auth.UserId.HasValue)
+        {
+            _selectedAssigneeIds.Clear();
+            _selectedAssigneeIds.Add(auth.UserId.Value);
+            var hasSelf = taskAssignees.Any(ta => ta.UserId == auth.UserId.Value);
+            if (!hasSelf)
+            {
+                var self = await db.Users.FindAsync(auth.UserId.Value);
+                taskAssignees.Insert(0, new LocalTaskAssignee
+                {
+                    TaskId = taskId,
+                    UserId = auth.UserId.Value,
+                    UserName = self?.Name ?? auth.UserName ?? "—"
+                });
+            }
         }
 
         // Populate AvatarPath from Users
@@ -157,6 +205,7 @@ public partial class CreateStageOverlay : UserControl
             RefreshAssigneeItems();
             RefreshAssigneeChips();
             NoAssigneesHint.Visibility = _allAssigneeItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            ApplyWorkerModeUi();
         });
     }
 

@@ -115,28 +115,25 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Section: Исполнители -->
-                <TextBlock Text="ИСПОЛНИТЕЛИ ЭТАПА" Style="{StaticResource SectionHeader}"/>
+                <!-- Section: Исполнители (скрыто для работника — он автоматом назначается) -->
+                <StackPanel x:Name="AssigneesSection">
+                    <TextBlock Text="ИСПОЛНИТЕЛИ ЭТАПА" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Info hint: assignees come from task -->
-                <Border Background="#F0F9FF" CornerRadius="8"
-                        Padding="12,10" Margin="0,0,0,10"
-                        BorderBrush="#BAE6FD" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="ℹ" FontSize="13" Margin="0,0,8,0"
-                                   Foreground="#0284C7" VerticalAlignment="Center"/>
+                    <!-- Info hint: assignees come from task (для прораба и выше) -->
+                    <Border Background="#F0F9FF" CornerRadius="8"
+                            Padding="12,10" Margin="0,0,0,10"
+                            BorderBrush="#BAE6FD" BorderThickness="1">
                         <TextBlock Text="Исполнители назначаются только из участников задачи"
                                    FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <!-- Selected chips -->
-                <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8"
-                           Visibility="Collapsed"/>
+                    <!-- Selected chips -->
+                    <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8"
+                               Visibility="Collapsed"/>
 
-                <!-- Assignee picker list -->
-                <Border x:Name="AssigneePickerBorder" Background="White" BorderBrush="#DFE1E6"
-                        BorderThickness="1" CornerRadius="8" MaxHeight="200">
+                    <!-- Assignee picker list -->
+                    <Border x:Name="AssigneePickerBorder" Background="White" BorderBrush="#DFE1E6"
+                            BorderThickness="1" CornerRadius="8" MaxHeight="200">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <ItemsControl x:Name="AssigneePickerList">
@@ -196,6 +193,15 @@
                                        Margin="0,12,0,12" Visibility="Collapsed"/>
                         </StackPanel>
                     </ScrollViewer>
+                </Border>
+                </StackPanel>
+
+                <!-- Подсказка для работника: он автоматом назначается -->
+                <Border x:Name="WorkerAutoAssignHint" Background="#F0F9FF" CornerRadius="8"
+                        Padding="12,10" Margin="0,0,0,12"
+                        BorderBrush="#BAE6FD" BorderThickness="1" Visibility="Collapsed">
+                    <TextBlock Text="Вы будете автоматически назначены исполнителем этапа. Прораб может добавить других участников позже."
+                               FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
                 </Border>
 
                 <!-- Error -->
