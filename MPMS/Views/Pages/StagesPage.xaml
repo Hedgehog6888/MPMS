@@ -251,7 +251,7 @@
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" Margin="0,0,24,0">
                                                                 <!-- Marked for deletion badge -->
-                                                                <Border CornerRadius="4" Padding="8,4" Background="#DE350B"
+                                                                <Border CornerRadius="4" Padding="10,5" Background="#DE350B"
                                                                         Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
                                                                     <TextBlock Text="Пометка удаления" FontSize="11"
                                                                                Foreground="White" FontWeight="SemiBold"/>
@@ -309,7 +309,7 @@
                                                                        TextTrimming="CharacterEllipsis"/>
 
                                                             <!-- Status badge (rectangle: Запланирован, Выполняется, Завершён) -->
-                                                            <Border Grid.Column="3" CornerRadius="4" Padding="8,3"
+                                                            <Border Grid.Column="3" CornerRadius="4" Padding="10,5"
                                                                     VerticalAlignment="Center" HorizontalAlignment="Left">
                                                                 <Border.Style>
                                                                     <Style TargetType="Border">

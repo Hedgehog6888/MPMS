@@ -24,6 +24,7 @@ public partial class CreateStageOverlay : UserControl
     private List<AssigneePickerItem> _allAssigneeItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private bool _isWorkerMode; // работник не выбирает исполнителей — автоматом он сам
+    private StageStatus _selectedStatus = StageStatus.Planned;
 
     public CreateStageOverlay()
     {
@@ -95,9 +96,8 @@ public partial class CreateStageOverlay : UserControl
         NameBox.Text = stage.Name;
         DescriptionBox.Text = stage.Description ?? "";
 
-        foreach (ComboBoxItem item in StatusCombo.Items)
-            if (item.Tag?.ToString() == stage.Status.ToString())
-            { StatusCombo.SelectedItem = item; break; }
+        _selectedStatus = stage.Status;
+        ApplyStatusSelection(_selectedStatus);
 
         ApplyWorkerModeUi();
         _ = LoadAssigneesFromTaskAsync(task.Id, stage.Id);
@@ -286,8 +286,8 @@ public partial class CreateStageOverlay : UserControl
     {
         var chip = new Border
         {
-            CornerRadius = new CornerRadius(20),
-            Padding = new Thickness(8, 4, 8, 4),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 5, 10, 5),
             Margin = new Thickness(0, 2, 6, 2),
             Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
@@ -296,8 +296,8 @@ public partial class CreateStageOverlay : UserControl
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
         var avatar = new Border
         {
-            Width = 18, Height = 18,
-            CornerRadius = new CornerRadius(9),
+            Width = 20, Height = 20,
+            CornerRadius = new CornerRadius(4),
             Background = item.AvatarBrush,
             Margin = new Thickness(0, 0, 5, 0),
             ClipToBounds = true
@@ -312,7 +312,7 @@ public partial class CreateStageOverlay : UserControl
                 bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                 bmp.EndInit();
                 bmp.Freeze();
-                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 18, Height = 18 };
+                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
                 avatar.Background = Brushes.Transparent;
             }
             catch { avatar.Child = CreateStageInitialsBlock(item.Initials); }
@@ -484,19 +484,56 @@ public partial class CreateStageOverlay : UserControl
         await db.SaveChangesAsync();
     }
 
-    private StageStatus GetStatus()
+    private void StatusPlanned_Click(object sender, RoutedEventArgs e)
     {
-        if (StatusCombo.SelectedItem is ComboBoxItem item)
-        {
-            return item.Tag?.ToString() switch
-            {
-                "InProgress" => StageStatus.InProgress,
-                "Completed"  => StageStatus.Completed,
-                _            => StageStatus.Planned
-            };
-        }
-        return StageStatus.Planned;
+        _selectedStatus = StageStatus.Planned;
+        ApplyStatusSelection(_selectedStatus);
     }
+
+    private void StatusInProgress_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedStatus = StageStatus.InProgress;
+        ApplyStatusSelection(_selectedStatus);
+    }
+
+    private void StatusCompleted_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedStatus = StageStatus.Completed;
+        ApplyStatusSelection(_selectedStatus);
+    }
+
+    private void ApplyStatusSelection(StageStatus status)
+    {
+        var neutral = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
+        var neutralBg = new SolidColorBrush(Colors.White);
+        var neutralFg = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
+
+        BtnStatusPlanned.BorderBrush = status == StageStatus.Planned
+            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutral;
+        BtnStatusPlanned.Background = status == StageStatus.Planned
+            ? new SolidColorBrush(Color.FromRgb(0xF4, 0xF5, 0xF7)) : neutralBg;
+        BtnStatusPlanned.Foreground = status == StageStatus.Planned
+            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutralFg;
+        BtnStatusPlanned.FontWeight = status == StageStatus.Planned ? FontWeights.SemiBold : FontWeights.Normal;
+
+        BtnStatusInProgress.BorderBrush = status == StageStatus.InProgress
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)) : neutral;
+        BtnStatusInProgress.Background = status == StageStatus.InProgress
+            ? new SolidColorBrush(Color.FromRgb(0xEB, 0xF2, 0xFF)) : neutralBg;
+        BtnStatusInProgress.Foreground = status == StageStatus.InProgress
+            ? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)) : neutralFg;
+        BtnStatusInProgress.FontWeight = status == StageStatus.InProgress ? FontWeights.SemiBold : FontWeights.Normal;
+
+        BtnStatusCompleted.BorderBrush = status == StageStatus.Completed
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutral;
+        BtnStatusCompleted.Background = status == StageStatus.Completed
+            ? new SolidColorBrush(Color.FromRgb(0xE8, 0xF5, 0xE9)) : neutralBg;
+        BtnStatusCompleted.Foreground = status == StageStatus.Completed
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutralFg;
+        BtnStatusCompleted.FontWeight = status == StageStatus.Completed ? FontWeights.SemiBold : FontWeights.Normal;
+    }
+
+    private StageStatus GetStatus() => _selectedStatus;
 
     private void ShowError(string message)
     {

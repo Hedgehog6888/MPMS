@@ -28,12 +28,12 @@
                     </Style>
                 </Border.Style>
                 <StackPanel>
-                    <!-- Priority badge -->
+                    <!-- Priority badge (стиль как у статусов этапа) -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6" HorizontalAlignment="Right">
-                        <Border CornerRadius="4" Padding="6,2"
+                        <Border CornerRadius="4" Padding="10,5"
                                 Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}">
                             <TextBlock Text="{Binding Priority, Converter={StaticResource PriorityToString}}"
-                                       Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                       Foreground="White" FontSize="11" FontWeight="SemiBold"/>
                         </Border>
                     </StackPanel>
                     <!-- Task name -->
@@ -54,7 +54,7 @@
                     <!-- Assignee -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
                                 Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
-                        <Border Width="20" Height="20" CornerRadius="10" Background="#172B4D" Margin="0,0,6,0">
+                        <Border Width="20" Height="20" CornerRadius="4" Background="#172B4D" Margin="0,0,6,0">
                             <TextBlock Text="{Binding AssignedUserName}" FontSize="8" FontWeight="Bold"
                                        Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -1300,7 +1300,7 @@
                                                    TextTrimming="CharacterEllipsis"/>
 
                                         <!-- Status badge (rectangle: Запланирован, Выполняется, Завершён) -->
-                                        <Border Grid.Column="3" CornerRadius="4" Padding="8,3"
+                                        <Border Grid.Column="3" CornerRadius="4" Padding="10,5"
                                                 VerticalAlignment="Center" HorizontalAlignment="Left">
                                             <Border.Style>
                                                 <Style TargetType="Border">

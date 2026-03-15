@@ -17,6 +17,36 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,1"/>
         </Style>
+
+        <!-- Прямоугольные кнопки статуса этапа -->
+        <Style x:Key="StatusSegmentedBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -105,14 +135,42 @@
                               SelectionChanged="TaskCombo_SelectionChanged"/>
                 </StackPanel>
 
-                <!-- Status (edit mode) -->
+                <!-- Status (edit mode) — три прямоугольные кнопки -->
                 <StackPanel x:Name="StatusRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="Статус" Style="{StaticResource FormLabel}"/>
-                    <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}">
-                        <ComboBoxItem Content="Запланирован" Tag="Planned"/>
-                        <ComboBoxItem Content="Выполняется" Tag="InProgress"/>
-                        <ComboBoxItem Content="Завершён" Tag="Completed"/>
-                    </ComboBox>
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="BtnStatusPlanned" Grid.Column="0" Style="{StaticResource StatusSegmentedBtn}"
+                                Click="StatusPlanned_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border Width="8" Height="8" CornerRadius="4" Background="#6B778C"
+                                        Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Запланирован" FontSize="13"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BtnStatusInProgress" Grid.Column="2" Style="{StaticResource StatusSegmentedBtn}"
+                                Click="StatusInProgress_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border Width="8" Height="8" CornerRadius="4" Background="#0082FF"
+                                        Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Выполняется" FontSize="13"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="BtnStatusCompleted" Grid.Column="4" Style="{StaticResource StatusSegmentedBtn}"
+                                Click="StatusCompleted_Click">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border Width="8" Height="8" CornerRadius="4" Background="#00875A"
+                                        Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Завершён" FontSize="13"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
                 </StackPanel>
 
                 <!-- Section: Исполнители (скрыто для работника — он автоматом назначается) -->

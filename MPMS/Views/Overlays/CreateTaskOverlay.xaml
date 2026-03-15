@@ -10,16 +10,42 @@
             <Setter Property="Margin" Value="0,20,0,10"/>
         </Style>
 
-        <Style x:Key="PriorityBtn" TargetType="RadioButton">
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-
         <Style x:Key="UserPickerItem" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,1"/>
+        </Style>
+
+        <!-- Прямоугольные кнопки приоритета (как статусы в CreateStageOverlay) -->
+        <Style x:Key="PrioritySegmentedBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </UserControl.Resources>
 
@@ -94,185 +120,51 @@
                           SelectedValuePath="Id"
                           SelectionChanged="ProjectCombo_SelectionChanged"/>
 
-                <!-- Priority -->
+                <!-- Priority — четыре прямоугольные кнопки -->
                 <TextBlock Text="Приоритет *" Style="{StaticResource FormLabel}"/>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <RadioButton x:Name="PriorityLow" GroupName="Priority" Tag="Low"
-                                 IsChecked="False" Click="Priority_Click" Cursor="Hand">
-                        <RadioButton.Template>
-                            <ControlTemplate TargetType="RadioButton">
-                                <Border x:Name="Bg" CornerRadius="8,0,0,8"
-                                        BorderBrush="#DFE1E6" BorderThickness="1,1,0.5,1"
-                                        Padding="16,9">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="White"/>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="↓" FontSize="12" Margin="0,0,4,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#00875A"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock x:Name="Lbl" Text="Низкий" FontSize="12">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#6B778C"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#00875A"/>
-                                        <Setter TargetName="Bg" Property="BorderBrush" Value="#00875A"/>
-                                        <Setter TargetName="Lbl" Property="Foreground" Value="White"/>
-                                        <Setter TargetName="Lbl" Property="FontWeight" Value="SemiBold"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </RadioButton.Template>
-                    </RadioButton>
-
-                    <RadioButton x:Name="PriorityMedium" GroupName="Priority" Tag="Medium"
-                                 IsChecked="True" Click="Priority_Click" Cursor="Hand">
-                        <RadioButton.Template>
-                            <ControlTemplate TargetType="RadioButton">
-                                <Border x:Name="Bg" CornerRadius="0"
-                                        BorderBrush="#DFE1E6" BorderThickness="0.5,1,0.5,1"
-                                        Padding="16,9">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="White"/>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="●" FontSize="9" Margin="0,0,4,0" VerticalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#0082FF"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock x:Name="Lbl" Text="Средний" FontSize="12">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#6B778C"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#0082FF"/>
-                                        <Setter TargetName="Bg" Property="BorderBrush" Value="#0082FF"/>
-                                        <Setter TargetName="Lbl" Property="Foreground" Value="White"/>
-                                        <Setter TargetName="Lbl" Property="FontWeight" Value="SemiBold"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </RadioButton.Template>
-                    </RadioButton>
-
-                    <RadioButton x:Name="PriorityHigh" GroupName="Priority" Tag="High"
-                                 IsChecked="False" Click="Priority_Click" Cursor="Hand">
-                        <RadioButton.Template>
-                            <ControlTemplate TargetType="RadioButton">
-                                <Border x:Name="Bg" CornerRadius="0"
-                                        BorderBrush="#DFE1E6" BorderThickness="0.5,1,0.5,1"
-                                        Padding="16,9">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="White"/>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="↑" FontSize="12" Margin="0,0,4,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#FF8B00"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock x:Name="Lbl" Text="Высокий" FontSize="12">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#6B778C"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#FF8B00"/>
-                                        <Setter TargetName="Bg" Property="BorderBrush" Value="#FF8B00"/>
-                                        <Setter TargetName="Lbl" Property="Foreground" Value="White"/>
-                                        <Setter TargetName="Lbl" Property="FontWeight" Value="SemiBold"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </RadioButton.Template>
-                    </RadioButton>
-
-                    <RadioButton x:Name="PriorityCritical" GroupName="Priority" Tag="Critical"
-                                 IsChecked="False" Click="Priority_Click" Cursor="Hand">
-                        <RadioButton.Template>
-                            <ControlTemplate TargetType="RadioButton">
-                                <Border x:Name="Bg" CornerRadius="0,8,8,0"
-                                        BorderBrush="#DFE1E6" BorderThickness="0.5,1,1,1"
-                                        Padding="16,9">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="White"/>
-                                        </Style>
-                                    </Border.Style>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="‼" FontSize="12" Margin="0,0,4,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#DE350B"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock x:Name="Lbl" Text="Критический" FontSize="12">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#6B778C"/>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#DE350B"/>
-                                        <Setter TargetName="Bg" Property="BorderBrush" Value="#DE350B"/>
-                                        <Setter TargetName="Lbl" Property="Foreground" Value="White"/>
-                                        <Setter TargetName="Lbl" Property="FontWeight" Value="SemiBold"/>
-                                    </Trigger>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </RadioButton.Template>
-                    </RadioButton>
-                </StackPanel>
+                <Grid Margin="0,6,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="BtnPriorityLow" Grid.Column="0" Style="{StaticResource PrioritySegmentedBtn}"
+                            Click="PriorityLow_Click">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border Width="8" Height="8" CornerRadius="4" Background="#00875A"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Низкий" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnPriorityMedium" Grid.Column="2" Style="{StaticResource PrioritySegmentedBtn}"
+                            Click="PriorityMedium_Click">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border Width="8" Height="8" CornerRadius="4" Background="#0082FF"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Средний" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnPriorityHigh" Grid.Column="4" Style="{StaticResource PrioritySegmentedBtn}"
+                            Click="PriorityHigh_Click">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border Width="8" Height="8" CornerRadius="4" Background="#FF8B00"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Высокий" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnPriorityCritical" Grid.Column="6" Style="{StaticResource PrioritySegmentedBtn}"
+                            Click="PriorityCritical_Click">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Border Width="8" Height="8" CornerRadius="4" Background="#DE350B"
+                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Критический" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
 
                 <!-- Status row (edit mode only) -->
                 <StackPanel x:Name="StatusRow" Visibility="Collapsed" Margin="0,0,0,12">

@@ -25,10 +25,12 @@ public partial class CreateTaskOverlay : UserControl
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
+    private TaskPriority _selectedPriority = TaskPriority.Medium;
 
     public CreateTaskOverlay()
     {
         InitializeComponent();
+        Loaded += (_, _) => ApplyPrioritySelection(_selectedPriority);
     }
 
     public void SetCreateMode(TasksViewModel vm, Guid? projectId = null,
@@ -81,7 +83,8 @@ public partial class CreateTaskOverlay : UserControl
 
         if (editTaskId.HasValue && _editTask is not null)
         {
-            SetPriorityButton(_editTask.Priority);
+            _selectedPriority = _editTask.Priority;
+            ApplyPrioritySelection(_selectedPriority);
 
             foreach (ComboBoxItem item in StatusCombo.Items)
                 if (item.Tag?.ToString() == _editTask.Status.ToString())
@@ -178,8 +181,8 @@ public partial class CreateTaskOverlay : UserControl
     {
         var chip = new Border
         {
-            CornerRadius = new CornerRadius(20),
-            Padding = new Thickness(8, 4, 8, 4),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 5, 10, 5),
             Margin = new Thickness(0, 2, 6, 2),
             Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
@@ -188,8 +191,8 @@ public partial class CreateTaskOverlay : UserControl
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
         var avatar = new Border
         {
-            Width = 18, Height = 18,
-            CornerRadius = new CornerRadius(9),
+            Width = 20, Height = 20,
+            CornerRadius = new CornerRadius(4),
             Background = item.AvatarBrush,
             Margin = new Thickness(0, 0, 5, 0),
             ClipToBounds = true
@@ -204,7 +207,7 @@ public partial class CreateTaskOverlay : UserControl
                 bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                 bmp.EndInit();
                 bmp.Freeze();
-                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 18, Height = 18 };
+                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
                 avatar.Background = Brushes.Transparent;
             }
             catch { avatar.Child = CreateInitialsBlock(item.Initials); }
@@ -373,23 +376,70 @@ public partial class CreateTaskOverlay : UserControl
         await db.SaveChangesAsync();
     }
 
-    private void Priority_Click(object sender, RoutedEventArgs e) { }
-
-    private void SetPriorityButton(TaskPriority priority)
+    private void PriorityLow_Click(object sender, RoutedEventArgs e)
     {
-        PriorityLow.IsChecked      = priority == TaskPriority.Low;
-        PriorityMedium.IsChecked   = priority == TaskPriority.Medium;
-        PriorityHigh.IsChecked     = priority == TaskPriority.High;
-        PriorityCritical.IsChecked = priority == TaskPriority.Critical;
+        _selectedPriority = TaskPriority.Low;
+        ApplyPrioritySelection(_selectedPriority);
     }
 
-    private TaskPriority GetPriority()
+    private void PriorityMedium_Click(object sender, RoutedEventArgs e)
     {
-        if (PriorityLow.IsChecked == true)      return TaskPriority.Low;
-        if (PriorityHigh.IsChecked == true)     return TaskPriority.High;
-        if (PriorityCritical.IsChecked == true) return TaskPriority.Critical;
-        return TaskPriority.Medium;
+        _selectedPriority = TaskPriority.Medium;
+        ApplyPrioritySelection(_selectedPriority);
     }
+
+    private void PriorityHigh_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedPriority = TaskPriority.High;
+        ApplyPrioritySelection(_selectedPriority);
+    }
+
+    private void PriorityCritical_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedPriority = TaskPriority.Critical;
+        ApplyPrioritySelection(_selectedPriority);
+    }
+
+    private void ApplyPrioritySelection(TaskPriority priority)
+    {
+        var neutral = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
+        var neutralBg = new SolidColorBrush(Colors.White);
+        var neutralFg = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
+
+        BtnPriorityLow.BorderBrush = priority == TaskPriority.Low
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutral;
+        BtnPriorityLow.Background = priority == TaskPriority.Low
+            ? new SolidColorBrush(Color.FromRgb(0xE8, 0xF5, 0xE9)) : neutralBg;
+        BtnPriorityLow.Foreground = priority == TaskPriority.Low
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutralFg;
+        BtnPriorityLow.FontWeight = priority == TaskPriority.Low ? FontWeights.SemiBold : FontWeights.Normal;
+
+        BtnPriorityMedium.BorderBrush = priority == TaskPriority.Medium
+            ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)) : neutral;
+        BtnPriorityMedium.Background = priority == TaskPriority.Medium
+            ? new SolidColorBrush(Color.FromRgb(0xEB, 0xF2, 0xFF)) : neutralBg;
+        BtnPriorityMedium.Foreground = priority == TaskPriority.Medium
+            ? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)) : neutralFg;
+        BtnPriorityMedium.FontWeight = priority == TaskPriority.Medium ? FontWeights.SemiBold : FontWeights.Normal;
+
+        BtnPriorityHigh.BorderBrush = priority == TaskPriority.High
+            ? new SolidColorBrush(Color.FromRgb(0xFF, 0x8B, 0x00)) : neutral;
+        BtnPriorityHigh.Background = priority == TaskPriority.High
+            ? new SolidColorBrush(Color.FromRgb(0xFF, 0xF4, 0xE6)) : neutralBg;
+        BtnPriorityHigh.Foreground = priority == TaskPriority.High
+            ? new SolidColorBrush(Color.FromRgb(0xE6, 0x51, 0x00)) : neutralFg;
+        BtnPriorityHigh.FontWeight = priority == TaskPriority.High ? FontWeights.SemiBold : FontWeights.Normal;
+
+        BtnPriorityCritical.BorderBrush = priority == TaskPriority.Critical
+            ? new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B)) : neutral;
+        BtnPriorityCritical.Background = priority == TaskPriority.Critical
+            ? new SolidColorBrush(Color.FromRgb(0xFF, 0xEB, 0xE6)) : neutralBg;
+        BtnPriorityCritical.Foreground = priority == TaskPriority.Critical
+            ? new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B)) : neutralFg;
+        BtnPriorityCritical.FontWeight = priority == TaskPriority.Critical ? FontWeights.SemiBold : FontWeights.Normal;
+    }
+
+    private TaskPriority GetPriority() => _selectedPriority;
 
     private TaskStatus GetStatus()
     {
