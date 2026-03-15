@@ -28,6 +28,29 @@ public class LocalUser : LocalEntity
     [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     [MaxLength(500)] public string? AvatarPath { get; set; }
+
+    /// <summary>Avatar stored as PNG bytes in the database (takes priority over AvatarPath).</summary>
+    public byte[]? AvatarData { get; set; }
+
+    /// <summary>Indicates the account is blocked — user cannot log in.</summary>
+    public bool IsBlocked { get; set; } = false;
+    public DateTime? BlockedAt { get; set; }
+    [MaxLength(500)] public string? BlockedReason { get; set; }
+
+    [NotMapped]
+    public string Initials => string.IsNullOrWhiteSpace(Name) ? "?"
+        : string.Join("", Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => char.ToUpper(w[0]).ToString()));
+
+    [NotMapped]
+    public string RoleDisplayName => RoleName switch
+    {
+        "Administrator" or "Admin"                              => "Администратор",
+        "Project Manager" or "ProjectManager" or "Manager"     => "Менеджер",
+        "Foreman"                                               => "Прораб",
+        "Worker"                                                => "Работник",
+        { Length: > 0 } r                                       => r,
+        _                                                       => "—"
+    };
 }
 
 public class LocalProject : LocalEntity
@@ -44,6 +67,9 @@ public class LocalProject : LocalEntity
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
+
+    /// <summary>Project has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    public bool IsArchived { get; set; } = false;
 
     [NotMapped] public int TotalTasks { get; set; }
     [NotMapped] public int CompletedTasks { get; set; }
@@ -74,6 +100,9 @@ public class LocalTask : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
+    /// <summary>Task has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    public bool IsArchived { get; set; } = false;
+
     /// <summary>ProgressCalculator: целые % (37, 83), зависимость от распределения</summary>
     public int ProgressPercent => (int)Math.Round(ProgressCalculator.GetTaskProgressPercent(
         CompletedStages, InProgressStages, TotalStages));
@@ -94,6 +123,10 @@ public class LocalTaskStage : LocalEntity
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
+
+    /// <summary>Stage has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    public bool IsArchived { get; set; } = false;
+
     [NotMapped] public string TaskName { get; set; } = string.Empty;
 }
 
@@ -141,6 +174,9 @@ public class LocalProjectMember
     /// <summary>Avatar path from LocalUser — populated when loading members.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
 
+    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
+    [NotMapped] public byte[]? AvatarData { get; set; }
+
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
@@ -156,6 +192,13 @@ public class LocalTaskAssignee
 
     /// <summary>Avatar path from LocalUser — populated when loading.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
+
+    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
+    [NotMapped] public byte[]? AvatarData { get; set; }
+
+    [NotMapped]
+    public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
+        : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
 }
 
 /// <summary>Stage assignee — only users from parent task's assignees.</summary>
@@ -168,6 +211,13 @@ public class LocalStageAssignee
 
     /// <summary>Avatar path from LocalUser — populated when loading.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
+
+    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
+    [NotMapped] public byte[]? AvatarData { get; set; }
+
+    [NotMapped]
+    public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
+        : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
 }
 
 /// <summary>Message/comment on a task or project.</summary>
@@ -188,12 +238,31 @@ public class LocalMessage
 /// <summary>Action type for activity log — used for styling and filtering.</summary>
 public static class ActivityActionKind
 {
-    public const string Created = "Created";
-    public const string Updated = "Updated";
-    public const string Deleted = "Deleted";
-    public const string MarkedForDeletion = "MarkedForDeletion";
-    public const string UnmarkedForDeletion = "UnmarkedForDeletion";
-    public const string Message = "Message";
+    public const string Created              = "Created";
+    public const string Updated              = "Updated";
+    public const string Deleted              = "Deleted";
+    public const string MarkedForDeletion    = "MarkedForDeletion";
+    public const string UnmarkedForDeletion  = "UnmarkedForDeletion";
+    public const string Message              = "Message";
+
+    // Auth events
+    public const string Login                = "Login";
+    public const string Logout               = "Logout";
+
+    // Profile events
+    public const string PasswordChanged      = "PasswordChanged";
+    public const string AvatarChanged        = "AvatarChanged";
+
+    // Admin-only user management events
+    public const string UserCreated          = "UserCreated";
+    public const string UserEdited           = "UserEdited";
+    public const string UserBlocked          = "UserBlocked";
+    public const string UserUnblocked        = "UserUnblocked";
+    public const string UserDeleted          = "UserDeleted";
+
+    // Archive / restore
+    public const string Restored             = "Restored";
+    public const string PermanentlyDeleted   = "PermanentlyDeleted";
 }
 
 /// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>

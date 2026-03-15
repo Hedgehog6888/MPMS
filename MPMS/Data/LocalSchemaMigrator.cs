@@ -24,6 +24,9 @@ public static class LocalSchemaMigrator
         AddAvatarPathColumn(conn);
         AddActionTypeToActivityLogs(conn);
         AddUserIdToActivityLogs(conn);
+        AddUserBlockingColumns(conn);
+        AddAvatarDataColumn(conn);
+        AddIsArchivedColumn(conn);
     }
 
     private static void AddActionTypeToActivityLogs(SqliteConnection conn)
@@ -150,6 +153,25 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"Projects\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Tasks\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"IsMarkedForDeletion\" INTEGER NOT NULL DEFAULT 0;");
+    }
+
+    private static void AddUserBlockingColumns(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"IsBlocked\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"BlockedAt\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"BlockedReason\" TEXT NULL;");
+    }
+
+    private static void AddAvatarDataColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"AvatarData\" BLOB NULL;");
+    }
+
+    private static void AddIsArchivedColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Projects\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"Tasks\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

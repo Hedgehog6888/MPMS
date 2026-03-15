@@ -20,7 +20,7 @@ namespace MPMS.Views.Pages;
 public partial class ProfilePage : UserControl
 {
     private LocalUser? _user;
-    private bool _isEditing;
+
 
     private static string AvatarDirectory =>
         System.IO.Path.Combine(
@@ -69,14 +69,22 @@ public partial class ProfilePage : UserControl
 
         if (_user is null) return;
 
-        // Populate card
-        var parts = _user.Name.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
-        var initials = parts.Length >= 2
-            ? $"{parts[0][0]}{parts[1][0]}"
-            : _user.Name.Length > 0 ? $"{_user.Name[0]}" : "?";
+        // Generate default initials avatar if the user has none yet
+        if (_user.AvatarData is null or { Length: 0 })
+        {
+            var color = AvatarHelper.GetColorForName(_user.Name);
+            _user.AvatarData = AvatarHelper.GenerateInitialsAvatar(_user.Name, color);
+            var entity = await db.Users.FindAsync(_user.Id);
+            if (entity is not null)
+            {
+                entity.AvatarData = _user.AvatarData;
+                await db.SaveChangesAsync();
+            }
+        }
 
-        AvatarInitials.Text = initials.ToUpperInvariant();
-        ApplyAvatarDisplay(_user.AvatarPath);
+        var initials = AvatarHelper.GetInitials(_user.Name);
+        AvatarInitials.Text = initials;
+        ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);
         NameText.Text = _user.Name;
         LoginText.Text = _user.Username;
         EmailText.Text = string.IsNullOrWhiteSpace(_user.Email) ? "—" : _user.Email;
@@ -144,7 +152,6 @@ public partial class ProfilePage : UserControl
 
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
-        _isEditing = true;
         ErrorPanel.Visibility = Visibility.Collapsed;
         SuccessPanel.Visibility = Visibility.Collapsed;
         ViewPanel.Visibility = Visibility.Collapsed;
@@ -165,7 +172,6 @@ public partial class ProfilePage : UserControl
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
-        _isEditing = false;
         ViewPanel.Visibility = Visibility.Visible;
         EditPanel.Visibility = Visibility.Collapsed;
         EditBtn.Visibility = Visibility.Visible;
@@ -209,6 +215,7 @@ public partial class ProfilePage : UserControl
         SaveBtn.IsEnabled = false;
         try
         {
+            var auth = App.Services.GetRequiredService<IAuthService>();
             var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
             await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -259,6 +266,25 @@ public partial class ProfilePage : UserControl
                 _user.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
             }
 
+            // Log password change if it was changed
+            if (!string.IsNullOrEmpty(newPass) && _user is not null)
+            {
+                db.ActivityLogs.Add(new LocalActivityLog
+                {
+                    UserId      = _user.Id,
+                    ActorRole   = auth.UserRole,
+                    UserName    = _user.Name,
+                    UserInitials = AvatarHelper.GetInitials(_user.Name),
+                    UserColor   = "#1B6EC2",
+                    ActionType  = ActivityActionKind.PasswordChanged,
+                    ActionText  = "Изменил пароль своего аккаунта",
+                    EntityType  = "User",
+                    EntityId    = _user.Id,
+                    CreatedAt   = DateTime.UtcNow
+                });
+                await db.SaveChangesAsync();
+            }
+
             SuccessPanel.Visibility = Visibility.Visible;
 
             // Update displayed name + avatar
@@ -266,11 +292,8 @@ public partial class ProfilePage : UserControl
             ViewName.Text = _user?.Name ?? "";
             ViewEmail.Text = _user?.Email ?? "Не указан";
             EmailText.Text = _user?.Email ?? "—";
-            var parts = (_user?.Name ?? "").Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
-            var initials = parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}"
-                : _user?.Name.Length > 0 ? $"{_user.Name[0]}" : "?";
-            AvatarInitials.Text = initials.ToUpperInvariant();
-            ApplyAvatarDisplay(_user?.AvatarPath);
+            AvatarInitials.Text = AvatarHelper.GetInitials(_user?.Name ?? "");
+            ApplyAvatarDisplay(_user?.AvatarData, _user?.AvatarPath);
 
             await System.Threading.Tasks.Task.Delay(1500);
             Cancel_Click(sender, e);
@@ -287,31 +310,29 @@ public partial class ProfilePage : UserControl
 
     // ── Avatar helpers ──────────────────────────────────────────────────────
 
-    private void ApplyAvatarDisplay(string? avatarPath)
+    /// <summary>
+    /// Displays the best available avatar:
+    /// 1. AvatarData (bytes from DB) — custom photo or generated initials image
+    /// 2. AvatarPath (legacy file path)
+    /// 3. Pure initials text circle
+    /// </summary>
+    private void ApplyAvatarDisplay(byte[]? avatarData, string? avatarPath)
     {
-        if (!string.IsNullOrWhiteSpace(avatarPath) && File.Exists(avatarPath))
+        var bmp = AvatarHelper.GetImageSource(avatarData, avatarPath);
+        if (bmp is not null)
         {
-            try
-            {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(avatarPath, UriKind.Absolute);
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-
-                AvatarImage.Source = bmp;
-                AvatarImage.Visibility = Visibility.Visible;
-                AvatarInitials.Visibility = Visibility.Collapsed;
-                AvatarBorder.Background = Brushes.Transparent;
-                return;
-            }
-            catch { /* fall through to initials */ }
+            AvatarImage.Source = bmp;
+            AvatarImage.Visibility = Visibility.Visible;
+            AvatarInitials.Visibility = Visibility.Collapsed;
+            AvatarBorder.Background = Brushes.Transparent;
+            return;
         }
 
         AvatarImage.Visibility = Visibility.Collapsed;
         AvatarInitials.Visibility = Visibility.Visible;
-        AvatarBorder.Background = new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
+        var hexColor = AvatarHelper.GetColorForName(_user?.Name ?? "");
+        try { AvatarBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hexColor)); }
+        catch { AvatarBorder.Background = new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)); }
     }
 
     private void AvatarUpload_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -344,32 +365,56 @@ public partial class ProfilePage : UserControl
             Directory.CreateDirectory(AvatarDirectory);
             var avatarPath = Path.Combine(AvatarDirectory, $"{_user.Id}.png");
 
-            // Write PNG to disk
-            await System.Threading.Tasks.Task.Run(() =>
+            // Write PNG to disk and read bytes
+            byte[] avatarBytes = await System.Threading.Tasks.Task.Run(() =>
             {
-                using var fs = new FileStream(avatarPath, FileMode.Create);
+                using var ms = new System.IO.MemoryStream();
                 var encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(BitmapFrame.Create(croppedImage));
-                encoder.Save(fs);
+                encoder.Save(ms);
+                var bytes = ms.ToArray();
+
+                using var fs = new FileStream(avatarPath, FileMode.Create);
+                fs.Write(bytes, 0, bytes.Length);
+                return bytes;
             });
 
-            // Persist path to DB
+            var auth = App.Services.GetRequiredService<IAuthService>();
             var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
             await using var db = await dbFactory.CreateDbContextAsync();
             var entity = await db.Users.FindAsync(_user.Id);
             if (entity is not null)
             {
                 entity.AvatarPath = avatarPath;
-                entity.IsSynced = false;
+                entity.AvatarData = avatarBytes;
+                entity.IsSynced   = false;
+                entity.LastModifiedLocally = DateTime.UtcNow;
+
+                // Log avatar change
+                db.ActivityLogs.Add(new LocalActivityLog
+                {
+                    UserId      = _user.Id,
+                    ActorRole   = auth.UserRole,
+                    UserName    = _user.Name,
+                    UserInitials = AvatarHelper.GetInitials(_user.Name),
+                    UserColor   = "#1B6EC2",
+                    ActionType  = ActivityActionKind.AvatarChanged,
+                    ActionText  = "Изменил фото профиля",
+                    EntityType  = "User",
+                    EntityId    = _user.Id,
+                    CreatedAt   = DateTime.UtcNow
+                });
+
                 await db.SaveChangesAsync();
             }
 
             _user.AvatarPath = avatarPath;
+            _user.AvatarData = avatarBytes;
 
             // Refresh the profile page avatar display
-            ApplyAvatarDisplay(avatarPath);
+            ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);
 
-            // Propagate to MainViewModel so the top-bar and all other places update
+            // Propagate to MainViewModel so the top-bar avatar updates
             var mainVm = App.Services.GetService(typeof(MPMS.ViewModels.MainViewModel))
                          as MPMS.ViewModels.MainViewModel;
             if (mainVm is not null)

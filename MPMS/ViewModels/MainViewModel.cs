@@ -30,6 +30,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private ViewModelBase? _currentPageViewModel;
     [ObservableProperty] private string? _userAvatarPath;
+    [ObservableProperty] private byte[]? _userAvatarData;
 
     public string SwitchAccountTooltip => "Сменить аккаунт";
 
@@ -50,6 +51,10 @@ public partial class MainViewModel : ViewModelBase
 
     public bool IsProjectsVisible =>
         !string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsAdminPanelVisible =>
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase);
 
     public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp)
     {
@@ -111,6 +116,7 @@ public partial class MainViewModel : ViewModelBase
             "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
             "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
             "Profile"   => _sp.GetRequiredService<ProfileViewModel>(),
+            "Admin"     => _sp.GetRequiredService<AdminViewModel>(),
             "Settings"  => null, // handled via overlay
             _           => null
         };
@@ -190,30 +196,59 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(UserRoleDisplay));
         OnPropertyChanged(nameof(UserInitials));
         OnPropertyChanged(nameof(IsProjectsVisible));
+        OnPropertyChanged(nameof(IsAdminPanelVisible));
         _ = RefreshAvatarAsync();
-        // Workers go to Tasks page by default
+        // Workers go to Tasks page by default; Admins to Projects (or Admin panel)
         Navigate(IsProjectsVisible ? "Projects" : "Tasks");
     }
 
-    /// <summary>Reloads the avatar path from the local DB and notifies the UI.</summary>
+    /// <summary>Reloads the avatar from the local DB and notifies the UI (supports AvatarData bytes and legacy AvatarPath).</summary>
     public async Task RefreshAvatarAsync()
     {
-        if (_auth.UserId is not { } uid) { UserAvatarPath = null; return; }
+        if (_auth.UserId is not { } uid) { UserAvatarPath = null; UserAvatarData = null; return; }
         try
         {
             var dbFactory = _sp.GetRequiredService<IDbContextFactory<LocalDbContext>>();
             await using var db = await dbFactory.CreateDbContextAsync();
             var user = await db.Users.FindAsync(uid);
             UserAvatarPath = user?.AvatarPath;
+            UserAvatarData = user?.AvatarData;
         }
-        catch { UserAvatarPath = null; }
+        catch { UserAvatarPath = null; UserAvatarData = null; }
     }
 
     [RelayCommand]
-    private void SwitchAccount()
+    private async Task SwitchAccount()
     {
+        await LogLogoutAsync();
         _auth.Logout();
         App.NavigateToLogin();
+    }
+
+    private async Task LogLogoutAsync()
+    {
+        try
+        {
+            await using var db = await _sp.GetRequiredService<IDbContextFactory<Data.LocalDbContext>>().CreateDbContextAsync();
+            var name     = _auth.UserName ?? "?";
+            var initials = Services.AvatarHelper.GetInitials(name);
+            var color    = Services.AvatarHelper.GetColorForName(name);
+            db.ActivityLogs.Add(new Models.LocalActivityLog
+            {
+                UserId       = _auth.UserId,
+                ActorRole    = _auth.UserRole,
+                UserName     = name,
+                UserInitials = initials,
+                UserColor    = color,
+                ActionType   = Models.ActivityActionKind.Logout,
+                ActionText   = "Выход из системы",
+                EntityType   = "User",
+                EntityId     = _auth.UserId ?? Guid.Empty,
+                CreatedAt    = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+        catch { /* non-critical */ }
     }
 }
 

@@ -109,6 +109,135 @@ public class AvatarPathToImageSourceConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>
+/// Converts avatar byte array (PNG stored in DB) to ImageSource for display.
+/// Returns null if data is null or empty — caller shows initials circle fallback.
+/// </summary>
+public class AvatarBytesToImageSourceConverter : IValueConverter
+{
+    public static readonly AvatarBytesToImageSourceConverter Instance = new();
+
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var bytes = value as byte[];
+        return MPMS.Services.AvatarHelper.BytesToBitmapImage(bytes);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converts bool IsBlocked to a localized status string: "Активен" / "Заблокирован".
+/// </summary>
+public class BlockedToStatusStringConverter : IValueConverter
+{
+    public static readonly BlockedToStatusStringConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? "Заблокирован" : "Активен";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converts bool IsBlocked to a SolidColorBrush:
+/// true → red (#EF4444), false → green (#22C55E).
+/// </summary>
+public class BlockedToStatusBrushConverter : IValueConverter
+{
+    public static readonly BlockedToStatusBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush ActiveBrush  = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush BlockedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? BlockedBrush : ActiveBrush;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converts AdminActionKind string to localized Russian label for history log.
+/// </summary>
+public class ActionKindToLabelConverter : IValueConverter
+{
+    public static readonly ActionKindToLabelConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            MPMS.Models.ActivityActionKind.Created            => "Создан",
+            MPMS.Models.ActivityActionKind.Updated            => "Изменён",
+            MPMS.Models.ActivityActionKind.Deleted            => "Удалён",
+            MPMS.Models.ActivityActionKind.MarkedForDeletion  => "Помечен на удаление",
+            MPMS.Models.ActivityActionKind.UnmarkedForDeletion => "Снята пометка",
+            MPMS.Models.ActivityActionKind.Message            => "Сообщение",
+            MPMS.Models.ActivityActionKind.Login              => "Вход",
+            MPMS.Models.ActivityActionKind.Logout             => "Выход",
+            MPMS.Models.ActivityActionKind.PasswordChanged    => "Смена пароля",
+            MPMS.Models.ActivityActionKind.AvatarChanged      => "Смена аватара",
+            MPMS.Models.ActivityActionKind.UserCreated        => "Создан пользователь",
+            MPMS.Models.ActivityActionKind.UserEdited         => "Изменён пользователь",
+            MPMS.Models.ActivityActionKind.UserBlocked        => "Заблокирован",
+            MPMS.Models.ActivityActionKind.UserUnblocked      => "Разблокирован",
+            MPMS.Models.ActivityActionKind.UserDeleted        => "Удалён пользователь",
+            MPMS.Models.ActivityActionKind.Restored           => "Восстановлен",
+            MPMS.Models.ActivityActionKind.PermanentlyDeleted => "Удалён навсегда",
+            _                                                  => value?.ToString() ?? "—"
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converts AdminActionKind string to a SolidColorBrush for history log badges.
+/// </summary>
+public class ActionKindToBrushConverter : IValueConverter
+{
+    public static readonly ActionKindToBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush BlueBrush   = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
+    private static readonly SolidColorBrush GreenBrush  = new(Color.FromRgb(0x16, 0xA3, 0x4A));
+    private static readonly SolidColorBrush RedBrush    = new(Color.FromRgb(0xEF, 0x44, 0x44));
+    private static readonly SolidColorBrush OrangeBrush = new(Color.FromRgb(0xF9, 0x73, 0x16));
+    private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
+    private static readonly SolidColorBrush GrayBrush   = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            MPMS.Models.ActivityActionKind.Created or
+            MPMS.Models.ActivityActionKind.UserCreated        => BlueBrush,
+
+            MPMS.Models.ActivityActionKind.Login or
+            MPMS.Models.ActivityActionKind.UnmarkedForDeletion or
+            MPMS.Models.ActivityActionKind.Restored or
+            MPMS.Models.ActivityActionKind.UserUnblocked      => GreenBrush,
+
+            MPMS.Models.ActivityActionKind.Deleted or
+            MPMS.Models.ActivityActionKind.PermanentlyDeleted or
+            MPMS.Models.ActivityActionKind.UserDeleted or
+            MPMS.Models.ActivityActionKind.UserBlocked        => RedBrush,
+
+            MPMS.Models.ActivityActionKind.MarkedForDeletion or
+            MPMS.Models.ActivityActionKind.PasswordChanged or
+            MPMS.Models.ActivityActionKind.AvatarChanged or
+            MPMS.Models.ActivityActionKind.Updated or
+            MPMS.Models.ActivityActionKind.UserEdited         => OrangeBrush,
+
+            MPMS.Models.ActivityActionKind.Message            => PurpleBrush,
+
+            _                                                  => GrayBrush
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Converts a TaskStatus enum to a SolidColorBrush for UI display.</summary>
 public class TaskStatusToBrushConverter : IValueConverter
 {
@@ -576,6 +705,56 @@ public class ActorRoleToForegroundBrushConverter : IValueConverter
             "Worker"                     => WorkerBrush,
             _                            => DefaultBrush
         };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Null/empty check: Visible when value is NOT null/empty, Collapsed otherwise.</summary>
+public class NullToVisibilityConverter : IValueConverter
+{
+    public bool Invert { get; init; }
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool hasValue = value switch
+        {
+            null             => false,
+            byte[] b         => b.Length > 0,
+            string s         => !string.IsNullOrEmpty(s),
+            _                => true
+        };
+        if (Invert) hasValue = !hasValue;
+        return hasValue ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts initials string to a deterministic SolidColorBrush accent color.</summary>
+public class InitialsToBrushConverter : IValueConverter
+{
+    private static readonly string[] Palette =
+    {
+        "#1B6EC2", "#C0392B", "#27AE60", "#8E44AD",
+        "#E67E22", "#16A085", "#2980B9", "#D35400"
+    };
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var s = value?.ToString() ?? "";
+        if (string.IsNullOrEmpty(s)) return new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
+        int hash = 0;
+        foreach (var c in s) hash = hash * 31 + c;
+        var hex = Palette[Math.Abs(hash) % Palette.Length];
+        try
+        {
+            var color = (Color)ColorConverter.ConvertFromString(hex);
+            return new SolidColorBrush(color);
+        }
+        catch { return new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)); }
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

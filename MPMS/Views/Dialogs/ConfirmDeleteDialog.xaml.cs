@@ -46,15 +46,25 @@ public partial class ConfirmDeleteDialog : Window
         return dialog.Confirmed;
     }
 
+    /// <summary>Sets a custom message for the admin panel operations.</summary>
+    public void SetMessage(string message)
+    {
+        if (TitleText is not null) TitleText.Text = "Подтверждение";
+        if (ItemNameText is not null) ItemNameText.Text = message;
+        if (EntityTypeText is not null) EntityTypeText.Text = "Действие";
+    }
+
     private void Confirm_Click(object sender, RoutedEventArgs e)
     {
         Confirmed = true;
+        DialogResult = true;
         Close();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         Confirmed = false;
+        DialogResult = false;
         Close();
     }
 }

@@ -110,7 +110,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Project = projectEntity;
         }
 
-        var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id);
+        var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id && !t.IsArchived);
 
         // Workers only see tasks assigned to them
         bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
@@ -124,7 +124,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Load stages and compute TotalStages/CompletedStages + auto task status for each task
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages
-            .Where(s => taskIds.Contains(s.TaskId))
+            .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived)
             .OrderBy(s => s.CreatedAt)
             .ToListAsync();
 
@@ -152,8 +152,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Initialize filtered task collections based on current filters
         ApplyTaskFilter();
 
-        // Progress: exclude tasks marked for deletion. ProgressCalculator — единая формула с ProjectsViewModel
-        var activeTasks = tasks.Where(t => !t.IsMarkedForDeletion).ToList();
+        // Progress: exclude tasks marked for deletion or archived. ProgressCalculator — единая формула с ProjectsViewModel
+        var activeTasks = tasks.Where(t => !t.IsMarkedForDeletion && !t.IsArchived).ToList();
         TotalTasks = activeTasks.Count;
         CompletedTasksCount = activeTasks.Count(t => t.Status == TaskStatus.Completed);
         InProgressTasksCount = activeTasks.Count(t => t.Status == TaskStatus.InProgress);
@@ -201,7 +201,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .ToListAsync();
         Files = new ObservableCollection<LocalFile>(files);
 
-        // Load project members (executors) with AvatarPath from Users
+        // Load project members (executors) with AvatarData/AvatarPath from Users
         var members = await db.ProjectMembers
             .Where(m => m.ProjectId == Project.Id)
             .OrderBy(m => m.UserName)
@@ -209,9 +209,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var userIds = members.Select(m => m.UserId).Distinct().ToList();
         var userAvatars = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .ToDictionaryAsync(u => u.Id);
         foreach (var m in members)
-            m.AvatarPath = userAvatars.GetValueOrDefault(m.UserId);
+        {
+            if (userAvatars.TryGetValue(m.UserId, out var av))
+            {
+                m.AvatarPath = av.AvatarPath;
+                m.AvatarData = av.AvatarData;
+            }
+        }
         Members = new ObservableCollection<LocalProjectMember>(members);
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
@@ -382,11 +389,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
-        db.TaskStages.Remove(entity);
+        entity.IsArchived = true;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        if (stage.IsSynced)
-            await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Delete, new { });
-        await LogActivityAsync(db, $"Удалён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Deleted);
+        await LogActivityAsync(db, $"Этап «{stage.Name}» перемещён в архив", "Stage", stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -493,17 +500,22 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;
 
-        // Cascade delete stages associated with this task
+        entity.IsArchived = true;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        // Cascade archive to all stages of this task
         var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
-        db.TaskStages.RemoveRange(stages);
-        db.Tasks.Remove(entity);
+        foreach (var s in stages)
+        {
+            s.IsArchived = true;
+            s.IsSynced = false;
+            s.UpdatedAt = DateTime.UtcNow;
+        }
+
         await db.SaveChangesAsync();
-
-        if (task.IsSynced)
-            await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
-
         await RecalcProjectStatusAsync(db);
-        await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
+        await LogActivityAsync(db, $"Задача «{task.Name}» перемещена в архив", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -653,7 +665,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var project = await db.Projects.FindAsync(Project.Id);
         if (project is null) return;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
 
         project.IsSynced = false;

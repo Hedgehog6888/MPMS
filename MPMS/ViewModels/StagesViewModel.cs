@@ -65,10 +65,11 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var tasks = await db.Tasks.ToListAsync();
+            var tasks = await db.Tasks.Where(t => !t.IsArchived).ToListAsync();
             var taskDict = tasks.ToDictionary(t => t.Id);
 
             var stageList = await db.TaskStages
+                .Where(s => !s.IsArchived)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
 
@@ -203,11 +204,10 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         var entity = await db.TaskStages.FindAsync(item.Stage.Id);
         if (entity is null) return;
 
-        db.TaskStages.Remove(entity);
+        entity.IsArchived = true;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-
-        if (item.Stage.IsSynced)
-            await _sync.QueueOperationAsync("Stage", item.Stage.Id, SyncOperation.Delete, new { });
 
         await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();

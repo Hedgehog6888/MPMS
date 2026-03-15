@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
 
@@ -10,16 +12,18 @@ public partial class LoginViewModel : ViewModelBase
 {
     private readonly IApiService _api;
     private readonly IAuthService _auth;
+    private readonly IDbContextFactory<LocalDbContext> _dbFactory;
 
     [ObservableProperty] private string _username = string.Empty;
     [ObservableProperty] private string _password = string.Empty;
     [ObservableProperty] private ObservableCollection<RecentAccount> _recentAccounts = new();
     [ObservableProperty] private bool _hasRecentAccounts;
 
-    public LoginViewModel(IApiService api, IAuthService auth)
+    public LoginViewModel(IApiService api, IAuthService auth, IDbContextFactory<LocalDbContext> dbFactory)
     {
         _api = api;
         _auth = auth;
+        _dbFactory = dbFactory;
         _ = LoadRecentAccountsAsync();
     }
 
@@ -82,11 +86,38 @@ public partial class LoginViewModel : ViewModelBase
 
     private void OpenMainAndClose()
     {
+        _ = LogLoginAsync();
         App.OpenMainWindow();
         foreach (System.Windows.Window w in System.Windows.Application.Current.Windows)
         {
             if (w is Views.LoginWindow) { w.Close(); break; }
         }
+    }
+
+    private async Task LogLoginAsync()
+    {
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var name     = _auth.UserName ?? "?";
+            var initials = Services.AvatarHelper.GetInitials(name);
+            var color    = Services.AvatarHelper.GetColorForName(name);
+            db.ActivityLogs.Add(new LocalActivityLog
+            {
+                UserId       = _auth.UserId,
+                ActorRole    = _auth.UserRole,
+                UserName     = name,
+                UserInitials = initials,
+                UserColor    = color,
+                ActionType   = ActivityActionKind.Login,
+                ActionText   = $"Вход в систему",
+                EntityType   = "User",
+                EntityId     = _auth.UserId ?? Guid.Empty,
+                CreatedAt    = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+        catch { /* non-critical */ }
     }
 
     private async Task LoadRecentAccountsAsync()

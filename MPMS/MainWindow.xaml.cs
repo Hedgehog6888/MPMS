@@ -32,27 +32,25 @@ public partial class MainWindow : Window
 
     private void OnMainViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.UserAvatarPath) && sender is MainViewModel vm)
-            ApplyTopBarAvatar(vm.UserAvatarPath);
+        if (sender is not MainViewModel vm) return;
+        if (e.PropertyName is nameof(MainViewModel.UserAvatarPath) or nameof(MainViewModel.UserAvatarData))
+            ApplyTopBarAvatar(vm.UserAvatarData, vm.UserAvatarPath);
     }
 
-    private void ApplyTopBarAvatar(string? path)
+    /// <summary>
+    /// Shows the best available avatar in the top bar:
+    /// 1. AvatarData (bytes stored in DB) — custom photo or auto-generated initials image
+    /// 2. AvatarPath (legacy file path)
+    /// 3. Falls back to initials circle (shown by default in XAML)
+    /// </summary>
+    private void ApplyTopBarAvatar(byte[]? avatarData, string? avatarPath)
     {
-        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+        var bmp = MPMS.Services.AvatarHelper.GetImageSource(avatarData, avatarPath);
+        if (bmp is not null)
         {
-            try
-            {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(path, UriKind.Absolute);
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-                TopBarAvatarImage.Source = bmp;
-                TopBarAvatarBorder.Visibility = Visibility.Visible;
-                return;
-            }
-            catch { }
+            TopBarAvatarImage.Source = bmp;
+            TopBarAvatarBorder.Visibility = Visibility.Visible;
+            return;
         }
         TopBarAvatarImage.Source = null;
         TopBarAvatarBorder.Visibility = Visibility.Collapsed;

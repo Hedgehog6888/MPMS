@@ -159,13 +159,20 @@ public partial class CreateStageOverlay : UserControl
             }
         }
 
-        // Populate AvatarPath from Users
+        // Populate AvatarData/AvatarPath from Users
         var userIds = taskAssignees.Select(ta => ta.UserId).Distinct().ToList();
         var userAvatars = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .ToDictionaryAsync(u => u.Id);
         foreach (var ta in taskAssignees)
-            ta.AvatarPath = userAvatars.GetValueOrDefault(ta.UserId);
+        {
+            if (userAvatars.TryGetValue(ta.UserId, out var av))
+            {
+                ta.AvatarPath = av.AvatarPath;
+                ta.AvatarData = av.AvatarData;
+            }
+        }
 
         // Only task assignees (project members assigned to task) can be assigned to stages
         if (taskAssignees.Count == 0)
@@ -175,7 +182,7 @@ public partial class CreateStageOverlay : UserControl
         else
         {
             _allAssigneeItems = taskAssignees.Select(ta => new AssigneePickerItem(
-                ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds, ta.AvatarPath)).ToList();
+                ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds, ta.AvatarPath, ta.AvatarData)).ToList();
         }
 
         // Load existing stage assignees if editing
@@ -295,20 +302,11 @@ public partial class CreateStageOverlay : UserControl
             Margin = new Thickness(0, 0, 5, 0),
             ClipToBounds = true
         };
-        if (!string.IsNullOrEmpty(item.AvatarPath) && System.IO.File.Exists(item.AvatarPath))
+        var avatarBmp = Services.AvatarHelper.GetImageSource(item.AvatarData, item.AvatarPath);
+        if (avatarBmp is not null)
         {
-            try
-            {
-                var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(item.AvatarPath, UriKind.Absolute);
-                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
-                avatar.Background = Brushes.Transparent;
-            }
-            catch { avatar.Child = CreateStageInitialsBlock(item.Initials); }
+            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
+            avatar.Background = Brushes.Transparent;
         }
         else
         {

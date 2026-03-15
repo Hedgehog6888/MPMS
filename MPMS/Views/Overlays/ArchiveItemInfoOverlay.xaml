@@ -1,0 +1,229 @@
+<UserControl x:Class="MPMS.Views.Overlays.ArchiveItemInfoOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="640" d:DesignWidth="520">
+
+    <UserControl.Resources>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+            <Setter Property="Margin"     Value="0,20,0,10"/>
+        </Style>
+        <Style x:Key="InfoLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Margin"     Value="0,0,0,2"/>
+        </Style>
+        <Style x:Key="InfoValue" TargetType="TextBlock">
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="Foreground"   Value="#172B4D"/>
+            <Setter Property="FontWeight"   Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <!-- Sub-tab button for tasks/stages inside overlay -->
+        <Style x:Key="SubTab" TargetType="RadioButton">
+            <Setter Property="Background"   Value="Transparent"/>
+            <Setter Property="Foreground"   Value="#6B778C"/>
+            <Setter Property="FontSize"     Value="13"/>
+            <Setter Property="FontWeight"   Value="Medium"/>
+            <Setter Property="Cursor"       Value="Hand"/>
+            <Setter Property="Padding"      Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" Background="Transparent"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <TextBlock Text="{TemplateBinding Content}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontWeight="{TemplateBinding FontWeight}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══ Header ═══════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock x:Name="TitleText"
+                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock x:Name="SubtitleText"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══ Body ═════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,16,24,8">
+
+                <!-- Status bar -->
+                <Border Background="#FEF3C7" CornerRadius="8" Padding="14,10" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Элемент находится в архиве"
+                                   FontSize="13" FontWeight="SemiBold" Foreground="#92400E" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- MAIN INFO -->
+                <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="Тип" Style="{StaticResource InfoLabel}"/>
+                        <Border x:Name="TypeBadge" CornerRadius="4" Padding="8,3" HorizontalAlignment="Left" Margin="0,2,0,0">
+                            <TextBlock x:Name="TypeBadgeText" FontSize="11" FontWeight="SemiBold"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <TextBlock Text="Статус" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="StatusText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock x:Name="ParentLabel" Text="Связан с" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="ParentText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBlock Text="Удалил" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="DeletedByText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Grid.Column="0">
+                        <TextBlock Text="Дата удаления" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="DeletedAtText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- DESCRIPTION (only shown when non-empty) -->
+                <StackPanel x:Name="DescriptionPanel" Visibility="Collapsed">
+                    <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionHeader}"/>
+                    <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12">
+                        <TextBlock x:Name="DescriptionText"
+                                   FontSize="13" Foreground="#172B4D"
+                                   TextWrapping="Wrap" LineHeight="20"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- RESTORE INFO -->
+                <TextBlock Text="ВОССТАНОВЛЕНИЕ" Style="{StaticResource SectionHeader}"/>
+                <Border Background="#F0FDF4" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
+                    <TextBlock x:Name="RestoreInfoText"
+                               FontSize="12" Foreground="#166534" TextWrapping="Wrap" LineHeight="18"/>
+                </Border>
+
+                <!-- ═══ СВЯЗАННЫЕ ЭЛЕМЕНТЫ (only for Project / Task) ════ -->
+                <StackPanel x:Name="RelatedPanel" Visibility="Collapsed">
+                    <TextBlock x:Name="RelatedSectionTitle" Text="СВЯЗАННЫЕ ЭЛЕМЕНТЫ"
+                               Style="{StaticResource SectionHeader}"/>
+
+                    <!-- Sub-tab bar (only shown for Project type) -->
+                    <Border x:Name="SubTabBar"
+                            Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="4,3" HorizontalAlignment="Left"
+                            Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton x:Name="SubTabTasks"   GroupName="ArchiveSub"
+                                         IsChecked="True"       Content="Задачи"
+                                         Style="{StaticResource SubTab}"
+                                         Click="SubTab_Click"/>
+                            <RadioButton x:Name="SubTabStages"  GroupName="ArchiveSub"
+                                         IsChecked="False"      Content="Этапы"
+                                         Style="{StaticResource SubTab}"
+                                         Click="SubTab_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tasks list -->
+                    <StackPanel x:Name="RelatedTasksList" Margin="0,0,0,8"/>
+
+                    <!-- Stages list -->
+                    <StackPanel x:Name="RelatedStagesList" Visibility="Collapsed" Margin="0,0,0,8"/>
+
+                    <TextBlock x:Name="RelatedEmptyText"
+                               Text="Нет связанных элементов"
+                               FontSize="12" Foreground="#8993A4"
+                               Margin="0,0,0,8" Visibility="Collapsed"/>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Padding="24,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Закрыть" Style="{StaticResource OutlineBtn}"
+                        Click="Cancel_Click" Margin="0,0,10,0"/>
+                <Button x:Name="RestoreButton" Content="Восстановить"
+                        Style="{StaticResource BlackBtn}"
+                        Click="Restore_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

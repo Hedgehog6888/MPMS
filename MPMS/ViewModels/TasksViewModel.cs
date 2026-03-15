@@ -53,13 +53,13 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var projectList = await db.Projects.OrderBy(p => p.Name).ToListAsync();
+        var projectList = await db.Projects.Where(p => !p.IsArchived).OrderBy(p => p.Name).ToListAsync();
         Projects = new ObservableCollection<LocalProject>(projectList);
         var filterOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
         filterOpts.AddRange(projectList.Select(p => new ProjectFilterOption(p.Id, p.Name)));
         ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(filterOpts);
 
-        var query = db.Tasks.AsQueryable();
+        var query = db.Tasks.Where(t => !t.IsArchived);
 
         // Role-based filtering: Workers only see tasks assigned to them
         bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
@@ -170,9 +170,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return null;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
-        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
 
         foreach (var t in tasks)
         {
@@ -236,7 +236,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
@@ -284,14 +284,19 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;
 
-        // Cascade delete stages
-        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
-        db.TaskStages.RemoveRange(stages);
-        db.Tasks.Remove(entity);
-        await db.SaveChangesAsync();
+        entity.IsArchived = true;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
 
-        if (task.IsSynced)
-            await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
+        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
+        foreach (var s in stages)
+        {
+            s.IsArchived = true;
+            s.IsSynced = false;
+            s.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
 
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();

@@ -794,6 +794,14 @@
             <infra:ActorRoleToBrushConverter            x:Key="ActorRoleToBrush"/>
             <infra:ActorRoleToForegroundBrushConverter  x:Key="ActorRoleToForegroundBrush"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
+            <infra:AvatarBytesToImageSourceConverter    x:Key="AvatarBytesToImage"/>
+            <infra:BlockedToStatusStringConverter       x:Key="BlockedToStatusString"/>
+            <infra:BlockedToStatusBrushConverter        x:Key="BlockedToStatusBrush"/>
+            <infra:ActionKindToLabelConverter           x:Key="ActionKindToLabel"/>
+            <infra:ActionKindToBrushConverter           x:Key="ActionKindToBrush"/>
+            <infra:NullToVisibilityConverter            x:Key="NullToVis"/>
+            <infra:NullToVisibilityConverter            x:Key="NullToVisInv" Invert="True"/>
+            <infra:InitialsToBrushConverter             x:Key="InitialsToBrush"/>
 
             <!-- ── Local search Border style with focus animation ─── -->
             <Style x:Key="SearchBoxBorder" TargetType="Border">
@@ -823,6 +831,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
                 <pages:ProfilePage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AdminViewModel}">
+                <pages:AdminPage/>
             </DataTemplate>
 
         </ResourceDictionary>

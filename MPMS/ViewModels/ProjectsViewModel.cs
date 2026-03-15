@@ -46,7 +46,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-            var query = db.Projects.AsQueryable();
+            var query = db.Projects.Where(p => !p.IsArchived);
 
             // Foreman sees only projects they are a member of
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
@@ -74,7 +74,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         {
             query = query.Where(p => p.IsMarkedForDeletion);
         }
-        else if (statusSnapshot != "Все")
+
+        if (statusSnapshot != "Пометка удалить" && statusSnapshot != "Все")
         {
             var status = statusSnapshot switch
             {
@@ -102,7 +103,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         ct.ThrowIfCancellationRequested();
         foreach (var project in list)
         {
-            var projTasks = allTasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion).ToList();
+            var projTasks = allTasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToList();
             var taskIds = projTasks.Select(t => t.Id).ToList();
             var projStages = allStages.Where(s => taskIds.Contains(s.TaskId)).ToList();
             foreach (var t in projTasks)
@@ -214,13 +215,19 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         var entity = await db.Projects.FindAsync(project.Id);
         if (entity is null) return;
 
-        db.Projects.Remove(entity);
+        // Move to archive — cascade IsArchived to all tasks and their stages
+        entity.IsArchived = true;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+        foreach (var t in tasks) { t.IsArchived = true; t.IsSynced = false; t.UpdatedAt = DateTime.UtcNow; }
+        foreach (var s in stages) { s.IsArchived = true; s.IsSynced = false; s.UpdatedAt = DateTime.UtcNow; }
+
         await db.SaveChangesAsync();
-
-        if (project.IsSynced)
-            await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Delete, new { });
-
-        await LogActivityAsync(db, $"Удалён проект «{project.Name}»", "Project", project.Id, ActivityActionKind.Deleted);
+        await LogActivityAsync(db, $"Проект «{project.Name}» перемещён в архив", "Project", project.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 

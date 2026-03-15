@@ -123,9 +123,16 @@ public partial class CreateTaskOverlay : UserControl
         var userIds = members.Select(m => m.UserId).Distinct().ToList();
         var userAvatars = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .ToDictionaryAsync(u => u.Id);
         foreach (var m in members)
-            m.AvatarPath = userAvatars.GetValueOrDefault(m.UserId);
+        {
+            if (userAvatars.TryGetValue(m.UserId, out var av))
+            {
+                m.AvatarPath = av.AvatarPath;
+                m.AvatarData = av.AvatarData;
+            }
+        }
 
         if (members.Count == 0)
         {
@@ -134,7 +141,7 @@ public partial class CreateTaskOverlay : UserControl
         else
         {
             _allAssigneeItems = members.Select(m => new AssigneePickerItem(
-                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath)).ToList();
+                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData)).ToList();
         }
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -197,20 +204,11 @@ public partial class CreateTaskOverlay : UserControl
             Margin = new Thickness(0, 0, 5, 0),
             ClipToBounds = true
         };
-        if (!string.IsNullOrEmpty(item.AvatarPath) && System.IO.File.Exists(item.AvatarPath))
+        var avatarBmp = Services.AvatarHelper.GetImageSource(item.AvatarData, item.AvatarPath);
+        if (avatarBmp is not null)
         {
-            try
-            {
-                var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                bmp.BeginInit();
-                bmp.UriSource = new Uri(item.AvatarPath, UriKind.Absolute);
-                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                bmp.EndInit();
-                bmp.Freeze();
-                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
-                avatar.Background = Brushes.Transparent;
-            }
-            catch { avatar.Child = CreateInitialsBlock(item.Initials); }
+            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
+            avatar.Background = Brushes.Transparent;
         }
         else
         {
@@ -469,6 +467,7 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
     public Guid UserId { get; }
     public string Name { get; }
     public string? AvatarPath { get; }
+    public byte[]? AvatarData { get; }
     public string RoleDisplay { get; }
     public string Initials { get; }
     public SolidColorBrush AvatarBrush { get; }
@@ -490,11 +489,12 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public AssigneePickerItem(Guid userId, string name, string role, HashSet<Guid> selectedIds, string? avatarPath = null)
+    public AssigneePickerItem(Guid userId, string name, string role, HashSet<Guid> selectedIds, string? avatarPath = null, byte[]? avatarData = null)
     {
         UserId = userId;
         Name = name;
         AvatarPath = avatarPath;
+        AvatarData = avatarData;
         _isSelected = selectedIds.Contains(userId);
 
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);

@@ -250,10 +250,10 @@
 
         <!-- Tabs -->
         <Border Grid.Row="1"
-                Background="{StaticResource BackgroundBrush}"
-                Padding="24,4">
+                Background="#F4F5F7"
+                Padding="24,6">
             <Border Background="White"
-                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderBrush="#DFE1E6"
                     BorderThickness="1"
                     CornerRadius="8"
                     Padding="6,4"
@@ -381,19 +381,20 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                                    <Border Width="32" Height="32" CornerRadius="16"
-                                                            Background="#172B4D" Margin="0,0,10,0"
+                                                    <Border Width="32" Height="32" CornerRadius="4"
+                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
+                                                            Margin="0,0,10,0"
                                                             ClipToBounds="True">
                                                         <Grid>
-                                                            <Image Source="{Binding AvatarPath, Converter={StaticResource AvatarPathToImage}}"
+                                                            <Image Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
                                                                    Stretch="UniformToFill" Width="32" Height="32"
-                                                                   Visibility="{Binding AvatarPath, Converter={StaticResource StringToVis}}"/>
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                             <TextBlock Text="{Binding Initials}"
                                                                        FontSize="10" FontWeight="Bold"
                                                                        Foreground="White"
                                                                        HorizontalAlignment="Center"
                                                                        VerticalAlignment="Center"
-                                                                       Visibility="{Binding AvatarPath, Converter={StaticResource StringToVisInv}}"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"
                                                                        ToolTip="{Binding UserName}"/>
                                                         </Grid>
                                                     </Border>
@@ -425,19 +426,20 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                                    <Border Width="32" Height="32" CornerRadius="16"
-                                                            Background="#42526E" Margin="0,0,10,0"
+                                                    <Border Width="32" Height="32" CornerRadius="4"
+                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
+                                                            Margin="0,0,10,0"
                                                             ClipToBounds="True">
                                                         <Grid>
-                                                            <Image Source="{Binding AvatarPath, Converter={StaticResource AvatarPathToImage}}"
+                                                            <Image Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
                                                                    Stretch="UniformToFill" Width="32" Height="32"
-                                                                   Visibility="{Binding AvatarPath, Converter={StaticResource StringToVis}}"/>
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                             <TextBlock Text="{Binding Initials}"
                                                                        FontSize="10" FontWeight="Bold"
                                                                        Foreground="White"
                                                                        HorizontalAlignment="Center"
                                                                        VerticalAlignment="Center"
-                                                                       Visibility="{Binding AvatarPath, Converter={StaticResource StringToVisInv}}"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"
                                                                        ToolTip="{Binding UserName}"/>
                                                         </Grid>
                                                     </Border>
