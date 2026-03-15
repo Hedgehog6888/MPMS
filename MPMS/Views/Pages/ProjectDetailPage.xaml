@@ -861,7 +861,7 @@
                                                         <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                Width="14" Height="14"
                                                                VerticalAlignment="Center"
-                                                               Opacity="0.85"/>
+                                                               Opacity="0.7"/>
                                                     </Button>
                                                     <!-- Mark for deletion / unmark (Foreman, Manager) -->
                                                     <Button Tag="{Binding}" Click="MarkTaskForDeletion_Click"
@@ -884,21 +884,33 @@
                                                                 </TextBlock>
                                                             </ToolTip>
                                                         </Button.ToolTip>
-                                                        <TextBlock FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Text" Value="⊘"/>
-                                                                    <Setter Property="Opacity" Value="0.55"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                            <Setter Property="Text" Value="↩"/>
-                                                                            <Setter Property="Foreground" Value="#DE350B"/>
-                                                                            <Setter Property="Opacity" Value="1"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
+                                                        <Grid>
+                                                            <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"
+                                                                   Width="14" Height="14" VerticalAlignment="Center" Opacity="0.7">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+                                                            <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"
+                                                                   Width="14" Height="14" VerticalAlignment="Center">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+                                                        </Grid>
                                                     </Button>
                                                     <!-- Delete (Admin/Manager) -->
                                                     <Button ToolTip="Удалить задачу"
@@ -908,7 +920,7 @@
                                                         <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
                                                                Width="14" Height="14"
                                                                VerticalAlignment="Center"
-                                                               Opacity="0.9"/>
+                                                               Opacity="0.7"/>
                                                     </Button>
                                                 </StackPanel>
                                             </Grid>
@@ -1232,7 +1244,7 @@
                                                     </Style>
                                                 </Button.Style>
                                                 <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
-                                                       Width="14" Height="14" VerticalAlignment="Center" Opacity="0.85"/>
+                                                       Width="14" Height="14" VerticalAlignment="Center" Opacity="0.7"/>
                                             </Button>
                                             <!-- Mark/unmark for deletion (Worker+) -->
                                             <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
@@ -1255,21 +1267,33 @@
                                                         </TextBlock>
                                                     </ToolTip>
                                                 </Button.ToolTip>
-                                                <TextBlock FontSize="13" VerticalAlignment="Center">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="⊘"/>
-                                                            <Setter Property="Opacity" Value="0.5"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                    <Setter Property="Text" Value="↩"/>
-                                                                    <Setter Property="Foreground" Value="#DE350B"/>
-                                                                    <Setter Property="Opacity" Value="1"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
+                                                <Grid>
+                                                    <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"
+                                                           Width="14" Height="14" VerticalAlignment="Center" Opacity="0.7">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Image.Style>
+                                                    </Image>
+                                                    <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"
+                                                           Width="14" Height="14" VerticalAlignment="Center">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Image.Style>
+                                                    </Image>
+                                                </Grid>
                                             </Button>
                                             <!-- Delete stage (Foreman+) -->
                                             <Button ToolTip="Удалить этап"
@@ -1277,7 +1301,7 @@
                                                     Style="{StaticResource DangerIconButton}"
                                                     Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
                                                 <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                       Width="14" Height="14" VerticalAlignment="Center" Opacity="0.9"/>
+                                                       Width="14" Height="14" VerticalAlignment="Center" Opacity="0.7"/>
                                             </Button>
                                         </StackPanel>
                                     </Grid>

@@ -355,7 +355,10 @@
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                     <Button x:Name="MarkDeletionBtn" Click="MarkDeletion_Click"
-                            Style="{StaticResource DangerBtn}" Margin="0,0,8,0"/>
+                            Style="{StaticResource DangerBtn}" Margin="0,0,8,0">
+                        <TextBlock x:Name="MarkDeletionBtnText" Text="Пометить к удалению"
+                                   Foreground="#DE350B" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </Button>
                     <Button Content="Закрыть" Click="Close_Click"
                             Style="{StaticResource OutlineBtn}"/>
                 </StackPanel>

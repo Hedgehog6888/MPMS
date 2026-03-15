@@ -82,7 +82,7 @@ public partial class StageDetailOverlay : UserControl
     private void ApplyDeletionMark(bool isMarked)
     {
         DeletionWarningBorder.Visibility = isMarked ? Visibility.Visible : Visibility.Collapsed;
-        MarkDeletionBtn.Content = isMarked ? "Снять пометку" : "Пометить к удалению";
+        MarkDeletionBtnText.Text = isMarked ? "Снять пометку" : "Пометить к удалению";
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
