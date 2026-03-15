@@ -137,12 +137,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         Projects = new ObservableCollection<LocalProject>(list);
 
-        // Load recent activity log (last 10 entries)
-        var activities = await db.ActivityLogs
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(10)
-            .ToListAsync(ct);
-        ct.ThrowIfCancellationRequested();
+        // Load recent activity log with role-based filtering
+        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 10, ct);
         RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
     }
 
@@ -270,6 +266,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
+        var userId = session?.UserId;
+        var actorRole = session?.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -278,6 +276,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         db.ActivityLogs.Add(new LocalActivityLog
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",

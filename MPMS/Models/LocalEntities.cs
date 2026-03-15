@@ -200,6 +200,10 @@ public static class ActivityActionKind
 public class LocalActivityLog
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    /// <summary>User who performed the action — used for role-based filtering.</summary>
+    public Guid? UserId { get; set; }
+    /// <summary>Role of the actor at log time — used to hide admin actions from managers.</summary>
+    [MaxLength(50)] public string? ActorRole { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)]   public string UserInitials { get; set; } = "?";
     [MaxLength(20)]  public string UserColor { get; set; } = "#1B6EC2";

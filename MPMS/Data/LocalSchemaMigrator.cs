@@ -23,11 +23,18 @@ public static class LocalSchemaMigrator
         AddIsMarkedForDeletionColumns(conn);
         AddAvatarPathColumn(conn);
         AddActionTypeToActivityLogs(conn);
+        AddUserIdToActivityLogs(conn);
     }
 
     private static void AddActionTypeToActivityLogs(SqliteConnection conn)
     {
         TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"ActionType\" TEXT NULL;");
+    }
+
+    private static void AddUserIdToActivityLogs(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"UserId\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"ActorRole\" TEXT NULL;");
     }
 
     private static void CreateRecentAccountsTable(SqliteConnection conn)

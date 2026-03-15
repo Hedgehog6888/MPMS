@@ -790,6 +790,9 @@
             <infra:EntityTypeToAccentBrushConverter     x:Key="EntityTypeToAccentBrush"/>
             <infra:ActivityLogToAccentBrushConverter     x:Key="ActivityLogToAccentBrush"/>
             <infra:EntityTypeToBadgeLabelConverter      x:Key="EntityTypeToLabel"/>
+            <infra:ActorRoleToLabelConverter            x:Key="ActorRoleToLabel"/>
+            <infra:ActorRoleToBrushConverter            x:Key="ActorRoleToBrush"/>
+            <infra:ActorRoleToForegroundBrushConverter  x:Key="ActorRoleToForegroundBrush"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
 
             <!-- ── Local search Border style with focus animation ─── -->

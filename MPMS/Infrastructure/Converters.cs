@@ -511,3 +511,72 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>Maps ActorRole to localized Russian label for activity log role badge.</summary>
+public class ActorRoleToLabelConverter : IValueConverter
+{
+    public static readonly ActorRoleToLabelConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            "Administrator" or "Admin"   => "Админ",
+            "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
+            "Foreman"                    => "Прораб",
+            "Worker"                     => "Работник",
+            _                            => ""
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps ActorRole to light pastel Brush for role badge background (distinct from entity badges).</summary>
+public class ActorRoleToBrushConverter : IValueConverter
+{
+    public static readonly ActorRoleToBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush AdminBrush    = new(Color.FromRgb(0xFE, 0xE2, 0xE2));
+    private static readonly SolidColorBrush ManagerBrush  = new(Color.FromRgb(0xDB, 0xE8, 0xFE));
+    private static readonly SolidColorBrush ForemanBrush  = new(Color.FromRgb(0xD1, 0xFA, 0xE5));
+    private static readonly SolidColorBrush WorkerBrush   = new(Color.FromRgb(0xED, 0xE9, 0xFE));
+    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0xF1, 0xF3, 0xF5));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            "Administrator" or "Admin"   => AdminBrush,
+            "Project Manager" or "ProjectManager" or "Manager" => ManagerBrush,
+            "Foreman"                    => ForemanBrush,
+            "Worker"                     => WorkerBrush,
+            _                            => DefaultBrush
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps ActorRole to foreground Brush for role badge text (dark accent).</summary>
+public class ActorRoleToForegroundBrushConverter : IValueConverter
+{
+    public static readonly ActorRoleToForegroundBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush AdminBrush    = new(Color.FromRgb(0x99, 0x1B, 0x1B));
+    private static readonly SolidColorBrush ManagerBrush  = new(Color.FromRgb(0x1D, 0x4E, 0xD8));
+    private static readonly SolidColorBrush ForemanBrush  = new(Color.FromRgb(0x16, 0x65, 0x34));
+    private static readonly SolidColorBrush WorkerBrush   = new(Color.FromRgb(0x6D, 0x28, 0xD9));
+    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x4B, 0x55, 0x63));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value?.ToString() ?? "") switch
+        {
+            "Administrator" or "Admin"   => AdminBrush,
+            "Project Manager" or "ProjectManager" or "Manager" => ManagerBrush,
+            "Foreman"                    => ForemanBrush,
+            "Worker"                     => WorkerBrush,
+            _                            => DefaultBrush
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

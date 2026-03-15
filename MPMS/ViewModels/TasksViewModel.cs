@@ -309,6 +309,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
+        var userId = session?.UserId;
+        var actorRole = session?.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -317,6 +319,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         db.ActivityLogs.Add(new LocalActivityLog
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
             UserName = userName,
             UserInitials = initials.ToUpper(),
             UserColor = "#1B6EC2",

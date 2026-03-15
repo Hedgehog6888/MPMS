@@ -138,13 +138,22 @@
                                                                FontSize="10" FontWeight="Bold" Foreground="White"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <!-- Entity badge + action text -->
+                                                <!-- Entity badge + role badge + action text -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                                         <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0"
                                                                 Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}">
                                                             <TextBlock Text="{Binding EntityType, Converter={StaticResource EntityTypeToLabel}}"
                                                                        FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                                                        </Border>
+                                                        <Border CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
+                                                                Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
+                                                                BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
+                                                                BorderThickness="1"
+                                                                Visibility="{Binding ActorRole, Converter={StaticResource StringToVis}}">
+                                                            <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
+                                                                       FontSize="9" FontWeight="SemiBold"
+                                                                       Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
                                                         </Border>
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="12" FontWeight="SemiBold"
@@ -407,10 +416,11 @@
                                                             <!-- Actions (role-based) -->
                                                             <StackPanel Grid.Column="7" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                                <!-- Edit (Manager+, hidden when marked) -->
+                                                                <!-- Edit (Manager+, hidden for Foreman, hidden when marked) -->
                                                                 <Button Tag="{Binding}" Click="EditProject_Click"
                                                                         Width="26" Height="26" Margin="0,0,2,0"
-                                                                        ToolTip="Редактировать">
+                                                                        ToolTip="Редактировать"
+                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                                     <Button.Style>
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                             <Style.Triggers>

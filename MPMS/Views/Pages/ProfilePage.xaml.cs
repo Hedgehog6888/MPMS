@@ -131,17 +131,13 @@ public partial class ProfilePage : UserControl
         var projectCount = await db.Projects.CountAsync();
         var taskCount = await db.Tasks.CountAsync();
         var stageCount = await db.TaskStages.CountAsync();
-        var activityCount = await db.ActivityLogs.CountAsync();
         ProjectCountText.Text = projectCount.ToString();
         TaskCountText.Text = taskCount.ToString();
         StageCountText.Text = stageCount.ToString();
-        ActivityCountText.Text = activityCount.ToString();
 
-        // Load recent activity (last 8 entries)
-        var activities = await db.ActivityLogs
-            .OrderByDescending(a => a.CreatedAt)
-            .Take(8)
-            .ToListAsync();
+        // Load recent activity with role-based filtering (last 8 entries)
+        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, auth, 8);
+        ActivityCountText.Text = (await ActivityFilterService.GetFilteredActivityCountAsync(db, auth)).ToString();
         ActivityList.ItemsSource = activities;
         NoActivityText.Visibility = activities.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
