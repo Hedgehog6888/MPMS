@@ -129,9 +129,24 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return null;
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+
+        foreach (var t in tasks)
+        {
+            var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
+            t.TotalStages = taskStages.Count;
+            t.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
+            t.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
+            if (taskStages.Count > 0)
+                t.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
+        }
+
         project.TotalTasks = tasks.Count;
         project.CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed);
+        project.InProgressTasks = tasks.Count(t => t.Status == TaskStatus.InProgress);
         return project;
     }
 
