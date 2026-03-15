@@ -1,8 +1,11 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Services;
 using MPMS.Views.Dialogs;
 
@@ -19,8 +22,14 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string _currentPage = "Projects";
     [ObservableProperty] private bool _isSidebarExpanded = true;
     [ObservableProperty] private bool _isOnline;
+    [ObservableProperty] private bool _isSyncing;
+    [ObservableProperty] private string _lastSyncText = "Ещё не синхронизировано";
+    [ObservableProperty] private int _syncProjectCount;
+    [ObservableProperty] private int _syncTaskCount;
+    [ObservableProperty] private int _syncStageCount;
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private ViewModelBase? _currentPageViewModel;
+    [ObservableProperty] private string? _userAvatarPath;
 
     public string SwitchAccountTooltip => "Сменить аккаунт";
 
@@ -59,16 +68,32 @@ public partial class MainViewModel : ViewModelBase
         _onlineTimer.Tick += OnOnlineTimerTick;
         _onlineTimer.Start();
 
+        _ = RefreshAvatarAsync();
         Navigate(IsProjectsVisible ? "Projects" : "Tasks");
     }
 
     private void OnOnlineTimerTick(object? sender, EventArgs e)
     {
         var online = _sync.IsOnline;
-        if (IsOnline == online) return;
+        if (IsOnline != online)
+        {
+            IsOnline = online;
+            StatusMessage = online ? string.Empty : "Офлайн режим — данные не синхронизируются";
+        }
+    }
 
-        IsOnline = online;
-        StatusMessage = online ? string.Empty : "Офлайн режим — данные не синхронизируются";
+    private async System.Threading.Tasks.Task RefreshSyncCountsAsync()
+    {
+        try
+        {
+            var dbFactory = _sp.GetService<IDbContextFactory<LocalDbContext>>();
+            if (dbFactory is null) return;
+            await using var db = await dbFactory.CreateDbContextAsync();
+            SyncProjectCount = await db.Projects.CountAsync();
+            SyncTaskCount = await db.Tasks.CountAsync();
+            SyncStageCount = await db.TaskStages.CountAsync();
+        }
+        catch { }
     }
 
     [RelayCommand]
@@ -85,6 +110,8 @@ public partial class MainViewModel : ViewModelBase
                 => _sp.GetRequiredService<TasksViewModel>(),
             "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
             "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
+            "Profile"   => _sp.GetRequiredService<ProfileViewModel>(),
+            "Settings"  => null, // handled via overlay
             _           => null
         };
 
@@ -92,6 +119,9 @@ public partial class MainViewModel : ViewModelBase
             _ = loadable.LoadAsync();
 
         CurrentPageViewModel = vm;
+
+        // Refresh sync counts when navigating
+        _ = RefreshSyncCountsAsync();
     }
 
     [RelayCommand]
@@ -119,13 +149,22 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToProjectCmd(Models.LocalProject project)
+        => NavigateToProject(project);
+
+    [RelayCommand]
     private async Task SyncNowAsync()
     {
         IsBusy = true;
+        IsSyncing = true;
         SetStatus("Синхронизация...");
         await _sync.SyncAsync();
+        var now = DateTime.Now;
+        LastSyncText = $"Последняя синхронизация: {now:HH:mm}";
         SetStatus(IsOnline ? "Данные синхронизированы" : "Нет соединения с сервером");
         IsBusy = false;
+        IsSyncing = false;
+        await RefreshSyncCountsAsync();
     }
 
     [RelayCommand]
@@ -151,8 +190,23 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(UserRoleDisplay));
         OnPropertyChanged(nameof(UserInitials));
         OnPropertyChanged(nameof(IsProjectsVisible));
+        _ = RefreshAvatarAsync();
         // Workers go to Tasks page by default
         Navigate(IsProjectsVisible ? "Projects" : "Tasks");
+    }
+
+    /// <summary>Reloads the avatar path from the local DB and notifies the UI.</summary>
+    public async Task RefreshAvatarAsync()
+    {
+        if (_auth.UserId is not { } uid) { UserAvatarPath = null; return; }
+        try
+        {
+            var dbFactory = _sp.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var user = await db.Users.FindAsync(uid);
+            UserAvatarPath = user?.AvatarPath;
+        }
+        catch { UserAvatarPath = null; }
     }
 
     [RelayCommand]

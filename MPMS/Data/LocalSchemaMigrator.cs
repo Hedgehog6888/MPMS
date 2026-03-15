@@ -21,6 +21,7 @@ public static class LocalSchemaMigrator
         CreateStageAssigneesTable(conn);
         CreateMessagesTable(conn);
         AddIsMarkedForDeletionColumns(conn);
+        AddAvatarPathColumn(conn);
     }
 
     private static void CreateRecentAccountsTable(SqliteConnection conn)
@@ -124,6 +125,11 @@ public static class LocalSchemaMigrator
                 "CreatedAt"   TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
             );
             """);
+    }
+
+    private static void AddAvatarPathColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"AvatarPath\" TEXT NULL;");
     }
 
     private static void AddIsMarkedForDeletionColumns(SqliteConnection conn)

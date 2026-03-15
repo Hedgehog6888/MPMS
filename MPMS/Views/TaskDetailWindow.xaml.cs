@@ -68,10 +68,7 @@ public partial class TaskDetailWindow : Window
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage) return;
 
-        var result = MessageBox.Show($"Удалить этап «{stage.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-        if (result == MessageBoxResult.Yes)
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(this, "Этап", stage.Name))
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
     }
 

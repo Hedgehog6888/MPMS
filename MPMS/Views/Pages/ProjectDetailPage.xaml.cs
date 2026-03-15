@@ -25,16 +25,42 @@ public partial class ProjectDetailPage : UserControl
         Loaded += OnLoaded;
     }
 
+    private string _userRole = "";
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
-        string role = auth.UserRole ?? "";
-        _canEdit = role is "Admin" or "Administrator"
-                        or "ProjectManager" or "Manager" or "Project Manager";
-        EditProjectBtn.Visibility      = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+        _userRole = auth.UserRole ?? "";
+        _canEdit = _userRole is "Administrator" or "Project Manager" or "Foreman";
+        bool isManagerOrAbove = _userRole is "Administrator" or "Project Manager";
+        bool canMarkProject   = _userRole is "Administrator" or "Project Manager";
+
+        EditProjectBtn.Visibility      = isManagerOrAbove ? Visibility.Visible : Visibility.Collapsed;
+        MarkProjectBtn.Visibility      = canMarkProject ? Visibility.Visible : Visibility.Collapsed;
         CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
         CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void MarkProject_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM is null) return;
+        await VM.MarkProjectForDeletionCommand.ExecuteAsync(null);
+        // Update button text based on project state
+        UpdateMarkProjectButton();
+    }
+
+    private void UpdateMarkProjectButton()
+    {
+        if (VM?.Project is null) return;
+        bool marked = VM.Project.IsMarkedForDeletion;
+        // Update mark button text via template
+        MarkProjectBtn.ApplyTemplate();
+        if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
+            tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
+        // Hide editing buttons when project is marked for deletion
+        EditProjectBtn.Visibility  = marked ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
+        CreateTaskQuickBtn.Visibility = marked ? Visibility.Collapsed : (_canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
@@ -113,9 +139,8 @@ public partial class ProjectDetailPage : UserControl
     private async void DeleteTask_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
-        var result = MessageBox.Show($"Удалить задачу «{task.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (Dialogs.ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
             await VM.DeleteTaskCommand.ExecuteAsync(task);
     }
 
@@ -123,6 +148,50 @@ public partial class ProjectDetailPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
+    }
+
+    private async void MarkStageForDeletion_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        await VM.MarkStageForDeletionCommand.ExecuteAsync(stage);
+    }
+
+    private async void DeleteStageFromProject_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        var owner = Window.GetWindow(this);
+        if (Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
+            await VM.DeleteStageCommand.ExecuteAsync(stage);
+    }
+
+    private void Stage_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskStage stage || VM is null) return;
+        var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
+        if (task is null) return;
+
+        var overlay = new StageDetailOverlay();
+        var vm = VM;
+        var stageItem = new ViewModels.StageItem { Stage = stage, TaskName = stage.TaskName };
+        overlay.SetStage(stageItem, task, () =>
+        {
+            if (vm != null)
+                _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(
+                    async () => await vm.LoadAsync());
+        });
+        MainWindow.Instance?.ShowDrawer(overlay, 500);
+    }
+
+    private void EditStageFromProject_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
+        if (task is null) return;
+        var overlay = new CreateStageOverlay();
+        var vm = VM;
+        overlay.SetEditMode(stage, task,
+            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
+        MainWindow.Instance?.ShowDrawer(overlay);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)
@@ -284,6 +353,55 @@ public partial class ProjectDetailPage : UserControl
         {
             SendProjectMessage_Click(sender, e);
             e.Handled = true;
+        }
+    }
+
+    // ── Local search box focus animations (matches global search style) ─────────
+    private static readonly SolidColorBrush SearchFocusBrush = new(Colors.Black);
+    private static readonly SolidColorBrush SearchNormalBrush = new(Colors.Transparent);
+    private static readonly SolidColorBrush SearchFocusBg = new(Colors.White);
+    private static readonly SolidColorBrush SearchNormalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+    private static readonly System.Windows.Media.Effects.DropShadowEffect SearchFocusShadow = new()
+    {
+        Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
+    };
+
+    private static Border? FindParentBorder(DependencyObject element)
+    {
+        var current = VisualTreeHelper.GetParent(element);
+        while (current is not null)
+        {
+            if (current is Border b) return b;
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return null;
+    }
+
+    private void LocalSearch_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var border = FindParentBorder(tb);
+            if (border is not null)
+            {
+                border.BorderBrush = SearchFocusBrush;
+                border.Background = SearchFocusBg;
+                border.Effect = SearchFocusShadow;
+            }
+        }
+    }
+
+    private void LocalSearch_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var border = FindParentBorder(tb);
+            if (border is not null)
+            {
+                border.BorderBrush = SearchNormalBrush;
+                border.Background = SearchNormalBg;
+                border.Effect = null;
+            }
         }
     }
 }

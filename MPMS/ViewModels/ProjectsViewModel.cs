@@ -91,7 +91,19 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 query = query.Where(p => p.Status == status.Value);
         }
 
-        var list = await query.OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
+        // Sort: non-deleted first by status order (Planning→InProgress→Completed→Cancelled), then marked-for-deletion at bottom
+        var list = (await query.ToListAsync(ct))
+            .OrderBy(p => p.IsMarkedForDeletion)
+            .ThenBy(p => p.Status switch
+            {
+                ProjectStatus.Planning    => 0,
+                ProjectStatus.InProgress  => 1,
+                ProjectStatus.Completed   => 2,
+                ProjectStatus.Cancelled   => 3,
+                _                         => 4
+            })
+            .ThenByDescending(p => p.CreatedAt)
+            .ToList();
         ct.ThrowIfCancellationRequested();
 
         // Populate progress stats for each project
@@ -167,7 +179,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         project.Address = req.Address;
         project.StartDate = req.StartDate;
         project.EndDate = req.EndDate;
-        project.Status = req.Status;
+        // Status is auto-calculated from tasks, do not override from request
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
         project.IsSynced = false;
@@ -206,6 +218,25 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+
+        // Cascade mark/unmark to all tasks and their stages
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+
+        foreach (var t in tasks)
+        {
+            t.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            t.IsSynced = false;
+            t.UpdatedAt = DateTime.UtcNow;
+        }
+        foreach (var s in stages)
+        {
+            s.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            s.IsSynced = false;
+            s.UpdatedAt = DateTime.UtcNow;
+        }
+
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";

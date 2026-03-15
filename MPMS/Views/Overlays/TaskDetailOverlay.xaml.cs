@@ -1,6 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -52,6 +56,38 @@ public partial class TaskDetailOverlay : UserControl
         await _vm.LoadAsync();
         UpdateStagesTabLabel();
         UpdateEmptyStates();
+        await LoadAssigneesAsync();
+    }
+
+    private async System.Threading.Tasks.Task LoadAssigneesAsync()
+    {
+        if (_vm?.Task is null) return;
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+
+        var assignees = await db.TaskAssignees
+            .Where(a => a.TaskId == _vm.Task.Id)
+            .OrderBy(a => a.UserName)
+            .ToListAsync();
+
+        // If no multi-assignees, fall back to legacy single assignee
+        if (assignees.Count == 0 && _vm.Task.AssignedUserId.HasValue)
+        {
+            assignees.Add(new LocalTaskAssignee
+            {
+                TaskId = _vm.Task.Id,
+                UserId = _vm.Task.AssignedUserId.Value,
+                UserName = _vm.Task.AssignedUserName ?? "—"
+            });
+        }
+
+        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName)).ToList();
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            AssigneesDisplay.ItemsSource = displayItems;
+            NoAssigneesText.Visibility = displayItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        });
     }
 
     private void UpdateStagesTabLabel()
@@ -229,9 +265,8 @@ public partial class TaskDetailOverlay : UserControl
     private async void DeleteStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
-        var result = MessageBox.Show($"Удалить этап «{stage.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
     }
 
@@ -262,5 +297,23 @@ public partial class TaskDetailOverlay : UserControl
             });
 
         MainWindow.Instance?.ShowDrawer(leftDetail, overlay, 850);
+    }
+}
+
+/// <summary>Display model for a task assignee in the detail overlay.</summary>
+public sealed class AssigneeDisplayItem
+{
+    public Guid UserId { get; }
+    public string UserName { get; }
+    public string Initials { get; }
+
+    public AssigneeDisplayItem(Guid userId, string userName)
+    {
+        UserId = userId;
+        UserName = userName;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
     }
 }

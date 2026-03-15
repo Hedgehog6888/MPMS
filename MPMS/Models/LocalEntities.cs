@@ -26,6 +26,7 @@ public class LocalUser : LocalEntity
     public Guid RoleId { get; set; }
     [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    [MaxLength(500)] public string? AvatarPath { get; set; }
 }
 
 public class LocalProject : LocalEntity
