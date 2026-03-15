@@ -390,6 +390,24 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await LoadAsync();
     }
 
+    [RelayCommand]
+    private async Task ChangeStageStatusAsync((LocalTaskStage stage, StageStatus newStatus) args)
+    {
+        var (stage, newStatus) = args;
+        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.TaskStages.FindAsync(stage.Id);
+        if (entity is null) return;
+        entity.Status = newStatus;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, req);
+        await LogActivityAsync(db, $"Обновлён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Updated);
+        await RecalcProjectStatusAsync(db);
+        await LoadAsync();
+    }
+
     public async Task SaveNewTaskAsync(CreateTaskRequest req, Guid localId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();

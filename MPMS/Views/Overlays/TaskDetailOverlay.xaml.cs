@@ -315,10 +315,6 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
 
-        // Новый экземпляр оверлея задачи слева.
-        var leftDetail = new TaskDetailOverlay();
-        leftDetail.SetTask(_vm.Task, _onClosed);
-
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(
             stage,
@@ -330,15 +326,10 @@ public partial class TaskDetailOverlay : UserControl
                 UpdateEmptyStates();
                 _onClosed?.Invoke(); // Sync project page
             },
-            onAfterSave: () =>
-            {
-                if (_vm?.Task is null) return;
-                var detail = new TaskDetailOverlay();
-                detail.SetTask(_vm.Task, _onClosed);
-                MainWindow.Instance?.ShowDrawer(detail, 500);
-            });
+            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        MainWindow.Instance?.ShowDrawer(leftDetail, overlay, 850);
+        // Только оверлей редактирования, без левой панели. После закрытия — снова проект + задача.
+        MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 }
 

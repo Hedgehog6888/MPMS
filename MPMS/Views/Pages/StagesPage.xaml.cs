@@ -70,6 +70,20 @@ public partial class StagesPage : UserControl
         await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.Completed));
     }
 
+    private async void RevertStage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
+        e.Handled = true;
+        await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.Planned));
+    }
+
+    private async void ReopenStage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
+        e.Handled = true;
+        await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.InProgress));
+    }
+
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
