@@ -218,7 +218,8 @@
                 </Grid>
                 <ProgressBar Value="{Binding Task.ProgressPercent, Mode=OneWay}"
                              Maximum="100" Height="8" Margin="0,0,0,16"
-                             Background="#EEF0F3" Foreground="#0082FF"
+                             Background="#EEF0F3"
+                             Foreground="{Binding Task.ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
                              Template="{StaticResource SlimProgressBar}"/>
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>

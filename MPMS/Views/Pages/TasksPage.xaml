@@ -425,7 +425,7 @@
                                                     <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
                                                                  Maximum="100" Height="6"
                                                                  Background="#E9ECEF"
-                                                                 Foreground="#111111"
+                                                                 Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
                                                                  Margin="0,0,0,4"
                                                                  Template="{StaticResource SlimPB}"/>
                                                     <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
@@ -606,7 +606,8 @@
                                         <ProgressBar Grid.Column="0"
                                                      Value="{Binding ProgressPercent, Mode=OneWay}"
                                                      Maximum="100" Height="4" VerticalAlignment="Center"
-                                                     Background="#E0E0E0" Foreground="#111111"
+                                                     Background="#E0E0E0"
+                                                     Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
                                                      Template="{StaticResource SlimPB}"/>
                                         <TextBlock Grid.Column="1" Margin="6,0,0,0"
                                                    Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"

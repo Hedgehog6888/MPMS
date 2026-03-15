@@ -101,14 +101,32 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
         }
 
-        var list = await query.OrderBy(t => t.IsMarkedForDeletion).ThenByDescending(t => t.CreatedAt).ToListAsync();
+        var list = (await query.ToListAsync())
+            .OrderBy(t => t.IsMarkedForDeletion)
+            .ThenBy(t => t.Status switch
+            {
+                TaskStatus.Planned    => 0,
+                TaskStatus.InProgress => 1,
+                TaskStatus.Paused     => 2,
+                TaskStatus.Completed  => 3,
+                _                     => 4
+            })
+            .ThenBy(t => t.ProgressPercent)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToList();
         Tasks = new ObservableCollection<LocalTask>(list);
 
+        static int StatusOrder(TaskStatus s) => s switch
+        {
+            TaskStatus.Planned => 0, TaskStatus.InProgress => 1,
+            TaskStatus.Paused => 2, TaskStatus.Completed => 3, _ => 4
+        };
         var groups = list
             .GroupBy(t => new { t.ProjectId, t.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
             .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—",
-                g.OrderBy(t => t.IsMarkedForDeletion).ToList()))
+                g.OrderBy(t => t.IsMarkedForDeletion).ThenBy(t => StatusOrder(t.Status))
+                    .ThenBy(t => t.ProgressPercent).ThenByDescending(t => t.CreatedAt).ToList()))
             .ToList();
         TaskGroups = new ObservableCollection<ProjectTaskGroup>(groups);
 

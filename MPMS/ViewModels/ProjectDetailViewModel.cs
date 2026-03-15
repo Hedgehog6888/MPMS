@@ -267,9 +267,18 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(t => t.Priority == priority.Value);
         }
 
-        // Tasks sorted: non-deleted first by priority desc, then marked-for-deletion at bottom
+        // Tasks sorted: non-deleted first by status, then by progress desc, then priority, name
         var list = query
             .OrderBy(t => t.IsMarkedForDeletion)
+            .ThenBy(t => t.Status switch
+            {
+                TaskStatus.Planned    => 0,
+                TaskStatus.InProgress => 1,
+                TaskStatus.Paused     => 2,
+                TaskStatus.Completed  => 3,
+                _                     => 4
+            })
+            .ThenBy(t => t.ProgressPercent)
             .ThenByDescending(t => (int)t.Priority)
             .ThenBy(t => t.Name)
             .ToList();

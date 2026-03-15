@@ -786,6 +786,7 @@
             <infra:StageCountToStringConverter x:Key="StageCountToString"/>
             <infra:DateTimeToRelativeConverter x:Key="DateTimeToRelative"/>
             <infra:EqualityToVisibilityConverter x:Key="EqualityToVis"/>
+            <infra:ProgressPercentToBrushConverter    x:Key="ProgressPercentToBrush"/>
             <infra:EntityTypeToAccentBrushConverter     x:Key="EntityTypeToAccentBrush"/>
             <infra:EntityTypeToBadgeLabelConverter      x:Key="EntityTypeToLabel"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>

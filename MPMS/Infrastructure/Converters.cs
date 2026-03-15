@@ -398,6 +398,27 @@ public class RequiredRoleToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Converts progress percent (int) to Brush: red &lt;30%, orange 30–59%, blue 60–99%, green 100%.</summary>
+public class ProgressPercentToBrushConverter : IValueConverter
+{
+    public static readonly ProgressPercentToBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var pct = value is int i ? i : 0;
+        return pct >= 100
+            ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
+            : pct >= 60
+                ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF))
+                : pct >= 30
+                    ? new SolidColorBrush(Color.FromRgb(0xF9, 0x73, 0x16))
+                    : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Maps EntityType string to an accent SolidColorBrush for activity log items.</summary>
 public class EntityTypeToAccentBrushConverter : IValueConverter
 {

@@ -27,6 +27,7 @@ public partial class TaskSummaryPanel : UserControl
         DueDateText.Text = task.DueDate?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "—";
         ProgressBar.Value = task.ProgressPercent;
         ProgressText.Text = $"{task.ProgressPercent}%";
+        ProgressBar.Foreground = ProgressPercentToBrushConverter.Instance.Convert(task.ProgressPercent, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush ?? Brushes.Gray;
 
         var statusBrush = TaskStatusToBrushConverter.Instance.Convert(task.Status, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;

@@ -91,19 +91,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 query = query.Where(p => p.Status == status.Value);
         }
 
-        // Sort: non-deleted first by status order (Planning→InProgress→Completed→Cancelled), then marked-for-deletion at bottom
-        var list = (await query.ToListAsync(ct))
-            .OrderBy(p => p.IsMarkedForDeletion)
-            .ThenBy(p => p.Status switch
-            {
-                ProjectStatus.Planning    => 0,
-                ProjectStatus.InProgress  => 1,
-                ProjectStatus.Completed   => 2,
-                ProjectStatus.Cancelled   => 3,
-                _                         => 4
-            })
-            .ThenByDescending(p => p.CreatedAt)
-            .ToList();
+        var list = (await query.ToListAsync(ct)).ToList();
         ct.ThrowIfCancellationRequested();
 
         // Populate progress stats for each project (TotalTasks, CompletedTasks, InProgressTasks — как в ProjectDetailViewModel)
@@ -130,6 +118,21 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             project.InProgressTasks = projTasks.Count(t => t.Status == TaskStatus.InProgress);
             project.Status = StatusCalculator.GetProjectStatusFromTasks(projTasks);
         }
+
+        // Sort: non-deleted first by status, then by progress desc, then by date
+        list = list
+            .OrderBy(p => p.IsMarkedForDeletion)
+            .ThenBy(p => p.Status switch
+            {
+                ProjectStatus.Planning    => 0,
+                ProjectStatus.InProgress  => 1,
+                ProjectStatus.Completed   => 2,
+                ProjectStatus.Cancelled   => 3,
+                _                         => 4
+            })
+            .ThenBy(p => p.ProgressPercent)
+            .ThenByDescending(p => p.CreatedAt)
+            .ToList();
 
         Projects = new ObservableCollection<LocalProject>(list);
 

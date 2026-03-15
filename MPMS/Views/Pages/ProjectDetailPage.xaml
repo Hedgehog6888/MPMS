@@ -68,7 +68,8 @@
                     </StackPanel>
                     <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
                                  Maximum="100" Height="4"
-                                 Background="#E8EAED" Foreground="#111111">
+                                 Background="#E8EAED"
+                                 Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}">
                         <ProgressBar.Template>
                             <ControlTemplate TargetType="ProgressBar">
                                 <Border Background="{TemplateBinding Background}" CornerRadius="2">
@@ -466,7 +467,8 @@
                                            Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                                 <ProgressBar Value="{Binding ProjectProgressPercent, Mode=OneWay}"
                                              Maximum="100" Height="10" Margin="0,0,0,8"
-                                             Background="#E9ECEF" Foreground="Black">
+                                             Background="#E9ECEF"
+                                             Foreground="{Binding ProjectProgressPercent, Converter={StaticResource ProgressPercentToBrush}}">
                                     <ProgressBar.Template>
                                         <ControlTemplate TargetType="ProgressBar">
                                             <Border Background="{TemplateBinding Background}" CornerRadius="5">
@@ -845,7 +847,7 @@
                                                     <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
                                                                  Maximum="100" Height="4"
                                                                  Background="#E0E0E0"
-                                                                 Foreground="#111111">
+                                                                 Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}">
                                                         <ProgressBar.Template>
                                                             <ControlTemplate TargetType="ProgressBar">
                                                                 <Border Background="{TemplateBinding Background}" CornerRadius="2">

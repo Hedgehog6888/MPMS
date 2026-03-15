@@ -152,7 +152,8 @@
                 </Grid>
                 <ProgressBar Value="{Binding Task.ProgressPercent, Mode=OneWay}"
                              Maximum="100" Height="8"
-                             Background="#E9ECEF" Foreground="Black">
+                             Background="#E9ECEF"
+                             Foreground="{Binding Task.ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}">
                     <ProgressBar.Template>
                         <ControlTemplate TargetType="ProgressBar">
                             <Border Background="{TemplateBinding Background}" CornerRadius="4">
