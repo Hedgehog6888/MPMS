@@ -188,7 +188,8 @@
 
                         <!-- Search box -->
                         <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
-                                Padding="10,0" Height="36" Margin="0,0,12,0">
+                                Padding="10,0" Height="36" Margin="0,0,12,0"
+                                BorderThickness="1.5" BorderBrush="Transparent">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -218,7 +219,9 @@
                                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent" BorderThickness="0"
                                              VerticalAlignment="Center" FontSize="13"
-                                             Foreground="#172B4D"/>
+                                             Foreground="#172B4D"
+                                             GotFocus="SearchBox_GotFocus"
+                                             LostFocus="SearchBox_LostFocus"/>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -233,45 +236,65 @@
                 </Border>
 
                 <!-- PROJECTS TABLE ──────────────────────────────────── -->
-                <Border Background="White" CornerRadius="8"
-                        BorderBrush="#DFE1E6" BorderThickness="1"
-                        ClipToBounds="True">
-                    <StackPanel>
+                <StackPanel>
 
                         <!-- Column headers -->
-                        <Border Background="#F8F9FA" Padding="16,10"
-                                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+                        <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
+                                BorderThickness="1.5" BorderBrush="Transparent">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>          <!-- Name -->
-                                    <ColumnDefinition Width="140"/>        <!-- Client -->
-                                    <ColumnDefinition Width="100"/>        <!-- Start -->
-                                    <ColumnDefinition Width="110"/>        <!-- End -->
-                                    <ColumnDefinition Width="110"/>        <!-- Status -->
-                                    <ColumnDefinition Width="150"/>        <!-- Progress -->
-                                    <ColumnDefinition Width="130"/>        <!-- Manager -->
-                                    <ColumnDefinition Width="80"/>         <!-- Actions -->
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="80"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Название проекта"   Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="1" Text="Заказчик"           Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="2" Text="Дата начала"        Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="3" Text="Дата завершения"    Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="4" Text="Статус"             Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="5" Text="Прогресс"           Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="6" Text="Менеджер"           Style="{StaticResource ColHeader}"/>
-                                <TextBlock Grid.Column="7" Text="Действия"           Style="{StaticResource ColHeader}" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ ПРОЕКТА"   Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="1" Text="ЗАКАЗЧИК"           Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="2" Text="ДАТА НАЧАЛА"        Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="3" Text="ДАТА ЗАВЕРШЕНИЯ"    Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="4" Text="СТАТУС"             Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="5" Text="ПРОГРЕСС"           Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="6" Text="МЕНЕДЖЕР"           Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"           Style="{StaticResource ColHeader}" HorizontalAlignment="Right"/>
                             </Grid>
                         </Border>
 
-                        <!-- Project rows -->
+                        <!-- Project rows as cards -->
                         <ItemsControl ItemsSource="{Binding Projects}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource ProjectRow}"
-                                            Padding="0"
-                                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1"
-                                            MouseLeftButtonDown="ProjectRow_Click">
-                                        <Grid Margin="16,12">
+                                    <Border CornerRadius="8" Margin="0,0,0,6"
+                                            Padding="15,12" BorderThickness="1.5"
+                                            Cursor="Hand" MouseLeftButtonDown="ProjectRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="White"/>
+                                                <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="#DE350B"/>
+                                                        <Setter Property="Background" Value="#FFF5F5"/>
+                                                        <Setter Property="Opacity" Value="0.85"/>
+                                                    </DataTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="BorderBrush" Value="#172B4D"/>
+                                                    </Trigger>
+                                                    <EventTrigger RoutedEvent="Loaded">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                 From="0" To="1" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="140"/>
@@ -282,6 +305,7 @@
                                                 <ColumnDefinition Width="130"/>
                                                 <ColumnDefinition Width="80"/>
                                             </Grid.ColumnDefinitions>
+
 
                                             <!-- Project name -->
                                             <TextBlock Grid.Column="0"
@@ -310,15 +334,36 @@
                                                        Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"
                                                        Style="{StaticResource CellTextSec}"/>
 
-                                            <!-- Status badge -->
-                                            <Border Grid.Column="4"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Center"
-                                                    CornerRadius="4" Padding="8,4"
-                                                    Background="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}">
-                                                <TextBlock Text="{Binding Status, Converter={StaticResource ProjectStatusToString}}"
-                                                           Foreground="White" FontSize="11" FontWeight="SemiBold"/>
-                                            </Border>
+                                                            <!-- Status badge -->
+                                                            <Border Grid.Column="4"
+                                                                    HorizontalAlignment="Left"
+                                                                    VerticalAlignment="Center"
+                                                                    CornerRadius="4" Padding="8,4">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Background" Value="#FFEBE6"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Text" Value="{Binding Status, Converter={StaticResource ProjectStatusToString}}"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Text" Value="Пометка удаления"/>
+                                                                                    <Setter Property="Foreground" Value="#DE350B"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </Border>
 
                                             <!-- Progress -->
                                             <StackPanel Grid.Column="5" VerticalAlignment="Center"
@@ -352,35 +397,72 @@
                                                            MaxWidth="90"/>
                                             </StackPanel>
 
-                                            <!-- Actions (role-based) -->
-                                            <StackPanel Grid.Column="7" Orientation="Horizontal"
-                                                        VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                <!-- Deletion mark indicator -->
-                                                <Border CornerRadius="4" Padding="5,2" Margin="0,0,4,0"
-                                                        Background="#FFEBE6" VerticalAlignment="Center"
-                                                        Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                    <TextBlock Text="К удалению" FontSize="10"
-                                                               Foreground="#BF2600" FontWeight="SemiBold"/>
-                                                </Border>
-                                                <!-- Mark for deletion / Unmark (Manager role) -->
-                                                <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click"
-                                                        Style="{StaticResource IconButton}"
-                                                        Width="26" Height="26" Margin="0,0,2,0"
-                                                        ToolTip="Пометить для удаления"
-                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Manager,ProjectManager,Project Manager'}">
-                                                    <TextBlock Text="🗑" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                               Opacity="0.6"/>
-                                                </Button>
-                                                <!-- Delete (Admin only) -->
-                                                <Button Tag="{Binding}" Click="DeleteProject_Click"
-                                                        Style="{StaticResource IconButton}"
-                                                        Width="26" Height="26"
-                                                        ToolTip="Удалить проект"
-                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Admin,Administrator'}">
-                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                           Width="12" Height="12" Opacity="0.6"/>
-                                                </Button>
-                                            </StackPanel>
+                                                            <!-- Actions (role-based) -->
+                                                            <StackPanel Grid.Column="7" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                                <!-- Edit (Manager+, hidden when marked) -->
+                                                                <Button Tag="{Binding}" Click="EditProject_Click"
+                                                                        Width="26" Height="26" Margin="0,0,2,0"
+                                                                        ToolTip="Редактировать">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                    <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
+                                                                           Width="12" Height="12" Opacity="0.7"/>
+                                                                </Button>
+                                                                <!-- Mark for deletion / Unmark (Manager role) -->
+                                                                <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click"
+                                                                        Style="{StaticResource IconButton}"
+                                                                        Width="26" Height="26" Margin="0,0,2,0"
+                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
+                                                                    <Button.ToolTip>
+                                                                        <ToolTip>
+                                                                            <TextBlock>
+                                                                                <TextBlock.Style>
+                                                                                    <Style TargetType="TextBlock">
+                                                                                        <Setter Property="Text" Value="Пометить к удалению"/>
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                                <Setter Property="Text" Value="Снять пометку удаления"/>
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </TextBlock.Style>
+                                                                            </TextBlock>
+                                                                        </ToolTip>
+                                                                    </Button.ToolTip>
+                                                                    <TextBlock FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Text" Value="⊘"/>
+                                                                                <Setter Property="Opacity" Value="0.5"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                        <Setter Property="Text" Value="↩"/>
+                                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                                        <Setter Property="Opacity" Value="1"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                </Button>
+                                                                <!-- Delete (Admin only) -->
+                                                                <Button Tag="{Binding}" Click="DeleteProject_Click"
+                                                                        Style="{StaticResource IconButton}"
+                                                                        Width="26" Height="26"
+                                                                        ToolTip="Удалить проект"
+                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
+                                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
+                                                                           Width="12" Height="12" Opacity="0.6"/>
+                                                                </Button>
+                                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -398,8 +480,7 @@
                                        FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
                         </StackPanel>
 
-                    </StackPanel>
-                </Border>
+                </StackPanel>
 
             </StackPanel>
         </ScrollViewer>

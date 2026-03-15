@@ -26,12 +26,48 @@ public partial class TasksPage : UserControl
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
         string role = auth.UserRole ?? "";
-        bool canCreate = role is "Admin" or "Administrator"
-                              or "ProjectManager" or "Manager" or "Project Manager";
+        bool canCreate = role is "Administrator" or "Project Manager" or "Foreman";
         CreateTaskBtn.Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private TasksViewModel? VM => DataContext as TasksViewModel;
+
+    private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
+    private static readonly SolidColorBrush _normalBrush = new(Colors.Transparent);
+    private static readonly SolidColorBrush _focusBg = new(Colors.White);
+    private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+    private static readonly System.Windows.Media.Effects.DropShadowEffect _focusShadow = new()
+    {
+        Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
+    };
+
+    private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var parent = System.Windows.Media.VisualTreeHelper.GetParent(tb);
+            if (System.Windows.Media.VisualTreeHelper.GetParent(parent) is Border border)
+            {
+                border.BorderBrush = _focusBrush;
+                border.Background = _focusBg;
+                border.Effect = _focusShadow;
+            }
+        }
+    }
+
+    private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var parent = System.Windows.Media.VisualTreeHelper.GetParent(tb);
+            if (System.Windows.Media.VisualTreeHelper.GetParent(parent) is Border border)
+            {
+                border.BorderBrush = _normalBrush;
+                border.Background = _normalBg;
+                border.Effect = null;
+            }
+        }
+    }
 
     private void ViewMode_Click(object sender, RoutedEventArgs e)
     {
@@ -61,10 +97,15 @@ public partial class TasksPage : UserControl
     private async void DeleteTask_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
-        var result = MessageBox.Show($"Удалить задачу «{task.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
             await VM.DeleteTaskCommand.ExecuteAsync(task);
+    }
+
+    private async void MarkTask_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
+        await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)

@@ -46,10 +46,8 @@ public partial class MaterialsPage : UserControl
         if (sender is not Button btn || btn.Tag is not LocalMaterial material || VM is null)
             return;
 
-        var result = MessageBox.Show($"Удалить материал «{material.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Материал", material.Name))
             await VM.DeleteMaterialCommand.ExecuteAsync(material);
     }
 }

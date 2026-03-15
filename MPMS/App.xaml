@@ -787,6 +787,16 @@
             <infra:EntityTypeToBadgeLabelConverter      x:Key="EntityTypeToLabel"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
 
+            <!-- ── Local search Border style with focus animation ─── -->
+            <Style x:Key="SearchBoxBorder" TargetType="Border">
+                <Setter Property="Background" Value="#F4F5F7"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="10,0"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+            </Style>
+
             <!-- ── DataTemplates: ViewModel → View (UserControl) ─── -->
             <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
                 <pages:ProjectsPage/>
@@ -802,6 +812,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:StagesViewModel}">
                 <pages:StagesPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
+                <pages:ProfilePage/>
             </DataTemplate>
 
         </ResourceDictionary>

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -39,14 +40,19 @@ public partial class StagesPage : UserControl
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 
+    private async void MarkStage_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
+        e.Handled = true;
+        await VM.MarkStageForDeletionCommand.ExecuteAsync(item);
+    }
+
     private async void DeleteStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
-        var result = MessageBox.Show(
-            $"Удалить этап «{item.Stage.Name}»?",
-            "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", item.Stage.Name))
             await VM.DeleteStageCommand.ExecuteAsync(item);
     }
 
@@ -73,6 +79,29 @@ public partial class StagesPage : UserControl
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(item.Stage, task, async () => { if (VM is not null) await VM.LoadAsync(); });
         MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
+    private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
+    private static readonly SolidColorBrush _normalBrush = new(Colors.Transparent);
+    private static readonly SolidColorBrush _focusBg = new(Colors.White);
+    private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+
+    private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb && VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(tb)) is Border border)
+        {
+            border.BorderBrush = _focusBrush;
+            border.Background = _focusBg;
+        }
+    }
+
+    private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb && VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(tb)) is Border border)
+        {
+            border.BorderBrush = _normalBrush;
+            border.Background = _normalBg;
+        }
     }
 
     private async void Stage_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)

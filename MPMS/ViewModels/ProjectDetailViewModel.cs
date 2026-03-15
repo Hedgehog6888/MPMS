@@ -63,6 +63,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _taskViewMode = "List";
     [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
     [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
+
+    [ObservableProperty] private List<LocalProjectMember> _foremanMembers = [];
+    [ObservableProperty] private List<LocalProjectMember> _workerMembers = [];
     [ObservableProperty] private int _totalTasks;
     [ObservableProperty] private int _completedTasksCount;
     [ObservableProperty] private int _inProgressTasksCount;
@@ -174,6 +177,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .OrderBy(m => m.UserName)
             .ToListAsync();
         Members = new ObservableCollection<LocalProjectMember>(members);
+        ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
+        WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
 
         // Load project messages (discussion)
         var messages = await db.Messages
@@ -227,7 +232,12 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(t => t.Priority == priority.Value);
         }
 
-        var list = query.OrderByDescending(t => t.CreatedAt).ToList();
+        // Tasks sorted: non-deleted first by priority desc, then marked-for-deletion at bottom
+        var list = query
+            .OrderBy(t => t.IsMarkedForDeletion)
+            .ThenByDescending(t => (int)t.Priority)
+            .ThenBy(t => t.Name)
+            .ToList();
 
         FilteredTasks           = new ObservableCollection<LocalTask>(list);
         FilteredPlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
@@ -268,7 +278,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(s => s.Status == targetStatus.Value);
         }
 
-        var list = query.ToList();
+        var list = query.OrderBy(s => s.IsMarkedForDeletion).ToList();
         FilteredStages = new ObservableCollection<LocalTaskStage>(list);
     }
 
@@ -288,13 +298,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.Address = req.Address;
         project.StartDate = req.StartDate;
         project.EndDate = req.EndDate;
-        project.Status = req.Status;
+        // Status is auto-calculated, do not override from request
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
+        await RecalcProjectStatusAsync(db);
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
 
         Project = project;
@@ -309,6 +320,35 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     [RelayCommand]
     private void SwitchTaskView(string mode) => TaskViewMode = mode;
+
+    [RelayCommand]
+    private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.TaskStages.FindAsync(stage.Id);
+        if (entity is null) return;
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task DeleteStageAsync(LocalTaskStage stage)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.TaskStages.FindAsync(stage.Id);
+        if (entity is null) return;
+        db.TaskStages.Remove(entity);
+        await db.SaveChangesAsync();
+        if (stage.IsSynced)
+            await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Delete, new { });
+        await LogActivityAsync(db, $"Удалён этап «{stage.Name}»", "Stage", stage.Id);
+        await LoadAsync();
+    }
 
     public async Task SaveNewTaskAsync(CreateTaskRequest req, Guid localId)
     {
@@ -342,6 +382,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Task", localId, SyncOperation.Create,
             req with { Id = localId });
 
+        await RecalcProjectStatusAsync(db);
         await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId);
         await LoadAsync();
     }
@@ -368,6 +409,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         task.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
+        await RecalcProjectStatusAsync(db);
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id);
         await LoadAsync();
@@ -389,12 +431,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;
 
+        // Cascade delete stages associated with this task
+        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
+        db.TaskStages.RemoveRange(stages);
         db.Tasks.Remove(entity);
         await db.SaveChangesAsync();
 
         if (task.IsSynced)
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
+        await RecalcProjectStatusAsync(db);
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
         await LoadAsync();
     }
@@ -409,10 +455,58 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+
+        // Cascade mark/unmark to all stages of this task
+        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
+        foreach (var stage in stages)
+        {
+            stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            stage.IsSynced = false;
+            stage.UpdatedAt = DateTime.UtcNow;
+        }
+
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task MarkProjectForDeletionAsync()
+    {
+        if (Project is null) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(Project.Id);
+        if (project is null) return;
+
+        project.IsMarkedForDeletion = !project.IsMarkedForDeletion;
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+
+        // Cascade mark/unmark to all tasks and their stages
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+
+        foreach (var t in tasks)
+        {
+            t.IsMarkedForDeletion = project.IsMarkedForDeletion;
+            t.IsSynced = false;
+            t.UpdatedAt = DateTime.UtcNow;
+        }
+        foreach (var s in stages)
+        {
+            s.IsMarkedForDeletion = project.IsMarkedForDeletion;
+            s.IsSynced = false;
+            s.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+
+        Project.IsMarkedForDeletion = project.IsMarkedForDeletion;
+        var action = project.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id);
         await LoadAsync();
     }
 
@@ -433,7 +527,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             UserName = userName,
             UserInitials = initials,
             UserColor = "#1B6EC2",
-            UserRole = _auth.UserRole ?? "—",
+            UserRole = RoleToRussian(_auth.UserRole),
             Text = text.Trim(),
             CreatedAt = DateTime.UtcNow
         };
@@ -466,4 +560,47 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         });
         await db.SaveChangesAsync();
     }
+
+    /// <summary>Recalculates and saves the project's status based on its tasks.</summary>
+    private async Task RecalcProjectStatusAsync(LocalDbContext db)
+    {
+        if (Project is null) return;
+        var project = await db.Projects.FindAsync(Project.Id);
+        if (project is null) return;
+
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+        if (tasks.Count == 0)
+        {
+            project.Status = ProjectStatus.Planning;
+        }
+        else if (tasks.All(t => t.Status == Models.TaskStatus.Completed))
+        {
+            project.Status = ProjectStatus.Completed;
+        }
+        else if (tasks.Any(t => t.Status == Models.TaskStatus.InProgress || t.Status == Models.TaskStatus.Paused || t.Status == Models.TaskStatus.Completed))
+        {
+            project.Status = ProjectStatus.InProgress;
+        }
+        else
+        {
+            project.Status = ProjectStatus.Planning;
+        }
+
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        // Update local in-memory reference
+        if (Project is not null)
+            Project.Status = project.Status;
+    }
+
+    public static string RoleToRussian(string? role) => role switch
+    {
+        "Administrator" or "Admin" => "Администратор",
+        "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
+        "Foreman" => "Прораб",
+        "Worker" => "Работник",
+        _ => role ?? "—"
+    };
 }

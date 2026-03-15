@@ -105,7 +105,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             UserName = userName,
             UserInitials = initials,
             UserColor = "#1B6EC2",
-            UserRole = auth.UserRole ?? "—",
+            UserRole = ProjectDetailViewModel.RoleToRussian(auth.UserRole),
             Text = text.Trim(),
             CreatedAt = DateTime.UtcNow
         };
@@ -297,7 +297,22 @@ public partial class TaskDetailViewModel : ViewModelBase
         var stages = await ctx.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
         taskEntity.TotalStages = stages.Count;
         taskEntity.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+
+        // Auto-update task status based on stage completion
+        if (stages.Count > 0)
+        {
+            if (stages.All(s => s.Status == StageStatus.Completed))
+                taskEntity.Status = Models.TaskStatus.Completed;
+            else if (stages.Any(s => s.Status == StageStatus.InProgress))
+                taskEntity.Status = Models.TaskStatus.InProgress;
+        }
+
+        taskEntity.IsSynced = false;
+        taskEntity.UpdatedAt = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
+
+        // Auto-update project status based on task completion
+        await RecalcProjectStatusAsync(ctx, taskEntity.ProjectId);
 
         // Update the in-memory Task so the UI reflects the new progress immediately
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -306,8 +321,27 @@ public partial class TaskDetailViewModel : ViewModelBase
             {
                 Task.TotalStages = taskEntity.TotalStages;
                 Task.CompletedStages = taskEntity.CompletedStages;
+                Task.Status = taskEntity.Status;
                 OnPropertyChanged(nameof(Task));
             }
         });
+    }
+
+    private static async System.Threading.Tasks.Task RecalcProjectStatusAsync(LocalDbContext db, Guid projectId)
+    {
+        var project = await db.Projects.FindAsync(projectId);
+        if (project is null) return;
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        if (tasks.Count == 0)
+            project.Status = ProjectStatus.Planning;
+        else if (tasks.All(t => t.Status == Models.TaskStatus.Completed))
+            project.Status = ProjectStatus.Completed;
+        else if (tasks.Any(t => t.Status == Models.TaskStatus.InProgress || t.Status == Models.TaskStatus.Paused || t.Status == Models.TaskStatus.Completed))
+            project.Status = ProjectStatus.InProgress;
+        else
+            project.Status = ProjectStatus.Planning;
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
     }
 }

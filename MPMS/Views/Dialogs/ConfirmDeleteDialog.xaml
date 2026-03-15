@@ -1,0 +1,141 @@
+<Window x:Class="MPMS.Views.Dialogs.ConfirmDeleteDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Подтверждение удаления"
+        SizeToContent="WidthAndHeight"
+        MinWidth="420"
+        MaxWidth="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <Style x:Key="DialogBtn" TargetType="Button">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- Drop shadow border wrapping -->
+    <Border CornerRadius="12" Background="White"
+            BorderBrush="#DFE1E6" BorderThickness="1"
+            Padding="0,0,0,0"
+            Margin="16">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
+        </Border.Effect>
+        <StackPanel>
+
+            <!-- Header -->
+            <Border Background="#FFF5F5" CornerRadius="12,12,0,0" Padding="24,20,24,16">
+                <Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Warning icon -->
+                        <Border Width="40" Height="40" CornerRadius="20" Background="#FFEBE6"
+                                Margin="0,0,14,0" VerticalAlignment="Center">
+                            <TextBlock Text="⚠" FontSize="18" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" Foreground="#DE350B"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="TitleText" Text="Удалить элемент?"
+                                       FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                            <TextBlock Text="Это действие нельзя отменить" FontSize="12"
+                                       Foreground="#6B778C" Margin="0,3,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <!-- Close button -->
+                    <Button Click="Cancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Width="26" Height="26">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="Transparent" CornerRadius="13">
+                                    <TextBlock Text="✕" FontSize="12" HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" Foreground="#6B778C"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Margin="24,16,24,0">
+                <!-- Item name highlight -->
+                <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,8">
+                    <StackPanel>
+                        <TextBlock x:Name="EntityTypeText" Text="Элемент"
+                                   FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="ItemNameText" Text=""
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Warning message -->
+                <Border x:Name="CascadeWarning" Background="#FFF8E1" CornerRadius="6" Padding="12,10"
+                        BorderBrush="#FFC107" BorderThickness="1" Margin="0,0,0,0"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="CascadeText"
+                               FontSize="12" Foreground="#856404" TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer -->
+            <Border Padding="24,16,24,20">
+                <Grid>
+                    <Button Content="Отмена" HorizontalAlignment="Left"
+                            Click="Cancel_Click"
+                            Style="{StaticResource DialogBtn}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="White" CornerRadius="8"
+                                        BorderBrush="#DFE1E6" BorderThickness="1"
+                                        Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                                    <TextBlock Text="Отмена" Foreground="#172B4D"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button x:Name="ConfirmBtn" HorizontalAlignment="Right"
+                            Click="Confirm_Click"
+                            Style="{StaticResource DialogBtn}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="#DE350B" CornerRadius="8"
+                                        Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                                    <TextBlock Text="Удалить" Foreground="White"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#BF2600"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+</Window>

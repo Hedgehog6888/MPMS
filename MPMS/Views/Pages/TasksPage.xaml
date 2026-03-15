@@ -181,6 +181,7 @@
                         <Border Grid.Column="0"
                                 Background="#F4F5F7" CornerRadius="6"
                                 Padding="10,0" Height="36" Margin="0,0,10,0"
+                                BorderThickness="1.5" BorderBrush="Transparent"
                                 VerticalAlignment="Center" HorizontalAlignment="Stretch">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -211,7 +212,9 @@
                                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent" BorderThickness="0"
                                              VerticalAlignment="Center" FontSize="13"
-                                             Foreground="#172B4D"/>
+                                             Foreground="#172B4D"
+                                             GotFocus="SearchBox_GotFocus"
+                                             LostFocus="SearchBox_LostFocus"/>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -237,31 +240,29 @@
 
                 <!-- LIST VIEW panel -->
                 <StackPanel x:Name="ListPanel">
-                    <Border Background="White" CornerRadius="8"
-                            BorderBrush="#DFE1E6" BorderThickness="1"
-                            ClipToBounds="True">
-                        <StackPanel>
 
-                            <!-- Column headers — widths must match data row columns exactly -->
-                            <Border Background="#F8F9FA" Padding="0,0,0,0"
-                                    BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
-                                <Grid Margin="16,10">
+                            <!-- Column headers -->
+                            <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
+                                    BorderThickness="1.5" BorderBrush="Transparent">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>    <!-- Name -->
-                                        <ColumnDefinition Width="160"/>  <!-- Assignee -->
-                                        <ColumnDefinition Width="95"/>   <!-- Priority -->
-                                        <ColumnDefinition Width="100"/>  <!-- Due date -->
-                                        <ColumnDefinition Width="110"/>  <!-- Status -->
-                                        <ColumnDefinition Width="72"/>   <!-- Stages -->
-                                        <ColumnDefinition Width="110"/>  <!-- Progress -->
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="95"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="72"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="90"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Название задачи"  Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="1" Text="Исполнитель"      Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="2" Text="Приоритет"        Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="3" Text="Срок"             Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="4" Text="Статус"           Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="5" Text="Этапы"            Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="6" Text="Прогресс"         Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="1" Text="ИСПОЛНИТЕЛЬ"  Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="2" Text="ПРИОРИТЕТ"    Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="3" Text="СРОК"         Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="4" Text="СТАТУС"       Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="5" Text="ЭТАПЫ"        Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="6" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
+                                    <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"     Style="{StaticResource ColHeader}"/>
                                 </Grid>
                             </Border>
 
@@ -271,32 +272,51 @@
                                     <DataTemplate>
                                         <StackPanel>
                                             <!-- Project header -->
-                                            <Border Background="#F4F5F7" Padding="16,8"
-                                                    BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
-                                                <TextBlock Text="{Binding ProjectName, Mode=OneWay}" FontSize="12" FontWeight="SemiBold"
+                                            <Border Background="#F4F5F7" Padding="10,6" Margin="0,8,0,4" CornerRadius="6">
+                                                <TextBlock Text="{Binding ProjectName, Mode=OneWay}" FontSize="11" FontWeight="SemiBold"
                                                            Foreground="#6B778C"/>
                                             </Border>
                                             <!-- Tasks in project -->
                                             <ItemsControl ItemsSource="{Binding Tasks}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                        <Border Style="{StaticResource TaskRow}"
-                                                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1"
-                                                MouseLeftButtonDown="Task_Click">
+                                        <Border CornerRadius="8" Margin="0,0,0,6"
+                                                Padding="15,10" BorderThickness="1.5"
+                                                Cursor="Hand" MouseLeftButtonDown="Task_Click">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="White"/>
+                                                    <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#DE350B"/>
+                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                            <Setter Property="Opacity" Value="0.85"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#172B4D"/>
+                                                        </Trigger>
+                                                        <EventTrigger RoutedEvent="Loaded">
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                     From="0" To="1" Duration="0:0:0.2"/>
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </EventTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <Grid>
-                                                <!-- Priority left border -->
-                                                <Border Width="3" HorizontalAlignment="Left"
-                                                        Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}"
-                                                        VerticalAlignment="Stretch"/>
-                                            <Grid Margin="20,10,16,10">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="160"/>
+                                                    <ColumnDefinition Width="140"/>
                                                     <ColumnDefinition Width="95"/>
                                                     <ColumnDefinition Width="100"/>
-                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="120"/>
                                                     <ColumnDefinition Width="72"/>
-                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="90"/>
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Name + description -->
@@ -313,13 +333,6 @@
                                                                 Background="#FFEBE6" VerticalAlignment="Center"
                                                                 Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
                                                             <TextBlock Text="Просрочено" FontSize="10"
-                                                                       Foreground="#BF2600" FontWeight="SemiBold"/>
-                                                        </Border>
-                                                        <!-- Deletion mark indicator -->
-                                                        <Border CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
-                                                                Background="#FFEBE6" VerticalAlignment="Center"
-                                                                Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                            <TextBlock Text="К удалению" FontSize="10"
                                                                        Foreground="#BF2600" FontWeight="SemiBold"/>
                                                         </Border>
                                                     </StackPanel>
@@ -376,11 +389,30 @@
                                                 <Border Grid.Column="4"
                                                         HorizontalAlignment="Left"
                                                         VerticalAlignment="Center"
-                                                        CornerRadius="4" Padding="8,4"
-                                                        Background="{Binding Status, Converter={StaticResource TaskStatusToBrush}}">
-                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TaskStatusToString}}"
-                                                               Foreground="White"
-                                                               FontSize="11" FontWeight="SemiBold"/>
+                                                        CornerRadius="4" Padding="8,4">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <Setter Property="Background" Value="#DE350B"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Foreground="White"
+                                                               FontSize="11" FontWeight="SemiBold">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <Setter Property="Text" Value="Пометка удаления"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Border>
 
                                                 <!-- Stage count -->
@@ -400,7 +432,73 @@
                                                     <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
                                                                FontSize="11" Foreground="#6B778C"/>
                                                 </StackPanel>
-                                            </Grid>
+
+                                                <!-- Action buttons -->
+                                                <StackPanel Grid.Column="7" Orientation="Horizontal"
+                                                            VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                    <!-- Edit (Foreman+, hidden when marked) -->
+                                                    <Button ToolTip="Редактировать"
+                                                            Tag="{Binding}" Click="EditTask_Click"
+                                                            Margin="0,0,4,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
+                                                               Width="14" Height="14" VerticalAlignment="Center" Opacity="0.85"/>
+                                                    </Button>
+                                                    <!-- Mark for deletion (Foreman+) -->
+                                                    <Button Tag="{Binding}" Click="MarkTask_Click"
+                                                            Margin="0,0,4,0"
+                                                            Style="{StaticResource IconButton}"
+                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
+                                                        <Button.ToolTip>
+                                                            <ToolTip>
+                                                                <TextBlock>
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Text" Value="Пометить к удалению"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Text" Value="Снять пометку удаления"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </ToolTip>
+                                                        </Button.ToolTip>
+                                                        <TextBlock FontSize="13" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="⊘"/>
+                                                                    <Setter Property="Opacity" Value="0.55"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                            <Setter Property="Text" Value="↩"/>
+                                                                            <Setter Property="Foreground" Value="#DE350B"/>
+                                                                            <Setter Property="Opacity" Value="1"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Button>
+                                                    <!-- Delete (Manager+) -->
+                                                    <Button ToolTip="Удалить задачу"
+                                                            Tag="{Binding}" Click="DeleteTask_Click"
+                                                            Style="{StaticResource DangerIconButton}"
+                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
+                                                        <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
+                                                               Width="14" Height="14" VerticalAlignment="Center" Opacity="0.9"/>
+                                                    </Button>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                                     </DataTemplate>
@@ -422,8 +520,6 @@
                                            FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
                             </StackPanel>
 
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <!-- KANBAN VIEW panel -->
@@ -437,6 +533,81 @@
                         <ColumnDefinition Width="8"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+
+                    <!-- Shared Kanban card DataTemplate -->
+                    <Grid.Resources>
+                        <DataTemplate x:Key="KanbanCardTpl">
+                            <Border Style="{StaticResource KanbanCard}"
+                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
+                                    MouseMove="KanbanCard_MouseMove"
+                                    PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
+                                <StackPanel>
+                                    <!-- Top row: priority badge + deletion indicator -->
+                                    <Grid Margin="0,0,0,6">
+                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left"
+                                                Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}">
+                                            <TextBlock Text="{Binding Priority, Converter={StaticResource PriorityToString}}"
+                                                       Foreground="White" FontSize="10" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Padding="5,2" HorizontalAlignment="Right"
+                                                Background="#FFEBE6" VerticalAlignment="Center"
+                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Просрочено" FontSize="9" Foreground="#BF2600" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Task name -->
+                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="#172B4D" TextWrapping="Wrap" Margin="0,0,0,4"/>
+
+                                    <!-- Description (truncated) -->
+                                    <TextBlock Text="{Binding Description}" FontSize="11"
+                                               Foreground="#6B778C" TextWrapping="Wrap"
+                                               MaxHeight="32" Margin="0,0,0,6"
+                                               Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+
+                                    <!-- Due date -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <TextBlock Text="📅 " FontSize="11" VerticalAlignment="Center" Opacity="0.6"/>
+                                        <TextBlock Text="{Binding DueDate, Converter={StaticResource DateOnlyToString}}"
+                                                   FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Assignee -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
+                                                Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
+                                        <Border Width="20" Height="20" CornerRadius="10" Background="#172B4D" Margin="0,0,6,0">
+                                            <TextBlock Text="{Binding AssignedUserName}" FontSize="8" FontWeight="Bold"
+                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
+                                                   Foreground="#6B778C" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="120"/>
+                                    </StackPanel>
+
+                                    <!-- Stages progress -->
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ProgressBar Grid.Column="0"
+                                                     Value="{Binding ProgressPercent, Mode=OneWay}"
+                                                     Maximum="100" Height="4" VerticalAlignment="Center"
+                                                     Background="#E0E0E0" Foreground="#111111"
+                                                     Template="{StaticResource SlimPB}"/>
+                                        <TextBlock Grid.Column="1" Margin="6,0,0,0"
+                                                   Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
+                                                   FontSize="10" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <!-- Stage count -->
+                                    <TextBlock Text="{Binding TotalStages, Converter={StaticResource StageCountToString}}"
+                                               FontSize="10" Foreground="#97A0AF"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </Grid.Resources>
 
                     <!-- Planned column -->
                     <Border Grid.Column="0" Background="White" CornerRadius="8"
@@ -456,27 +627,8 @@
                                 </StackPanel>
                             </Border>
                             <StackPanel Margin="10,10">
-                                <ItemsControl ItemsSource="{Binding PlannedTasks}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource KanbanCard}"
-                                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
-                                                    MouseMove="KanbanCard_MouseMove"
-                                                    PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
-                                                               Foreground="#6B778C" Margin="0,4,0,0"/>
-                                                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
-                                                                 Maximum="100" Height="4" Margin="0,8,0,0"
-                                                                 Background="#E0E0E0" Foreground="#111111"
-                                                                 Template="{StaticResource SlimPB}"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding PlannedTasks}"
+                                              ItemTemplate="{StaticResource KanbanCardTpl}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -499,27 +651,8 @@
                                 </StackPanel>
                             </Border>
                             <StackPanel Margin="10,10">
-                                <ItemsControl ItemsSource="{Binding InProgressTasks}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource KanbanCard}"
-                                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
-                                                    MouseMove="KanbanCard_MouseMove"
-                                                    PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
-                                                               Foreground="#6B778C" Margin="0,4,0,0"/>
-                                                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
-                                                                 Maximum="100" Height="4" Margin="0,8,0,0"
-                                                                 Background="#E0E0E0" Foreground="#111111"
-                                                                 Template="{StaticResource SlimPB}"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding InProgressTasks}"
+                                              ItemTemplate="{StaticResource KanbanCardTpl}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -542,23 +675,8 @@
                                 </StackPanel>
                             </Border>
                             <StackPanel Margin="10,10">
-                                <ItemsControl ItemsSource="{Binding PausedTasks}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource KanbanCard}"
-                                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
-                                                    MouseMove="KanbanCard_MouseMove"
-                                                    PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
-                                                               Foreground="#6B778C" Margin="0,4,0,0"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding PausedTasks}"
+                                              ItemTemplate="{StaticResource KanbanCardTpl}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -581,23 +699,8 @@
                                 </StackPanel>
                             </Border>
                             <StackPanel Margin="10,10">
-                                <ItemsControl ItemsSource="{Binding CompletedTasks}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource KanbanCard}"
-                                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
-                                                    MouseMove="KanbanCard_MouseMove"
-                                                    PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" TextWrapping="Wrap"/>
-                                                    <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
-                                                               Foreground="#6B778C" Margin="0,4,0,0"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding CompletedTasks}"
+                                              ItemTemplate="{StaticResource KanbanCardTpl}"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>

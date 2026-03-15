@@ -2,6 +2,22 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <UserControl.Resources>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
+        </Style>
+
+        <Style x:Key="UserPickerItem" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+        </Style>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -11,26 +27,26 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Padding="20,16"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
                 <StackPanel>
                     <TextBlock x:Name="TitleLabel" Text="Добавить этап"
-                               FontSize="18" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
                     <TextBlock x:Name="TaskNameLabel" Text=""
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
                 </StackPanel>
-                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Click="Cancel_Click" Width="28" Height="28">
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="32" Height="32">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bg" Background="Transparent" CornerRadius="14">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
                                 <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" Foreground="#6B778C"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -41,29 +57,27 @@
 
         <!-- Form -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20">
+            <StackPanel Margin="24,0,24,8">
 
-                <!-- Project name (read-only, for fixed project context) -->
-                <StackPanel x:Name="ProjectNameRow" Margin="0,0,0,16" Visibility="Collapsed">
+                <!-- Section: Основная информация -->
+                <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Project context (read-only) -->
+                <StackPanel x:Name="ProjectNameRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="Проект" Style="{StaticResource FormLabel}"/>
-                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="6" Padding="10,9" Height="38">
-                        <TextBox x:Name="ProjectNameBox"
-                                 BorderThickness="0"
-                                 Background="Transparent"
-                                 Foreground="#172B4D"
-                                 FontSize="13"
-                                 VerticalContentAlignment="Center"
-                                 Padding="0"
-                                 IsReadOnly="True"
-                                 IsHitTestVisible="False"/>
+                    <Border Background="#F8F9FA" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Height="42">
+                        <TextBox x:Name="ProjectNameBox" BorderThickness="0"
+                                 Background="Transparent" Foreground="#6B778C"
+                                 FontSize="13" VerticalContentAlignment="Center"
+                                 Padding="0" IsReadOnly="True" IsHitTestVisible="False"/>
                     </Border>
                 </StackPanel>
 
                 <!-- Stage name -->
                 <TextBlock Text="Название этапа *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                        CornerRadius="6" Padding="10,9" Margin="0,0,0,16" Height="38">
+                        CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
                     <TextBox x:Name="NameBox" BorderThickness="0" Background="Transparent"
                              Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
                              Padding="0"/>
@@ -72,27 +86,28 @@
                 <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                        CornerRadius="6" Padding="10,8" Margin="0,0,0,16">
+                        CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
                     <TextBox x:Name="DescriptionBox" BorderThickness="0" Background="Transparent"
                              Foreground="#172B4D" FontSize="13"
-                             Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                             Height="72" TextWrapping="Wrap" AcceptsReturn="True"
                              VerticalContentAlignment="Top" Padding="0"
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
                 <!-- Project + Task picker (when creating from StagesPage) -->
-                <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,16" Visibility="Collapsed">
+                <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
                               Margin="0,0,0,12" DisplayMemberPath="Name" SelectedValuePath="Id"
                               SelectionChanged="ProjectCombo_SelectionChanged"/>
                     <TextBlock Text="Задача *" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="TaskCombo" Style="{StaticResource FormCombo}"
-                              Margin="0,0,0,0" DisplayMemberPath="Name" SelectedValuePath="Id"/>
+                              Margin="0,0,0,0" DisplayMemberPath="Name" SelectedValuePath="Id"
+                              SelectionChanged="TaskCombo_SelectionChanged"/>
                 </StackPanel>
 
                 <!-- Status (edit mode) -->
-                <StackPanel x:Name="StatusRow" Margin="0,0,0,16" Visibility="Collapsed">
+                <StackPanel x:Name="StatusRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="Статус" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}">
                         <ComboBoxItem Content="Запланирован" Tag="Planned"/>
@@ -101,33 +116,108 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Assignee -->
-                <TextBlock Text="Исполнитель" Style="{StaticResource FormLabel}"/>
-                <ComboBox x:Name="AssigneeCombo" Style="{StaticResource FormCombo}"
-                          Margin="0,0,0,16"
-                          SelectedValuePath="Id">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" FontSize="13" Foreground="#172B4D"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <!-- Section: Исполнители -->
+                <TextBlock Text="ИСПОЛНИТЕЛИ ЭТАПА" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Info hint: assignees come from task -->
+                <Border Background="#F0F9FF" CornerRadius="8"
+                        Padding="12,10" Margin="0,0,0,10"
+                        BorderBrush="#BAE6FD" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="ℹ" FontSize="13" Margin="0,0,8,0"
+                                   Foreground="#0284C7" VerticalAlignment="Center"/>
+                        <TextBlock Text="Исполнители назначаются только из участников задачи"
+                                   FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Selected chips -->
+                <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8"
+                           Visibility="Collapsed"/>
+
+                <!-- Assignee picker list -->
+                <Border x:Name="AssigneePickerBorder" Background="White" BorderBrush="#DFE1E6"
+                        BorderThickness="1" CornerRadius="8" MaxHeight="200">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <ItemsControl x:Name="AssigneePickerList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Tag="{Binding}"
+                                                MouseLeftButtonDown="AssigneeItem_Click">
+                                            <Border.Style>
+                                                <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#F8F9FA"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Width="32" Height="32" CornerRadius="16"
+                                                            Background="{Binding AvatarBrush}"
+                                                            Margin="0,0,10,0">
+                                                        <TextBlock Text="{Binding Initials}"
+                                                                   FontSize="11" FontWeight="Bold"
+                                                                   Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="13" FontWeight="SemiBold"
+                                                                   Foreground="#172B4D"/>
+                                                        <TextBlock Text="{Binding RoleDisplay}"
+                                                                   FontSize="11"
+                                                                   Foreground="{Binding RoleColorBrush}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <!-- Selected mark -->
+                                                <Border Width="22" Height="22" CornerRadius="11"
+                                                        Background="#111111"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        Visibility="{Binding IsSelectedVis}">
+                                                    <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock x:Name="NoAssigneesHint"
+                                       Text="Нет доступных исполнителей для этапа"
+                                       FontSize="12" Foreground="#97A0AF"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,12,0,12" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
 
                 <!-- Error -->
-                <Border x:Name="ErrorPanel" Background="#FFF3CD"
-                        CornerRadius="6" Padding="12,10"
-                        Margin="0,0,0,4" Visibility="Collapsed"
-                        BorderBrush="#FFC107" BorderThickness="1">
-                    <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#856404"
-                               TextWrapping="Wrap"/>
+                <Border x:Name="ErrorPanel" Background="#FFF0F0"
+                        CornerRadius="8" Padding="14,10"
+                        Margin="0,8,0,4" Visibility="Collapsed"
+                        BorderBrush="#FCA5A5" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
+                                   Foreground="#DC2626" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#DC2626"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Border>
 
             </StackPanel>
         </ScrollViewer>
 
         <!-- Footer -->
-        <Border Grid.Row="2" Padding="16,12"
-                BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
+        <Border Grid.Row="2" Padding="24,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">
             <Grid>
                 <Button Content="Отмена" HorizontalAlignment="Left"

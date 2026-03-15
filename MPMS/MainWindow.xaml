@@ -126,51 +126,204 @@
                                FontSize="15"/>
                 </Border>
 
-                <!-- Search box with focus animation -->
-                <Border x:Name="SearchBorder" Grid.Column="1"
-                        Background="#F4F5F7"
-                        CornerRadius="6" Padding="10,0"
-                        Width="520"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center" Height="36"
-                        BorderThickness="1.5" BorderBrush="Transparent">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="SearchIcon" Grid.Column="0" Text="&#xE721;"
-                                   FontFamily="Segoe MDL2 Assets"
-                                   FontSize="14" VerticalAlignment="Center"
-                                   Margin="0,0,8,0"
-                                   Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <Grid Grid.Column="1">
-                            <TextBlock Text="Поиск проектов, задач..."
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="13" VerticalAlignment="Center"
-                                       IsHitTestVisible="False">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SearchText}" Value="">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBox x:Name="GlobalSearchBox"
-                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0" Background="Transparent"
-                                     VerticalAlignment="Center" FontSize="13"
-                                     Foreground="{StaticResource TextPrimaryBrush}"
-                                     GotFocus="GlobalSearch_GotFocus"
-                                     LostFocus="GlobalSearch_LostFocus"
-                                     KeyDown="GlobalSearch_KeyDown"/>
+                <!-- Search box with focus animation + popup results -->
+                <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Border x:Name="SearchBorder"
+                            Background="#F4F5F7"
+                            CornerRadius="6" Padding="10,0"
+                            Width="520"
+                            Height="36"
+                            BorderThickness="1.5" BorderBrush="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SearchIcon" Grid.Column="0" Text="&#xE721;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Grid Grid.Column="1">
+                                <TextBlock Text="Поиск проектов, задач, этапов..."
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           FontSize="13" VerticalAlignment="Center"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="GlobalSearchBox"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderThickness="0" Background="Transparent"
+                                         VerticalAlignment="Center" FontSize="13"
+                                         Foreground="{StaticResource TextPrimaryBrush}"
+                                         GotFocus="GlobalSearch_GotFocus"
+                                         LostFocus="GlobalSearch_LostFocus"
+                                         KeyDown="GlobalSearch_KeyDown"
+                                         TextChanged="GlobalSearch_TextChanged"/>
+                            </Grid>
+                            <!-- Clear button -->
+                            <Button Grid.Column="2" x:Name="ClearSearchBtn"
+                                    Click="ClearSearch_Click"
+                                    Visibility="Collapsed"
+                                    Width="20" Height="20" Margin="4,0,0,0"
+                                    Style="{StaticResource IconButton}">
+                                <TextBlock Text="✕" FontSize="11" Foreground="#6B778C"/>
+                            </Button>
                         </Grid>
-                    </Grid>
-                </Border>
+                    </Border>
+
+                    <!-- Search Results Popup -->
+                    <Popup x:Name="SearchResultsPopup"
+                           PlacementTarget="{Binding ElementName=SearchBorder}"
+                           Placement="Bottom"
+                           AllowsTransparency="True"
+                           StaysOpen="False"
+                           Width="520">
+                        <Border Background="White" CornerRadius="8"
+                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                Margin="0,4,0,0" MaxHeight="480">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" Opacity="0.12"
+                                                  ShadowDepth="4" Direction="270"/>
+                            </Border.Effect>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel x:Name="SearchResultsPanel" Margin="8">
+                                    <!-- Projects section -->
+                                    <StackPanel x:Name="SearchProjectsSection" Margin="0,0,0,8">
+                                        <TextBlock Text="ПРОЕКТЫ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,8,8,6"/>
+                                        <ItemsControl x:Name="SearchProjectsList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border Width="6" Height="6" CornerRadius="3"
+                                                                    Background="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"
+                                                                    Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Client}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchProjectsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Tasks section -->
+                                    <StackPanel x:Name="SearchTasksSection" Margin="0,0,0,8">
+                                        <TextBlock Text="ЗАДАЧИ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchTasksList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border CornerRadius="3" Padding="5,2"
+                                                                    Background="{Binding Priority, Converter={StaticResource PriorityToBrush}}"
+                                                                    Margin="0,0,8,0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Priority, Converter={StaticResource PriorityToString}}"
+                                                                           FontSize="9" Foreground="White"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding ProjectName}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchTasksDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Stages section -->
+                                    <StackPanel x:Name="SearchStagesSection">
+                                        <TextBlock Text="ЭТАПЫ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchStagesList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Border Width="6" Height="6" CornerRadius="3"
+                                                                    Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"
+                                                                    Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding TaskName}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- No results -->
+                                    <TextBlock x:Name="NoSearchResultsText"
+                                               Text="Ничего не найдено" FontSize="13"
+                                               Foreground="#6B778C" HorizontalAlignment="Center"
+                                               Margin="0,16" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+                </Grid>
 
                 <!-- Right: Create + icons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal"
@@ -192,7 +345,7 @@
                     <Border Width="1" Height="20" Background="#DFE1E6" Margin="0,0,8,0" VerticalAlignment="Center"/>
 
                     <!-- Sync/connection status button with popup -->
-                    <Border x:Name="SyncStatusBorder" Width="36" Height="36" Margin="0,0,4,0"
+                    <Border x:Name="SyncStatusBorder" Width="36" Height="36" Margin="0,0,0,0"
                             Cursor="Hand" CornerRadius="6">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -204,22 +357,6 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <Border.ToolTip>
-                            <ToolTip>
-                                <TextBlock>
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Онлайн — синхронизация активна"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                    <Setter Property="Text" Value="Офлайн — нет подключения к серверу"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </ToolTip>
-                        </Border.ToolTip>
                         <Button Click="SyncStatus_Click" Style="{StaticResource IconButton}">
                             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Image Width="16" Height="16" Stretch="Uniform"
@@ -251,21 +388,238 @@
                                 </Ellipse>
                             </Grid>
                         </Button>
-                        <!-- Sync popup -->
-                        <Border.ContextMenu>
-                            <ContextMenu x:Name="SyncPopupMenu" Style="{StaticResource StatusMenu}">
-                                <MenuItem Header="Синхронизировать сейчас"
-                                          Command="{Binding SyncNowCommand}"
-                                          Style="{StaticResource StatusMenuItem}"/>
-                                <MenuItem Header="Проверить соединение"
-                                          Command="{Binding RefreshConnectionCommand}"
-                                          Style="{StaticResource StatusMenuItem}"/>
-                            </ContextMenu>
-                        </Border.ContextMenu>
+                    </Border>
+
+                    <!-- Sync popup (Popup control for rich design) -->
+                    <Popup x:Name="SyncPopup"
+                           PlacementTarget="{Binding ElementName=SyncStatusBorder}"
+                           Placement="Bottom"
+                           AllowsTransparency="True"
+                           StaysOpen="False"
+                           Width="300">
+                        <Border Background="White" CornerRadius="10"
+                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                Margin="0,4,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="20" Opacity="0.12"
+                                                  ShadowDepth="4" Direction="270"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <!-- Header -->
+                                <Border x:Name="SyncPopupHeader" CornerRadius="10,10,0,0" Padding="16,14">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#F0FDF4"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                    <Setter Property="Background" Value="#EFF6FF"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- Status icon circle -->
+                                        <Border Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                            <Setter Property="Background" Value="#F4F5F7"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="✓"/>
+                                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                                <Setter Property="Text" Value="✕"/>
+                                                                <Setter Property="Foreground" Value="#6B778C"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                                <Setter Property="Text" Value="↻"/>
+                                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Синхронизировано"/>
+                                                        <Setter Property="Foreground" Value="#172B4D"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                                <Setter Property="Text" Value="Нет подключения"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                                <Setter Property="Text" Value="Синхронизация..."/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock FontSize="11" Margin="0,2,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#6B778C"/>
+                                                        <Setter Property="Text" Value="{Binding LastSyncText}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                                <Setter Property="Text" Value="Изменения сохраняются локально"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <!-- "Актуально" badge -->
+                                        <Border Margin="8,0,0,0" CornerRadius="4" Padding="8,3"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#DCFCE7"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Актуально"/>
+                                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSyncing}" Value="True">
+                                                                <Setter Property="Text" Value="Синхр..."/>
+                                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Stats row (online only) -->
+                                <Border BorderBrush="#F0F0F0" BorderThickness="0,1,0,0"
+                                        Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="1" Background="#F0F0F0" Margin="0,8,0,8"/>
+                                        <Border Grid.Column="3" Background="#F0F0F0" Margin="0,8,0,8"/>
+                                        <StackPanel Grid.Column="0" HorizontalAlignment="Center" Margin="0,10">
+                                            <TextBlock Text="{Binding SyncProjectCount}" FontSize="16" FontWeight="Bold"
+                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Проектов" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Center" Margin="0,10">
+                                            <TextBlock Text="{Binding SyncTaskCount}" FontSize="16" FontWeight="Bold"
+                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Задач" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4" HorizontalAlignment="Center" Margin="0,10">
+                                            <TextBlock Text="{Binding SyncStageCount}" FontSize="16" FontWeight="Bold"
+                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Этапов" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Offline warning -->
+                                <Border Margin="12,8,12,0" CornerRadius="8" Padding="12,10"
+                                        Background="#FFFBEB" BorderBrush="#FCD34D" BorderThickness="1"
+                                        Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisInv}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Top" Foreground="#D97706"/>
+                                        <TextBlock Text="Изменения сохраняются локально и будут синхронизированы при восстановлении соединения."
+                                                   FontSize="11" Foreground="#92400E" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Footer with auto-sync info and sync button -->
+                                <Border Padding="12,10,12,12" BorderBrush="#F0F0F0" BorderThickness="0,1,0,0" Margin="0,8,0,0">
+                                    <Grid>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🕐" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Авто-синхронизация каждые 5 мин"
+                                                       FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Right" Click="SyncNow_Click"
+                                                Height="30" Padding="12,0" FontSize="12">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bg" Background="White" CornerRadius="6"
+                                                            BorderBrush="#DFE1E6" BorderThickness="1"
+                                                            Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="↻" FontSize="13" Margin="0,0,4,0"
+                                                                       VerticalAlignment="Center" Foreground="#172B4D"/>
+                                                            <TextBlock Text="Синхр." Foreground="#172B4D"
+                                                                       FontSize="12" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsEnabled" Value="False">
+                                                            <Setter Property="Opacity" Value="0.5"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <!-- Settings button -->
+                    <Border Width="36" Height="36" Margin="4,0,0,0"
+                            Cursor="Hand" CornerRadius="6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Button Click="Settings_Click" Style="{StaticResource IconButton}" ToolTip="Настройки">
+                            <Image Width="16" Height="16" Stretch="Uniform" Opacity="0.7"
+                                   Source="{svgc:SvgImage Source=/icons/settings.svg, AppName=MPMS}"/>
+                        </Button>
                     </Border>
 
                     <!-- Divider -->
-                    <Border Width="1" Height="20" Background="#DFE1E6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <Border Width="1" Height="20" Background="#DFE1E6" Margin="4,0,8,0" VerticalAlignment="Center"/>
 
                     <!-- User panel: name + role + avatar — opens popup on click -->
                     <Border x:Name="UserPanelBorder" Cursor="Hand"
@@ -295,6 +649,13 @@
                                     </MenuItem.Header>
                                 </MenuItem>
                                 <Separator/>
+                                <MenuItem Header="Мой профиль"
+                                          Click="MyProfile_Click"
+                                          Style="{StaticResource StatusMenuItem}"/>
+                                <MenuItem Header="Настройки"
+                                          Click="Settings_Click"
+                                          Style="{StaticResource StatusMenuItem}"/>
+                                <Separator/>
                                 <MenuItem Header="Выйти из аккаунта"
                                           Command="{Binding SwitchAccountCommand}"
                                           Style="{StaticResource StatusMenuItem}"
@@ -304,18 +665,26 @@
                         <Button x:Name="UserPanelBtn" Click="UserPanel_Click"
                                 Style="{StaticResource IconButton}" Padding="0" Background="Transparent">
                             <StackPanel Orientation="Horizontal">
-                                <!-- Avatar circle слева -->
-                                <Border Background="{StaticResource PrimaryBrush}"
-                                        Width="30" Height="30" CornerRadius="15"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Margin="0,0,8,0">
-                                    <TextBlock Text="{Binding UserInitials}"
-                                               Foreground="White" FontSize="11"
-                                               FontWeight="Bold"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
-                                </Border>
+                                <!-- Avatar circle слева: photo if available, else initials -->
+                                <Grid Width="30" Height="30" Margin="0,0,8,0"
+                                      VerticalAlignment="Center">
+                                    <!-- Initials fallback -->
+                                    <Border Background="{StaticResource PrimaryBrush}"
+                                            CornerRadius="15">
+                                        <TextBlock Text="{Binding UserInitials}"
+                                                   Foreground="White" FontSize="11"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <!-- Photo overlay (visible only when path is set; managed in code-behind) -->
+                                    <Border x:Name="TopBarAvatarBorder"
+                                            CornerRadius="15" ClipToBounds="True"
+                                            Visibility="Collapsed">
+                                        <Image x:Name="TopBarAvatarImage"
+                                               Stretch="UniformToFill"/>
+                                    </Border>
+                                </Grid>
                                 <!-- Name + Role stacked -->
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{Binding UserName}"

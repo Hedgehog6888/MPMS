@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Models;
 using MPMS.Services;
@@ -23,9 +24,39 @@ public partial class ProjectsPage : UserControl
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
         _userRole = auth.UserRole ?? "";
-        bool canCreate = _userRole is "Admin" or "Administrator"
-                              or "ProjectManager" or "Manager" or "Project Manager";
+        bool canCreate = _userRole is "Administrator" or "Project Manager";
         CreateProjectBtn.Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
+    private static readonly SolidColorBrush _normalBrush = new(Colors.Transparent);
+    private static readonly SolidColorBrush _focusBg = new(Colors.White);
+    private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+
+    private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var parent = VisualTreeHelper.GetParent(tb);
+            if (VisualTreeHelper.GetParent(parent) is Border border)
+            {
+                border.BorderBrush = _focusBrush;
+                border.Background = _focusBg;
+            }
+        }
+    }
+
+    private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox tb)
+        {
+            var parent = VisualTreeHelper.GetParent(tb);
+            if (VisualTreeHelper.GetParent(parent) is Border border)
+            {
+                border.BorderBrush = _normalBrush;
+                border.Background = _normalBg;
+            }
+        }
     }
 
     private ProjectsViewModel? VM => DataContext as ProjectsViewModel;
@@ -52,11 +83,10 @@ public partial class ProjectsPage : UserControl
     private async void DeleteProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
-        var result = MessageBox.Show(
-            $"Удалить проект «{project.Name}»?\nВсе задачи проекта также будут удалены.",
-            "Подтверждение удаления",
-            MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result == MessageBoxResult.Yes)
+        var owner = Window.GetWindow(this);
+        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(
+                owner, "Проект", project.Name,
+                "Все задачи и этапы этого проекта также будут удалены."))
             await VM.DeleteProjectCommand.ExecuteAsync(project);
     }
 

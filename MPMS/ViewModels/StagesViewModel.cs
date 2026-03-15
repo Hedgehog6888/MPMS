@@ -151,7 +151,8 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             .GroupBy(s => new { s.TaskId, s.TaskName, s.ProjectId, s.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
             .ThenBy(g => g.Key.TaskName)
-            .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName, g.ToList()))
+            .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName,
+                g.OrderBy(s => s.Stage.IsMarkedForDeletion).ToList()))
             .ToList();
         StageGroups = new ObservableCollection<TaskStageGroup>(groups);
     }
@@ -175,6 +176,23 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         // Сбросить текущий фильтр задачи, если он больше не доступен
         if (!TaskFilterOptions.Any(o => o.Id == TaskFilter))
             TaskFilter = null;
+    }
+
+    [RelayCommand]
+    private async Task MarkStageForDeletionAsync(StageItem item)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.TaskStages.FindAsync(item.Stage.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var action = entity.IsMarkedForDeletion ? "Помечен к удалению" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: этап «{item.Stage.Name}»", "Stage", item.Stage.Id);
+        await LoadAsync();
     }
 
     [RelayCommand]

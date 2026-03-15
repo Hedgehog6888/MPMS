@@ -79,21 +79,26 @@
         </Grid.RowDefinitions>
 
         <!-- ── HEADER ──────────────────────────────────────────────── -->
-        <Border Grid.Row="0" Padding="20,14"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Padding="20,16"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
                 <!-- Status + Priority badges -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Status badge -->
-                    <Border x:Name="StatusBadge" CornerRadius="4" Padding="8,4" Margin="0,0,8,0"
+                    <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0"
                             Background="{Binding Task.Status, Converter={StaticResource TaskStatusToBrush}}">
-                        <TextBlock Text="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"
-                                   FontSize="11" FontWeight="SemiBold" Foreground="White"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="6" Height="6" CornerRadius="3"
+                                    Background="White" Opacity="0.8"
+                                    Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"
+                                       FontSize="11" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
                     </Border>
 
                     <!-- Priority badge -->
-                    <Border CornerRadius="4" Padding="8,4"
-                            BorderThickness="1"
+                    <Border CornerRadius="6" Padding="10,5"
+                            BorderThickness="1.5"
                             BorderBrush="{Binding Task.Priority, Converter={StaticResource PriorityToBrush}}">
                         <TextBlock Text="{Binding Task.Priority, Converter={StaticResource PriorityToString}}"
                                    FontSize="11" FontWeight="SemiBold"
@@ -103,17 +108,17 @@
 
                 <!-- Close button -->
                 <Button HorizontalAlignment="Right" Click="Close_Click"
-                        Width="28" Height="28"
+                        Width="32" Height="32"
                         ToolTip="Закрыть">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bg" Background="Transparent" CornerRadius="14">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
                                 <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
                                            VerticalAlignment="Center" Foreground="#6B778C"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -150,70 +155,90 @@
 
                 <!-- Progress section -->
                 <Grid Margin="0,0,0,10">
-                    <TextBlock Text="Прогресс выполнения"
-                               FontSize="13" FontWeight="SemiBold"
-                               Foreground="#172B4D" VerticalAlignment="Center"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="ПРОГРЕСС ВЫПОЛНЕНИЯ"
+                                   FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#8993A4" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Task.CompletedStages}"
+                                       FontSize="13" Foreground="#6B778C"/>
+                            <TextBlock Text=" из " FontSize="13" Foreground="#6B778C"/>
+                            <TextBlock Text="{Binding Task.TotalStages}"
+                                       FontSize="13" Foreground="#6B778C"/>
+                            <TextBlock Text=" этапов" FontSize="13" Foreground="#6B778C"/>
+                        </StackPanel>
+                    </StackPanel>
                     <TextBlock Text="{Binding Task.ProgressPercent, StringFormat='{}{0}%'}"
-                               FontSize="28" FontWeight="Bold"
+                               FontSize="32" FontWeight="Bold"
                                Foreground="#172B4D"
-                               HorizontalAlignment="Right"/>
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center"/>
                 </Grid>
                 <ProgressBar Value="{Binding Task.ProgressPercent, Mode=OneWay}"
-                             Maximum="100" Height="10" Margin="0,0,0,16"
-                             Background="#E9ECEF" Foreground="#111111"
+                             Maximum="100" Height="8" Margin="0,0,0,16"
+                             Background="#EEF0F3" Foreground="#0082FF"
                              Template="{StaticResource SlimProgressBar}"/>
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
-                <!-- Assignee + Due Date two-column layout -->
+                <!-- Assignees + Due Date layout -->
                 <Grid Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Assignee -->
+                    <!-- Assignees (multi) -->
                     <StackPanel Grid.Column="0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.5"/>
-                            <TextBlock Text="Исполнитель" FontSize="12" Foreground="#6B778C"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <!-- Avatar circle -->
-                            <Border Width="36" Height="36" CornerRadius="18"
-                                    Background="#E8E9EC" Margin="0,0,10,0">
-                                <TextBlock FontSize="13" FontWeight="Bold"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="#172B4D">
-                                    <TextBlock.Text>
-                                        <Binding Path="Task.AssignedUserName">
-                                            <Binding.TargetNullValue>?</Binding.TargetNullValue>
-                                        </Binding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#172B4D">
-                                    <TextBlock.Text>
-                                        <Binding Path="Task.AssignedUserName" TargetNullValue="Не назначен"/>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                            </StackPanel>
-                        </StackPanel>
+                        <TextBlock Text="ИСПОЛНИТЕЛИ" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#8993A4" Margin="0,0,0,8"/>
+
+                        <!-- Multi-assignee avatar strip (populated in code-behind) -->
+                        <ItemsControl x:Name="AssigneesDisplay">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <Border Width="30" Height="30" CornerRadius="15"
+                                                Background="#1B6EC2" Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding Initials}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding UserName}"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="#172B4D"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Fallback: no assignees -->
+                        <TextBlock x:Name="NoAssigneesText"
+                                   Text="Не назначено" FontSize="12"
+                                   Foreground="#97A0AF" Visibility="Collapsed"/>
                     </StackPanel>
 
                     <!-- Due Date -->
                     <StackPanel Grid.Column="1">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.5"/>
-                            <TextBlock Text="Срок выполнения" FontSize="12" Foreground="#6B778C"/>
-                        </StackPanel>
+                        <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#8993A4" Margin="0,0,0,8"/>
                         <TextBlock FontSize="15" FontWeight="Bold" Foreground="#172B4D"
                                    Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=long}"
                                    Margin="0,0,0,2"/>
                         <TextBlock FontSize="12" Foreground="#6B778C"
                                    Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=dayname}"/>
+
+                        <!-- Overdue badge -->
+                        <Border x:Name="OverdueBadge" CornerRadius="4" Padding="6,3"
+                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                HorizontalAlignment="Left" Margin="0,4,0,0"
+                                Visibility="{Binding Task.IsOverdue, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Просрочена" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#DC2626"/>
+                        </Border>
                     </StackPanel>
                 </Grid>
 
@@ -263,8 +288,19 @@
                                     <DataTemplate>
                                         <!-- Stage card with colored left border by status -->
                                         <Border Margin="0,0,0,10" CornerRadius="8"
-                                                BorderBrush="#DFE1E6" BorderThickness="1"
-                                                Background="White">
+                                                BorderThickness="1.5">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="White"/>
+                                                    <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#DE350B"/>
+                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <Grid>
                                                 <!-- Status color strip -->
                                                 <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8"
@@ -288,14 +324,6 @@
                                                             <TextBlock Text="{Binding Status, Converter={StaticResource StageStatusToString}}"
                                                                        FontSize="10" FontWeight="SemiBold"
                                                                        Foreground="White"/>
-                                                        </Border>
-                                                        <!-- Deletion mark badge -->
-                                                        <Border Grid.Column="1" CornerRadius="4" Padding="6,3"
-                                                                Background="#FFEBE6" VerticalAlignment="Center"
-                                                                HorizontalAlignment="Right" Margin="8,0,0,0"
-                                                                Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                            <TextBlock Text="К удалению" FontSize="10" FontWeight="SemiBold"
-                                                                       Foreground="#BF2600"/>
                                                         </Border>
                                                     </Grid>
 
@@ -418,21 +446,49 @@
                                                         <!-- Spacer -->
                                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                                                     Width="Auto" Margin="0,0,0,0">
-                                                            <!-- Mark for deletion (Worker only) -->
-                                                            <Button ToolTip="Пометить для удаления"
-                                                                    Tag="{Binding}" Click="MarkStageForDeletion_Click"
+                                                            <!-- Mark for deletion (Worker + Foreman) -->
+                                                            <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
                                                                     Style="{StaticResource IconButton}"
                                                                     Width="26" Height="26" Margin="0,0,2,0"
-                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker'}">
-                                                                <TextBlock Text="🗑" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                                           Opacity="0.6"/>
+                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman'}">
+                                                                <Button.ToolTip>
+                                                                    <ToolTip>
+                                                                        <TextBlock>
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="Пометить к удалению"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                            <Setter Property="Text" Value="Снять пометку удаления"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </ToolTip>
+                                                                </Button.ToolTip>
+                                                                <TextBlock FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Text" Value="⊘"/>
+                                                                            <Setter Property="Opacity" Value="0.5"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Text" Value="↩"/>
+                                                                                    <Setter Property="Foreground" Value="#DE350B"/>
+                                                                                    <Setter Property="Opacity" Value="1"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
                                                             </Button>
                                                             <!-- Delete stage (Admin/Manager) -->
                                                             <Button ToolTip="Удалить этап"
                                                                     Tag="{Binding}" Click="DeleteStage_Click"
                                                                     Style="{StaticResource IconButton}"
                                                                     Width="26" Height="26" Margin="0,0,2,0"
-                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Admin,Administrator,Manager,ProjectManager,Project Manager'}">
+                                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
                                                                 <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
                                                                        Width="12" Height="12" Opacity="0.6"/>
                                                             </Button>
@@ -700,19 +756,29 @@
         </Grid>
 
         <!-- ── FOOTER ─────────────────────────────────────────────── -->
-        <Border Grid.Row="2" Padding="16,12"
-                BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
+        <Border Grid.Row="2" Padding="20,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                     <Button Content="Закрыть" Click="Close_Click"
                             Style="{StaticResource OutlineBtn}" Margin="0,0,8,0"/>
-                    <Button x:Name="ChangeStatusBtn" Content="Изменить статус" Click="ChangeStatus_Click"
-                            Style="{StaticResource OutlineBtn}"/>
+                    <Button x:Name="ChangeStatusBtn" Click="ChangeStatus_Click"
+                            Style="{StaticResource OutlineBtn}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⟳  " FontSize="13"/>
+                            <TextBlock Text="Изменить статус"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
-                <Button x:Name="EditTaskBtn" Content="Редактировать" HorizontalAlignment="Right"
+                <Button x:Name="EditTaskBtn" HorizontalAlignment="Right"
                         Click="EditTask_Click"
-                        Style="{StaticResource BlackBtn}"/>
+                        Style="{StaticResource BlackBtn}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="✎  " FontSize="13" Foreground="White"/>
+                        <TextBlock Text="Редактировать" Foreground="White"/>
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
 

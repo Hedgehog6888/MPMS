@@ -101,20 +101,21 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
         }
 
-        var list = await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
+        var list = await query.OrderBy(t => t.IsMarkedForDeletion).ThenByDescending(t => t.CreatedAt).ToListAsync();
         Tasks = new ObservableCollection<LocalTask>(list);
 
         var groups = list
             .GroupBy(t => new { t.ProjectId, t.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
-            .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—", g.ToList()))
+            .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—",
+                g.OrderBy(t => t.IsMarkedForDeletion).ToList()))
             .ToList();
         TaskGroups = new ObservableCollection<ProjectTaskGroup>(groups);
 
-        PlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
-        InProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress));
-        PausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused));
-        CompletedTasks  = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Completed));
+        PlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned    && !t.IsMarkedForDeletion));
+        InProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress && !t.IsMarkedForDeletion));
+        PausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused     && !t.IsMarkedForDeletion));
+        CompletedTasks  = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Completed  && !t.IsMarkedForDeletion));
     }
 
     public void SetProjectFilter(LocalProject? project)
@@ -171,7 +172,26 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Task", localId, SyncOperation.Create,
             req with { Id = localId });
 
+        await RecalcProjectStatusAsync(db, req.ProjectId);
         await LoadAsync();
+    }
+
+    private static async Task RecalcProjectStatusAsync(LocalDbContext db, Guid projectId)
+    {
+        var project = await db.Projects.FindAsync(projectId);
+        if (project is null) return;
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        if (tasks.Count == 0)
+            project.Status = ProjectStatus.Planning;
+        else if (tasks.All(t => t.Status == TaskStatus.Completed))
+            project.Status = ProjectStatus.Completed;
+        else if (tasks.Any(t => t.Status == TaskStatus.InProgress || t.Status == TaskStatus.Paused || t.Status == TaskStatus.Completed))
+            project.Status = ProjectStatus.InProgress;
+        else
+            project.Status = ProjectStatus.Planning;
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
     }
 
     public async Task SaveUpdatedTaskAsync(Guid id, UpdateTaskRequest req)
@@ -217,6 +237,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;
 
+        // Cascade delete stages
+        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
+        db.TaskStages.RemoveRange(stages);
         db.Tasks.Remove(entity);
         await db.SaveChangesAsync();
 
@@ -224,6 +247,32 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Delete, new { });
 
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task MarkTaskForDeletionAsync(LocalTask task)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Tasks.FindAsync(task.Id);
+        if (entity is null) return;
+
+        entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        // Cascade mark/unmark to all stages of this task
+        var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
+        foreach (var stage in stages)
+        {
+            stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            stage.IsSynced = false;
+            stage.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
+        await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id);
         await LoadAsync();
     }
 
