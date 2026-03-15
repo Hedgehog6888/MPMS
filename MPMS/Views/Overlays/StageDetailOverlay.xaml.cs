@@ -213,7 +213,7 @@ public partial class StageDetailOverlay : UserControl
         {
             if (stages.All(s => s.Status == StageStatus.Completed))
                 task.Status = TaskStatus.Completed;
-            else if (stages.Any(s => s.Status == StageStatus.InProgress))
+            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
                 task.Status = TaskStatus.InProgress;
             else
                 task.Status = TaskStatus.Planned;
@@ -230,7 +230,7 @@ public partial class StageDetailOverlay : UserControl
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
         if (tasks.Count == 0)
             project.Status = ProjectStatus.Planning;
         else if (tasks.All(t => t.Status == TaskStatus.Completed))

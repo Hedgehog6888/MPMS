@@ -299,7 +299,7 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="ℹ" FontSize="13" Margin="0,0,8,0"
                                    Foreground="#92400E" VerticalAlignment="Center"/>
-                        <TextBlock Text="Выберите проект, чтобы увидеть доступных исполнителей"
+                        <TextBlock x:Name="NoProjHintText" Text="Выберите проект, чтобы увидеть доступных исполнителей"
                                    FontSize="12" Foreground="#92400E" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>

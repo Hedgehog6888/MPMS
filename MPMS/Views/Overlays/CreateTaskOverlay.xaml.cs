@@ -49,7 +49,7 @@ public partial class CreateTaskOverlay : UserControl
         _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать задачу";
         SaveButton.Content = "Сохранить изменения";
-        StatusRow.Visibility = Visibility.Visible;
+        StatusRow.Visibility = Visibility.Collapsed; // Status is auto from stages
 
         NameBox.Text = task.Name;
         DescriptionBox.Text = task.Description ?? "";
@@ -109,33 +109,42 @@ public partial class CreateTaskOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // Get project members (foremen + workers)
+        // Only project members can be assigned to tasks (foremen + workers)
         var members = await db.ProjectMembers
             .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.UserName)
             .ToListAsync();
 
+        var userIds = members.Select(m => m.UserId).Distinct().ToList();
+        var userAvatars = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+        foreach (var m in members)
+            m.AvatarPath = userAvatars.GetValueOrDefault(m.UserId);
+
         if (members.Count == 0)
         {
-            // Fallback: show all worker-role users
-            var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
-            var users = await db.Users
-                .Where(u => workerRoles.Contains(u.RoleName))
-                .OrderBy(u => u.Name)
-                .ToListAsync();
-            _allAssigneeItems = users.Select(u => new AssigneePickerItem(
-                u.Id, u.Name, u.RoleName, _selectedAssigneeIds)).ToList();
+            _allAssigneeItems = [];
         }
         else
         {
             _allAssigneeItems = members.Select(m => new AssigneePickerItem(
-                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds)).ToList();
+                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath)).ToList();
         }
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            NoProjHint.Visibility = Visibility.Collapsed;
-            AssigneePickerBorder.Visibility = Visibility.Visible;
+            if (members.Count == 0)
+            {
+                NoProjHint.Visibility = Visibility.Visible;
+                NoProjHintText.Text = "В проекте нет назначенных работников. Добавьте прораба или работников в проект.";
+                AssigneePickerBorder.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                NoProjHint.Visibility = Visibility.Collapsed;
+                AssigneePickerBorder.Visibility = Visibility.Visible;
+            }
             RefreshAssigneeItems();
         });
     }
@@ -180,15 +189,28 @@ public partial class CreateTaskOverlay : UserControl
             Width = 18, Height = 18,
             CornerRadius = new CornerRadius(9),
             Background = item.AvatarBrush,
-            Margin = new Thickness(0, 0, 5, 0)
+            Margin = new Thickness(0, 0, 5, 0),
+            ClipToBounds = true
         };
-        avatar.Child = new TextBlock
+        if (!string.IsNullOrEmpty(item.AvatarPath) && System.IO.File.Exists(item.AvatarPath))
         {
-            Text = item.Initials, FontSize = 7, FontWeight = FontWeights.Bold,
-            Foreground = Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(item.AvatarPath, UriKind.Absolute);
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 18, Height = 18 };
+                avatar.Background = Brushes.Transparent;
+            }
+            catch { avatar.Child = CreateInitialsBlock(item.Initials); }
+        }
+        else
+        {
+            avatar.Child = CreateInitialsBlock(item.Initials);
+        }
         sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
@@ -216,6 +238,14 @@ public partial class CreateTaskOverlay : UserControl
         chip.Child = sp;
         return chip;
     }
+
+    private static TextBlock CreateInitialsBlock(string initials) => new()
+    {
+        Text = initials, FontSize = 7, FontWeight = FontWeights.Bold,
+        Foreground = Brushes.White,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center
+    };
 
     private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
     {
@@ -256,6 +286,9 @@ public partial class CreateTaskOverlay : UserControl
         { ShowError("Выберите проект."); return; }
         if (DueDatePicker.SelectedDate is null)
         { ShowError("Выберите срок выполнения."); return; }
+
+        if (_editTask is null && _selectedAssigneeIds.Count == 0)
+        { ShowError("Назначьте хотя бы одного исполнителя на задачу."); return; }
 
         var priority = GetPriority();
         var dueDate  = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);
@@ -383,6 +416,7 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
 {
     public Guid UserId { get; }
     public string Name { get; }
+    public string? AvatarPath { get; }
     public string RoleDisplay { get; }
     public string Initials { get; }
     public SolidColorBrush AvatarBrush { get; }
@@ -404,10 +438,11 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public AssigneePickerItem(Guid userId, string name, string role, HashSet<Guid> selectedIds)
+    public AssigneePickerItem(Guid userId, string name, string role, HashSet<Guid> selectedIds, string? avatarPath = null)
     {
         UserId = userId;
         Name = name;
+        AvatarPath = avatarPath;
         _isSelected = selectedIds.Contains(userId);
 
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);

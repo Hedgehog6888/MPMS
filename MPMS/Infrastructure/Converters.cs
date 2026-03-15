@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using MPMS.Models;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -75,6 +77,32 @@ public class HexToBrushConverter : IValueConverter
         catch { /* fall through */ }
 
         return new SolidColorBrush(Colors.Gray);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts avatar file path to ImageSource for display. Returns null when path is invalid or file missing.</summary>
+public class AvatarPathToImageSourceConverter : IValueConverter
+{
+    public static readonly AvatarPathToImageSourceConverter Instance = new();
+
+    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string path || string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            return null;
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.UriSource = new Uri(path, UriKind.Absolute);
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
+        }
+        catch { return null; }
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

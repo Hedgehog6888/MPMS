@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -23,6 +24,24 @@ public partial class ProjectDetailPage : UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is INotifyPropertyChanged oldVm)
+            oldVm.PropertyChanged -= Vm_PropertyChanged;
+        if (e.NewValue is INotifyPropertyChanged newVm)
+        {
+            newVm.PropertyChanged += Vm_PropertyChanged;
+            UpdateMarkProjectButton();
+        }
+    }
+
+    private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectDetailViewModel.Project))
+            Dispatcher.InvokeAsync(UpdateMarkProjectButton);
     }
 
     private string _userRole = "";
@@ -40,6 +59,7 @@ public partial class ProjectDetailPage : UserControl
         CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
         CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+        _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private async void MarkProject_Click(object sender, RoutedEventArgs e)
@@ -61,6 +81,8 @@ public partial class ProjectDetailPage : UserControl
         // Hide editing buttons when project is marked for deletion
         EditProjectBtn.Visibility  = marked ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
         CreateTaskQuickBtn.Visibility = marked ? Visibility.Collapsed : (_canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateTaskBtn.Visibility  = marked ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateStageBtn.Visibility = marked ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
@@ -82,8 +104,9 @@ public partial class ProjectDetailPage : UserControl
         FilesPanel.Visibility      = tab == "Files"      ? Visibility.Visible : Visibility.Collapsed;
         MaterialsPanel.Visibility  = tab == "Materials"  ? Visibility.Visible : Visibility.Collapsed;
 
-        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
-        CreateStageBtn.Visibility = (tab == "Stages" && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
+        bool marked = VM?.Project?.IsMarkedForDeletion ?? false;
+        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
+        CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
         {
@@ -109,7 +132,14 @@ public partial class ProjectDetailPage : UserControl
         var overlay = new CreateTaskOverlay();
         var vm = VM;
         overlay.SetCreateMode(tasksVm, vm.Project.Id,
-            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
+            onSaved: async () =>
+            {
+                if (vm != null)
+                {
+                    await vm.LoadAsync();
+                    _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+                }
+            });
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 
@@ -120,7 +150,14 @@ public partial class ProjectDetailPage : UserControl
         var overlay = new CreateProjectOverlay();
         var vm = VM;
         overlay.SetEditMode(projVm, vm.Project,
-            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
+            onSaved: async () =>
+            {
+                if (vm != null)
+                {
+                    await vm.LoadAsync();
+                    _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+                }
+            });
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 
@@ -131,7 +168,11 @@ public partial class ProjectDetailPage : UserControl
         var currentTask = task;
         overlay.SetEditMode(
             currentTask,
-            onSaved: async () => await VM.LoadAsync(),
+            onSaved: async () =>
+            {
+                await VM.LoadAsync();
+                _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+            },
             onAfterSave: () => OpenTaskDetail(currentTask));
         MainWindow.Instance?.ShowDrawer(overlay);
     }
@@ -176,8 +217,13 @@ public partial class ProjectDetailPage : UserControl
         overlay.SetStage(stageItem, task, () =>
         {
             if (vm != null)
-                _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(
-                    async () => await vm.LoadAsync());
+            {
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    await vm.LoadAsync();
+                    UpdateMarkProjectButton();
+                });
+            }
         });
         MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
@@ -190,7 +236,14 @@ public partial class ProjectDetailPage : UserControl
         var overlay = new CreateStageOverlay();
         var vm = VM;
         overlay.SetEditMode(stage, task,
-            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
+            onSaved: async () =>
+            {
+                if (vm != null)
+                {
+                    await vm.LoadAsync();
+                    _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+                }
+            });
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 

@@ -102,6 +102,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
+        // Reload project from DB to get latest IsMarkedForDeletion and Status
+        var projectEntity = await db.Projects.FindAsync(Project.Id);
+        if (projectEntity is not null)
+        {
+            Project = projectEntity;
+        }
+
         var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id);
 
         // Workers only see tasks assigned to them
@@ -113,6 +120,35 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
+        // Load stages and compute TotalStages/CompletedStages + auto task status for each task
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId))
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync();
+
+        foreach (var task in tasks)
+        {
+            var taskStages = stages.Where(s => s.TaskId == task.Id).ToList();
+            task.TotalStages = taskStages.Count;
+            task.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
+            task.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
+            // Auto task status: Completed=all done, InProgress=any in progress OR any completed (partial), Planned=all planned
+            if (taskStages.Count > 0)
+            {
+                if (taskStages.All(s => s.Status == StageStatus.Completed))
+                    task.Status = TaskStatus.Completed;
+                else if (taskStages.Any(s => s.Status == StageStatus.InProgress) || taskStages.Any(s => s.Status == StageStatus.Completed))
+                    task.Status = TaskStatus.InProgress;
+                else
+                    task.Status = TaskStatus.Planned;
+            }
+        }
+
+        // Persist task status changes and recalc project status
+        await RecalcAndSaveTaskStatusesAsync(db, tasks);
+        await RecalcProjectStatusAsync(db);
+
         Tasks = new ObservableCollection<LocalTask>(tasks);
         PlannedTasks    = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Planned));
         InProgressTasks = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.InProgress));
@@ -122,14 +158,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Initialize filtered task collections based on current filters
         ApplyTaskFilter();
 
-        TotalTasks = tasks.Count;
-        CompletedTasksCount = tasks.Count(t => t.Status == TaskStatus.Completed);
-        InProgressTasksCount = tasks.Count(t => t.Status == TaskStatus.InProgress);
+        // Progress: exclude tasks marked for deletion. Weighted: Completed=1, InProgress=0.5, Planned=0
+        var activeTasks = tasks.Where(t => !t.IsMarkedForDeletion).ToList();
+        TotalTasks = activeTasks.Count;
+        CompletedTasksCount = activeTasks.Count(t => t.Status == TaskStatus.Completed);
+        InProgressTasksCount = activeTasks.Count(t => t.Status == TaskStatus.InProgress);
         OverdueTasksCount = tasks.Count(t => t.IsOverdue);
         ProjectProgressPercent = TotalTasks == 0 ? 0
-            : (int)Math.Round((double)CompletedTasksCount / TotalTasks * 100);
+            : (int)Math.Round((CompletedTasksCount * 1.0 + InProgressTasksCount * 0.5) / TotalTasks * 100);
 
-        int plannedCount = tasks.Count(t => t.Status == TaskStatus.Planned);
+        int plannedCount = activeTasks.Count(t => t.Status == TaskStatus.Planned);
         TaskStatsSegments = new List<DonutSegment>
         {
             new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
@@ -138,14 +176,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
         };
 
-        // Load all stages for the project
-        var taskIds = tasks.Select(t => t.Id).ToList();
-        var stages = await db.TaskStages
-            .Where(s => taskIds.Contains(s.TaskId))
-            .OrderBy(s => s.CreatedAt)
-            .ToListAsync();
-
-        // Populate TaskName for each stage
+        // Populate TaskName for each stage (stages already loaded above)
         var taskNameDict = tasks.ToDictionary(t => t.Id, t => t.Name);
         foreach (var stage in stages)
             stage.TaskName = taskNameDict.GetValueOrDefault(stage.TaskId, "—");
@@ -171,11 +202,17 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .ToListAsync();
         Files = new ObservableCollection<LocalFile>(files);
 
-        // Load project members (executors)
+        // Load project members (executors) with AvatarPath from Users
         var members = await db.ProjectMembers
             .Where(m => m.ProjectId == Project.Id)
             .OrderBy(m => m.UserName)
             .ToListAsync();
+        var userIds = members.Select(m => m.UserId).Distinct().ToList();
+        var userAvatars = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+        foreach (var m in members)
+            m.AvatarPath = userAvatars.GetValueOrDefault(m.UserId);
         Members = new ObservableCollection<LocalProjectMember>(members);
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
@@ -404,7 +441,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         task.AssignedUserName = assignedName;
         task.Priority = req.Priority;
         task.DueDate = req.DueDate;
-        task.Status = req.Status;
+        // Status is auto-calculated from stages, do not set from request
+        var stages = await db.TaskStages.Where(s => s.TaskId == id).ToListAsync();
+        task.TotalStages = stages.Count;
+        task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+        task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
+        if (stages.Count > 0)
+        {
+            if (stages.All(s => s.Status == StageStatus.Completed))
+                task.Status = TaskStatus.Completed;
+            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
+                task.Status = TaskStatus.InProgress;
+            else
+                task.Status = TaskStatus.Planned;
+        }
         task.IsSynced = false;
         task.UpdatedAt = DateTime.UtcNow;
 
@@ -418,10 +468,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MoveTaskAsync((LocalTask task, Models.TaskStatus newStatus) args)
     {
-        var (task, newStatus) = args;
-        var req = new UpdateTaskRequest(task.Name, task.Description, task.AssignedUserId,
-            task.Priority, task.DueDate, newStatus);
-        await SaveUpdatedTaskAsync(task.Id, req);
+        // Task status is auto-calculated from stages — Kanban drag is disabled
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -561,14 +609,30 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
     }
 
-    /// <summary>Recalculates and saves the project's status based on its tasks.</summary>
+    /// <summary>Persists task status/stages and recalculates project status.</summary>
+    private async Task RecalcAndSaveTaskStatusesAsync(LocalDbContext db, List<LocalTask> tasks)
+    {
+        foreach (var t in tasks)
+        {
+            var entity = await db.Tasks.FindAsync(t.Id);
+            if (entity is null) continue;
+            entity.TotalStages = t.TotalStages;
+            entity.CompletedStages = t.CompletedStages;
+            entity.Status = t.Status;
+            entity.IsSynced = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+        }
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Recalculates and saves the project's status based on its tasks. Excludes tasks marked for deletion.</summary>
     private async Task RecalcProjectStatusAsync(LocalDbContext db)
     {
         if (Project is null) return;
         var project = await db.Projects.FindAsync(Project.Id);
         if (project is null) return;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion).ToListAsync();
         if (tasks.Count == 0)
         {
             project.Status = ProjectStatus.Planning;
@@ -590,7 +654,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        // Update local in-memory reference
         if (Project is not null)
             Project.Status = project.Status;
     }

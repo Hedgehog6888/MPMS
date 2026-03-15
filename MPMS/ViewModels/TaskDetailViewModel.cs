@@ -76,9 +76,20 @@ public partial class TaskDetailViewModel : ViewModelBase
         Files = new ObservableCollection<LocalFile>(files);
         HasNoFiles = files.Count == 0;
 
-        // Refresh task entity from DB to get latest progress
-        var refreshed = await db.Tasks.FindAsync(Task.Id);
-        if (refreshed is not null) Task = refreshed;
+        // Refresh task progress from stages (TotalStages, CompletedStages, InProgressStages, Status)
+        Task.TotalStages = stages.Count;
+        Task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+        Task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
+        if (stages.Count > 0)
+        {
+            if (stages.All(s => s.Status == StageStatus.Completed))
+                Task.Status = Models.TaskStatus.Completed;
+            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
+                Task.Status = Models.TaskStatus.InProgress;
+            else
+                Task.Status = Models.TaskStatus.Planned;
+        }
+        OnPropertyChanged(nameof(Task));
 
         // Load messages for this task
         var messages = await db.Messages
@@ -225,7 +236,20 @@ public partial class TaskDetailViewModel : ViewModelBase
         task.AssignedUserName = assignedName;
         task.Priority = req.Priority;
         task.DueDate = req.DueDate;
-        task.Status = req.Status;
+        // Status is auto-calculated from stages
+        var stages = await db.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
+        task.TotalStages = stages.Count;
+        task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
+        task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
+        if (stages.Count > 0)
+        {
+            if (stages.All(s => s.Status == StageStatus.Completed))
+                task.Status = Models.TaskStatus.Completed;
+            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
+                task.Status = Models.TaskStatus.InProgress;
+            else
+                task.Status = Models.TaskStatus.Planned;
+        }
         task.IsSynced = false;
         task.UpdatedAt = DateTime.UtcNow;
 
@@ -298,13 +322,15 @@ public partial class TaskDetailViewModel : ViewModelBase
         taskEntity.TotalStages = stages.Count;
         taskEntity.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
 
-        // Auto-update task status based on stage completion
+        // Auto-update task status: Completed=all done, InProgress=any in progress OR any completed, Planned=all planned
         if (stages.Count > 0)
         {
             if (stages.All(s => s.Status == StageStatus.Completed))
                 taskEntity.Status = Models.TaskStatus.Completed;
-            else if (stages.Any(s => s.Status == StageStatus.InProgress))
+            else if (stages.Any(s => s.Status == StageStatus.InProgress) || stages.Any(s => s.Status == StageStatus.Completed))
                 taskEntity.Status = Models.TaskStatus.InProgress;
+            else
+                taskEntity.Status = Models.TaskStatus.Planned;
         }
 
         taskEntity.IsSynced = false;
@@ -315,12 +341,14 @@ public partial class TaskDetailViewModel : ViewModelBase
         await RecalcProjectStatusAsync(ctx, taskEntity.ProjectId);
 
         // Update the in-memory Task so the UI reflects the new progress immediately
+        var inProgressCount = stages.Count(s => s.Status == StageStatus.InProgress);
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (Task is not null)
             {
                 Task.TotalStages = taskEntity.TotalStages;
                 Task.CompletedStages = taskEntity.CompletedStages;
+                Task.InProgressStages = inProgressCount;
                 Task.Status = taskEntity.Status;
                 OnPropertyChanged(nameof(Task));
             }
@@ -331,7 +359,7 @@ public partial class TaskDetailViewModel : ViewModelBase
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
         if (tasks.Count == 0)
             project.Status = ProjectStatus.Planning;
         else if (tasks.All(t => t.Status == Models.TaskStatus.Completed))

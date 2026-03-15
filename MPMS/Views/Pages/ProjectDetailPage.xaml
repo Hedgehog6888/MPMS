@@ -361,13 +361,20 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                                     <Border Width="32" Height="32" CornerRadius="16"
-                                                            Background="#172B4D" Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding Initials}"
-                                                                   FontSize="10" FontWeight="Bold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   ToolTip="{Binding UserName}"/>
+                                                            Background="#172B4D" Margin="0,0,10,0"
+                                                            ClipToBounds="True">
+                                                        <Grid>
+                                                            <Image Source="{Binding AvatarPath, Converter={StaticResource AvatarPathToImage}}"
+                                                                   Stretch="UniformToFill" Width="32" Height="32"
+                                                                   Visibility="{Binding AvatarPath, Converter={StaticResource StringToVis}}"/>
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarPath, Converter={StaticResource StringToVisInv}}"
+                                                                       ToolTip="{Binding UserName}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding UserName}"
@@ -398,13 +405,20 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                                     <Border Width="32" Height="32" CornerRadius="16"
-                                                            Background="#42526E" Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding Initials}"
-                                                                   FontSize="10" FontWeight="Bold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   ToolTip="{Binding UserName}"/>
+                                                            Background="#42526E" Margin="0,0,10,0"
+                                                            ClipToBounds="True">
+                                                        <Grid>
+                                                            <Image Source="{Binding AvatarPath, Converter={StaticResource AvatarPathToImage}}"
+                                                                   Stretch="UniformToFill" Width="32" Height="32"
+                                                                   Visibility="{Binding AvatarPath, Converter={StaticResource StringToVis}}"/>
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="10" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarPath, Converter={StaticResource StringToVisInv}}"
+                                                                       ToolTip="{Binding UserName}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding UserName}"
@@ -1165,9 +1179,11 @@
                                             <ColumnDefinition Width="100"/>
                                             <ColumnDefinition Width="90"/>
                                         </Grid.ColumnDefinitions>
-
-                                        <!-- Name + description -->
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <!-- Left status strip (matches TaskDetailOverlay stages) -->
+                                        <Border Width="4" HorizontalAlignment="Left" CornerRadius="8,0,0,8"
+                                                Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                        <!-- Name + description (left margin for status strip) -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="18,0,0,0">
                                             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
                                                        Foreground="{StaticResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>

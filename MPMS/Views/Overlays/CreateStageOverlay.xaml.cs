@@ -118,18 +118,23 @@ public partial class CreateStageOverlay : UserControl
             });
         }
 
-        // If still empty: fallback to all worker-role users
+        // Populate AvatarPath from Users
+        var userIds = taskAssignees.Select(ta => ta.UserId).Distinct().ToList();
+        var userAvatars = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.AvatarPath);
+        foreach (var ta in taskAssignees)
+            ta.AvatarPath = userAvatars.GetValueOrDefault(ta.UserId);
+
+        // Only task assignees (project members assigned to task) can be assigned to stages
         if (taskAssignees.Count == 0)
         {
-            var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
-            var users = await db.Users.Where(u => workerRoles.Contains(u.RoleName)).ToListAsync();
-            _allAssigneeItems = users.Select(u => new AssigneePickerItem(
-                u.Id, u.Name, u.RoleName, _selectedAssigneeIds)).ToList();
+            _allAssigneeItems = [];
         }
         else
         {
             _allAssigneeItems = taskAssignees.Select(ta => new AssigneePickerItem(
-                ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds)).ToList();
+                ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds, ta.AvatarPath)).ToList();
         }
 
         // Load existing stage assignees if editing
@@ -245,15 +250,28 @@ public partial class CreateStageOverlay : UserControl
             Width = 18, Height = 18,
             CornerRadius = new CornerRadius(9),
             Background = item.AvatarBrush,
-            Margin = new Thickness(0, 0, 5, 0)
+            Margin = new Thickness(0, 0, 5, 0),
+            ClipToBounds = true
         };
-        avatar.Child = new TextBlock
+        if (!string.IsNullOrEmpty(item.AvatarPath) && System.IO.File.Exists(item.AvatarPath))
         {
-            Text = item.Initials, FontSize = 7, FontWeight = FontWeights.Bold,
-            Foreground = Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(item.AvatarPath, UriKind.Absolute);
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                avatar.Child = new Image { Source = bmp, Stretch = Stretch.UniformToFill, Width = 18, Height = 18 };
+                avatar.Background = Brushes.Transparent;
+            }
+            catch { avatar.Child = CreateStageInitialsBlock(item.Initials); }
+        }
+        else
+        {
+            avatar.Child = CreateStageInitialsBlock(item.Initials);
+        }
         sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
@@ -282,6 +300,14 @@ public partial class CreateStageOverlay : UserControl
         return chip;
     }
 
+    private static TextBlock CreateStageInitialsBlock(string initials) => new()
+    {
+        Text = initials, FontSize = 7, FontWeight = FontWeights.Bold,
+        Foreground = Brushes.White,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center
+    };
+
     private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
@@ -307,6 +333,9 @@ public partial class CreateStageOverlay : UserControl
 
         if (string.IsNullOrWhiteSpace(NameBox.Text))
         { ShowError("Введите название этапа."); return; }
+
+        if (_editStage is null && _selectedAssigneeIds.Count == 0)
+        { ShowError("Назначьте хотя бы одного исполнителя на этап."); return; }
 
         Guid taskId;
         TaskDetailViewModel? vm;

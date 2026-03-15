@@ -203,6 +203,7 @@ public partial class TaskDetailOverlay : UserControl
             await _vm.LoadAsync();
             UpdateStagesTabLabel();
             UpdateEmptyStates();
+            _onClosed?.Invoke(); // Refresh project page
         });
         MainWindow.Instance?.ShowDrawer(overlay);
     }
@@ -217,26 +218,28 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
+        _onClosed?.Invoke(); // Sync project page
     }
 
     private async void CompleteStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
+        _onClosed?.Invoke(); // Sync project page
     }
 
     private async void RevertStage_Click(object sender, RoutedEventArgs e)
     {
-        // InProgress → Planned (cancel/revert action)
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Planned));
+        _onClosed?.Invoke(); // Sync project page
     }
 
     private async void ReopenStage_Click(object sender, RoutedEventArgs e)
     {
-        // Completed → InProgress (reopen stage)
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
+        _onClosed?.Invoke(); // Sync project page
     }
 
     private async void SendMessage_Click(object sender, RoutedEventArgs e)
@@ -287,6 +290,7 @@ public partial class TaskDetailOverlay : UserControl
                 await _vm.LoadAsync();
                 UpdateStagesTabLabel();
                 UpdateEmptyStates();
+                _onClosed?.Invoke(); // Sync project page
             },
             onAfterSave: () =>
             {

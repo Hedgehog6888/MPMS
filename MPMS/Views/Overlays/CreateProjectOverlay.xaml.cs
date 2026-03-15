@@ -289,6 +289,9 @@ public partial class CreateProjectOverlay : UserControl
         if (ManagerCombo.SelectedValue is not Guid managerId)
         { ShowError("Выберите ответственного менеджера."); return; }
 
+        if (_editProject is null && _selectedForeman is null && _selectedWorkerIds.Count == 0)
+        { ShowError("Назначьте прораба или хотя бы одного работника на проект."); return; }
+
         var startDate = DateOnly.FromDateTime(StartDatePicker.SelectedDate.Value);
         var endDate   = DateOnly.FromDateTime(EndDatePicker.SelectedDate.Value);
         if (endDate < startDate)

@@ -46,8 +46,10 @@ public class LocalProject : LocalEntity
 
     [NotMapped] public int TotalTasks { get; set; }
     [NotMapped] public int CompletedTasks { get; set; }
+    [NotMapped] public int InProgressTasks { get; set; }
+    /// <summary>Weighted progress: Completed=1, InProgress=0.5, Planned=0. Formula: (Completed + InProgress*0.5) / Total * 100</summary>
     [NotMapped] public int ProgressPercent => TotalTasks == 0 ? 0
-        : (int)Math.Round((double)CompletedTasks / TotalTasks * 100);
+        : (int)Math.Round((CompletedTasks * 1.0 + InProgressTasks * 0.5) / TotalTasks * 100);
     [NotMapped] public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
         string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2).Select(w => w[0].ToString().ToUpper()));
@@ -66,12 +68,14 @@ public class LocalTask : LocalEntity
     public TaskStatus Status { get; set; } = TaskStatus.Planned;
     public int TotalStages { get; set; }
     public int CompletedStages { get; set; }
+    [NotMapped] public int InProgressStages { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
+    /// <summary>Weighted progress: Completed=1, InProgress=0.5, Planned=0. Formula: (Completed + InProgress*0.5) / Total * 100</summary>
     public int ProgressPercent => TotalStages == 0 ? 0
-        : (int)Math.Round((double)CompletedStages / TotalStages * 100);
+        : (int)Math.Round((CompletedStages * 1.0 + InProgressStages * 0.5) / TotalStages * 100);
 
     public bool IsOverdue => DueDate.HasValue
         && DueDate < DateOnly.FromDateTime(DateTime.Today)
@@ -133,6 +137,9 @@ public class LocalProjectMember
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
 
+    /// <summary>Avatar path from LocalUser — populated when loading members.</summary>
+    [NotMapped] public string? AvatarPath { get; set; }
+
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
@@ -145,6 +152,9 @@ public class LocalTaskAssignee
     public Guid TaskId { get; set; }
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+
+    /// <summary>Avatar path from LocalUser — populated when loading.</summary>
+    [NotMapped] public string? AvatarPath { get; set; }
 }
 
 /// <summary>Stage assignee — only users from parent task's assignees.</summary>
@@ -154,6 +164,9 @@ public class LocalStageAssignee
     public Guid StageId { get; set; }
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
+
+    /// <summary>Avatar path from LocalUser — populated when loading.</summary>
+    [NotMapped] public string? AvatarPath { get; set; }
 }
 
 /// <summary>Message/comment on a task or project.</summary>
