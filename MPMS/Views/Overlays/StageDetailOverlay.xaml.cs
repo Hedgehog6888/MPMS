@@ -266,8 +266,20 @@ public partial class StageDetailOverlay : UserControl
             ProjectName = _task.ProjectName ?? "—"
         };
 
+        var taskId = _task.Id;
         var stageOverlay = new StageDetailOverlay();
-        stageOverlay.SetStage(item, _task, _onClosed);
+        stageOverlay.SetStage(item, _task, () =>
+        {
+            _onClosed?.Invoke();
+            _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask != null)
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
+        });
 
         MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, 850);
         await System.Threading.Tasks.Task.CompletedTask;

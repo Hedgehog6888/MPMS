@@ -150,7 +150,19 @@ public partial class StagesPage : UserControl
         taskPanel.SetTask(task);
 
         var stageOverlay = new StageDetailOverlay();
-        stageOverlay.SetStage(item, task, () => { _ = VM.LoadAsync(); });
+        var taskId = item.TaskId;
+        stageOverlay.SetStage(item, task, () =>
+        {
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                await VM.LoadAsync();
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask != null)
+                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
+        });
 
         MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, 850);
     }

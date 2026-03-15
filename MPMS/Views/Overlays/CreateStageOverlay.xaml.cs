@@ -24,7 +24,6 @@ public partial class CreateStageOverlay : UserControl
     private List<AssigneePickerItem> _allAssigneeItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private bool _isWorkerMode; // работник не выбирает исполнителей — автоматом он сам
-    private StageStatus _selectedStatus = StageStatus.Planned;
 
     public CreateStageOverlay()
     {
@@ -56,7 +55,6 @@ public partial class CreateStageOverlay : UserControl
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите проект и задачу";
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
-        StatusRow.Visibility = Visibility.Collapsed;
         ApplyWorkerModeUi();
         _ = LoadProjectsAsync();
     }
@@ -72,7 +70,6 @@ public partial class CreateStageOverlay : UserControl
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите задачу";
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
-        StatusRow.Visibility = Visibility.Collapsed;
         ProjectCombo.Visibility = Visibility.Collapsed;
         ProjectNameRow.Visibility = Visibility.Visible;
         ApplyWorkerModeUi();
@@ -90,14 +87,10 @@ public partial class CreateStageOverlay : UserControl
         _isWorkerMode = IsCurrentUserWorker();
         TitleLabel.Text = "Редактировать этап";
         SaveButton.Content = "Сохранить";
-        StatusRow.Visibility = Visibility.Visible;
         TaskNameLabel.Text = $"Задача: {task.Name}";
 
         NameBox.Text = stage.Name;
         DescriptionBox.Text = stage.Description ?? "";
-
-        _selectedStatus = stage.Status;
-        ApplyStatusSelection(_selectedStatus);
 
         ApplyWorkerModeUi();
         _ = LoadAssigneesFromTaskAsync(task.Id, stage.Id);
@@ -430,11 +423,10 @@ public partial class CreateStageOverlay : UserControl
             }
             else
             {
-                var status = GetStatus();
                 var req = new UpdateStageRequest(
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId, status);
+                    primaryAssigneeId, _editStage.Status);
                 await vm.SaveUpdatedStageAsync(_editStage.Id, req);
                 stageId = _editStage.Id;
             }
@@ -483,57 +475,6 @@ public partial class CreateStageOverlay : UserControl
         }
         await db.SaveChangesAsync();
     }
-
-    private void StatusPlanned_Click(object sender, RoutedEventArgs e)
-    {
-        _selectedStatus = StageStatus.Planned;
-        ApplyStatusSelection(_selectedStatus);
-    }
-
-    private void StatusInProgress_Click(object sender, RoutedEventArgs e)
-    {
-        _selectedStatus = StageStatus.InProgress;
-        ApplyStatusSelection(_selectedStatus);
-    }
-
-    private void StatusCompleted_Click(object sender, RoutedEventArgs e)
-    {
-        _selectedStatus = StageStatus.Completed;
-        ApplyStatusSelection(_selectedStatus);
-    }
-
-    private void ApplyStatusSelection(StageStatus status)
-    {
-        var neutral = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
-        var neutralBg = new SolidColorBrush(Colors.White);
-        var neutralFg = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
-
-        BtnStatusPlanned.BorderBrush = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutral;
-        BtnStatusPlanned.Background = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0xF4, 0xF5, 0xF7)) : neutralBg;
-        BtnStatusPlanned.Foreground = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutralFg;
-        BtnStatusPlanned.FontWeight = status == StageStatus.Planned ? FontWeights.SemiBold : FontWeights.Normal;
-
-        BtnStatusInProgress.BorderBrush = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)) : neutral;
-        BtnStatusInProgress.Background = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0xEB, 0xF2, 0xFF)) : neutralBg;
-        BtnStatusInProgress.Foreground = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)) : neutralFg;
-        BtnStatusInProgress.FontWeight = status == StageStatus.InProgress ? FontWeights.SemiBold : FontWeights.Normal;
-
-        BtnStatusCompleted.BorderBrush = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutral;
-        BtnStatusCompleted.Background = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0xE8, 0xF5, 0xE9)) : neutralBg;
-        BtnStatusCompleted.Foreground = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutralFg;
-        BtnStatusCompleted.FontWeight = status == StageStatus.Completed ? FontWeights.SemiBold : FontWeights.Normal;
-    }
-
-    private StageStatus GetStatus() => _selectedStatus;
 
     private void ShowError(string message)
     {

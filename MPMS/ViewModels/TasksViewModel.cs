@@ -187,6 +187,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         project.TotalTasks = tasks.Count;
         project.CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed);
         project.InProgressTasks = tasks.Count(t => t.Status == TaskStatus.InProgress);
+        project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         return project;
     }
 

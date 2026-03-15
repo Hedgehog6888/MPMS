@@ -181,20 +181,30 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
 
-        // Загружаем проект задачи для левой панели.
         var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
         var project = await tasksVm.GetProjectForTaskAsync(_vm.Task.ProjectId);
 
         UIElement? leftPanel = null;
+        ProjectSummaryPanel? projectPanel = null;
         if (project is not null)
         {
-            var projectPanel = new ProjectSummaryPanel();
+            projectPanel = new ProjectSummaryPanel();
             projectPanel.SetProject(project);
             leftPanel = projectPanel;
         }
 
+        var projectId = _vm.Task.ProjectId;
         var detail = new TaskDetailOverlay();
-        detail.SetTask(_vm.Task, _onClosed);
+        detail.SetTask(_vm.Task, () =>
+        {
+            _onClosed?.Invoke();
+            _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                var updatedProject = await tasksVm.GetProjectForTaskAsync(projectId);
+                if (updatedProject != null && projectPanel != null)
+                    projectPanel.SetProject(updatedProject);
+            });
+        });
         MainWindow.Instance?.ShowDrawer(leftPanel, detail, 900);
     }
 

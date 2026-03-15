@@ -99,13 +99,14 @@
             </Setter>
         </Style>
 
-        <Style x:Key="StatusPillBtn" TargetType="Button">
+        <!-- Прямоугольные кнопки статуса (как в оверлее редактирования) -->
+        <Style x:Key="StatusSegmentedBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#6B778C"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="14,6"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -115,7 +116,7 @@
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="20" Padding="{TemplateBinding Padding}">
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -215,32 +216,39 @@
                         <StackPanel>
                             <TextBlock Text="СТАТУС" FontSize="10" FontWeight="SemiBold"
                                        Foreground="#8993A4" Margin="0,0,0,10"/>
-                            <StackPanel Orientation="Horizontal">
-                                <Button x:Name="BtnPlanned" Style="{StaticResource StatusPillBtn}"
-                                        Margin="0,0,8,0" Click="SetStatusPlanned_Click">
-                                    <StackPanel Orientation="Horizontal">
+                            <Grid Margin="0,0,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="BtnPlanned" Grid.Column="0" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetStatusPlanned_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Border Width="8" Height="8" CornerRadius="4"
-                                                Background="#6B778C" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Запланирован" FontSize="12"/>
+                                                Background="#6B778C" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Запланирован" FontSize="13"/>
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="BtnInProgress" Style="{StaticResource StatusPillBtn}"
-                                        Margin="0,0,8,0" Click="SetStatusInProgress_Click">
-                                    <StackPanel Orientation="Horizontal">
+                                <Button x:Name="BtnInProgress" Grid.Column="2" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetStatusInProgress_Click">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Border Width="8" Height="8" CornerRadius="4"
-                                                Background="#0082FF" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Выполняется" FontSize="12"/>
+                                                Background="#0082FF" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Выполняется" FontSize="13"/>
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="BtnCompleted" Style="{StaticResource StatusPillBtn}"
+                                <Button x:Name="BtnCompleted" Grid.Column="4" Style="{StaticResource StatusSegmentedBtn}"
                                         Click="SetStatusCompleted_Click">
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Border Width="8" Height="8" CornerRadius="4"
-                                                Background="#00875A" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Завершён" FontSize="12"/>
+                                                Background="#00875A" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Завершён" FontSize="13"/>
                                     </StackPanel>
                                 </Button>
-                            </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -364,10 +372,7 @@
                 </StackPanel>
                 <Button x:Name="EditButton" HorizontalAlignment="Right"
                         Click="Edit_Click" Style="{StaticResource BlackBtn}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="✎  " FontSize="13" Foreground="White"/>
-                        <TextBlock Text="Редактировать" Foreground="White"/>
-                    </StackPanel>
+                    <TextBlock Text="Редактировать" Foreground="White"/>
                 </Button>
             </Grid>
         </Border>

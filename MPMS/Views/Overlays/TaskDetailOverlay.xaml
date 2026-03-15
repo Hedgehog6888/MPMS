@@ -792,10 +792,7 @@
                 <Button x:Name="EditTaskBtn" HorizontalAlignment="Right"
                         Click="EditTask_Click"
                         Style="{StaticResource BlackBtn}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="✎  " FontSize="13" Foreground="White"/>
-                        <TextBlock Text="Редактировать" Foreground="White"/>
-                    </StackPanel>
+                    <TextBlock Text="Редактировать" Foreground="White"/>
                 </Button>
             </Grid>
         </Border>

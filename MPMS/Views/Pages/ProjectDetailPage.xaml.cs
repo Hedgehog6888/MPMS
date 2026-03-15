@@ -3,8 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -239,21 +241,30 @@ public partial class ProjectDetailPage : UserControl
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
 
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(task);
+
         var overlay = new StageDetailOverlay();
         var vm = VM;
         var stageItem = new ViewModels.StageItem { Stage = stage, TaskName = stage.TaskName };
+        var taskId = task.Id;
         overlay.SetStage(stageItem, task, () =>
         {
-            if (vm != null)
+            _ = Dispatcher.InvokeAsync(async () =>
             {
-                _ = Dispatcher.InvokeAsync(async () =>
+                if (vm != null)
                 {
                     await vm.LoadAsync();
                     UpdateMarkProjectButton();
-                });
-            }
+                }
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask != null)
+                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
         });
-        MainWindow.Instance?.ShowDrawer(overlay, 500);
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, 850);
     }
 
     private void EditStageFromProject_Click(object sender, RoutedEventArgs e)

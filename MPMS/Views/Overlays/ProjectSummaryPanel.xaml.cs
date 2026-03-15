@@ -15,6 +15,8 @@ namespace MPMS.Views.Overlays;
 
 public partial class ProjectSummaryPanel : UserControl
 {
+    private int _loadVersion;
+
     public ProjectSummaryPanel()
     {
         InitializeComponent();
@@ -28,10 +30,11 @@ public partial class ProjectSummaryPanel : UserControl
             return;
         }
         Visibility = Visibility.Visible;
-        _ = LoadAsync(project);
+        var loadVersion = ++_loadVersion;
+        _ = LoadAsync(project, loadVersion);
     }
 
-    private async System.Threading.Tasks.Task LoadAsync(LocalProject project)
+    private async System.Threading.Tasks.Task LoadAsync(LocalProject project, int loadVersion)
     {
         // Basic info
         ProjectNameText.Text = project.Name;
@@ -77,16 +80,22 @@ public partial class ProjectSummaryPanel : UserControl
             UpdateProgressWidth(pct);
         });
 
+        if (loadVersion != _loadVersion) return;
+
+        var displayStatus = project.TotalTasks > 0 && project.CompletedTasks >= project.TotalTasks
+            ? ProjectStatus.Completed
+            : project.Status;
+
         // Status
         var statusBrush = ProjectStatusToBrushConverter.Instance.Convert(
-            project.Status, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush;
+            displayStatus, typeof(Brush), null, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;
         StatusDot.Background = new SolidColorBrush(Colors.White) { Opacity = 0.7 };
         StatusText.Text = ProjectStatusToStringConverter.Instance.Convert(
-            project.Status, typeof(string), null, CultureInfo.InvariantCulture) as string ?? "—";
+            displayStatus, typeof(string), null, CultureInfo.InvariantCulture) as string ?? "—";
 
         // Header band color based on status
-        StatusHeaderBand.Background = project.Status switch
+        StatusHeaderBand.Background = displayStatus switch
         {
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
             ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
@@ -114,6 +123,8 @@ public partial class ProjectSummaryPanel : UserControl
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
+                if (loadVersion != _loadVersion) return;
+
                 ForemanSection.Visibility = foremans.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 ForemanList.ItemsSource = foremans;
 

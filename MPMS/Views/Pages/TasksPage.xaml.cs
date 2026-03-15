@@ -126,23 +126,33 @@ public partial class TasksPage : UserControl
     {
         var overlay = new TaskDetailOverlay();
         var vm = VM;
-        overlay.SetTask(task, () =>
-        {
-            if (vm != null)
-                _ = Application.Current.Dispatcher.InvokeAsync(async () => await vm.LoadAsync());
-        });
-
         UIElement? leftPanel = null;
+        ProjectSummaryPanel? projectPanel = null;
         if (vm != null)
         {
             var project = await vm.GetProjectForTaskAsync(task.ProjectId);
             if (project != null)
             {
-                var projectPanel = new ProjectSummaryPanel();
+                projectPanel = new ProjectSummaryPanel();
                 projectPanel.SetProject(project);
                 leftPanel = projectPanel;
             }
         }
+
+        overlay.SetTask(task, () =>
+        {
+            if (vm != null)
+            {
+                _ = Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    await vm.LoadAsync();
+                    var project = await vm.GetProjectForTaskAsync(task.ProjectId);
+                    if (project != null && projectPanel != null)
+                        projectPanel.SetProject(project);
+                });
+            }
+        });
+
         MainWindow.Instance?.ShowDrawer(leftPanel, overlay, 900);
     }
 
