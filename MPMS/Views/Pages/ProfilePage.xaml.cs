@@ -239,7 +239,9 @@ public partial class ProfilePage : UserControl
                 var userEntity = await db.Users.FindAsync(_user.Id);
                 if (userEntity is not null)
                 {
-                    userEntity.Name = NameBox.Text.Trim();
+                    var parts = NameBox.Text.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    userEntity.FirstName = parts.Length > 0 ? parts[0] : "";
+                    userEntity.LastName = parts.Length > 1 ? parts[1] : "";
                     userEntity.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
                     userEntity.IsSynced = false;
                 }
@@ -262,7 +264,9 @@ public partial class ProfilePage : UserControl
             // Refresh display
             if (_user is not null)
             {
-                _user.Name = NameBox.Text.Trim();
+                var parts = NameBox.Text.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                _user.FirstName = parts.Length > 0 ? parts[0] : "";
+                _user.LastName = parts.Length > 1 ? parts[1] : "";
                 _user.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
             }
 

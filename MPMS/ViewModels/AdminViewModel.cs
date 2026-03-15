@@ -230,14 +230,15 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var users = await db.Users.OrderBy(u => u.Name).ToListAsync();
 
         var rows = users.Select(u =>
-        {
-            var parts = u.Name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-            return new AdminUserRow
             {
+                var name = !string.IsNullOrWhiteSpace(u.Name) ? u.Name : $"{u.FirstName} {u.LastName}".Trim();
+                var parts = name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                return new AdminUserRow
+                {
                 Id            = u.Id,
-                Name          = u.Name,
-                FirstName     = parts.Length > 0 ? parts[0] : u.Name,
-                LastName      = parts.Length > 1 ? parts[1] : string.Empty,
+                Name          = name,
+                FirstName     = parts.Length > 0 ? parts[0] : u.FirstName,
+                LastName      = parts.Length > 1 ? parts[1] : u.LastName,
                 Username      = u.Username,
                 Email         = u.Email ?? string.Empty,
                 RoleName      = u.RoleName,
@@ -249,8 +250,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 BlockedAt     = u.BlockedAt,
                 AvatarData    = u.AvatarData,
                 AvatarPath    = u.AvatarPath
-            };
-        }).ToList();
+                };
+            }).ToList();
 
         Application.Current.Dispatcher.Invoke(() =>
         {
@@ -759,8 +760,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     public static async Task UpdatePasswordHashAsync(LocalDbContext db, Guid userId, string hash)
     {
-        var session = await db.AuthSessions.FirstOrDefaultAsync(s => s.UserId == userId);
-        if (session is not null) session.LocalPasswordHash = hash;
+        var user = await db.Users.FindAsync(userId);
+        if (user is not null) user.PasswordHash = hash;
     }
 
     [RelayCommand]

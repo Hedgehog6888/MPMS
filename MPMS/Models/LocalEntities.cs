@@ -21,8 +21,11 @@ public class LocalRole
 
 public class LocalUser : LocalEntity
 {
+    /// <summary>Full name — stored for compatibility. Prefer FirstName+LastName for new data.</summary>
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
-    [MaxLength(50)]  public string Username { get; set; } = string.Empty;
+    [MaxLength(50)] public string FirstName { get; set; } = string.Empty;
+    [MaxLength(50)] public string LastName  { get; set; } = string.Empty;
+    [MaxLength(50)] public string Username { get; set; } = string.Empty;
     [MaxLength(255)] public string? Email { get; set; }
     public Guid RoleId { get; set; }
     [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
@@ -32,14 +35,24 @@ public class LocalUser : LocalEntity
     /// <summary>Avatar stored as PNG bytes in the database (takes priority over AvatarPath).</summary>
     public byte[]? AvatarData { get; set; }
 
+    /// <summary>BCrypt hash for offline login — set by admin when creating/editing the user locally.</summary>
+    public string? PasswordHash { get; set; }
+
     /// <summary>Indicates the account is blocked — user cannot log in.</summary>
     public bool IsBlocked { get; set; } = false;
     public DateTime? BlockedAt { get; set; }
     [MaxLength(500)] public string? BlockedReason { get; set; }
 
     [NotMapped]
-    public string Initials => string.IsNullOrWhiteSpace(Name) ? "?"
-        : string.Join("", Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => char.ToUpper(w[0]).ToString()));
+    public string Initials
+    {
+        get
+        {
+            var n = !string.IsNullOrWhiteSpace(Name) ? Name : $"{FirstName} {LastName}".Trim();
+            return string.IsNullOrWhiteSpace(n) ? "?"
+                : string.Join("", n.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? char.ToUpper(w[0]).ToString() : ""));
+        }
+    }
 
     [NotMapped]
     public string RoleDisplayName => RoleName switch

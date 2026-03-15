@@ -2,11 +2,31 @@ namespace MPMS.API.DTOs;
 
 public record UserResponse(
     Guid Id,
-    string Name,
+    string FirstName,
+    string LastName,
     string Username,
     string? Email,
     string Role,
     DateTime CreatedAt
+);
+
+public record CreateUserRequest(
+    string FirstName,
+    string LastName,
+    string Username,
+    string? Email,
+    string Password,
+    Guid RoleId,
+    Guid? Id = null
+);
+
+public record UpdateUserRequest(
+    string FirstName,
+    string LastName,
+    string Username,
+    string? Email,
+    Guid RoleId,
+    string? NewPassword = null
 );
 
 public record ActivityLogResponse(

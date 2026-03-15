@@ -176,6 +176,12 @@ public class ApiService : IApiService
         return await GetAsync<List<UserResponse>>($"users{q}");
     }
 
+    public async Task<UserResponse?> CreateUserAsync(CreateUserRequest request)
+        => await PostAsync<UserResponse>("users", request);
+
+    public async Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request)
+        => await PutAsync<UserResponse>($"users/{id}", request);
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AttachToken()
     {

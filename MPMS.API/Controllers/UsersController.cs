@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MPMS.API.Data;
 using MPMS.API.DTOs;
+using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
@@ -25,14 +26,84 @@ public class UsersController : ControllerBase
         var query = _db.Users.Include(u => u.Role).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(u => u.Name.Contains(search) || (u.Email != null && u.Email.Contains(search)));
+        {
+            var s = search.Trim();
+            query = query.Where(u =>
+                (u.FirstName + " " + u.LastName).Contains(s) ||
+                u.Username.Contains(s) ||
+                (u.Email != null && u.Email.Contains(s)));
+        }
 
         var users = await query
-            .OrderBy(u => u.Name)
-            .Select(u => new UserResponse(u.Id, u.Name, u.Username, u.Email, u.Role.Name, u.CreatedAt))
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
+            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt))
             .ToListAsync();
 
         return Ok(users);
+    }
+
+    /// <summary>Create user (admin only)</summary>
+    [HttpPost]
+    public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
+    {
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username))
+            return Conflict(new { message = "Пользователь с таким логином уже существует" });
+
+        var roleExists = await _db.Roles.AnyAsync(r => r.Id == request.RoleId);
+        if (!roleExists)
+            return BadRequest(new { message = "Указанная роль не существует" });
+
+        var user = new User
+        {
+            Id = request.Id ?? Guid.NewGuid(),
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Username = request.Username.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            RoleId = request.RoleId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+        await _db.Entry(user).Reference(u => u.Role).LoadAsync();
+
+        return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
+            user.Username, user.Email, user.Role.Name, user.CreatedAt));
+    }
+
+    /// <summary>Update user (admin only)</summary>
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<UserResponse>> Update(Guid id, [FromBody] UpdateUserRequest request)
+    {
+        var user = await _db.Users.FindAsync(id);
+        if (user is null) return NotFound();
+
+        if (await _db.Users.AnyAsync(u => u.Username == request.Username && u.Id != id))
+            return Conflict(new { message = "Пользователь с таким логином уже существует" });
+
+        var roleExists = await _db.Roles.AnyAsync(r => r.Id == request.RoleId);
+        if (!roleExists)
+            return BadRequest(new { message = "Указанная роль не существует" });
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.Username = request.Username.Trim();
+        user.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        user.RoleId = request.RoleId;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        if (!string.IsNullOrEmpty(request.NewPassword))
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+        await _db.SaveChangesAsync();
+        await _db.Entry(user).Reference(u => u.Role).LoadAsync();
+
+        return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
+            user.Username, user.Email, user.Role.Name, user.CreatedAt));
     }
 
     /// <summary>Get activity log (with filters)</summary>
@@ -65,7 +136,7 @@ public class UsersController : ControllerBase
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(l => new ActivityLogResponse(
-                l.Id, l.UserId, l.User.Name,
+                l.Id, l.UserId, l.User.FirstName + " " + l.User.LastName,
                 l.ActionType.ToString(), l.EntityType.ToString(),
                 l.EntityId, l.Description, l.CreatedAt))
             .ToListAsync();

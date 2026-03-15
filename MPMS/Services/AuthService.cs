@@ -61,33 +61,50 @@ public class AuthService : IAuthService
 
     /// <summary>
     /// Attempts to authenticate using the locally cached password hash.
-    /// Only works if the user has previously logged in on this machine.
+    /// First checks the active AuthSession (previously logged-in users),
+    /// then falls back to LocalUser.PasswordHash (admin-created users).
     /// </summary>
     public async Task<AuthResponse?> TryOfflineLoginAsync(string username, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+
+        // Primary check: active session (user has previously logged in online)
         var session = await db.AuthSessions.FirstOrDefaultAsync();
+        if (session is not null
+            && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrEmpty(session.LocalPasswordHash)
+            && BCrypt.Net.BCrypt.Verify(plainPassword, session.LocalPasswordHash))
+        {
+            return new AuthResponse(
+                session.UserId, session.UserName, session.Username,
+                session.UserRole, session.Token, session.ExpiresAt);
+        }
 
-        if (session is null
-            || !string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrEmpty(session.LocalPasswordHash))
-            return null;
-
-        if (!BCrypt.Net.BCrypt.Verify(plainPassword, session.LocalPasswordHash))
+        // Fallback: admin-created user with password stored in LocalUser.PasswordHash
+        var localUser = await db.Users
+            .FirstOrDefaultAsync(u => u.Username == username);
+        if (localUser is null
+            || string.IsNullOrEmpty(localUser.PasswordHash)
+            || !BCrypt.Net.BCrypt.Verify(plainPassword, localUser.PasswordHash))
             return null;
 
         return new AuthResponse(
-            session.UserId, session.UserName, session.Username,
-            session.UserRole, session.Token, session.ExpiresAt);
+            localUser.Id, localUser.Name, localUser.Username,
+            localUser.RoleName, string.Empty, DateTime.UtcNow.AddDays(1));
     }
 
     public async Task<bool> HasLocalCacheAsync(string username)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+
         var session = await db.AuthSessions.FirstOrDefaultAsync();
-        return session is not null
-               && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
-               && !string.IsNullOrEmpty(session.LocalPasswordHash);
+        if (session is not null
+            && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrEmpty(session.LocalPasswordHash))
+            return true;
+
+        var localUser = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+        return localUser is not null && !string.IsNullOrEmpty(localUser.PasswordHash);
     }
 
     public async Task<List<RecentAccount>> GetRecentAccountsAsync()

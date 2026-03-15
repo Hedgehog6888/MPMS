@@ -49,7 +49,8 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
-            Name = request.Name,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
             Username = request.Username,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
@@ -77,7 +78,7 @@ public class AuthController : ControllerBase
 
         if (user is null) return NotFound();
 
-        return Ok(new UserResponse(user.Id, user.Name, user.Username,
+        return Ok(new UserResponse(user.Id, user.FirstName, user.LastName, user.Username,
             user.Email, user.Role.Name, user.CreatedAt));
     }
 
@@ -111,6 +112,6 @@ public class AuthController : ControllerBase
     }
 
     private AuthResponse BuildAuthResponse(User user) =>
-        new(user.Id, user.Name, user.Username, user.Role.Name,
+        new(user.Id, $"{user.FirstName} {user.LastName}".Trim(), user.Username, user.Role.Name,
             _jwt.GenerateToken(user), _jwt.GetExpiryTime());
 }

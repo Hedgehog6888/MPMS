@@ -12,7 +12,7 @@ public record LoginResult(AuthResponse? Response, string? Error)
     public static LoginResult Offline()                    => Fail("Нет соединения с сервером. Проверьте, что API запущен (порт 5147).");
     public static LoginResult WrongCredentials()           => Fail("Неверный логин или пароль.");
 }
-public record RegisterRequest(string Name, string Username, string? Email, string Password, Guid RoleId);
+public record RegisterRequest(string FirstName, string LastName, string Username, string? Email, string Password, Guid RoleId);
 public record AuthResponse(Guid UserId, string Name, string Username, string Role,
     string Token, DateTime ExpiresAt);
 public record RoleDto(Guid Id, string Name, string? Description);
@@ -79,4 +79,8 @@ public record FileDto(Guid Id, string FileName, string FileType, long FileSize,
     Guid? ProjectId, Guid? TaskId, Guid? StageId, DateTime CreatedAt);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
-public record UserResponse(Guid Id, string Name, string Username, string? Email, string Role, DateTime CreatedAt);
+public record UserResponse(Guid Id, string FirstName, string LastName, string Username, string? Email, string Role, DateTime CreatedAt);
+
+public record CreateUserRequest(string FirstName, string LastName, string Username, string? Email, string Password, Guid RoleId, Guid? Id = null);
+
+public record UpdateUserRequest(string FirstName, string LastName, string Username, string? Email, Guid RoleId, string? NewPassword = null);

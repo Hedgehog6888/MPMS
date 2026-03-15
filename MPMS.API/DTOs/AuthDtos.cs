@@ -8,7 +8,8 @@ public record LoginRequest(
 );
 
 public record RegisterRequest(
-    [Required, MaxLength(100)] string Name,
+    [Required, MaxLength(50)] string FirstName,
+    [Required, MaxLength(50)] string LastName,
     [Required, MaxLength(50)] string Username,
     [MaxLength(255)] string? Email,
     [Required, MinLength(6)] string Password,

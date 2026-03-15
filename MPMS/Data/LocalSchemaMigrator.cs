@@ -27,6 +27,8 @@ public static class LocalSchemaMigrator
         AddUserBlockingColumns(conn);
         AddAvatarDataColumn(conn);
         AddIsArchivedColumn(conn);
+        AddPasswordHashColumn(conn);
+        SplitUserNameToFirstLast(conn);
     }
 
     private static void AddActionTypeToActivityLogs(SqliteConnection conn)
@@ -172,6 +174,36 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"Projects\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Tasks\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
+    }
+
+    private static void AddPasswordHashColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"PasswordHash\" TEXT NULL;");
+    }
+
+    private static void SplitUserNameToFirstLast(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"FirstName\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"LastName\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"Name\" TEXT NULL;");
+        try
+        {
+            Execute(conn, """
+                UPDATE "Users" SET "Name" = trim("FirstName" || ' ' || "LastName")
+                WHERE ("Name" IS NULL OR "Name" = '') AND ("FirstName" IS NOT NULL OR "LastName" IS NOT NULL)
+                """);
+        }
+        catch (SqliteException) { /* ignore */ }
+        try
+        {
+            Execute(conn, """
+                UPDATE "Users" SET
+                    "FirstName" = CASE WHEN instr(COALESCE("Name",'') || ' ', ' ') > 1 THEN substr("Name", 1, instr("Name" || ' ', ' ') - 1) ELSE COALESCE("Name",'') END,
+                    "LastName" = CASE WHEN instr(COALESCE("Name",'') || ' ', ' ') > 1 THEN trim(substr("Name", instr("Name" || ' ', ' '))) ELSE '' END
+                WHERE "FirstName" IS NULL OR "FirstName" = ''
+                """);
+        }
+        catch (SqliteException) { /* ignore */ }
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

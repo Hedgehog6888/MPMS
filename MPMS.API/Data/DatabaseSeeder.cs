@@ -25,7 +25,8 @@ public static class DatabaseSeeder
         {
             new User
             {
-                Name         = "Иван Администратов",
+                FirstName    = "Иван",
+                LastName     = "Администратов",
                 Username     = "admin",
                 Email        = "admin@mpms.local",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
@@ -35,7 +36,8 @@ public static class DatabaseSeeder
             },
             new User
             {
-                Name         = "Алексей Менеджеров",
+                FirstName    = "Алексей",
+                LastName     = "Менеджеров",
                 Username     = "manager",
                 Email        = "manager@mpms.local",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("manager123"),
@@ -45,7 +47,8 @@ public static class DatabaseSeeder
             },
             new User
             {
-                Name         = "Сергей Прорабов",
+                FirstName    = "Сергей",
+                LastName     = "Прорабов",
                 Username     = "foreman",
                 Email        = "foreman@mpms.local",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("foreman123"),
@@ -55,7 +58,8 @@ public static class DatabaseSeeder
             },
             new User
             {
-                Name         = "Пётр Работников",
+                FirstName    = "Пётр",
+                LastName     = "Работников",
                 Username     = "worker",
                 Email        = "worker@mpms.local",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("worker123"),

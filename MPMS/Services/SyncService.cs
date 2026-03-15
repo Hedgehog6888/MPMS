@@ -82,6 +82,20 @@ public class SyncService : ISyncService
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
+        // Roles (for admin form)
+        var apiRoles = await _api.GetRolesAsync();
+        if (apiRoles is not null)
+        {
+            foreach (var r in apiRoles)
+            {
+                var existing = await db.Roles.FindAsync(r.Id);
+                if (existing is null)
+                    db.Roles.Add(new LocalRole { Id = r.Id, Name = r.Name, Description = r.Description });
+                else
+                    existing.Name = r.Name;
+            }
+        }
+
         // Users (for dropdowns)
         var users = await _api.GetUsersAsync();
         if (!_api.IsOnline) return;  // bail out early if the first request already failed
@@ -92,9 +106,12 @@ public class SyncService : ISyncService
 
             foreach (var u in users)
             {
+                var fullName = $"{u.FirstName} {u.LastName}".Trim();
                 if (existing.TryGetValue(u.Id, out var local))
                 {
-                    local.Name = u.Name; local.Username = u.Username;
+                    local.Name = fullName;
+                    local.FirstName = u.FirstName; local.LastName = u.LastName;
+                    local.Username = u.Username;
                     local.Email = u.Email;
                     local.RoleName = u.Role; local.IsSynced = true;
                 }
@@ -102,8 +119,9 @@ public class SyncService : ISyncService
                 {
                     db.Users.Add(new LocalUser
                     {
-                        Id = u.Id, Name = u.Name, Username = u.Username,
-                        Email = u.Email, RoleName = u.Role,
+                        Id = u.Id, Name = fullName,
+                        FirstName = u.FirstName, LastName = u.LastName,
+                        Username = u.Username, Email = u.Email, RoleName = u.Role,
                         IsSynced = true, CreatedAt = u.CreatedAt
                     });
                 }
