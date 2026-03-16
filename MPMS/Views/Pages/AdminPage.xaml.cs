@@ -98,6 +98,9 @@ public partial class AdminPage : UserControl
     private void BlockOverlayBackdrop_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         => _vm?.CancelBlockOverlayCommand.Execute(null);
 
+    private void UnblockOverlayBackdrop_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        => _vm?.CancelUnblockOverlayCommand.Execute(null);
+
     private void ConfirmOverlayBackdrop_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         => _vm?.CancelConfirmCommand.Execute(null);
 

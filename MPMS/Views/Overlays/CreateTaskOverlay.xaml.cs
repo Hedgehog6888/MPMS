@@ -93,15 +93,17 @@ public partial class CreateTaskOverlay : UserControl
             if (_editTask.DueDate.HasValue)
                 DueDatePicker.SelectedDate = _editTask.DueDate.Value.ToDateTime(TimeOnly.MinValue);
 
-            // Load existing task assignees
+            // Load existing task assignees (exclude blocked users)
+            var blockedIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
             var taskAssignees = await db.TaskAssignees
-                .Where(ta => ta.TaskId == _editTask.Id)
+                .Where(ta => ta.TaskId == _editTask.Id && !blockedIds.Contains(ta.UserId))
                 .ToListAsync();
             foreach (var ta in taskAssignees)
                 _selectedAssigneeIds.Add(ta.UserId);
 
-            // Also include legacy single assignee
-            if (_editTask.AssignedUserId.HasValue && !_selectedAssigneeIds.Contains(_editTask.AssignedUserId.Value))
+            // Also include legacy single assignee (if not blocked)
+            if (_editTask.AssignedUserId.HasValue && !blockedIds.Contains(_editTask.AssignedUserId.Value)
+                && !_selectedAssigneeIds.Contains(_editTask.AssignedUserId.Value))
                 _selectedAssigneeIds.Add(_editTask.AssignedUserId.Value);
 
             RefreshAssigneeItems();
@@ -114,9 +116,10 @@ public partial class CreateTaskOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // Only project members can be assigned to tasks (foremen + workers)
+        // Only project members can be assigned to tasks (foremen + workers), exclude blocked users
+        var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
         var members = await db.ProjectMembers
-            .Where(m => m.ProjectId == projectId)
+            .Where(m => m.ProjectId == projectId && !blockedUserIds.Contains(m.UserId))
             .OrderBy(m => m.UserName)
             .ToListAsync();
 

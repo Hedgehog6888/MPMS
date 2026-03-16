@@ -177,7 +177,9 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     // ── Block overlay ─────────────────────────────────────────────────────
     [ObservableProperty] private bool _isBlockOverlayOpen;
+    [ObservableProperty] private bool _isUnblockOverlayOpen;
     [ObservableProperty] private string _blockTargetName = string.Empty;
+    [ObservableProperty] private string _blockTargetReason = string.Empty; // reason when unblocking (read-only)
     [ObservableProperty] private string _blockReason     = string.Empty;
     private AdminUserRow? _blockTargetRow;
 
@@ -320,12 +322,25 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (row is null) return;
         _blockTargetRow = row;
         BlockTargetName = row.Name;
+        BlockTargetReason = row.BlockedReason ?? string.Empty;
         BlockReason = string.Empty;
-        IsBlockOverlayOpen = true;
+        if (row.IsBlocked)
+        {
+            IsUnblockOverlayOpen = true;
+            IsBlockOverlayOpen = false;
+        }
+        else
+        {
+            IsBlockOverlayOpen = true;
+            IsUnblockOverlayOpen = false;
+        }
     }
 
     [RelayCommand]
     private void CancelBlockOverlay() => IsBlockOverlayOpen = false;
+
+    [RelayCommand]
+    private void CancelUnblockOverlay() => IsUnblockOverlayOpen = false;
 
     [RelayCommand]
     private async Task SubmitBlockAsync()
@@ -333,6 +348,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (_blockTargetRow is null) return;
         var row = _blockTargetRow;
         IsBlockOverlayOpen = false;
+        IsUnblockOverlayOpen = false;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.FindAsync(row.Id);

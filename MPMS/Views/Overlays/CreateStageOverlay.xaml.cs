@@ -122,23 +122,27 @@ public partial class CreateStageOverlay : UserControl
         var auth = App.Services.GetRequiredService<IAuthService>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // Get task assignees (people who can be assigned to stages of this task)
+        // Get task assignees (people who can be assigned to stages of this task), exclude blocked users
+        var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
         var taskAssignees = await db.TaskAssignees
-            .Where(ta => ta.TaskId == taskId)
+            .Where(ta => ta.TaskId == taskId && !blockedUserIds.Contains(ta.UserId))
             .OrderBy(ta => ta.UserName)
             .ToListAsync();
 
-        // Also check legacy single-assignee on the task entity
+        // Also check legacy single-assignee on the task entity (if not blocked)
         LocalTask? taskEntity = await db.Tasks.FindAsync(taskId);
         if (taskAssignees.Count == 0 && taskEntity?.AssignedUserId.HasValue == true)
         {
-            // Fallback: use task's single assignee
-            taskAssignees.Add(new LocalTaskAssignee
+            var legacyId = taskEntity.AssignedUserId!.Value;
+            if (!blockedUserIds.Contains(legacyId))
             {
-                TaskId = taskId,
-                UserId = taskEntity.AssignedUserId!.Value,
-                UserName = taskEntity.AssignedUserName ?? "—"
-            });
+                taskAssignees.Add(new LocalTaskAssignee
+                {
+                    TaskId = taskId,
+                    UserId = legacyId,
+                    UserName = taskEntity.AssignedUserName ?? "—"
+                });
+            }
         }
 
         // Работник при создании этапа: автоматом назначается он сам; добавляем в список если его нет
@@ -185,18 +189,19 @@ public partial class CreateStageOverlay : UserControl
                 ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds, ta.AvatarPath, ta.AvatarData)).ToList();
         }
 
-        // Load existing stage assignees if editing
+        // Load existing stage assignees if editing (exclude blocked users)
         if (stageId.HasValue)
         {
             var stageAssignees = await db.StageAssignees
-                .Where(sa => sa.StageId == stageId.Value)
+                .Where(sa => sa.StageId == stageId.Value && !blockedUserIds.Contains(sa.UserId))
                 .ToListAsync();
             foreach (var sa in stageAssignees)
                 _selectedAssigneeIds.Add(sa.UserId);
 
-            // Also check legacy single assignee
+            // Also check legacy single assignee (if not blocked)
             var stageEntity = await db.TaskStages.FindAsync(stageId.Value);
-            if (stageEntity?.AssignedUserId.HasValue == true && !_selectedAssigneeIds.Contains(stageEntity.AssignedUserId!.Value))
+            if (stageEntity?.AssignedUserId.HasValue == true && !blockedUserIds.Contains(stageEntity.AssignedUserId!.Value)
+                && !_selectedAssigneeIds.Contains(stageEntity.AssignedUserId!.Value))
                 _selectedAssigneeIds.Add(stageEntity.AssignedUserId.Value);
         }
 

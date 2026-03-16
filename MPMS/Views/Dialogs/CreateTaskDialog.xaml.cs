@@ -28,7 +28,7 @@ public partial class CreateTaskDialog : Window
         await using var db = await _dbFactory.CreateDbContextAsync();
         var workerRoles = new[] { "Foreman", "Прораб", "Worker", "Работник" };
         var users = await db.Users
-            .Where(u => workerRoles.Contains(u.RoleName))
+            .Where(u => !u.IsBlocked && workerRoles.Contains(u.RoleName))
             .OrderBy(u => u.Name)
             .ToListAsync();
         AssigneeCombo.ItemsSource = users;

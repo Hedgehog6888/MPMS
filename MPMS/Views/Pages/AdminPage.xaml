@@ -346,7 +346,12 @@
                                                         <Button Style="{StaticResource RowIconBtn}" ToolTip="{Binding BlockLabel}"
                                                                 Command="{Binding DataContext.OpenBlockOverlayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 CommandParameter="{Binding}">
-                                                            <Image Source="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                            <Grid Width="14" Height="14">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/block.svg, AppName=MPMS}" Width="14" Height="14"
+                                                                       Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVisInv}}"/>
+                                                                <Image Source="{svgc:SvgImage Source=/icons/unblock.svg, AppName=MPMS}" Width="14" Height="14"
+                                                                       Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVis}}"/>
+                                                            </Grid>
                                                         </Button>
                                                         <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить"
                                                                 Command="{Binding DataContext.OpenDeleteUserConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -517,7 +522,7 @@
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     CommandParameter="{Binding}">
-                                                                <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                                <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                             </Button>
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
                                                                     Command="{Binding DataContext.OpenPermanentDeleteProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -591,7 +596,7 @@
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     CommandParameter="{Binding}">
-                                                                <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                                <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                             </Button>
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
                                                                     Command="{Binding DataContext.OpenPermanentDeleteTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -665,7 +670,7 @@
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     CommandParameter="{Binding}">
-                                                                <Image Source="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                                <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                             </Button>
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
                                                                     Command="{Binding DataContext.OpenPermanentDeleteStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -995,7 +1000,7 @@
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════
-             BLOCK USER OVERLAY  — matches ConfirmDeleteDialog style
+             BLOCK USER OVERLAY (жёлтый)
         ═══════════════════════════════════════════════════════════════════ -->
         <Grid Panel.ZIndex="100"
               Visibility="{Binding IsBlockOverlayOpen, Converter={StaticResource BoolToVis}}">
@@ -1007,20 +1012,17 @@
                     <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
                 </Border.Effect>
                 <StackPanel>
-                    <!-- Amber header with icon + close -->
                     <Border Background="#FFF8E1" CornerRadius="12,12,0,0" Padding="24,20,24,16">
                         <Grid>
                             <StackPanel Orientation="Horizontal">
-                                <Border Width="40" Height="40" CornerRadius="20" Background="#FFEFC6"
-                                        Margin="0,0,14,0" VerticalAlignment="Center">
-                                    <TextBlock Text="🔒" FontSize="18"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="40" Height="40" CornerRadius="20" Margin="0,0,14,0" VerticalAlignment="Center"
+                                        Background="#FFEFC6">
+                                    <Image Source="{svgc:SvgImage Source=/icons/block_amber.svg, AppName=MPMS}"
+                                           Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Заблокировать пользователя?"
-                                               FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
-                                    <TextBlock Text="Пользователь не сможет войти в систему"
-                                               FontSize="12" Foreground="#92400E" Margin="0,3,0,0"/>
+                                    <TextBlock Text="Заблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                    <TextBlock Text="Пользователь не сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#92400E"/>
                                 </StackPanel>
                             </StackPanel>
                             <Button HorizontalAlignment="Right" VerticalAlignment="Top"
@@ -1043,7 +1045,6 @@
                             </Button>
                         </Grid>
                     </Border>
-                    <!-- Content -->
                     <StackPanel Margin="24,16,24,0">
                         <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,14">
                             <StackPanel>
@@ -1053,20 +1054,21 @@
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <TextBlock Text="Причина блокировки (необязательно)" FontSize="12" FontWeight="SemiBold"
-                                   Foreground="#344563" Margin="0,0,0,6"/>
-                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                                CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
-                            <TextBox Text="{Binding BlockReason, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0" Background="Transparent"
-                                     Foreground="#172B4D" FontSize="13"
-                                     Height="72" TextWrapping="Wrap" AcceptsReturn="True"
-                                     VerticalContentAlignment="Top"/>
-                        </Border>
-                        <TextBlock Text="Причина будет показана пользователю при входе."
-                                   FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
+                        <StackPanel>
+                            <TextBlock Text="Причина блокировки (необязательно)" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#344563" Margin="0,0,0,6"/>
+                            <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                    CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                                <TextBox Text="{Binding BlockReason, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderThickness="0" Background="Transparent"
+                                         Foreground="#172B4D" FontSize="13"
+                                         Height="72" TextWrapping="Wrap" AcceptsReturn="True"
+                                         VerticalContentAlignment="Top"/>
+                            </Border>
+                            <TextBlock Text="Причина будет показана пользователю при входе."
+                                       FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                    <!-- Footer -->
                     <Border Padding="24,16,24,20">
                         <Grid>
                             <Button HorizontalAlignment="Left" Height="38" Padding="20,0"
@@ -1098,13 +1100,124 @@
                                         <Border x:Name="Bg" Background="#D97706" CornerRadius="8"
                                                 Padding="{TemplateBinding Padding}"
                                                 Height="{TemplateBinding Height}">
-                                            <TextBlock Text="Заблокировать" Foreground="White"
-                                                       FontSize="13" FontWeight="SemiBold"
+                                            <TextBlock Text="Заблокировать" Foreground="White" FontSize="13" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="Bg" Property="Background" Value="#B45309"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             UNBLOCK USER OVERLAY (зелёный)
+        ═══════════════════════════════════════════════════════════════════ -->
+        <Grid Panel.ZIndex="100"
+              Visibility="{Binding IsUnblockOverlayOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="Transparent" MouseLeftButtonDown="UnblockOverlayBackdrop_Click"/>
+            <Border Background="White" Width="440"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    CornerRadius="12" BorderBrush="#DFE1E6" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border Background="#C8E6C9" CornerRadius="12,12,0,0" Padding="24,20,24,16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="40" Height="40" CornerRadius="20" Margin="0,0,14,0" VerticalAlignment="Center"
+                                        Background="#81C784">
+                                    <Image Source="{svgc:SvgImage Source=/icons/unblock_green.svg, AppName=MPMS}"
+                                           Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Разблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                    <TextBlock Text="Пользователь снова сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#2E7D32"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Command="{Binding CancelUnblockOverlayCommand}"
+                                    Width="26" Height="26">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" CornerRadius="13">
+                                            <TextBlock Text="✕" FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#6B778C"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <StackPanel Margin="24,16,24,0">
+                        <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="Пользователь" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding BlockTargetName}"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <StackPanel Visibility="{Binding BlockTargetReason, Converter={StaticResource StringToVis}}">
+                            <TextBlock Text="Причина блокировки" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#344563" Margin="0,0,0,6"/>
+                            <Border Background="#F4F5F7" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+                                <TextBlock Text="{Binding BlockTargetReason}" FontSize="13" Foreground="#6B778C"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Padding="24,16,24,20">
+                        <Grid>
+                            <Button HorizontalAlignment="Left" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding CancelUnblockOverlayCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="White" CornerRadius="8"
+                                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Отмена" Foreground="#172B4D"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button HorizontalAlignment="Right" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding SubmitBlockCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="#00875A" CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Разблокировать" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#006B47"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>

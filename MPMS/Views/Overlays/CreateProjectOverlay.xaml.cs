@@ -92,13 +92,14 @@ public partial class CreateProjectOverlay : UserControl
         else
         {
             var managers = await db.Users
-                .Where(u => u.RoleName == "ProjectManager" || u.RoleName == "Manager"
-                         || u.RoleName == "Project Manager")
+                .Where(u => !u.IsBlocked &&
+                    (u.RoleName == "ProjectManager" || u.RoleName == "Manager"
+                         || u.RoleName == "Project Manager"))
                 .OrderBy(u => u.Name)
                 .ToListAsync();
 
             if (managers.Count == 0)
-                managers = await db.Users.OrderBy(u => u.Name).ToListAsync();
+                managers = await db.Users.Where(u => !u.IsBlocked).OrderBy(u => u.Name).ToListAsync();
 
             ManagerCombo.ItemsSource = managers;
             if (selectedManagerId.HasValue)
@@ -107,13 +108,13 @@ public partial class CreateProjectOverlay : UserControl
                 ManagerCombo.SelectedIndex = 0;
         }
 
-        // Load foremans and workers
+        // Load foremans and workers (only active, not blocked)
         _foremanUsers = await db.Users
-            .Where(u => u.RoleName == "Foreman" || u.RoleName == "Прораб")
+            .Where(u => !u.IsBlocked && (u.RoleName == "Foreman" || u.RoleName == "Прораб"))
             .OrderBy(u => u.Name)
             .ToListAsync();
         _workerUsers = await db.Users
-            .Where(u => u.RoleName == "Worker" || u.RoleName == "Работник")
+            .Where(u => !u.IsBlocked && (u.RoleName == "Worker" || u.RoleName == "Работник"))
             .OrderBy(u => u.Name)
             .ToListAsync();
 
@@ -134,7 +135,10 @@ public partial class CreateProjectOverlay : UserControl
 
             var workerMembers = members.Where(m => m.UserRole is "Worker" or "Работник").ToList();
             foreach (var wm in workerMembers)
-                _selectedWorkerIds.Add(wm.UserId);
+            {
+                if (_workerUsers.Any(u => u.Id == wm.UserId))
+                    _selectedWorkerIds.Add(wm.UserId);
+            }
         }
 
         // Создаём items с учётом выбранных (как в CreateTaskOverlay)
