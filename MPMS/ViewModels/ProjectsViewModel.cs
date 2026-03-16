@@ -48,16 +48,57 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
             var query = db.Projects.Where(p => !p.IsArchived);
 
-            // Foreman sees only projects they are a member of
+            var userId = _auth.UserId;
+            bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
-            if (isForeman && _auth.UserId.HasValue)
+            bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+            if (userId.HasValue)
             {
-                var userId = _auth.UserId.Value;
-                var assignedProjectIds = await db.ProjectMembers
-                    .Where(m => m.UserId == userId)
-                    .Select(m => m.ProjectId)
-                    .ToListAsync(ct);
-                query = query.Where(p => assignedProjectIds.Contains(p.Id));
+                if (isManager)
+                {
+                    // Менеджер видит только проекты, где он ответственный
+                    query = query.Where(p => p.ManagerId == userId.Value);
+                }
+                else if (isForeman)
+                {
+                    // Прораб видит только проекты, где он назначен
+                    var assignedProjectIds = await db.ProjectMembers
+                        .Where(m => m.UserId == userId.Value)
+                        .Select(m => m.ProjectId)
+                        .ToListAsync(ct);
+                    query = query.Where(p => assignedProjectIds.Contains(p.Id));
+                }
+                else if (isWorker)
+                {
+                    // Рабочий видит только проекты, где у него есть назначенные задачи или этапы
+                    var projectIdsFromTaskAssignee = await db.Tasks
+                        .Where(t => t.AssignedUserId == userId.Value)
+                        .Select(t => t.ProjectId)
+                        .ToListAsync(ct);
+                    var projectIdsFromTaskAssignees = await db.TaskAssignees
+                        .Where(ta => ta.UserId == userId.Value)
+                        .Join(db.Tasks, ta => ta.TaskId, t => t.Id, (_, t) => t.ProjectId)
+                        .ToListAsync(ct);
+                    var projectIdsFromStageAssignees = await db.StageAssignees
+                        .Where(sa => sa.UserId == userId.Value)
+                        .Join(db.TaskStages, sa => sa.StageId, s => s.Id, (_, s) => s.TaskId)
+                        .Join(db.Tasks, tid => tid, t => t.Id, (_, t) => t.ProjectId)
+                        .ToListAsync(ct);
+                    var projectIdsFromStageAssigned = await db.TaskStages
+                        .Where(s => s.AssignedUserId == userId.Value)
+                        .Join(db.Tasks, s => s.TaskId, t => t.Id, (_, t) => t.ProjectId)
+                        .ToListAsync(ct);
+                    var workerProjectIds = projectIdsFromTaskAssignee
+                        .Concat(projectIdsFromTaskAssignees)
+                        .Concat(projectIdsFromStageAssignees)
+                        .Concat(projectIdsFromStageAssigned)
+                        .Distinct()
+                        .ToList();
+                    query = query.Where(p => workerProjectIds.Contains(p.Id));
+                }
             }
 
             await LoadInternalAsync(db, query, ct);

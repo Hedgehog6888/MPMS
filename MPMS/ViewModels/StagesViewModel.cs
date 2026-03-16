@@ -23,6 +23,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
+    private readonly IAuthService _auth;
 
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
@@ -41,10 +42,11 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     public List<string> StatusOptions { get; } =
         ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
 
-    public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
+    public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _sync = sync;
+        _auth = auth;
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -65,13 +67,74 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var tasks = await db.Tasks.Where(t => !t.IsArchived).ToListAsync();
+            var tasksQuery = db.Tasks.Where(t => !t.IsArchived);
+            var userId = _auth.UserId;
+            bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+            bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+            bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+            if (userId.HasValue)
+            {
+                if (isManager)
+                    tasksQuery = tasksQuery.Where(t => db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
+                else if (isForeman)
+                {
+                    var foremanProjectIds = await db.ProjectMembers
+                        .Where(m => m.UserId == userId.Value)
+                        .Select(m => m.ProjectId)
+                        .ToListAsync();
+                    tasksQuery = tasksQuery.Where(t => foremanProjectIds.Contains(t.ProjectId));
+                }
+                else if (isWorker)
+                {
+                    var workerTaskIds = await db.Tasks
+                        .Where(t => t.AssignedUserId == userId.Value)
+                        .Select(t => t.Id)
+                        .ToListAsync();
+                    var workerTaskIdsFromAssignees = await db.TaskAssignees
+                        .Where(ta => ta.UserId == userId.Value)
+                        .Select(ta => ta.TaskId)
+                        .ToListAsync();
+                    var workerStageIds = await db.StageAssignees
+                        .Where(sa => sa.UserId == userId.Value)
+                        .Select(sa => sa.StageId)
+                        .ToListAsync();
+                    var workerStageIdsFromAssigned = await db.TaskStages
+                        .Where(s => s.AssignedUserId == userId.Value)
+                        .Select(s => s.Id)
+                        .ToListAsync();
+                    var allWorkerTaskIds = workerTaskIds.Concat(workerTaskIdsFromAssignees).Distinct().ToList();
+                    var allWorkerStageIds = workerStageIds.Concat(workerStageIdsFromAssigned).Distinct().ToList();
+                    tasksQuery = tasksQuery.Where(t =>
+                        allWorkerTaskIds.Contains(t.Id) ||
+                        db.TaskStages.Any(s => s.TaskId == t.Id && allWorkerStageIds.Contains(s.Id)));
+                }
+            }
+
+            var tasks = await tasksQuery.ToListAsync();
             var taskDict = tasks.ToDictionary(t => t.Id);
+            var taskIds = tasks.Select(t => t.Id).ToList();
 
             var stageList = await db.TaskStages
-                .Where(s => !s.IsArchived)
+                .Where(s => !s.IsArchived && taskIds.Contains(s.TaskId))
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();
+
+            if (userId.HasValue && isWorker)
+            {
+                var workerStageIds = await db.StageAssignees
+                    .Where(sa => sa.UserId == userId.Value)
+                    .Select(sa => sa.StageId)
+                    .ToListAsync();
+                var workerStageIdsFromAssigned = await db.TaskStages
+                    .Where(s => s.AssignedUserId == userId.Value)
+                    .Select(s => s.Id)
+                    .ToListAsync();
+                var allWorkerStageIds = workerStageIds.Concat(workerStageIdsFromAssigned).Distinct().ToList();
+                stageList = stageList.Where(s => allWorkerStageIds.Contains(s.Id)).ToList();
+            }
 
             var items = stageList.Select(s =>
             {

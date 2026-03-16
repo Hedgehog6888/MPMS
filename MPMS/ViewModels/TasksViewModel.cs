@@ -53,7 +53,34 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var projectList = await db.Projects.Where(p => !p.IsArchived).OrderBy(p => p.Name).ToListAsync();
+        var projectQuery = db.Projects.Where(p => !p.IsArchived);
+        var userId = _auth.UserId;
+        bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+        bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+        if (userId.HasValue)
+        {
+            if (isManager)
+                projectQuery = projectQuery.Where(p => p.ManagerId == userId.Value);
+            else if (isForeman)
+            {
+                var foremanProjectIds = await db.ProjectMembers
+                    .Where(m => m.UserId == userId.Value)
+                    .Select(m => m.ProjectId)
+                    .ToListAsync();
+                projectQuery = projectQuery.Where(p => foremanProjectIds.Contains(p.Id));
+            }
+            else if (isWorker)
+            {
+                var workerProjectIds = await GetWorkerVisibleProjectIdsAsync(db, userId.Value);
+                projectQuery = projectQuery.Where(p => workerProjectIds.Contains(p.Id));
+            }
+        }
+
+        var projectList = await projectQuery.OrderBy(p => p.Name).ToListAsync();
         Projects = new ObservableCollection<LocalProject>(projectList);
         var filterOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
         filterOpts.AddRange(projectList.Select(p => new ProjectFilterOption(p.Id, p.Name)));
@@ -61,10 +88,32 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var query = db.Tasks.Where(t => !t.IsArchived);
 
-        // Role-based filtering: Workers only see tasks assigned to them
-        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
-        if (isWorker && _auth.UserId.HasValue)
-            query = query.Where(t => t.AssignedUserId == _auth.UserId.Value);
+        if (userId.HasValue)
+        {
+            if (isManager)
+                query = query.Where(t => db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
+            else if (isForeman)
+            {
+                var foremanProjectIds = await db.ProjectMembers
+                    .Where(m => m.UserId == userId.Value)
+                    .Select(m => m.ProjectId)
+                    .ToListAsync();
+                query = query.Where(t => foremanProjectIds.Contains(t.ProjectId));
+            }
+            else if (isWorker)
+            {
+                var workerTaskIds = await db.Tasks
+                    .Where(t => t.AssignedUserId == userId.Value)
+                    .Select(t => t.Id)
+                    .ToListAsync();
+                var workerTaskIdsFromAssignees = await db.TaskAssignees
+                    .Where(ta => ta.UserId == userId.Value)
+                    .Select(ta => ta.TaskId)
+                    .ToListAsync();
+                var allWorkerTaskIds = workerTaskIds.Concat(workerTaskIdsFromAssignees).Distinct().ToList();
+                query = query.Where(t => allWorkerTaskIds.Contains(t.Id));
+            }
+        }
 
         if (ProjectFilter.HasValue)
             query = query.Where(t => t.ProjectId == ProjectFilter.Value);
@@ -162,6 +211,35 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         ProjectFilter = project?.Id;
         ProjectFilterName = project?.Name ?? "Все проекты";
+    }
+
+    private static async Task<List<Guid>> GetWorkerVisibleProjectIdsAsync(LocalDbContext db, Guid workerId)
+    {
+        var fromTaskAssignee = await db.Tasks
+            .Where(t => t.AssignedUserId == workerId)
+            .Select(t => t.ProjectId)
+            .ToListAsync();
+        var fromTaskAssignees = await db.TaskAssignees
+            .Where(ta => ta.UserId == workerId)
+            .Join(db.Tasks, ta => ta.TaskId, t => t.Id, (_, t) => t.ProjectId)
+            .ToListAsync();
+        var stageTaskIds = await db.StageAssignees
+            .Where(sa => sa.UserId == workerId)
+            .Join(db.TaskStages, sa => sa.StageId, s => s.Id, (_, s) => s.TaskId)
+            .ToListAsync();
+        var fromStageAssignees = stageTaskIds.Count > 0
+            ? await db.Tasks.Where(t => stageTaskIds.Contains(t.Id)).Select(t => t.ProjectId).ToListAsync()
+            : new List<Guid>();
+        var fromStageAssigned = await db.TaskStages
+            .Where(s => s.AssignedUserId == workerId)
+            .Join(db.Tasks, s => s.TaskId, t => t.Id, (_, t) => t.ProjectId)
+            .ToListAsync();
+        return fromTaskAssignee
+            .Concat(fromTaskAssignees)
+            .Concat(fromStageAssignees)
+            .Concat(fromStageAssigned)
+            .Distinct()
+            .ToList();
     }
 
     public async Task<LocalProject?> GetProjectForTaskAsync(Guid projectId)

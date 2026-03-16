@@ -91,6 +91,34 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     partial void OnStageStatusFilterChanged(string value) => ApplyStageFilter();
     partial void OnStageTaskFilterChanged(Guid? value) => ApplyStageFilter();
 
+    private void ClearProjectData()
+    {
+        Tasks = [];
+        PlannedTasks = [];
+        InProgressTasks = [];
+        PausedTasks = [];
+        CompletedTasks = [];
+        FilteredTasks = [];
+        FilteredPlannedTasks = [];
+        FilteredInProgressTasks = [];
+        FilteredPausedTasks = [];
+        FilteredCompletedTasks = [];
+        AllStages = [];
+        FilteredStages = [];
+        Files = [];
+        Members = [];
+        ForemanMembers = [];
+        WorkerMembers = [];
+        Messages = [];
+        TotalTasks = 0;
+        CompletedTasksCount = 0;
+        InProgressTasksCount = 0;
+        OverdueTasksCount = 0;
+        ProjectProgressPercent = 0;
+        TaskStatsSegments = [];
+        _goBackAction?.Invoke();
+    }
+
     public void SetProject(LocalProject project, Action? goBackAction = null)
     {
         Project = project;
@@ -110,12 +138,62 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Project = projectEntity;
         }
 
+        var userId = _auth.UserId;
+        bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+        bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+        if (userId.HasValue)
+        {
+            if (isManager && Project.ManagerId != userId.Value)
+            {
+                ClearProjectData();
+                return;
+            }
+            if (isForeman)
+            {
+                var isMember = await db.ProjectMembers
+                    .AnyAsync(m => m.ProjectId == Project.Id && m.UserId == userId.Value);
+                if (!isMember)
+                {
+                    ClearProjectData();
+                    return;
+                }
+            }
+            if (isWorker)
+            {
+                var hasAssignedTask = await db.Tasks
+                    .AnyAsync(t => t.ProjectId == Project.Id && (t.AssignedUserId == userId.Value ||
+                        db.TaskAssignees.Any(ta => ta.TaskId == t.Id && ta.UserId == userId.Value)));
+                var hasAssignedStage = await db.TaskStages
+                    .Where(s => db.Tasks.Any(t => t.Id == s.TaskId && t.ProjectId == Project.Id))
+                    .AnyAsync(s => s.AssignedUserId == userId.Value ||
+                        db.StageAssignees.Any(sa => sa.StageId == s.Id && sa.UserId == userId.Value));
+                if (!hasAssignedTask && !hasAssignedStage)
+                {
+                    ClearProjectData();
+                    return;
+                }
+            }
+        }
+
         var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id && !t.IsArchived);
 
-        // Workers only see tasks assigned to them
-        bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
-        if (isWorker && _auth.UserId.HasValue)
-            tasksQuery = tasksQuery.Where(t => t.AssignedUserId == _auth.UserId.Value);
+        if (userId.HasValue && isWorker)
+        {
+            var workerTaskIds = await db.Tasks
+                .Where(t => t.ProjectId == Project.Id && t.AssignedUserId == userId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var workerTaskIdsFromAssignees = await db.TaskAssignees
+                .Where(ta => ta.UserId == userId.Value)
+                .Join(db.Tasks.Where(t => t.ProjectId == Project.Id), ta => ta.TaskId, t => t.Id, (_, t) => t.Id)
+                .ToListAsync();
+            var allWorkerTaskIds = workerTaskIds.Concat(workerTaskIdsFromAssignees).Distinct().ToList();
+            tasksQuery = tasksQuery.Where(t => allWorkerTaskIds.Contains(t.Id));
+        }
 
         var tasks = await tasksQuery
             .OrderByDescending(t => t.CreatedAt)
@@ -123,10 +201,22 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         // Load stages and compute TotalStages/CompletedStages + auto task status for each task
         var taskIds = tasks.Select(t => t.Id).ToList();
-        var stages = await db.TaskStages
-            .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived)
-            .OrderBy(s => s.CreatedAt)
-            .ToListAsync();
+        var stagesQuery = db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived);
+        if (userId.HasValue && isWorker)
+        {
+            var workerStageIds = await db.StageAssignees
+                .Where(sa => sa.UserId == userId.Value)
+                .Select(sa => sa.StageId)
+                .ToListAsync();
+            var workerStageIdsFromAssigned = await db.TaskStages
+                .Where(s => taskIds.Contains(s.TaskId) && s.AssignedUserId == userId.Value)
+                .Select(s => s.Id)
+                .ToListAsync();
+            var allWorkerStageIds = workerStageIds.Concat(workerStageIdsFromAssigned).Distinct().ToList();
+            stagesQuery = stagesQuery.Where(s => allWorkerStageIds.Contains(s.Id));
+        }
+        var stages = await stagesQuery.OrderBy(s => s.CreatedAt).ToListAsync();
 
         foreach (var task in tasks)
         {
@@ -195,15 +285,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ApplyStageFilter();
 
         // Load files
+        var projectId = Project!.Id;
         var files = await db.Files
-            .Where(f => f.ProjectId == Project.Id)
+            .Where(f => f.ProjectId == projectId)
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
         Files = new ObservableCollection<LocalFile>(files);
 
         // Load project members (executors) with AvatarData/AvatarPath from Users
         var members = await db.ProjectMembers
-            .Where(m => m.ProjectId == Project.Id)
+            .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.UserName)
             .ToListAsync();
         var userIds = members.Select(m => m.UserId).Distinct().ToList();
@@ -225,7 +316,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         // Load project messages (discussion)
         var messages = await db.Messages
-            .Where(m => m.ProjectId == Project.Id)
+            .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
         Messages = new ObservableCollection<LocalMessage>(messages);
