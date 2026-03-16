@@ -353,13 +353,17 @@
                                                 <!-- Assignee -->
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                             VerticalAlignment="Center" Margin="0,0,8,0">
-                                                    <Border Width="26" Height="26" CornerRadius="13"
-                                                            Background="#E8E9EC" Margin="0,0,6,0">
-                                                        <TextBlock FontSize="9" FontWeight="Bold"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"
-                                                                   Foreground="#172B4D"
-                                                                   Text="{Binding AssignedUserName}"/>
+                                                    <Border Style="{StaticResource AvatarCircle26}"
+                                                            Background="#172B4D" Margin="0,0,6,0">
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="26" Height="26"
+                                                                   Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding AssignedUserInitials}" FontSize="9" FontWeight="Bold"
+                                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <TextBlock Text="{Binding AssignedUserName}"
                                                                FontSize="12" Foreground="#172B4D"
@@ -596,9 +600,16 @@
                                     <!-- Assignee -->
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
                                                 Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
-                                        <Border Width="20" Height="20" CornerRadius="10" Background="#172B4D" Margin="0,0,6,0">
-                                            <TextBlock Text="{Binding AssignedUserName}" FontSize="8" FontWeight="Bold"
-                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Border Style="{StaticResource AvatarCircle20}" Background="#172B4D" Margin="0,0,6,0">
+                                            <Grid>
+                                                <Image Style="{StaticResource AvatarImage}"
+                                                       Source="{Binding AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                       Width="20" Height="20"
+                                                       Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                <TextBlock Text="{Binding AssignedUserInitials}" FontSize="8" FontWeight="Bold"
+                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                            </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
                                                    Foreground="#6B778C" VerticalAlignment="Center"

@@ -7,8 +7,11 @@ public record UserResponse(
     string Username,
     string? Email,
     string Role,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    byte[]? AvatarData = null
 );
+
+public record UploadAvatarRequest(byte[] AvatarData);
 
 public record CreateUserRequest(
     string FirstName,
@@ -17,7 +20,8 @@ public record CreateUserRequest(
     string? Email,
     string Password,
     Guid RoleId,
-    Guid? Id = null
+    Guid? Id = null,
+    byte[]? AvatarData = null
 );
 
 public record UpdateUserRequest(

@@ -179,7 +179,6 @@ public partial class CreateProjectOverlay : UserControl
     private void ShowSelectedForeman(LocalUser user)
     {
         SelectedForemanName.Text = user.Name;
-        ForemanAvatarText.Text = GetInitials(user.Name);
         SelectedForemanPanel.Visibility = Visibility.Visible;
     }
 
@@ -270,7 +269,6 @@ public partial class CreateProjectOverlay : UserControl
 
     private Border BuildWorkerChip(WorkerChipInfo info, AssigneePickerItem? item)
     {
-        // Как в CreateTaskOverlay/CreateStageOverlay — прямоугольные с скруглением 6
         var chip = new Border
         {
             CornerRadius = new CornerRadius(6),
@@ -281,35 +279,6 @@ public partial class CreateProjectOverlay : UserControl
             BorderThickness = new Thickness(1)
         };
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        var avatarBrush = item?.AvatarBrush ?? new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E));
-        var avatar = new Border
-        {
-            Width = 20, Height = 20,
-            CornerRadius = new CornerRadius(4),
-            Background = avatarBrush,
-            Margin = new Thickness(0, 0, 5, 0),
-            ClipToBounds = true
-        };
-        var avatarBmp = item?.AvatarData != null || item?.AvatarPath != null
-            ? Services.AvatarHelper.GetImageSource(item?.AvatarData, item?.AvatarPath)
-            : null;
-        if (avatarBmp is not null)
-        {
-            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
-            avatar.Background = Brushes.Transparent;
-        }
-        else
-        {
-            avatar.Child = new TextBlock
-            {
-                Text = info.Initials,
-                FontSize = 7, FontWeight = FontWeights.Bold,
-                Foreground = Brushes.White,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-        }
-        sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
             Text = info.Name,

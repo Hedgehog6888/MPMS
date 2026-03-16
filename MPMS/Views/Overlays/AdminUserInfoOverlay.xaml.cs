@@ -31,7 +31,7 @@ public partial class AdminUserInfoOverlay : UserControl
                                    ?? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
         if (_row.AvatarData is { Length: > 0 })
         {
-            var src = AvatarHelper.GetImageSource(_row.AvatarData, _row.AvatarPath);
+            var src = AvatarHelper.GetImageSource(_row.AvatarData, _row.AvatarPath, _row.Name);
             AvatarImage.Source    = src;
             AvatarInitials.Visibility = Visibility.Collapsed;
         }

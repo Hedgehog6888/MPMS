@@ -32,6 +32,9 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    /// <summary>Avatar stored as PNG bytes.</summary>
+    public byte[]? AvatarData { get; set; }
+
     public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
     public ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
     public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();

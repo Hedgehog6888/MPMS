@@ -103,7 +103,23 @@ public partial class TaskDetailOverlay : UserControl
             });
         }
 
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName)).ToList();
+        var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
+        if (userIds.Count > 0)
+        {
+            var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = userAvatars.ToDictionary(u => u.Id);
+            foreach (var a in assignees)
+            {
+                if (avDict.TryGetValue(a.UserId, out var av))
+                {
+                    a.AvatarData = av.AvatarData;
+                    a.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
+        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, a.AvatarData, a.AvatarPath)).ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -349,11 +365,15 @@ public sealed class AssigneeDisplayItem
     public Guid UserId { get; }
     public string UserName { get; }
     public string Initials { get; }
+    public byte[]? AvatarData { get; }
+    public string? AvatarPath { get; }
 
-    public AssigneeDisplayItem(Guid userId, string userName)
+    public AssigneeDisplayItem(Guid userId, string userName, byte[]? avatarData = null, string? avatarPath = null)
     {
         UserId = userId;
         UserName = userName;
+        AvatarData = avatarData;
+        AvatarPath = avatarPath;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         Initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}".ToUpper()

@@ -217,14 +217,21 @@
                                             </Border.Style>
                                             <Grid>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Border Width="32" Height="32" CornerRadius="16"
+                                                    <Border Style="{StaticResource AvatarCircle32}"
                                                             Background="{Binding AvatarBrush}"
                                                             Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding Initials}"
-                                                                   FontSize="11" FontWeight="Bold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="32" Height="32"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}"

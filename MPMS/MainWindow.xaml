@@ -686,12 +686,13 @@
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"/>
                                     </Border>
-                                    <!-- Photo overlay (visible only when path is set; managed in code-behind) -->
+                                    <!-- Photo overlay (EllipseGeometry для идеального круга) -->
                                     <Border x:Name="TopBarAvatarBorder"
-                                            CornerRadius="15" ClipToBounds="True"
+                                            Style="{StaticResource AvatarCircle30}"
                                             Visibility="Collapsed">
                                         <Image x:Name="TopBarAvatarImage"
-                                               Stretch="UniformToFill"/>
+                                               Style="{StaticResource AvatarImage}"
+                                               Width="30" Height="30"/>
                                     </Border>
                                 </Grid>
                                 <!-- Name + Role stacked -->

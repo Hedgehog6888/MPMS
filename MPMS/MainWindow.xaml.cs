@@ -34,18 +34,19 @@ public partial class MainWindow : Window
     {
         if (sender is not MainViewModel vm) return;
         if (e.PropertyName is nameof(MainViewModel.UserAvatarPath) or nameof(MainViewModel.UserAvatarData))
-            ApplyTopBarAvatar(vm.UserAvatarData, vm.UserAvatarPath);
+            ApplyTopBarAvatar(vm.UserAvatarData, vm.UserAvatarPath, vm.UserName);
     }
 
     /// <summary>
     /// Shows the best available avatar in the top bar:
     /// 1. AvatarData (bytes stored in DB) — custom photo or auto-generated initials image
     /// 2. AvatarPath (legacy file path)
-    /// 3. Falls back to initials circle (shown by default in XAML)
+    /// 3. Generated initials avatar if no photo
+    /// 4. Falls back to initials circle (shown by default in XAML)
     /// </summary>
-    private void ApplyTopBarAvatar(byte[]? avatarData, string? avatarPath)
+    private void ApplyTopBarAvatar(byte[]? avatarData, string? avatarPath, string? displayName = null)
     {
-        var bmp = MPMS.Services.AvatarHelper.GetImageSource(avatarData, avatarPath);
+        var bmp = MPMS.Services.AvatarHelper.GetImageSource(avatarData, avatarPath, displayName);
         if (bmp is not null)
         {
             TopBarAvatarImage.Source = bmp;
@@ -176,6 +177,15 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainViewModel vm)
             vm.NavigateCommand.Execute("Profile");
+    }
+
+    private void ChangeAvatar_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel vm)
+        {
+            vm.NavigateCommand.Execute("Profile");
+            // Profile page will be shown; user can click avatar to change
+        }
     }
 
     private static readonly SolidColorBrush _searchFocusBrush = new(Colors.Black);

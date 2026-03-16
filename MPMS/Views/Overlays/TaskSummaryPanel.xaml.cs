@@ -3,14 +3,20 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.Views.Overlays;
 
 public partial class TaskSummaryPanel : UserControl
 {
+    private int _avatarLoadVersion;
+
     public TaskSummaryPanel()
     {
         InitializeComponent();
@@ -26,6 +32,7 @@ public partial class TaskSummaryPanel : UserControl
         Visibility = Visibility.Visible;
         TaskNameText.Text = task.Name;
         AssigneeText.Text = task.AssignedUserName ?? "—";
+        ApplyAssigneeAvatar(task);
         DueDateText.Text = task.DueDate?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "—";
 
         // Days left / overdue
@@ -105,6 +112,58 @@ public partial class TaskSummaryPanel : UserControl
         {
             ProjectSection.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private void ApplyAssigneeAvatar(LocalTask task)
+    {
+        AssigneeAvatarInitials.Text = task.AssignedUserInitials;
+        AssigneeAvatarBorder.Background = new InitialsToBrushConverter().Convert(
+            task.AssignedUserInitials, typeof(Brush), null!, CultureInfo.InvariantCulture) as Brush
+            ?? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
+
+        var avatar = AvatarHelper.GetImageSource(task.AssignedUserAvatarData, task.AssignedUserAvatarPath, task.AssignedUserName);
+        if (avatar is not null)
+        {
+            AssigneeAvatarImage.Source = avatar;
+            AssigneeAvatarImage.Visibility = Visibility.Visible;
+            AssigneeAvatarInitials.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        AssigneeAvatarImage.Source = null;
+        AssigneeAvatarImage.Visibility = Visibility.Collapsed;
+        AssigneeAvatarInitials.Visibility = Visibility.Visible;
+
+        if (!task.AssignedUserId.HasValue)
+            return;
+
+        var loadVersion = ++_avatarLoadVersion;
+        _ = LoadAssigneeAvatarAsync(task.AssignedUserId.Value, task.AssignedUserName, loadVersion);
+    }
+
+    private async Task LoadAssigneeAvatarAsync(Guid userId, string? userName, int loadVersion)
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var avatar = await db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.AvatarData, u.AvatarPath })
+            .FirstOrDefaultAsync();
+        if (avatar is null || loadVersion != _avatarLoadVersion)
+            return;
+
+        var source = AvatarHelper.GetImageSource(avatar.AvatarData, avatar.AvatarPath, userName);
+        if (source is null)
+            return;
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            if (loadVersion != _avatarLoadVersion)
+                return;
+            AssigneeAvatarImage.Source = source;
+            AssigneeAvatarImage.Visibility = Visibility.Visible;
+            AssigneeAvatarInitials.Visibility = Visibility.Collapsed;
+        });
     }
 
     private void UpdateProgressWidth(int pct)

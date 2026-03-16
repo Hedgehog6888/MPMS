@@ -54,9 +54,16 @@
                     <!-- Assignee -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8"
                                 Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}">
-                        <Border Width="20" Height="20" CornerRadius="4" Background="#172B4D" Margin="0,0,6,0">
-                            <TextBlock Text="{Binding AssignedUserName}" FontSize="8" FontWeight="Bold"
-                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Style="{StaticResource AvatarCircle20}" Background="#172B4D" Margin="0,0,6,0">
+                            <Grid>
+                                <Image Style="{StaticResource AvatarImage}"
+                                       Source="{Binding AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                       Width="20" Height="20"
+                                       Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVis}}"/>
+                                <TextBlock Text="{Binding AssignedUserInitials}" FontSize="8" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                            </Grid>
                         </Border>
                         <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
                                    Foreground="#6B778C" VerticalAlignment="Center"/>
@@ -356,11 +363,18 @@
                                         <TextBlock Text="Ответственный менеджер" FontSize="11"
                                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <StackPanel Orientation="Horizontal">
-                                            <Border Width="28" Height="28" CornerRadius="14"
+                                            <Border Style="{StaticResource AvatarCircle28}"
                                                     Background="#172B4D" Margin="0,0,8,0">
-                                                <TextBlock Text="{Binding Project.ManagerInitials}"
-                                                           Foreground="White" FontSize="10" FontWeight="Bold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding Project.ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="28" Height="28"
+                                                           Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Project.ManagerInitials}"
+                                                               Foreground="White" FontSize="10" FontWeight="Bold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
                                             </Border>
                                             <TextBlock Text="{Binding Project.ManagerName}"
                                                        FontSize="14" FontWeight="SemiBold"
@@ -377,27 +391,27 @@
                                         <TextBlock Text="ПРОРАБ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding ForemanMembers}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                                    <Border Width="32" Height="32" CornerRadius="4"
-                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
-                                                            Margin="0,0,10,0"
-                                                            ClipToBounds="True">
-                                                        <Grid>
-                                                            <Image Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                   Stretch="UniformToFill" Width="32" Height="32"
-                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                            <TextBlock Text="{Binding Initials}"
-                                                                       FontSize="10" FontWeight="Bold"
-                                                                       Foreground="White"
-                                                                       HorizontalAlignment="Center"
-                                                                       VerticalAlignment="Center"
-                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"
-                                                                       ToolTip="{Binding UserName}"/>
-                                                        </Grid>
-                                                    </Border>
+                                                    <ItemsControl ItemsSource="{Binding ForemanMembers}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                                    <Border Style="{StaticResource AvatarCircle32}"
+                                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
+                                                                            Margin="0,0,10,0">
+                                                                        <Grid>
+                                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                                   Width="32" Height="32"
+                                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                            <TextBlock Text="{Binding Initials}"
+                                                                                       FontSize="10" FontWeight="Bold"
+                                                                                       Foreground="White"
+                                                                                       HorizontalAlignment="Center"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"
+                                                                                       ToolTip="{Binding UserName}"/>
+                                                                        </Grid>
+                                                                    </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="13" FontWeight="SemiBold"
@@ -422,27 +436,27 @@
                                         <TextBlock Text="РАБОТНИКИ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding WorkerMembers}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                                    <Border Width="32" Height="32" CornerRadius="4"
-                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
-                                                            Margin="0,0,10,0"
-                                                            ClipToBounds="True">
-                                                        <Grid>
-                                                            <Image Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                   Stretch="UniformToFill" Width="32" Height="32"
-                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                            <TextBlock Text="{Binding Initials}"
-                                                                       FontSize="10" FontWeight="Bold"
-                                                                       Foreground="White"
-                                                                       HorizontalAlignment="Center"
-                                                                       VerticalAlignment="Center"
-                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"
-                                                                       ToolTip="{Binding UserName}"/>
-                                                        </Grid>
-                                                    </Border>
+                                                    <ItemsControl ItemsSource="{Binding WorkerMembers}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                                    <Border Style="{StaticResource AvatarCircle32}"
+                                                                            Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
+                                                                            Margin="0,0,10,0">
+                                                                        <Grid>
+                                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                                   Width="32" Height="32"
+                                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                            <TextBlock Text="{Binding Initials}"
+                                                                                       FontSize="10" FontWeight="Bold"
+                                                                                       Foreground="White"
+                                                                                       HorizontalAlignment="Center"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"
+                                                                                       ToolTip="{Binding UserName}"/>
+                                                                        </Grid>
+                                                                    </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="13" FontWeight="SemiBold"
@@ -806,9 +820,8 @@
                                                                Foreground="{StaticResource TextPrimaryBrush}"
                                                                TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding AssignedUserName}"
-                                                               FontSize="11"
+                                                               FontSize="11" Margin="0,2,0,0"
                                                                Foreground="{StaticResource TextSecondaryBrush}"
-                                                               Margin="0,2,0,0"
                                                                Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
 
@@ -1174,7 +1187,6 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="130"/>
                                 <ColumnDefinition Width="130"/>
-                                <ColumnDefinition Width="100"/>
                                 <ColumnDefinition Width="90"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="НАЗВАНИЕ" FontSize="11" FontWeight="SemiBold"
@@ -1185,9 +1197,7 @@
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
                             <TextBlock Grid.Column="3" Text="СТАТУС" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ" FontSize="11" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ" FontSize="11" FontWeight="SemiBold"
+                            <TextBlock Grid.Column="4" Text="ДЕЙСТВИЯ" FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Grid>
                     </Border>
@@ -1228,7 +1238,6 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="130"/>
                                             <ColumnDefinition Width="130"/>
-                                            <ColumnDefinition Width="100"/>
                                             <ColumnDefinition Width="90"/>
                                         </Grid.ColumnDefinitions>
                                         <!-- Name + description -->
@@ -1240,6 +1249,10 @@
                                                        Foreground="{StaticResource TextSecondaryBrush}"
                                                        Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                                                        Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                                            <TextBlock Text="{Binding AssignedUserName}" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Margin="0,2,0,0"
+                                                       Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
                                         </StackPanel>
 
                                         <!-- Status buttons (left of task, with margin) -->
@@ -1328,15 +1341,8 @@
                                             </TextBlock>
                                         </Border>
 
-                                        <!-- Assignee -->
-                                        <TextBlock Grid.Column="4" VerticalAlignment="Center"
-                                                   Text="{Binding AssignedUserName}"
-                                                   FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
-
                                         <!-- Action buttons -->
-                                        <StackPanel Grid.Column="5" Orientation="Horizontal"
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal"
                                                     VerticalAlignment="Center" HorizontalAlignment="Right">
                                             <!-- Edit stage (Foreman+, hidden when marked) -->
                                             <Button ToolTip="Редактировать"
@@ -1451,14 +1457,21 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <!-- Avatar -->
-                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18"
+                                        <Border Grid.Column="0" Style="{StaticResource AvatarCircle36}"
                                                 Margin="0,0,10,0" VerticalAlignment="Top"
                                                 Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
-                                            <TextBlock Text="{Binding UserInitials}"
-                                                       FontSize="13" FontWeight="Bold"
-                                                       Foreground="White"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
+                                            <Grid>
+                                                <Image Style="{StaticResource AvatarImage}"
+                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                       Width="36" Height="36"
+                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                <TextBlock Text="{Binding UserInitials}"
+                                                           FontSize="13" FontWeight="Bold"
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                            </Grid>
                                         </Border>
                                         <StackPanel Grid.Column="1">
                                             <!-- Name + role + time -->

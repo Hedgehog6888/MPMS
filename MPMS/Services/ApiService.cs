@@ -184,6 +184,20 @@ public class ApiService : IApiService
 
     public async Task<bool> DeleteUserAsync(Guid id) => await DeleteAsync($"users/{id}");
 
+    public async Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData)
+    {
+        try
+        {
+            AttachToken();
+            var request = new UploadAvatarRequest(avatarData);
+            var response = await _http.PutAsJsonAsync($"users/{userId}/avatar", request, JsonOpts);
+            IsOnline = true;
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException) { IsOnline = false; return false; }
+        catch (OperationCanceledException) { IsOnline = false; return false; }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AttachToken()
     {

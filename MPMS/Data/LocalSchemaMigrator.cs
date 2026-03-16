@@ -30,6 +30,17 @@ public static class LocalSchemaMigrator
         AddPasswordHashColumn(conn);
         SplitUserNameToFirstLast(conn);
         CreateDeletedUserIdsTable(conn);
+        CreateAppFlagsTable(conn);
+    }
+
+    private static void CreateAppFlagsTable(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "AppFlags" (
+                "Key"   TEXT NOT NULL CONSTRAINT "PK_AppFlags" PRIMARY KEY,
+                "Value" TEXT NOT NULL DEFAULT ''
+            );
+            """);
     }
 
     private static void CreateDeletedUserIdsTable(SqliteConnection conn)

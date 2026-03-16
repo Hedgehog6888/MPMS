@@ -84,11 +84,27 @@ public partial class TaskDetailViewModel : ViewModelBase
             Task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
         OnPropertyChanged(nameof(Task));
 
-        // Load messages for this task
+        // Load messages for this task with AvatarData from Users
         var messages = await db.Messages
             .Where(m => m.TaskId == Task.Id)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
+        var msgUserIds = messages.Select(m => m.UserId).Distinct().ToList();
+        if (msgUserIds.Count > 0)
+        {
+            var msgUserAvatars = await db.Users.Where(u => msgUserIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var msgAvDict = msgUserAvatars.ToDictionary(u => u.Id);
+            foreach (var msg in messages)
+            {
+                if (msgAvDict.TryGetValue(msg.UserId, out var av))
+                {
+                    msg.AvatarData = av.AvatarData;
+                    msg.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
         Messages = new ObservableCollection<LocalMessage>(messages);
     }
 
@@ -113,6 +129,20 @@ public partial class TaskDetailViewModel : ViewModelBase
             Text = text.Trim(),
             CreatedAt = DateTime.UtcNow
         };
+
+        if (auth.UserId.HasValue)
+        {
+            var avatar = await db.Users
+                .Where(u => u.Id == auth.UserId.Value)
+                .Select(u => new { u.AvatarData, u.AvatarPath })
+                .FirstOrDefaultAsync();
+            if (avatar is not null)
+            {
+                msg.AvatarData = avatar.AvatarData;
+                msg.AvatarPath = avatar.AvatarPath;
+            }
+        }
+
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
         await LogActivityAsync(db, $"Сообщение в задаче «{Task.Name}»", "Message", msg.Id, ActivityActionKind.Message);
@@ -193,6 +223,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         await _sync.QueueOperationAsync("Stage", localId, SyncOperation.Create,
             req with { Id = localId });
 
+        await LogActivityAsync(db, $"Создан этап «{req.Name}»", "Stage", localId, ActivityActionKind.Created);
         await LoadAsync();
         await UpdateTaskProgressAsync();
     }

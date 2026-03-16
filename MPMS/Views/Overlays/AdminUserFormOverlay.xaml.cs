@@ -208,7 +208,7 @@ public partial class AdminUserFormOverlay : UserControl
 
                 if (api.IsOnline)
                 {
-                    var createReq = new CreateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, password, role.Id, newId);
+                    var createReq = new CreateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, password, role.Id, newId, avatarData);
                     var apiResult = await api.CreateUserAsync(createReq);
                     if (apiResult is null)
                     {

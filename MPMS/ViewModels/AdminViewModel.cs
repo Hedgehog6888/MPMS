@@ -647,6 +647,24 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             .Where(l => l.ActionType == null || !ActivityKinds.Contains(l.ActionType))
             .OrderByDescending(l => l.CreatedAt)
             .ToListAsync();
+
+        var historyUserIds = _allHistoryLogs.Where(l => l.UserId.HasValue).Select(l => l.UserId!.Value).Distinct().ToList();
+        if (historyUserIds.Count > 0)
+        {
+            var historyUserAvatars = await db.Users.Where(u => historyUserIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = historyUserAvatars.ToDictionary(u => u.Id);
+            foreach (var l in _allHistoryLogs)
+            {
+                if (l.UserId.HasValue && avDict.TryGetValue(l.UserId.Value, out var av))
+                {
+                    l.AvatarData = av.AvatarData;
+                    l.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
+
         var userNames = _allHistoryLogs.Select(l => l.UserName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n).ToList();
         Application.Current.Dispatcher.Invoke(() =>
         {

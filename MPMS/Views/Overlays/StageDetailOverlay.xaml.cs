@@ -110,7 +110,23 @@ public partial class StageDetailOverlay : UserControl
             });
         }
 
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName)).ToList();
+        var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
+        if (userIds.Count > 0)
+        {
+            var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = userAvatars.ToDictionary(u => u.Id);
+            foreach (var a in assignees)
+            {
+                if (avDict.TryGetValue(a.UserId, out var av))
+                {
+                    a.AvatarData = av.AvatarData;
+                    a.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
+        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, a.AvatarData, a.AvatarPath)).ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {

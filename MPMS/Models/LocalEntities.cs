@@ -93,6 +93,10 @@ public class LocalProject : LocalEntity
     [NotMapped] public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
         string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2).Select(w => w[0].ToString().ToUpper()));
+
+    /// <summary>Manager avatar from Users — populated when loading for display.</summary>
+    [NotMapped] public byte[]? ManagerAvatarData { get; set; }
+    [NotMapped] public string? ManagerAvatarPath { get; set; }
 }
 
 public class LocalTask : LocalEntity
@@ -103,6 +107,10 @@ public class LocalTask : LocalEntity
     public string? Description { get; set; }
     public Guid? AssignedUserId { get; set; }
     [MaxLength(100)] public string? AssignedUserName { get; set; }
+    [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
+    [NotMapped] public string? AssignedUserAvatarPath { get; set; }
+    [NotMapped] public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
+        : string.Join("", AssignedUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
     public DateOnly? DueDate { get; set; }
     public TaskStatus Status { get; set; } = TaskStatus.Planned;
@@ -132,6 +140,10 @@ public class LocalTaskStage : LocalEntity
     public string? Description { get; set; }
     public Guid? AssignedUserId { get; set; }
     [MaxLength(100)] public string? AssignedUserName { get; set; }
+    [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
+    [NotMapped] public string? AssignedUserAvatarPath { get; set; }
+    [NotMapped] public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
+        : string.Join("", AssignedUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
     public StageStatus Status { get; set; } = StageStatus.Planned;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -246,6 +258,9 @@ public class LocalMessage
     [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped] public byte[]? AvatarData { get; set; }
+    [NotMapped] public string? AvatarPath { get; set; }
 }
 
 /// <summary>Action type for activity log — used for styling and filtering.</summary>
@@ -294,6 +309,10 @@ public class LocalActivityLog
     [MaxLength(50)]  public string EntityType { get; set; } = string.Empty;
     public Guid EntityId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Avatar from Users — populated when loading for display.</summary>
+    [NotMapped] public byte[]? AvatarData { get; set; }
+    [NotMapped] public string? AvatarPath { get; set; }
 }
 
 /// <summary>IDs of users deleted locally — prevents sync from re-adding them.</summary>

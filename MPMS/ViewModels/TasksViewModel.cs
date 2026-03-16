@@ -150,6 +150,24 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var list = await query.ToListAsync();
 
+        // Populate AssignedUserAvatarData for tasks from Users
+        var taskAssigneeIds = list.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
+        if (taskAssigneeIds.Count > 0)
+        {
+            var taskUserAvatars = await db.Users.Where(u => taskAssigneeIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = taskUserAvatars.ToDictionary(u => u.Id);
+            foreach (var t in list)
+            {
+                if (t.AssignedUserId.HasValue && avDict.TryGetValue(t.AssignedUserId.Value, out var av))
+                {
+                    t.AssignedUserAvatarData = av.AvatarData;
+                    t.AssignedUserAvatarPath = av.AvatarPath;
+                }
+            }
+        }
+
         // Load stages and recalculate task status from stages (same as ProjectDetailViewModel)
         var taskIds = list.Select(t => t.Id).ToList();
         var stages = await db.TaskStages
@@ -266,6 +284,15 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         project.CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed);
         project.InProgressTasks = tasks.Count(t => t.Status == TaskStatus.InProgress);
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
+
+        var managerAv = await db.Users.Where(u => u.Id == project.ManagerId)
+            .Select(u => new { u.AvatarData, u.AvatarPath })
+            .FirstOrDefaultAsync();
+        if (managerAv is not null)
+        {
+            project.ManagerAvatarData = managerAv.AvatarData;
+            project.ManagerAvatarPath = managerAv.AvatarPath;
+        }
         return project;
     }
 
@@ -307,6 +334,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             req with { Id = localId });
 
         await RecalcProjectStatusAsync(db, req.ProjectId);
+        await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId, ActivityActionKind.Created);
         await LoadAsync();
     }
 

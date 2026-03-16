@@ -177,6 +177,24 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             .ThenByDescending(p => p.CreatedAt)
             .ToList();
 
+        // Populate ManagerAvatarData/ManagerAvatarPath from Users
+        var managerIds = list.Select(p => p.ManagerId).Distinct().ToList();
+        if (managerIds.Count > 0)
+        {
+            var managerAvatars = await db.Users
+                .Where(u => managerIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToDictionaryAsync(u => u.Id, ct);
+            foreach (var p in list)
+            {
+                if (managerAvatars.TryGetValue(p.ManagerId, out var av))
+                {
+                    p.ManagerAvatarData = av.AvatarData;
+                    p.ManagerAvatarPath = av.AvatarPath;
+                }
+            }
+        }
+
         Projects = new ObservableCollection<LocalProject>(list);
 
         // Load recent activity log with role-based filtering

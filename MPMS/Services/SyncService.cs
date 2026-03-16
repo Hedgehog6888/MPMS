@@ -116,7 +116,11 @@ public class SyncService : ISyncService
                     local.FirstName = u.FirstName; local.LastName = u.LastName;
                     local.Username = u.Username;
                     local.Email = u.Email;
-                    local.RoleName = u.Role; local.IsSynced = true;
+                    local.RoleName = u.Role;
+                    // Обновляем аватар с сервера только если нет несинхронизированных локальных изменений
+                    if (local.IsSynced && u.AvatarData is { Length: > 0 })
+                        local.AvatarData = u.AvatarData;
+                    local.IsSynced = true;
                 }
                 else
                 {
@@ -125,6 +129,7 @@ public class SyncService : ISyncService
                         Id = u.Id, Name = fullName,
                         FirstName = u.FirstName, LastName = u.LastName,
                         Username = u.Username, Email = u.Email, RoleName = u.Role,
+                        AvatarData = u.AvatarData,
                         IsSynced = true, CreatedAt = u.CreatedAt
                     });
                 }
@@ -305,6 +310,7 @@ public class SyncService : ISyncService
                 "Task"     => await SyncTaskAsync(op),
                 "Stage"    => await SyncStageAsync(op),
                 "Material" => await SyncMaterialAsync(op),
+                "User"     => await SyncUserAvatarAsync(op),
                 _          => true
             };
         }
@@ -361,6 +367,21 @@ public class SyncService : ISyncService
 
         var updateReq = JsonSerializer.Deserialize<UpdateStageRequest>(op.Payload);
         return updateReq is not null && await _api.UpdateStageAsync(op.EntityId, updateReq) is not null;
+    }
+
+    private async Task<bool> SyncUserAvatarAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Update) return true;
+        var payload = JsonSerializer.Deserialize<UploadAvatarRequest>(op.Payload);
+        if (payload?.AvatarData is null || payload.AvatarData.Length == 0) return true;
+        var ok = await _api.UploadUserAvatarAsync(op.EntityId, payload.AvatarData);
+        if (ok)
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var user = await db.Users.FindAsync(op.EntityId);
+            if (user is not null) { user.IsSynced = true; await db.SaveChangesAsync(); }
+        }
+        return ok;
     }
 
     private async Task<bool> SyncMaterialAsync(PendingOperation op)

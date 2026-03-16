@@ -327,11 +327,29 @@
                                                             </Border>
 
                                                             <!-- Assignee -->
-                                                            <TextBlock Grid.Column="4" VerticalAlignment="Center"
-                                                                       Text="{Binding Stage.AssignedUserName}"
-                                                                       FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
+                                                                        Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}">
+                                                                <Border Style="{StaticResource AvatarCircle26}"
+                                                                        Background="{Binding Stage.AssignedUserInitials, Converter={StaticResource InitialsToBrush}}"
+                                                                        Margin="0,0,6,0">
+                                                                    <Grid>
+                                                                        <Image Style="{StaticResource AvatarImage}"
+                                                                               Source="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                               Width="26" Height="26"
+                                                                               Visibility="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                        <TextBlock Text="{Binding Stage.AssignedUserInitials}"
+                                                                                   FontSize="9" FontWeight="Bold"
+                                                                                   Foreground="White"
+                                                                                   HorizontalAlignment="Center"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Visibility="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Stage.AssignedUserName}"
+                                                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           VerticalAlignment="Center"/>
+                                                            </StackPanel>
 
                                                             <!-- Action buttons -->
                                                             <StackPanel Grid.Column="5" Orientation="Horizontal"

@@ -69,19 +69,6 @@ public partial class ProfilePage : UserControl
 
         if (_user is null) return;
 
-        // Generate default initials avatar if the user has none yet
-        if (_user.AvatarData is null or { Length: 0 })
-        {
-            var color = AvatarHelper.GetColorForName(_user.Name);
-            _user.AvatarData = AvatarHelper.GenerateInitialsAvatar(_user.Name, color);
-            var entity = await db.Users.FindAsync(_user.Id);
-            if (entity is not null)
-            {
-                entity.AvatarData = _user.AvatarData;
-                await db.SaveChangesAsync();
-            }
-        }
-
         var initials = AvatarHelper.GetInitials(_user.Name);
         AvatarInitials.Text = initials;
         ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);
@@ -322,7 +309,7 @@ public partial class ProfilePage : UserControl
     /// </summary>
     private void ApplyAvatarDisplay(byte[]? avatarData, string? avatarPath)
     {
-        var bmp = AvatarHelper.GetImageSource(avatarData, avatarPath);
+        var bmp = AvatarHelper.GetImageSource(avatarData, avatarPath, _user?.Name);
         if (bmp is not null)
         {
             AvatarImage.Source = bmp;
@@ -414,6 +401,10 @@ public partial class ProfilePage : UserControl
 
             _user.AvatarPath = avatarPath;
             _user.AvatarData = avatarBytes;
+
+            // Queue sync to server
+            var sync = App.Services.GetRequiredService<ISyncService>();
+            await sync.QueueOperationAsync("User", _user.Id, SyncOperation.Update, new UploadAvatarRequest(avatarBytes));
 
             // Refresh the profile page avatar display
             ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);

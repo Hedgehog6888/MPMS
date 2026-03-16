@@ -819,6 +819,93 @@
             <infra:NullToVisibilityConverter            x:Key="NullToVisInv" Invert="True"/>
             <infra:InitialsToBrushConverter             x:Key="InitialsToBrush"/>
 
+            <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
+            <Style x:Key="AvatarCircle20" TargetType="Border">
+                <Setter Property="Width" Value="20"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="10,10" RadiusX="10" RadiusY="10"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle26" TargetType="Border">
+                <Setter Property="Width" Value="26"/>
+                <Setter Property="Height" Value="26"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="13,13" RadiusX="13" RadiusY="13"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle28" TargetType="Border">
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="14,14" RadiusX="14" RadiusY="14"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle30" TargetType="Border">
+                <Setter Property="Width" Value="30"/>
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="15,15" RadiusX="15" RadiusY="15"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle32" TargetType="Border">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="16,16" RadiusX="16" RadiusY="16"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle34" TargetType="Border">
+                <Setter Property="Width" Value="34"/>
+                <Setter Property="Height" Value="34"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="17,17" RadiusX="17" RadiusY="17"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle36" TargetType="Border">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="18,18" RadiusX="18" RadiusY="18"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle72" TargetType="Border">
+                <Setter Property="Width" Value="72"/>
+                <Setter Property="Height" Value="72"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="36,36" RadiusX="36" RadiusY="36"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarCircle90" TargetType="Border">
+                <Setter Property="Width" Value="90"/>
+                <Setter Property="Height" Value="90"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="45,45" RadiusX="45" RadiusY="45"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="AvatarImage" TargetType="Image">
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+                <Setter Property="Stretch" Value="UniformToFill"/>
+            </Style>
+
             <!-- ── Local search Border style with focus animation ─── -->
             <Style x:Key="SearchBoxBorder" TargetType="Border">
                 <Setter Property="Background" Value="#F4F5F7"/>

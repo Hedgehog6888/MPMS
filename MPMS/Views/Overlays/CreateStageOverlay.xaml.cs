@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,6 +23,8 @@ public partial class CreateStageOverlay : UserControl
     private Action? _onAfterSave;
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
+    private List<StageSelectionItem> _projectItems = [];
+    private List<StageSelectionItem> _taskItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private bool _isWorkerMode; // работник не выбирает исполнителей — автоматом он сам
 
@@ -55,6 +58,7 @@ public partial class CreateStageOverlay : UserControl
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите проект и задачу";
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
+        ProjectPickerSection.Visibility = Visibility.Visible;
         ApplyWorkerModeUi();
         _ = LoadProjectsAsync();
     }
@@ -70,6 +74,7 @@ public partial class CreateStageOverlay : UserControl
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите задачу";
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
+        ProjectPickerSection.Visibility = Visibility.Collapsed;
         ProjectCombo.Visibility = Visibility.Collapsed;
         ProjectNameRow.Visibility = Visibility.Visible;
         ApplyWorkerModeUi();
@@ -220,10 +225,13 @@ public partial class CreateStageOverlay : UserControl
         await using var db = await dbFactory.CreateDbContextAsync();
         var projects = await db.Projects.OrderBy(p => p.Name).ToListAsync();
         ProjectCombo.ItemsSource = projects;
+        _projectItems = projects.Select(p => new StageSelectionItem(p.Id, p.Name)).ToList();
+        ProjectPickerList.ItemsSource = _projectItems;
+        NoProjectsHint.Visibility = _projectItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (projects.Count > 0)
         {
             ProjectCombo.SelectedIndex = 0;
-            await LoadTasksForProjectAsync((Guid)ProjectCombo.SelectedValue!);
+            RefreshProjectItems();
         }
     }
 
@@ -235,23 +243,36 @@ public partial class CreateStageOverlay : UserControl
         ProjectNameBox.Text = project?.Name ?? "—";
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
         TaskCombo.ItemsSource = tasks;
+        _taskItems = tasks.Select(t => new StageSelectionItem(t.Id, t.Name)).ToList();
+        TaskPickerList.ItemsSource = _taskItems;
+        NoTasksHint.Visibility = _taskItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (tasks.Count > 0)
         {
             TaskCombo.SelectedIndex = 0;
-            await LoadAssigneesFromTaskAsync((Guid)TaskCombo.SelectedValue!);
+            RefreshTaskItems();
+        }
+        else
+        {
+            _allAssigneeItems = [];
+            RefreshAssigneeItems();
+            RefreshAssigneeChips();
         }
     }
 
     private async void ProjectCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ProjectCombo.SelectedValue is Guid projectId)
+        {
+            RefreshProjectItems();
             await LoadTasksForProjectAsync(projectId);
+        }
     }
 
     private async void TaskCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (TaskCombo.SelectedValue is Guid taskId)
         {
+            RefreshTaskItems();
             _selectedAssigneeIds.Clear();
             await LoadAssigneesFromTaskAsync(taskId);
         }
@@ -263,11 +284,50 @@ public partial class CreateStageOverlay : UserControl
         await using var db = await dbFactory.CreateDbContextAsync();
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
         TaskCombo.ItemsSource = tasks;
+        _taskItems = tasks.Select(t => new StageSelectionItem(t.Id, t.Name)).ToList();
+        TaskPickerList.ItemsSource = _taskItems;
+        NoTasksHint.Visibility = _taskItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (tasks.Count > 0)
         {
             TaskCombo.SelectedIndex = 0;
-            await LoadAssigneesFromTaskAsync((Guid)TaskCombo.SelectedValue!);
+            RefreshTaskItems();
         }
+        else
+        {
+            _allAssigneeItems = [];
+            RefreshAssigneeItems();
+            RefreshAssigneeChips();
+        }
+    }
+
+    private void ProjectItem_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border b && b.Tag is StageSelectionItem item)
+            ProjectCombo.SelectedValue = item.Id;
+    }
+
+    private void TaskItem_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border b && b.Tag is StageSelectionItem item)
+            TaskCombo.SelectedValue = item.Id;
+    }
+
+    private void RefreshProjectItems()
+    {
+        var selectedId = ProjectCombo.SelectedValue is Guid id ? id : (Guid?)null;
+        foreach (var item in _projectItems)
+            item.RefreshSelected(selectedId);
+        ProjectPickerList.ItemsSource = null;
+        ProjectPickerList.ItemsSource = _projectItems;
+    }
+
+    private void RefreshTaskItems()
+    {
+        var selectedId = TaskCombo.SelectedValue is Guid id ? id : (Guid?)null;
+        foreach (var item in _taskItems)
+            item.RefreshSelected(selectedId);
+        TaskPickerList.ItemsSource = null;
+        TaskPickerList.ItemsSource = _taskItems;
     }
 
     private void RefreshAssigneeItems()
@@ -299,25 +359,6 @@ public partial class CreateStageOverlay : UserControl
             BorderThickness = new Thickness(1)
         };
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        var avatar = new Border
-        {
-            Width = 20, Height = 20,
-            CornerRadius = new CornerRadius(4),
-            Background = item.AvatarBrush,
-            Margin = new Thickness(0, 0, 5, 0),
-            ClipToBounds = true
-        };
-        var avatarBmp = Services.AvatarHelper.GetImageSource(item.AvatarData, item.AvatarPath);
-        if (avatarBmp is not null)
-        {
-            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
-            avatar.Background = Brushes.Transparent;
-        }
-        else
-        {
-            avatar.Child = CreateStageInitialsBlock(item.Initials);
-        }
-        sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
             Text = item.Name, FontSize = 11,
@@ -344,14 +385,6 @@ public partial class CreateStageOverlay : UserControl
         chip.Child = sp;
         return chip;
     }
-
-    private static TextBlock CreateStageInitialsBlock(string initials) => new()
-    {
-        Text = initials, FontSize = 7, FontWeight = FontWeights.Bold,
-        Foreground = Brushes.White,
-        HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Center
-    };
 
     private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
     {
@@ -490,5 +523,39 @@ public partial class CreateStageOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         return await db.Tasks.FindAsync(taskId);
+    }
+}
+
+public sealed class StageSelectionItem : INotifyPropertyChanged
+{
+    public Guid Id { get; }
+    public string Name { get; }
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelectedVis)));
+        }
+    }
+
+    public Visibility IsSelectedVis => _isSelected ? Visibility.Visible : Visibility.Collapsed;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public StageSelectionItem(Guid id, string name, bool isSelected = false)
+    {
+        Id = id;
+        Name = name;
+        _isSelected = isSelected;
+    }
+
+    public void RefreshSelected(Guid? selectedId)
+    {
+        IsSelected = selectedId == Id;
     }
 }

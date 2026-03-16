@@ -199,25 +199,6 @@ public partial class CreateTaskOverlay : UserControl
             BorderThickness = new Thickness(1)
         };
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        var avatar = new Border
-        {
-            Width = 20, Height = 20,
-            CornerRadius = new CornerRadius(4),
-            Background = item.AvatarBrush,
-            Margin = new Thickness(0, 0, 5, 0),
-            ClipToBounds = true
-        };
-        var avatarBmp = Services.AvatarHelper.GetImageSource(item.AvatarData, item.AvatarPath);
-        if (avatarBmp is not null)
-        {
-            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
-            avatar.Background = Brushes.Transparent;
-        }
-        else
-        {
-            avatar.Child = CreateInitialsBlock(item.Initials);
-        }
-        sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
             Text = item.Name, FontSize = 11,
@@ -244,14 +225,6 @@ public partial class CreateTaskOverlay : UserControl
         chip.Child = sp;
         return chip;
     }
-
-    private static TextBlock CreateInitialsBlock(string initials) => new()
-    {
-        Text = initials, FontSize = 7, FontWeight = FontWeights.Bold,
-        Foreground = Brushes.White,
-        HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Center
-    };
 
     private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
     {

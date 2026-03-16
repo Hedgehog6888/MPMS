@@ -106,10 +106,21 @@
 
                     <!-- Assignee -->
                     <StackPanel Style="{StaticResource InfoRow}">
-                        <Border Style="{StaticResource IconBox}">
-                            <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}"
-                                   Width="16" Height="16" HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
+                        <Border x:Name="AssigneeAvatarBorder"
+                                Style="{StaticResource AvatarCircle28}"
+                                Background="#172B4D"
+                                Margin="0,0,10,0">
+                            <Grid>
+                                <Image x:Name="AssigneeAvatarImage"
+                                       Style="{StaticResource AvatarImage}"
+                                       Width="28" Height="28"/>
+                                <TextBlock x:Name="AssigneeAvatarInitials"
+                                           Foreground="White"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="ИСПОЛНИТЕЛЬ" Style="{StaticResource SectionLabel}"/>

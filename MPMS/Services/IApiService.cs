@@ -51,4 +51,5 @@ public interface IApiService
     Task<UserResponse?> CreateUserAsync(CreateUserRequest request);
     Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request);
     Task<bool> DeleteUserAsync(Guid id);
+    Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData);
 }

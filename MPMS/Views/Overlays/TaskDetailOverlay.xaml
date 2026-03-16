@@ -241,13 +241,20 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <Border Width="30" Height="30" CornerRadius="15"
+                                        <Border Style="{StaticResource AvatarCircle30}"
                                                 Background="#1B6EC2" Margin="0,0,8,0">
-                                            <TextBlock Text="{Binding Initials}"
-                                                       FontSize="10" FontWeight="Bold"
-                                                       Foreground="White"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
+                                            <Grid>
+                                                <Image Style="{StaticResource AvatarImage}"
+                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                       Width="30" Height="30"
+                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                <TextBlock Text="{Binding Initials}"
+                                                           FontSize="10" FontWeight="Bold"
+                                                           Foreground="White"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                            </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding UserName}"
                                                    FontSize="12" FontWeight="SemiBold"
@@ -304,7 +311,7 @@
                                          Style="{StaticResource TabButton}" Click="InnerTab_Click">
                                 <TextBlock Text="Файлы" VerticalAlignment="Center"/>
                             </RadioButton>
-                            <RadioButton x:Name="MessagesTab" Content="Сообщения"
+                            <RadioButton x:Name="MessagesTab" Content="Обсуждение"
                                          Tag="Messages"
                                          Style="{StaticResource TabButton}"
                                          Click="InnerTab_Click"/>
@@ -671,14 +678,21 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <!-- Avatar -->
-                                            <Border Width="34" Height="34" CornerRadius="17"
+                                            <Border Style="{StaticResource AvatarCircle34}"
                                                     Margin="0,0,10,0" VerticalAlignment="Top"
                                                     Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
-                                                <TextBlock Text="{Binding UserInitials}"
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="34" Height="34"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding UserInitials}"
                                                            FontSize="11" FontWeight="Bold"
                                                            Foreground="White"
                                                            HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
+                                                           VerticalAlignment="Center"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
                                             </Border>
                                             <!-- Message bubble -->
                                             <StackPanel Grid.Column="1">
@@ -739,7 +753,7 @@
                             <!-- Empty messages state -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,16,0,16"
                                         Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
-                                <TextBlock Text="Нет сообщений" FontSize="13" Foreground="#97A0AF"
+                                <TextBlock Text="Нет обсуждений" FontSize="13" Foreground="#97A0AF"
                                            HorizontalAlignment="Center"/>
                                 <TextBlock Text="Начните обсуждение задачи" FontSize="12"
                                            Foreground="#C1C7D0" HorizontalAlignment="Center" Margin="0,4,0,0"/>

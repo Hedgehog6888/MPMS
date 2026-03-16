@@ -97,13 +97,109 @@
 
                 <!-- Project + Task picker (when creating from StagesPage) -->
                 <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,12" Visibility="Collapsed">
-                    <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
-                              Margin="0,0,0,12" DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectionChanged="ProjectCombo_SelectionChanged"/>
-                    <TextBlock Text="Задача *" Style="{StaticResource FormLabel}"/>
-                    <ComboBox x:Name="TaskCombo" Style="{StaticResource FormCombo}"
-                              Margin="0,0,0,0" DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectionChanged="TaskCombo_SelectionChanged"/>
+                    <StackPanel x:Name="ProjectPickerSection" Margin="0,0,0,12">
+                        <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
+                        <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,0" DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectionChanged="ProjectCombo_SelectionChanged"
+                                  Visibility="Collapsed"/>
+                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="8" MaxHeight="180">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <ItemsControl x:Name="ProjectPickerList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Tag="{Binding}" MouseLeftButtonDown="ProjectItem_Click">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="13" FontWeight="SemiBold"
+                                                                   Foreground="#172B4D"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Width="22" Height="22" CornerRadius="11"
+                                                                Background="#111111"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
+                                                                Visibility="{Binding IsSelectedVis}">
+                                                            <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="NoProjectsHint"
+                                               Text="Нет доступных проектов"
+                                               FontSize="12" Foreground="#97A0AF"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,12" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel>
+                        <TextBlock Text="Задача *" Style="{StaticResource FormLabel}"/>
+                        <ComboBox x:Name="TaskCombo" Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,0" DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectionChanged="TaskCombo_SelectionChanged"
+                                  Visibility="Collapsed"/>
+                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="8" MaxHeight="180">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <ItemsControl x:Name="TaskPickerList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Tag="{Binding}" MouseLeftButtonDown="TaskItem_Click">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="13" FontWeight="SemiBold"
+                                                                   Foreground="#172B4D"
+                                                                   VerticalAlignment="Center"/>
+                                                        <Border Width="22" Height="22" CornerRadius="11"
+                                                                Background="#111111"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
+                                                                Visibility="{Binding IsSelectedVis}">
+                                                            <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="NoTasksHint"
+                                               Text="Нет доступных задач"
+                                               FontSize="12" Foreground="#97A0AF"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,12,0,12" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Section: Исполнители (скрыто для работника — он автоматом назначается) -->
@@ -143,14 +239,21 @@
                                             </Border.Style>
                                             <Grid>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Border Width="32" Height="32" CornerRadius="16"
+                                                    <Border Style="{StaticResource AvatarCircle32}"
                                                             Background="{Binding AvatarBrush}"
                                                             Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding Initials}"
-                                                                   FontSize="11" FontWeight="Bold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="32" Height="32"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}"

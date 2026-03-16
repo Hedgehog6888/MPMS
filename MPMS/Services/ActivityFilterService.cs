@@ -30,6 +30,24 @@ public static class ActivityFilterService
         var allActivities = await query.Take(50).ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
 
+        // Populate AvatarData/AvatarPath from Users for display
+        var userIds = allActivities.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct().ToList();
+        if (userIds.Count > 0)
+        {
+            var userAvatars = await db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToDictionaryAsync(u => u.Id, ct);
+            foreach (var a in allActivities)
+            {
+                if (a.UserId.HasValue && userAvatars.TryGetValue(a.UserId.Value, out var av))
+                {
+                    a.AvatarData = av.AvatarData;
+                    a.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
+
         // Admin: see all
         if (IsAdminRole(userRole))
             return allActivities.Take(take).ToList();

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MPMS.API.Models;
+using MPMS.API.Services;
 
 namespace MPMS.API.Data;
 
@@ -17,59 +18,37 @@ public static class DatabaseSeeder
         // Apply pending migrations automatically
         await db.Database.MigrateAsync();
 
-        if (await db.Users.AnyAsync()) return;
-
-        var roles = await db.Roles.ToDictionaryAsync(r => r.Name);
-
-        var users = new[]
+        if (!await db.Users.AnyAsync())
         {
-            new User
+            var roles = await db.Roles.ToDictionaryAsync(r => r.Name);
+            var users = new[]
             {
-                FirstName    = "Иван",
-                LastName     = "Администратов",
-                Username     = "admin",
-                Email        = "admin@mpms.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                RoleId       = roles["Administrator"].Id,
-                CreatedAt    = DateTime.UtcNow,
-                UpdatedAt    = DateTime.UtcNow
-            },
-            new User
-            {
-                FirstName    = "Алексей",
-                LastName     = "Менеджеров",
-                Username     = "manager",
-                Email        = "manager@mpms.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("manager123"),
-                RoleId       = roles["Project Manager"].Id,
-                CreatedAt    = DateTime.UtcNow,
-                UpdatedAt    = DateTime.UtcNow
-            },
-            new User
-            {
-                FirstName    = "Сергей",
-                LastName     = "Прорабов",
-                Username     = "foreman",
-                Email        = "foreman@mpms.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("foreman123"),
-                RoleId       = roles["Foreman"].Id,
-                CreatedAt    = DateTime.UtcNow,
-                UpdatedAt    = DateTime.UtcNow
-            },
-            new User
-            {
-                FirstName    = "Пётр",
-                LastName     = "Работников",
-                Username     = "worker",
-                Email        = "worker@mpms.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("worker123"),
-                RoleId       = roles["Worker"].Id,
-                CreatedAt    = DateTime.UtcNow,
-                UpdatedAt    = DateTime.UtcNow
-            }
-        };
+                CreateSeedUser("Иван", "Администратов", "admin", "admin@mpms.local", "admin123", roles["Administrator"].Id),
+                CreateSeedUser("Алексей", "Менеджеров", "manager", "manager@mpms.local", "manager123", roles["Project Manager"].Id),
+                CreateSeedUser("Сергей", "Прорабов", "foreman", "foreman@mpms.local", "foreman123", roles["Foreman"].Id),
+                CreateSeedUser("Пётр", "Работников", "worker", "worker@mpms.local", "worker123", roles["Worker"].Id)
+            };
+            db.Users.AddRange(users);
+            await db.SaveChangesAsync();
+            return;
+        }
 
-        db.Users.AddRange(users);
-        await db.SaveChangesAsync();
+    }
+
+    private static User CreateSeedUser(string firstName, string lastName, string username, string email, string password, Guid roleId)
+    {
+        var fullName = $"{firstName} {lastName}".Trim();
+        return new User
+        {
+            FirstName = firstName,
+            LastName = lastName,
+            Username = username,
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            RoleId = roleId,
+            AvatarData = AvatarGenerator.GenerateInitialsAvatar(fullName),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
     }
 }

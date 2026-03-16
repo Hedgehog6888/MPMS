@@ -130,13 +130,28 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <!-- Avatar -->
-                                                <Border Width="28" Height="28" CornerRadius="14"
-                                                        Margin="0,0,10,0" VerticalAlignment="Top"
-                                                        Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
-                                                    <TextBlock Text="{Binding UserInitials}"
-                                                               FontSize="10" FontWeight="Bold" Foreground="White"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <!-- Avatar: из БД (AvatarData) или инициалы — EllipseGeometry для идеального круга -->
+                                                <Border Margin="0,0,10,0" VerticalAlignment="Top">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource AvatarCircle28}">
+                                                            <Setter Property="Background" Value="{Binding UserColor, Converter={StaticResource HexToBrush}}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
+                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Image Style="{StaticResource AvatarImage}"
+                                                               Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                               Width="28" Height="28"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                        <TextBlock Text="{Binding UserInitials}"
+                                                                   FontSize="10" FontWeight="Bold" Foreground="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                    </Grid>
                                                 </Border>
                                                 <!-- Entity badge + role badge + action text -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -411,16 +426,23 @@
                                                            FontSize="11" Foreground="#6B778C"/>
                                             </StackPanel>
 
-                                            <!-- Manager -->
+                                            <!-- Manager: аватар из БД или инициалы — EllipseGeometry для идеального круга -->
                                             <StackPanel Grid.Column="6" Orientation="Horizontal"
                                                         VerticalAlignment="Center">
-                                                <Border Width="28" Height="28" CornerRadius="14"
+                                                <Border Style="{StaticResource AvatarCircle28}"
                                                         Background="#E8E9EC" Margin="0,0,8,0">
-                                                    <TextBlock Text="{Binding ManagerInitials}"
-                                                               FontSize="10" FontWeight="Bold"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="#172B4D"/>
+                                                    <Grid>
+                                                        <Image Style="{StaticResource AvatarImage}"
+                                                               Source="{Binding ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                               Width="28" Height="28"
+                                                               Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                        <TextBlock Text="{Binding ManagerInitials}"
+                                                                   FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="#172B4D"
+                                                                   Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                    </Grid>
                                                 </Border>
                                                 <TextBlock Text="{Binding ManagerName}"
                                                            FontSize="12" Foreground="#172B4D"

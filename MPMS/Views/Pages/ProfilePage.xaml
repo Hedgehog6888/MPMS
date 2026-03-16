@@ -124,9 +124,9 @@
                                     HorizontalAlignment="Center"
                                     BorderBrush="#BFDBFE" BorderThickness="2"/>
 
-                            <!-- Avatar circle: photo OR initials -->
-                            <Border x:Name="AvatarBorder" Width="90" Height="90" CornerRadius="45"
-                                    HorizontalAlignment="Center" ClipToBounds="True"
+                            <!-- Avatar circle: photo OR initials — EllipseGeometry для идеального круга -->
+                            <Border x:Name="AvatarBorder" Style="{StaticResource AvatarCircle90}"
+                                    HorizontalAlignment="Center"
                                     Background="#1B6EC2">
                                 <!-- Initials (visible when no photo) -->
                                 <TextBlock x:Name="AvatarInitials" Text="ИИ"
@@ -136,11 +136,12 @@
                                            VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Photo image (shown when avatar is loaded) -->
-                            <Border Width="90" Height="90" CornerRadius="45"
-                                    HorizontalAlignment="Center" ClipToBounds="True">
+                            <!-- Photo image (EllipseGeometry для идеального круга) -->
+                            <Border Style="{StaticResource AvatarCircle90}"
+                                    HorizontalAlignment="Center">
                                 <Image x:Name="AvatarImage"
-                                       Stretch="UniformToFill"
+                                       Style="{StaticResource AvatarImage}"
+                                       Width="90" Height="90"
                                        Visibility="Collapsed"/>
                             </Border>
 

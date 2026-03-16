@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MPMS.API.Data;
 using MPMS.API.DTOs;
 using MPMS.API.Models;
+using MPMS.API.Services;
 
 namespace MPMS.API.Controllers;
 
@@ -37,7 +38,7 @@ public class UsersController : ControllerBase
         var users = await query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt))
+            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt, u.AvatarData))
             .ToListAsync();
 
         return Ok(users);
@@ -54,6 +55,11 @@ public class UsersController : ControllerBase
         if (!roleExists)
             return BadRequest(new { message = "Указанная роль не существует" });
 
+        var fullName = $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim();
+        var avatarData = request.AvatarData is { Length: > 0 }
+            ? request.AvatarData
+            : AvatarGenerator.GenerateInitialsAvatar(fullName);
+
         var user = new User
         {
             Id = request.Id ?? Guid.NewGuid(),
@@ -63,6 +69,7 @@ public class UsersController : ControllerBase
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             RoleId = request.RoleId,
+            AvatarData = avatarData,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -72,7 +79,7 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt));
+            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData));
     }
 
     /// <summary>Update user (admin only)</summary>
@@ -103,7 +110,30 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt));
+            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData));
+    }
+
+    /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>
+    [HttpPut("{id:guid}/avatar")]
+    public async Task<ActionResult> UploadAvatar(Guid id, [FromBody] UploadAvatarRequest request)
+    {
+        var currentUserId = Guid.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid) ? uid : (Guid?)null;
+        var isAdmin = User.IsInRole("Administrator");
+        if (currentUserId != id && !isAdmin)
+            return Forbid();
+
+        var user = await _db.Users.FindAsync(id);
+        if (user is null) return NotFound();
+
+        if (request.AvatarData is null || request.AvatarData.Length == 0)
+            return BadRequest(new { message = "Данные аватара не переданы" });
+        if (request.AvatarData.Length > 512 * 1024) // 512 KB max
+            return BadRequest(new { message = "Размер аватара не должен превышать 512 КБ" });
+
+        user.AvatarData = request.AvatarData;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return NoContent();
     }
 
     /// <summary>Delete user (admin only). Fails if user is a project manager.</summary>

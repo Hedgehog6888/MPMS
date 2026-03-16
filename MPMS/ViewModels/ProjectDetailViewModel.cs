@@ -136,6 +136,15 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (projectEntity is not null)
         {
             Project = projectEntity;
+            var managerAv = await db.Users
+                .Where(u => u.Id == projectEntity.ManagerId)
+                .Select(u => new { u.AvatarData, u.AvatarPath })
+                .FirstOrDefaultAsync();
+            if (managerAv is not null)
+            {
+                Project.ManagerAvatarData = managerAv.AvatarData;
+                Project.ManagerAvatarPath = managerAv.AvatarPath;
+            }
         }
 
         var userId = _auth.UserId;
@@ -233,6 +242,24 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await RecalcAndSaveTaskStatusesAsync(db, tasks);
         await RecalcProjectStatusAsync(db);
 
+        // Populate AssignedUserAvatarData for tasks from Users
+        var taskAssigneeIds = tasks.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
+        if (taskAssigneeIds.Count > 0)
+        {
+            var taskUserAvatars = await db.Users.Where(u => taskAssigneeIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = taskUserAvatars.ToDictionary(u => u.Id);
+            foreach (var t in tasks)
+            {
+                if (t.AssignedUserId.HasValue && avDict.TryGetValue(t.AssignedUserId.Value, out var av))
+                {
+                    t.AssignedUserAvatarData = av.AvatarData;
+                    t.AssignedUserAvatarPath = av.AvatarPath;
+                }
+            }
+        }
+
         Tasks = new ObservableCollection<LocalTask>(tasks);
         PlannedTasks    = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Planned));
         InProgressTasks = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.InProgress));
@@ -265,8 +292,24 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
         };
 
-        // Populate TaskName for each stage (stages already loaded above)
+        // Populate TaskName and AssignedUserAvatarData for each stage
         var taskNameDict = tasks.ToDictionary(t => t.Id, t => t.Name);
+        var stageAssigneeIds = stages.Where(s => s.AssignedUserId.HasValue).Select(s => s.AssignedUserId!.Value).Distinct().ToList();
+        if (stageAssigneeIds.Count > 0)
+        {
+            var stageUserAvatars = await db.Users.Where(u => stageAssigneeIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var stageAvDict = stageUserAvatars.ToDictionary(u => u.Id);
+            foreach (var s in stages)
+            {
+                if (s.AssignedUserId.HasValue && stageAvDict.TryGetValue(s.AssignedUserId.Value, out var av))
+                {
+                    s.AssignedUserAvatarData = av.AvatarData;
+                    s.AssignedUserAvatarPath = av.AvatarPath;
+                }
+            }
+        }
         foreach (var stage in stages)
             stage.TaskName = taskNameDict.GetValueOrDefault(stage.TaskId, "—");
 
@@ -314,11 +357,27 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
 
-        // Load project messages (discussion)
+        // Load project messages (discussion) with AvatarData from Users
         var messages = await db.Messages
             .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
+        var msgUserIds = messages.Select(m => m.UserId).Distinct().ToList();
+        if (msgUserIds.Count > 0)
+        {
+            var msgUserAvatars = await db.Users.Where(u => msgUserIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var msgAvDict = msgUserAvatars.ToDictionary(u => u.Id);
+            foreach (var msg in messages)
+            {
+                if (msgAvDict.TryGetValue(msg.UserId, out var av))
+                {
+                    msg.AvatarData = av.AvatarData;
+                    msg.AvatarPath = av.AvatarPath;
+                }
+            }
+        }
         Messages = new ObservableCollection<LocalMessage>(messages);
     }
 

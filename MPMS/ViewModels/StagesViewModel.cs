@@ -136,6 +136,29 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 stageList = stageList.Where(s => allWorkerStageIds.Contains(s.Id)).ToList();
             }
 
+            var assigneeIds = stageList
+                .Where(s => s.AssignedUserId.HasValue)
+                .Select(s => s.AssignedUserId!.Value)
+                .Distinct()
+                .ToList();
+            if (assigneeIds.Count > 0)
+            {
+                var avatars = await db.Users
+                    .Where(u => assigneeIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                    .ToDictionaryAsync(u => u.Id);
+
+                foreach (var stage in stageList)
+                {
+                    if (stage.AssignedUserId.HasValue &&
+                        avatars.TryGetValue(stage.AssignedUserId.Value, out var avatar))
+                    {
+                        stage.AssignedUserAvatarData = avatar.AvatarData;
+                        stage.AssignedUserAvatarPath = avatar.AvatarPath;
+                    }
+                }
+            }
+
             var items = stageList.Select(s =>
             {
                 taskDict.TryGetValue(s.TaskId, out var task);

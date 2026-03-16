@@ -274,12 +274,19 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <Border Width="34" Height="34" CornerRadius="17"
+                                            <Border Style="{StaticResource AvatarCircle34}"
                                                     Background="#172B4D" Margin="0,0,10,0">
-                                                <TextBlock Text="{Binding Initials}" FontSize="11"
-                                                           FontWeight="Bold" Foreground="White"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="34" Height="34"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Initials}" FontSize="11"
+                                                               FontWeight="Bold" Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
                                             </Border>
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding UserName}" FontSize="13"

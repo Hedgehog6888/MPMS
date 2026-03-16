@@ -1,7 +1,10 @@
 using System.IO;
+using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using MPMS.Data;
+using MPMS.Models;
 
 namespace MPMS.Services;
 
@@ -41,7 +44,7 @@ public static class AvatarHelper
     /// Generates an initials-based avatar as a PNG byte array.
     /// Must be called on the UI thread (uses WPF DrawingVisual).
     /// </summary>
-    public static byte[] GenerateInitialsAvatar(string name, string? hexColor = null, int size = 128)
+    public static byte[] GenerateInitialsAvatar(string name, string? hexColor = null, int size = 256)
     {
         hexColor ??= GetColorForName(name);
         var initials = GetInitials(name);
@@ -59,7 +62,7 @@ public static class AvatarHelper
 
             dc.DrawEllipse(new SolidColorBrush(bg), null, new Point(cx, cy), r, r);
 
-            double fontSize = size * 0.38;
+            double fontSize = size * 0.5;
             var ft = new FormattedText(
                 initials,
                 System.Globalization.CultureInfo.CurrentCulture,
@@ -73,7 +76,9 @@ public static class AvatarHelper
                 Brushes.White,
                 VisualTreeHelper.GetDpi(dv).PixelsPerDip);
 
-            dc.DrawText(ft, new Point((size - ft.Width) / 2, (size - ft.Height) / 2));
+            double x = (size - ft.Width) / 2;
+            double y = (size - ft.Height) / 2;
+            dc.DrawText(ft, new Point(x, y));
         }
 
         var rtb = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
@@ -115,9 +120,10 @@ public static class AvatarHelper
     /// Returns the best available ImageSource for a user:
     /// 1. AvatarData (bytes from DB) if present
     /// 2. AvatarPath (file path) if file exists
-    /// 3. null (caller should render initials circle)
+    /// 3. Generated initials avatar if fallbackDisplayName is provided (must be on UI thread)
+    /// 4. null (caller should render initials circle)
     /// </summary>
-    public static BitmapImage? GetImageSource(byte[]? avatarData, string? avatarPath)
+    public static BitmapImage? GetImageSource(byte[]? avatarData, string? avatarPath, string? fallbackDisplayName = null)
     {
         if (avatarData is { Length: > 0 })
             return BytesToBitmapImage(avatarData);
@@ -129,6 +135,13 @@ public static class AvatarHelper
                 return BytesToBitmapImage(bytes);
         }
 
+        if (!string.IsNullOrWhiteSpace(fallbackDisplayName))
+        {
+            var bytes = GenerateInitialsAvatar(fallbackDisplayName);
+            return BytesToBitmapImage(bytes);
+        }
+
         return null;
     }
+
 }
