@@ -21,7 +21,7 @@ public class SyncService : ISyncService
     private readonly IApiService _api;
     private readonly IAuthService _auth;
 
-    private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(30));
+    private readonly PeriodicTimer _timer = new(TimeSpan.FromMinutes(5));
     private bool _isSyncing;
 
     public bool IsSyncing => _isSyncing;
@@ -44,6 +44,8 @@ public class SyncService : ISyncService
 
         try
         {
+            // Сначала проверяем соединение — иначе при IsOnline=false запросы не отправляются
+            await _api.ProbeAsync();
             await ProcessPendingOperationsAsync();
             await PullFromServerAsync();
         }

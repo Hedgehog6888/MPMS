@@ -73,6 +73,9 @@ public partial class MainViewModel : ViewModelBase
         _onlineTimer.Tick += OnOnlineTimerTick;
         _onlineTimer.Start();
 
+        // Обновлять счётчики в попапе после каждой синхронизации
+        _sync.OnlineStatusChanged += OnSyncStatusChanged;
+
         _ = RefreshAvatarAsync();
         Navigate(IsProjectsVisible ? "Projects" : "Tasks");
     }
@@ -85,6 +88,16 @@ public partial class MainViewModel : ViewModelBase
             IsOnline = online;
             StatusMessage = online ? string.Empty : "Офлайн режим — данные не синхронизируются";
         }
+    }
+
+    private void OnSyncStatusChanged(object? sender, bool online)
+    {
+        // Событие приходит из фонового потока — обновляем UI в главном потоке
+        Application.Current.Dispatcher.InvokeAsync(async () =>
+        {
+            IsOnline = online;
+            await RefreshSyncCountsAsync();
+        });
     }
 
     private async System.Threading.Tasks.Task RefreshSyncCountsAsync()
@@ -165,9 +178,17 @@ public partial class MainViewModel : ViewModelBase
         IsSyncing = true;
         SetStatus("Синхронизация...");
         await _sync.SyncAsync();
-        var now = DateTime.Now;
-        LastSyncText = $"Последняя синхронизация: {now:HH:mm}";
-        SetStatus(IsOnline ? "Данные синхронизированы" : "Нет соединения с сервером");
+        if (IsOnline)
+        {
+            var now = DateTime.Now;
+            LastSyncText = $"Последняя синхронизация: {now:HH:mm}";
+            SetStatus("Данные синхронизированы");
+        }
+        else
+        {
+            SetStatus("Нет соединения с сервером");
+            // LastSyncText не меняем — в офлайне показывается «Изменения сохраняются локально»
+        }
         IsBusy = false;
         IsSyncing = false;
         await RefreshSyncCountsAsync();

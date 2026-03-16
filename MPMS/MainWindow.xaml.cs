@@ -162,7 +162,6 @@ public partial class MainWindow : Window
 
     private void SyncNow_Click(object sender, RoutedEventArgs e)
     {
-        SyncPopup.IsOpen = false;
         if (DataContext is MainViewModel vm)
             vm.SyncNowCommand.Execute(null);
     }

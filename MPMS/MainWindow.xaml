@@ -396,7 +396,7 @@
                            Placement="Bottom"
                            AllowsTransparency="True"
                            StaysOpen="False"
-                           Width="300">
+                           Width="340">
                         <Border Background="White" CornerRadius="10"
                                 BorderBrush="#DFE1E6" BorderThickness="1"
                                 Margin="0,4,0,0">
@@ -420,9 +420,14 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <StackPanel Orientation="Horizontal">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*" MinWidth="0"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
                                         <!-- Status icon circle -->
-                                        <Border Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Center">
+                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Center">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#DCFCE7"/>
@@ -455,8 +460,8 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                         </Border>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock FontSize="13" FontWeight="SemiBold">
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="0">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Text" Value="Синхронизировано"/>
@@ -472,7 +477,7 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
-                                            <TextBlock FontSize="11" Margin="0,2,0,0">
+                                            <TextBlock FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Foreground" Value="#6B778C"/>
@@ -487,7 +492,7 @@
                                             </TextBlock>
                                         </StackPanel>
                                         <!-- "Актуально" badge -->
-                                        <Border Margin="8,0,0,0" CornerRadius="4" Padding="8,3"
+                                        <Border Grid.Column="2" Margin="8,0,0,0" CornerRadius="4" Padding="8,3"
                                                 VerticalAlignment="Center"
                                                 Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
                                             <Border.Style>
@@ -515,7 +520,7 @@
                                                 </TextBlock.Style>
                                             </TextBlock>
                                         </Border>
-                                    </StackPanel>
+                                    </Grid>
                                 </Border>
 
                                 <!-- Stats row (online only) -->
@@ -556,29 +561,33 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Top" Foreground="#D97706"/>
                                         <TextBlock Text="Изменения сохраняются локально и будут синхронизированы при восстановлении соединения."
-                                                   FontSize="11" Foreground="#92400E" TextWrapping="Wrap"/>
+                                                   FontSize="11" Foreground="#92400E" TextWrapping="Wrap" MaxWidth="280"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Footer with auto-sync info and sync button -->
                                 <Border Padding="12,10,12,12" BorderBrush="#F0F0F0" BorderThickness="0,1,0,0" Margin="0,8,0,0">
                                     <Grid>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                             <TextBlock Text="🕐" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                             <TextBlock Text="Авто-синхронизация каждые 5 мин"
-                                                       FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                       FontSize="11" Foreground="#6B778C" TextWrapping="Wrap"/>
                                         </StackPanel>
-                                        <Button HorizontalAlignment="Right" Click="SyncNow_Click"
-                                                Height="30" Padding="12,0" FontSize="12">
+                                        <Button Grid.Row="1" HorizontalAlignment="Left" Click="SyncNow_Click"
+                                                Height="30" Padding="12,0" MinWidth="140" FontSize="12">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border x:Name="Bg" Background="White" CornerRadius="6"
                                                             BorderBrush="#DFE1E6" BorderThickness="1"
                                                             Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
                                                         <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="↻" FontSize="13" Margin="0,0,4,0"
+                                                            <TextBlock Text="↻" FontSize="13" Margin="0,0,6,0"
                                                                        VerticalAlignment="Center" Foreground="#172B4D"/>
-                                                            <TextBlock Text="Синхр." Foreground="#172B4D"
+                                                            <TextBlock Text="Синхронизировать" Foreground="#172B4D"
                                                                        FontSize="12" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
