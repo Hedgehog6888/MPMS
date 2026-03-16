@@ -338,7 +338,7 @@ public partial class ProfilePage : UserControl
         if (openDlg.ShowDialog(owner) != true) return;
 
         var overlay = new AvatarCropOverlay(openDlg.FileName, SaveAvatarAsync);
-        MainWindow.Instance?.ShowDrawer(overlay, 920);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 840);
     }
 
     private async System.Threading.Tasks.Task SaveAvatarAsync(BitmapSource croppedImage)

@@ -19,6 +19,8 @@ namespace MPMS;
 public partial class MainWindow : Window
 {
     public static MainWindow? Instance { get; private set; }
+    private enum OverlayPresentationMode { None, Drawer, Modal }
+    private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -67,14 +69,20 @@ public partial class MainWindow : Window
     {
         // Detach previous content first to avoid "child must be detached from parent Visual" when the same or related element is reparented
         DrawerContentPresenter.Content = null;
+        ModalOverlayContentPresenter.Content = null;
         DrawerContentPresenter.Content = content;
         DrawerPanel.Width = width;
+        _overlayMode = OverlayPresentationMode.Drawer;
 
         // Clear any held animations before setting local values
         DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
 
         DrawerPanel.Margin = new Thickness(width, 0, 0, 0);
+        DrawerPanel.Visibility = Visibility.Visible;
+        ModalOverlayPanel.Visibility = Visibility.Collapsed;
         OverlayBackdrop.Opacity = 0;
         OverlayLayer.Visibility = Visibility.Visible;
 
@@ -90,6 +98,37 @@ public partial class MainWindow : Window
 
         var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    public void ShowCenteredOverlay(UIElement content, double width = 920)
+    {
+        DrawerContentPresenter.Content = null;
+        ModalOverlayContentPresenter.Content = null;
+        ModalOverlayContentPresenter.Content = content;
+        ModalOverlayPanel.Width = width;
+        _overlayMode = OverlayPresentationMode.Modal;
+
+        DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+        OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+
+        DrawerPanel.Visibility = Visibility.Collapsed;
+        ModalOverlayPanel.Visibility = Visibility.Visible;
+        ModalOverlayPanel.Opacity = 0;
+        ModalOverlayTransform.Y = 16;
+        OverlayBackdrop.Opacity = 0;
+        OverlayLayer.Visibility = Visibility.Visible;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
+        OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+        var slideIn = new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(220))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
     }
 
     /// <summary>Shows a dual-panel drawer: left panel (e.g. project context) + right panel (e.g. task detail).</summary>
@@ -119,9 +158,37 @@ public partial class MainWindow : Window
 
     public void HideDrawer()
     {
+        void CompleteClose()
+        {
+            DrawerContentPresenter.Content = null;
+            ModalOverlayContentPresenter.Content = null;
+            DrawerPanel.Visibility = Visibility.Visible;
+            ModalOverlayPanel.Visibility = Visibility.Collapsed;
+            OverlayLayer.Visibility = Visibility.Collapsed;
+            _overlayMode = OverlayPresentationMode.None;
+            // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
+            if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
+                _ = loadable.LoadAsync();
+        }
+
+        if (_overlayMode == OverlayPresentationMode.Modal)
+        {
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
+            fadeOut.Completed += (_, _) => CompleteClose();
+            ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+            OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+            var slideOut = new DoubleAnimation(0, 16, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideOut);
+            return;
+        }
+
         double w = DrawerPanel.ActualWidth > 0 ? DrawerPanel.ActualWidth : DrawerPanel.Width;
         var currentMargin = DrawerPanel.Margin;
-        var slideOut = new ThicknessAnimation(
+        var drawerSlideOut = new ThicknessAnimation(
             currentMargin,
             new Thickness(w, 0, 0, 0),
             TimeSpan.FromMilliseconds(250))
@@ -129,18 +196,11 @@ public partial class MainWindow : Window
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
             FillBehavior = FillBehavior.HoldEnd
         };
-        slideOut.Completed += (s, e) =>
-        {
-            DrawerContentPresenter.Content = null;
-            OverlayLayer.Visibility = Visibility.Collapsed;
-            // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
-            if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
-                _ = loadable.LoadAsync();
-        };
-        DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, slideOut);
+        drawerSlideOut.Completed += (_, _) => CompleteClose();
+        DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, drawerSlideOut);
 
-        var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
-        OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        var drawerFadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
+        OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, drawerFadeOut);
     }
 
     private void Backdrop_Click(object sender, MouseButtonEventArgs e)

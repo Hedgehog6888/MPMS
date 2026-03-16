@@ -1,7 +1,7 @@
 <UserControl x:Class="MPMS.Views.Overlays.AvatarCropOverlay"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="White">
+             Background="Transparent">
 
     <UserControl.Resources>
         <Style x:Key="AvatarCropSectionLabel" TargetType="TextBlock">
@@ -17,6 +17,7 @@
         </Style>
     </UserControl.Resources>
 
+    <Border Background="White" CornerRadius="18" ClipToBounds="True">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -224,4 +225,5 @@
             </Grid>
         </Border>
     </Grid>
+    </Border>
 </UserControl>

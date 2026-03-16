@@ -5,7 +5,7 @@
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         Title="MPMS — Montage Project Management System"
         Height="768" Width="1280"
-        MinHeight="600" MinWidth="900"
+        MinHeight="768" MinWidth="1280"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}">
 
@@ -1053,6 +1053,29 @@
                                       Opacity="0.18" Direction="180" ShadowDepth="0"/>
                 </Border.Effect>
                 <ContentPresenter x:Name="DrawerContentPresenter"/>
+            </Border>
+
+            <!-- Center modal overlay -->
+            <Border x:Name="ModalOverlayPanel"
+                    Background="White"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="840"
+                    MaxWidth="900"
+                    Margin="24"
+                    CornerRadius="18"
+                    ClipToBounds="True"
+                    Visibility="Collapsed"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="ModalOverlayTransform" Y="16"/>
+                </Border.RenderTransform>
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="40"
+                                      Opacity="0.18" Direction="270" ShadowDepth="0"/>
+                </Border.Effect>
+                <ContentPresenter x:Name="ModalOverlayContentPresenter"/>
             </Border>
         </Grid>
     </Grid>
