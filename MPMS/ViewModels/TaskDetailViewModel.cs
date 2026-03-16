@@ -262,6 +262,7 @@ public partial class TaskDetailViewModel : ViewModelBase
     private async Task ChangeStageStatusAsync((LocalTaskStage stage, StageStatus newStatus) args)
     {
         var (stage, newStatus) = args;
+        if (stage.IsMarkedForDeletion) return;
         var req = new UpdateStageRequest(stage.Name, stage.Description,
             stage.AssignedUserId, newStatus);
         await SaveUpdatedStageAsync(stage.Id, req);

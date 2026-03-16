@@ -247,18 +247,10 @@
                                                                            Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
                                                             </StackPanel>
 
-                                                            <!-- Status buttons (left of task, with margin) -->
+                                                            <!-- Status buttons (left of task, with margin) — скрываются при пометке удаления -->
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                                        VerticalAlignment="Center" Margin="0,0,24,0">
-                                                                <!-- Marked for deletion badge -->
-                                                                <Border CornerRadius="4" Padding="10,5" Background="#DE350B"
-                                                                        Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                                    <TextBlock Text="Пометка удаления" FontSize="11"
-                                                                               Foreground="White" FontWeight="SemiBold"/>
-                                                                </Border>
-                                                                <!-- Status buttons (hidden when marked) -->
-                                                                <StackPanel Orientation="Horizontal"
-                                                                            Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+                                                                        VerticalAlignment="Center" Margin="0,0,24,0"
+                                                                        Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                                     <Button Tag="{Binding}"
                                                                             Click="StartStage_Click" Margin="0,0,4,0"
                                                                             Style="{StaticResource IconButton}" FontSize="12"
@@ -299,7 +291,6 @@
                                                                         <TextBlock Text="Переоткрыть" VerticalAlignment="Center"
                                                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
                                                                     </Button>
-                                                                </StackPanel>
                                                             </StackPanel>
 
                                                             <!-- Task name -->

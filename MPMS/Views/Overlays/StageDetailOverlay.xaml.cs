@@ -84,6 +84,9 @@ public partial class StageDetailOverlay : UserControl
         DeletionWarningBorder.Visibility = isMarked ? Visibility.Visible : Visibility.Collapsed;
         MarkDeletionBtnText.Text = isMarked ? "Снять пометку" : "Пометить к удалению";
         EditButton.Visibility = isMarked ? Visibility.Collapsed : Visibility.Visible;
+        BtnPlanned.IsEnabled = !isMarked;
+        BtnInProgress.IsEnabled = !isMarked;
+        BtnCompleted.IsEnabled = !isMarked;
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
@@ -183,7 +186,7 @@ public partial class StageDetailOverlay : UserControl
 
     private async System.Threading.Tasks.Task ChangeStatusAsync(StageStatus newStatus)
     {
-        if (_stage is null) return;
+        if (_stage is null || _stage.IsMarkedForDeletion) return;
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(_stage.Id);

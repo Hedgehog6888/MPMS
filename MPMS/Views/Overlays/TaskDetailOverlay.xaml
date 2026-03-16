@@ -402,6 +402,9 @@
                                                                    Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <!-- Кнопки смены статуса — скрыты при пометке удаления -->
+                                                    <StackPanel Orientation="Horizontal"
+                                                                Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                     <!-- Start: Planned → InProgress -->
                                                     <Button Tag="{Binding}" Click="StartStage_Click" Margin="0,0,4,0"
                                                             Style="{StaticResource IconButton}" FontSize="12"
@@ -439,9 +442,10 @@
                                                             Style="{StaticResource IconButton}" FontSize="12"
                                                             ToolTip="Открыть снова"
                                                             Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Completed}">
-                                                        <TextBlock Text="Переоткрыть" VerticalAlignment="Center"
-                                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                            <TextBlock Text="Переоткрыть" VerticalAlignment="Center"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
                                                     </Button>
+                                                    </StackPanel>
                                                     <!-- Edit (hidden when marked) -->
                                                     <Button ToolTip="Редактировать" Tag="{Binding}"
                                                             Click="EditStage_Click" Margin="0,0,4,0">

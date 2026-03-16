@@ -260,28 +260,28 @@ public partial class TaskDetailOverlay : UserControl
 
     private async void StartStage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
         _onClosed?.Invoke(); // Sync project page
     }
 
     private async void CompleteStage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
         _onClosed?.Invoke(); // Sync project page
     }
 
     private async void RevertStage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Planned));
         _onClosed?.Invoke(); // Sync project page
     }
 
     private async void ReopenStage_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
         _onClosed?.Invoke(); // Sync project page
     }

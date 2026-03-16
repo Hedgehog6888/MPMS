@@ -308,6 +308,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private async Task ChangeStageStatusAsync((StageItem item, StageStatus newStatus) args)
     {
         var (item, newStatus) = args;
+        if (item.Stage.IsMarkedForDeletion) return;
         var vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         var task = await GetTaskForStageAsync(item.TaskId);
         if (task is null) return;

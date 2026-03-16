@@ -492,6 +492,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private async Task ChangeStageStatusAsync((LocalTaskStage stage, StageStatus newStatus) args)
     {
         var (stage, newStatus) = args;
+        if (stage.IsMarkedForDeletion) return;
         var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus);
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
