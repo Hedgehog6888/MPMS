@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,6 +22,8 @@ public partial class CreateProjectOverlay : UserControl
     private Action? _onAfterSave;
 
     // User data
+    private List<ForemanPickerItem> _foremanItems = [];
+    private List<AssigneePickerItem> _workerItems = [];
     private List<LocalUser> _foremanUsers = [];
     private List<LocalUser> _workerUsers = [];
     private LocalUser? _selectedForeman;
@@ -104,21 +107,17 @@ public partial class CreateProjectOverlay : UserControl
                 ManagerCombo.SelectedIndex = 0;
         }
 
-        // Load foremans
+        // Load foremans and workers
         _foremanUsers = await db.Users
             .Where(u => u.RoleName == "Foreman" || u.RoleName == "Прораб")
             .OrderBy(u => u.Name)
             .ToListAsync();
-        ForemanPickerList.ItemsSource = _foremanUsers.Select(u => new UserPickerItem(u)).ToList();
-
-        // Load workers
         _workerUsers = await db.Users
             .Where(u => u.RoleName == "Worker" || u.RoleName == "Работник")
             .OrderBy(u => u.Name)
             .ToListAsync();
-        WorkerPickerList.ItemsSource = _workerUsers.Select(u => new UserPickerItem(u)).ToList();
 
-        // If editing, load existing project members
+        // If editing, load existing project members first (до создания items)
         if (projectId.HasValue)
         {
             var members = await db.ProjectMembers
@@ -135,20 +134,42 @@ public partial class CreateProjectOverlay : UserControl
 
             var workerMembers = members.Where(m => m.UserRole is "Worker" or "Работник").ToList();
             foreach (var wm in workerMembers)
-            {
                 _selectedWorkerIds.Add(wm.UserId);
-            }
-            RefreshWorkerChips(workerMembers.Select(m => new WorkerChipInfo(m.UserId, m.UserName, GetInitials(m.UserName))).ToList());
         }
+
+        // Создаём items с учётом выбранных (как в CreateTaskOverlay)
+        _foremanItems = _foremanUsers.Select(u => new ForemanPickerItem(u, _selectedForeman?.Id)).ToList();
+        ForemanPickerList.ItemsSource = _foremanItems;
+        NoForemanHint.Visibility = _foremanItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        _workerItems = _workerUsers.Select(u => new AssigneePickerItem(
+            u.Id, u.Name, "Worker", _selectedWorkerIds, u.AvatarPath, u.AvatarData)).ToList();
+        WorkerPickerList.ItemsSource = _workerItems;
+        NoWorkersHint.Visibility = _workerItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        RefreshWorkerItems();
+        RefreshWorkerChips(_workerUsers
+            .Where(u => _selectedWorkerIds.Contains(u.Id))
+            .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
+            .ToList());
     }
 
     private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is Border b && b.Tag is UserPickerItem item)
+        if (sender is Border b && b.Tag is ForemanPickerItem item)
         {
             _selectedForeman = item.User;
             ShowSelectedForeman(item.User);
+            RefreshForemanItems();
         }
+    }
+
+    private void RefreshForemanItems()
+    {
+        foreach (var item in _foremanItems)
+            item.RefreshSelected(_selectedForeman?.Id);
+        ForemanPickerList.ItemsSource = null;
+        ForemanPickerList.ItemsSource = _foremanItems;
     }
 
     private void ShowSelectedForeman(LocalUser user)
@@ -162,6 +183,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         _selectedForeman = null;
         SelectedForemanPanel.Visibility = Visibility.Collapsed;
+        RefreshForemanItems();
     }
 
     private async System.Threading.Tasks.Task RemoveWorkerAsync(Guid userId, string workerName)
@@ -190,6 +212,7 @@ public partial class CreateProjectOverlay : UserControl
             }
         }
         _selectedWorkerIds.Remove(userId);
+        RefreshWorkerItems();
         var updated = _workerUsers
             .Where(u => _selectedWorkerIds.Contains(u.Id))
             .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
@@ -199,19 +222,28 @@ public partial class CreateProjectOverlay : UserControl
 
     private void WorkerItem_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Border b || b.Tag is not UserPickerItem item) return;
+        if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
 
-        var userId = item.User.Id;
+        var userId = item.UserId;
         if (_selectedWorkerIds.Contains(userId))
             _selectedWorkerIds.Remove(userId);
         else
             _selectedWorkerIds.Add(userId);
 
+        RefreshWorkerItems();
         var selectedWorkers = _workerUsers
             .Where(u => _selectedWorkerIds.Contains(u.Id))
             .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
             .ToList();
         RefreshWorkerChips(selectedWorkers);
+    }
+
+    private void RefreshWorkerItems()
+    {
+        foreach (var item in _workerItems)
+            item.RefreshSelected(_selectedWorkerIds);
+        WorkerPickerList.ItemsSource = null;
+        WorkerPickerList.ItemsSource = _workerItems;
     }
 
     private void RefreshWorkerChips(List<WorkerChipInfo> workers)
@@ -226,55 +258,68 @@ public partial class CreateProjectOverlay : UserControl
         SelectedWorkersPanel.Visibility = Visibility.Visible;
         foreach (var w in workers)
         {
-            var chip = BuildWorkerChip(w);
+            var item = _workerItems.FirstOrDefault(i => i.UserId == w.UserId);
+            var chip = BuildWorkerChip(w, item);
             SelectedWorkersPanel.Children.Add(chip);
         }
     }
 
-    private Border BuildWorkerChip(WorkerChipInfo info)
+    private Border BuildWorkerChip(WorkerChipInfo info, AssigneePickerItem? item)
     {
+        // Как в CreateTaskOverlay/CreateStageOverlay — прямоугольные с скруглением 6
         var chip = new Border
         {
-            CornerRadius = new CornerRadius(20),
+            CornerRadius = new CornerRadius(6),
             Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 3, 6, 3),
-            Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24)),
+            Margin = new Thickness(0, 2, 6, 2),
+            Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
             BorderThickness = new Thickness(1)
         };
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
+        var avatarBrush = item?.AvatarBrush ?? new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E));
         var avatar = new Border
         {
             Width = 20, Height = 20,
-            CornerRadius = new CornerRadius(10),
-            Background = new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E)),
-            Margin = new Thickness(0, 0, 6, 0)
+            CornerRadius = new CornerRadius(4),
+            Background = avatarBrush,
+            Margin = new Thickness(0, 0, 5, 0),
+            ClipToBounds = true
         };
-        avatar.Child = new TextBlock
+        var avatarBmp = item?.AvatarData != null || item?.AvatarPath != null
+            ? Services.AvatarHelper.GetImageSource(item?.AvatarData, item?.AvatarPath)
+            : null;
+        if (avatarBmp is not null)
         {
-            Text = info.Initials,
-            FontSize = 8, FontWeight = FontWeights.Bold,
-            Foreground = Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
+            avatar.Child = new Image { Source = avatarBmp, Stretch = Stretch.UniformToFill, Width = 20, Height = 20 };
+            avatar.Background = Brushes.Transparent;
+        }
+        else
+        {
+            avatar.Child = new TextBlock
+            {
+                Text = info.Initials,
+                FontSize = 7, FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+        }
         sp.Children.Add(avatar);
         sp.Children.Add(new TextBlock
         {
             Text = info.Name,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E)),
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
         var removeBtn = new Button
         {
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Cursor = System.Windows.Input.Cursors.Hand,
-            Margin = new Thickness(6, 0, 0, 0),
+            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
+            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
+            Margin = new Thickness(4, 0, 0, 0),
             Tag = (info.UserId, info.Name)
         };
-        removeBtn.Template = CreateRemoveBtnTemplate();
         removeBtn.Click += async (s, _) =>
         {
             if (s is Button btn && btn.Tag is (Guid uid, string name))
@@ -283,20 +328,6 @@ public partial class CreateProjectOverlay : UserControl
         sp.Children.Add(removeBtn);
         chip.Child = sp;
         return chip;
-    }
-
-    private static ControlTemplate CreateRemoveBtnTemplate()
-    {
-        var tpl = new ControlTemplate(typeof(Button));
-        var factory = new FrameworkElementFactory(typeof(Border));
-        factory.SetValue(Border.BackgroundProperty, Brushes.Transparent);
-        var txtFactory = new FrameworkElementFactory(typeof(TextBlock));
-        txtFactory.SetValue(TextBlock.TextProperty, "✕");
-        txtFactory.SetValue(TextBlock.FontSizeProperty, 10.0);
-        txtFactory.SetValue(TextBlock.ForegroundProperty, new SolidColorBrush(Colors.Gray));
-        factory.AppendChild(txtFactory);
-        tpl.VisualTree = factory;
-        return tpl;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -449,11 +480,49 @@ public partial class CreateProjectOverlay : UserControl
         ErrorPanel.Visibility = Visibility.Visible;
     }
 
-    private record UserPickerItem(LocalUser User)
+    private record WorkerChipInfo(Guid UserId, string Name, string Initials);
+}
+
+/// <summary>Элемент пикера прораба (как AssigneePickerItem в CreateTaskOverlay).</summary>
+public sealed class ForemanPickerItem : INotifyPropertyChanged
+{
+    public LocalUser User { get; }
+    public Guid UserId => User.Id;
+    public string Name => User.Name;
+    public string Initials { get; }
+    public string RoleDisplay => "Прораб";
+    public SolidColorBrush AvatarBrush { get; }
+    public SolidColorBrush RoleColorBrush { get; }
+
+    private bool _isSelected;
+    public bool IsSelected
     {
-        public string Name => User.Name;
-        public string Initials => GetInitials(User.Name);
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelectedVis)));
+        }
+    }
+    public Visibility IsSelectedVis => _isSelected ? Visibility.Visible : Visibility.Collapsed;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ForemanPickerItem(LocalUser user, Guid? selectedForemanId)
+    {
+        User = user;
+        var parts = user.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : user.Name.Length > 0 ? user.Name[0].ToString().ToUpper() : "?";
+        _isSelected = selectedForemanId == user.Id;
+        AvatarBrush = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34));
+        RoleColorBrush = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34));
     }
 
-    private record WorkerChipInfo(Guid UserId, string Name, string Initials);
+    public void RefreshSelected(Guid? selectedForemanId)
+    {
+        IsSelected = UserId == selectedForemanId;
+    }
 }

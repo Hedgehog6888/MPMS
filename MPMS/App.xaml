@@ -281,6 +281,22 @@
                 <Setter Property="Margin"     Value="0,0,0,6"/>
             </Style>
 
+            <!-- Кнопка удаления в чипах (без выделения при наведении) -->
+            <Style x:Key="ChipRemoveButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Single-line / multi-line TextBox - uses default template to avoid text visibility issues -->
             <Style x:Key="FormInput" TargetType="TextBox">
                 <Setter Property="Background"      Value="White"/>

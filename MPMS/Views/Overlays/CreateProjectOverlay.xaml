@@ -11,9 +11,9 @@
         </Style>
 
         <Style x:Key="MemberChip" TargetType="Border">
-            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Margin" Value="0,3,6,3"/>
+            <Setter Property="Margin" Value="0,2,6,2"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
@@ -166,63 +166,83 @@
                         <Border Style="{StaticResource MemberChip}"
                                 Background="#ECFDF5" BorderBrush="#6EE7B7" BorderThickness="1">
                             <StackPanel Orientation="Horizontal">
-                                <Border Width="20" Height="20" CornerRadius="10"
-                                        Background="#166534" Margin="0,0,6,0">
-                                    <TextBlock x:Name="ForemanAvatarText" FontSize="8"
+                                <Border Width="20" Height="20" CornerRadius="4"
+                                        Background="#166534" Margin="0,0,5,0">
+                                    <TextBlock x:Name="ForemanAvatarText" FontSize="7"
                                                FontWeight="Bold" Foreground="White"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock x:Name="SelectedForemanName"
                                            FontSize="12" Foreground="#166534"
                                            VerticalAlignment="Center"/>
-                                <Button Click="RemoveForeman_Click" Margin="6,0,0,0"
-                                        Background="Transparent" BorderThickness="0"
-                                        Cursor="Hand" VerticalAlignment="Center">
+                                <Button Style="{StaticResource ChipRemoveButton}"
+                                        Click="RemoveForeman_Click" Margin="6,0,0,0"
+                                        VerticalAlignment="Center">
                                     <TextBlock Text="✕" FontSize="10" Foreground="#6B778C"/>
                                 </Button>
                             </StackPanel>
                         </Border>
                     </StackPanel>
 
-                    <!-- Foreman list -->
+                    <!-- Foreman list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="8" MaxHeight="160">
+                            CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl x:Name="ForemanPickerList">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Tag="{Binding}"
-                                                MouseLeftButtonDown="ForemanItem_Click">
-                                            <Border.Style>
-                                                <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#F8F9FA"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Border Width="28" Height="28" CornerRadius="14"
-                                                        Background="#166534" Margin="0,0,10,0">
-                                                    <TextBlock Text="{Binding Initials}"
-                                                               FontSize="9" FontWeight="Bold"
-                                                               Foreground="White"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}"
-                                                               FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="#172B4D"/>
-                                                    <TextBlock Text="Прораб" FontSize="11"
-                                                               Foreground="#166534"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <StackPanel>
+                                <ItemsControl x:Name="ForemanPickerList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Tag="{Binding}"
+                                                    MouseLeftButtonDown="ForemanItem_Click">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F8F9FA"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="32" Height="32" CornerRadius="16"
+                                                                Background="{Binding AvatarBrush}"
+                                                                Margin="0,0,10,0">
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontSize="13" FontWeight="SemiBold"
+                                                                       Foreground="#172B4D"/>
+                                                            <TextBlock Text="{Binding RoleDisplay}"
+                                                                       FontSize="11"
+                                                                       Foreground="{Binding RoleColorBrush}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <Border Width="22" Height="22" CornerRadius="11"
+                                                            Background="#111111"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelectedVis}">
+                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="NoForemanHint"
+                                           Text="Нет доступных прорабов"
+                                           FontSize="12" Foreground="#97A0AF"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,12,0,12" Visibility="Collapsed"/>
+                            </StackPanel>
                         </ScrollViewer>
                     </Border>
                 </Grid>
@@ -245,58 +265,65 @@
                     <WrapPanel x:Name="SelectedWorkersPanel" Grid.Row="1"
                                Margin="0,0,0,8" Visibility="Collapsed"/>
 
-                    <!-- Workers list -->
+                    <!-- Workers list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="8" MaxHeight="160">
+                            CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl x:Name="WorkerPickerList">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Tag="{Binding}"
-                                                MouseLeftButtonDown="WorkerItem_Click">
-                                            <Border.Style>
-                                                <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#F8F9FA"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <Grid>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Border Width="28" Height="28" CornerRadius="14"
-                                                            Background="#92400E" Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding Initials}"
-                                                                   FontSize="9" FontWeight="Bold"
-                                                                   Foreground="White"
+                            <StackPanel>
+                                <ItemsControl x:Name="WorkerPickerList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Tag="{Binding}"
+                                                    MouseLeftButtonDown="WorkerItem_Click">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F8F9FA"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="32" Height="32" CornerRadius="16"
+                                                                Background="{Binding AvatarBrush}"
+                                                                Margin="0,0,10,0">
+                                                            <TextBlock Text="{Binding Initials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontSize="13" FontWeight="SemiBold"
+                                                                       Foreground="#172B4D"/>
+                                                            <TextBlock Text="{Binding RoleDisplay}"
+                                                                       FontSize="11"
+                                                                       Foreground="{Binding RoleColorBrush}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <Border Width="22" Height="22" CornerRadius="11"
+                                                            Background="#111111"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelectedVis}">
+                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"/>
                                                     </Border>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}"
-                                                                   FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"/>
-                                                        <TextBlock Text="Работник" FontSize="11"
-                                                                   Foreground="#92400E"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                                <!-- Selection checkmark (shown when selected) -->
-                                                <Border x:Name="CheckMark"
-                                                        Width="20" Height="20" CornerRadius="10"
-                                                        Background="#111111"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        Visibility="Collapsed">
-                                                    <TextBlock Text="✓" FontSize="10" Foreground="White"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="NoWorkersHint"
+                                           Text="Нет доступных работников"
+                                           FontSize="12" Foreground="#97A0AF"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,12,0,12" Visibility="Collapsed"/>
+                            </StackPanel>
                         </ScrollViewer>
                     </Border>
                 </Grid>

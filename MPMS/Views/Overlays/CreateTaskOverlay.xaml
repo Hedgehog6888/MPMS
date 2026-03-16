@@ -218,7 +218,7 @@
                                             <Grid>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Border Width="32" Height="32" CornerRadius="16"
-                                                            Background="{Binding AvatarColor}"
+                                                            Background="{Binding AvatarBrush}"
                                                             Margin="0,0,10,0">
                                                         <TextBlock Text="{Binding Initials}"
                                                                    FontSize="11" FontWeight="Bold"

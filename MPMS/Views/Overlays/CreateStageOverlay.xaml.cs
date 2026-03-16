@@ -321,9 +321,9 @@ public partial class CreateStageOverlay : UserControl
         });
         var removeBtn = new Button
         {
+            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
             Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
-            Background = Brushes.Transparent, BorderThickness = new Thickness(0),
-            Cursor = System.Windows.Input.Cursors.Hand, Margin = new Thickness(4, 0, 0, 0),
+            Margin = new Thickness(4, 0, 0, 0),
             Tag = item.UserId
         };
         removeBtn.Click += (s, _) =>
