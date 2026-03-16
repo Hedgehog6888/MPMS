@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
-using MPMS.Views.Dialogs;
+using MPMS.Views.Overlays;
 
 #pragma warning disable CS0618
 
@@ -337,15 +337,8 @@ public partial class ProfilePage : UserControl
         var owner = Window.GetWindow(this);
         if (openDlg.ShowDialog(owner) != true) return;
 
-        var cropDlg = new AvatarCropDialog(openDlg.FileName)
-        {
-            Owner = owner
-        };
-
-        if (cropDlg.ShowDialog() == true && cropDlg.CroppedImage != null)
-        {
-            _ = SaveAvatarAsync(cropDlg.CroppedImage);
-        }
+        var overlay = new AvatarCropOverlay(openDlg.FileName, SaveAvatarAsync);
+        MainWindow.Instance?.ShowDrawer(overlay, 920);
     }
 
     private async System.Threading.Tasks.Task SaveAvatarAsync(BitmapSource croppedImage)

@@ -1,0 +1,227 @@
+<UserControl x:Class="MPMS.Views.Overlays.AvatarCropOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White">
+
+    <UserControl.Resources>
+        <Style x:Key="AvatarCropSectionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+        </Style>
+
+        <Style x:Key="AvatarCropHintText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
+                Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Обрезка аватара"
+                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Настройте положение и размер круга перед сохранением"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="24,20,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="240"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Background="White"
+                    BorderBrush="#E8E9EC"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="ОБЛАСТЬ ОБРЕЗКИ" Style="{StaticResource AvatarCropSectionLabel}"/>
+                        <TextBlock Text="Перетаскивайте круг и тяните за точки по краям, чтобы изменить размер."
+                                   Style="{StaticResource AvatarCropHintText}" Margin="0,6,0,0"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1"
+                            Background="#111827"
+                            CornerRadius="12"
+                            Padding="12"
+                            BorderBrush="#1F2937"
+                            BorderThickness="1">
+                        <Canvas x:Name="CropCanvas"
+                                Background="#111827"
+                                Cursor="Arrow"
+                                ClipToBounds="True"
+                                SizeChanged="CropCanvas_SizeChanged"
+                                MouseLeftButtonDown="Canvas_MouseDown"
+                                MouseMove="Canvas_MouseMove"
+                                MouseLeftButtonUp="Canvas_MouseUp"
+                                MouseLeave="Canvas_MouseLeave">
+
+                            <Image x:Name="SourceImage"
+                                   Stretch="Fill"
+                                   IsHitTestVisible="False"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                            <Path x:Name="DimOverlay"
+                                  Fill="#99000000"
+                                  IsHitTestVisible="False"/>
+
+                            <Ellipse x:Name="CropRing"
+                                     Stroke="White" StrokeThickness="2"
+                                     StrokeDashArray="6,3"
+                                     IsHitTestVisible="False"/>
+
+                            <Line x:Name="GridH1" Stroke="White" StrokeThickness="0.5"
+                                  Opacity="0.30" IsHitTestVisible="False"/>
+                            <Line x:Name="GridH2" Stroke="White" StrokeThickness="0.5"
+                                  Opacity="0.30" IsHitTestVisible="False"/>
+                            <Line x:Name="GridV1" Stroke="White" StrokeThickness="0.5"
+                                  Opacity="0.30" IsHitTestVisible="False"/>
+                            <Line x:Name="GridV2" Stroke="White" StrokeThickness="0.5"
+                                  Opacity="0.30" IsHitTestVisible="False"/>
+
+                            <Ellipse x:Name="HandleN" Width="14" Height="14"
+                                     Fill="White" Stroke="#0082FF" StrokeThickness="2"
+                                     Cursor="SizeNS"/>
+                            <Ellipse x:Name="HandleS" Width="14" Height="14"
+                                     Fill="White" Stroke="#0082FF" StrokeThickness="2"
+                                     Cursor="SizeNS"/>
+                            <Ellipse x:Name="HandleW" Width="14" Height="14"
+                                     Fill="White" Stroke="#0082FF" StrokeThickness="2"
+                                     Cursor="SizeWE"/>
+                            <Ellipse x:Name="HandleE" Width="14" Height="14"
+                                     Fill="White" Stroke="#0082FF" StrokeThickness="2"
+                                     Cursor="SizeWE"/>
+                        </Canvas>
+                    </Border>
+
+                    <TextBlock Grid.Row="2"
+                               Text="Совет: старайтесь располагать лицо ближе к центру круга."
+                               FontSize="11" Foreground="#97A0AF" Margin="0,12,0,0"/>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Column="2">
+                <Border Background="White"
+                        BorderBrush="#E8E9EC"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="16"
+                        Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="ПРЕДПРОСМОТР" Style="{StaticResource AvatarCropSectionLabel}"/>
+
+                        <Border Width="120" Height="120" CornerRadius="60"
+                                HorizontalAlignment="Center"
+                                ClipToBounds="True"
+                                BorderBrush="#D0D6DE" BorderThickness="2"
+                                Margin="0,16,0,8">
+                            <Image x:Name="PreviewLarge" Stretch="UniformToFill"/>
+                        </Border>
+                        <TextBlock Text="Крупный размер"
+                                   FontSize="11" Foreground="#6B778C"
+                                   HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+                        <WrapPanel HorizontalAlignment="Center">
+                            <StackPanel Margin="0,0,16,0">
+                                <Border Width="56" Height="56" CornerRadius="28"
+                                        HorizontalAlignment="Center"
+                                        ClipToBounds="True"
+                                        BorderBrush="#D0D6DE" BorderThickness="2"
+                                        Margin="0,0,0,8">
+                                    <Image x:Name="PreviewMedium" Stretch="UniformToFill"/>
+                                </Border>
+                                <TextBlock Text="56 px" FontSize="10" Foreground="#6B778C"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <Border Width="32" Height="32" CornerRadius="16"
+                                        HorizontalAlignment="Center"
+                                        ClipToBounds="True"
+                                        BorderBrush="#D0D6DE" BorderThickness="2"
+                                        Margin="0,12,0,20">
+                                    <Image x:Name="PreviewSmall" Stretch="UniformToFill"/>
+                                </Border>
+                                <TextBlock Text="32 px" FontSize="10" Foreground="#6B778C"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#F8FAFF"
+                        BorderBrush="#BFDBFE"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="Подсказка" FontSize="12" FontWeight="SemiBold" Foreground="#1D4ED8"/>
+                        <TextBlock Text="После сохранения аватар будет использоваться по всей системе: в профиле, проектах, задачах и сообщениях."
+                                   Style="{StaticResource AvatarCropHintText}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="2" Padding="24,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Выбрать другое фото"
+                        HorizontalAlignment="Left"
+                        Click="BrowseAgain_Click"
+                        Style="{StaticResource OutlineBtn}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Отмена"
+                            Margin="0,0,10,0"
+                            Click="Cancel_Click"
+                            Style="{StaticResource OutlineBtn}"/>
+                    <Button Content="Сохранить"
+                            Click="Apply_Click"
+                            Style="{StaticResource BlackBtn}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
