@@ -78,6 +78,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<StageItem> _filteredPlannedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredInProgressStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredCompletedStages = [];
+    [ObservableProperty] private ObservableCollection<StageItem> _filteredMarkedStages = [];
 
     public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
@@ -110,6 +111,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         FilteredPlannedStages = [];
         FilteredInProgressStages = [];
         FilteredCompletedStages = [];
+        FilteredMarkedStages = [];
         AllStages = [];
         FilteredStages = [];
         Files = [];
@@ -234,9 +236,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         }
         var stages = await stagesQuery.OrderBy(s => s.CreatedAt).ToListAsync();
 
+        var projectMarked = Project?.IsMarkedForDeletion ?? false;
         foreach (var task in tasks)
         {
+            task.ProjectIsMarkedForDeletion = projectMarked;
             var taskStages = stages.Where(s => s.TaskId == task.Id).ToList();
+            foreach (var s in taskStages)
+            {
+                s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+                s.ProjectIsMarkedForDeletion = projectMarked;
+            }
             ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         }
 
@@ -280,7 +289,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         OverdueTasksCount = Project?.OverdueTasks ?? 0;
         ProjectProgressPercent = Project?.ProgressPercent ?? 0;
 
-        int plannedCount = tasks.Count(t => !t.IsMarkedForDeletion && !t.IsArchived && t.Status == TaskStatus.Planned);
+        int plannedCount = tasks.Count(t => !t.EffectiveTaskMarkedForDeletion && !t.IsArchived && t.Status == TaskStatus.Planned);
         TaskStatsSegments = new List<DonutSegment>
         {
             new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
@@ -389,7 +398,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         if (TaskStatusFilter == "Пометка удалить")
         {
-            query = query.Where(t => t.IsMarkedForDeletion);
+            query = query.Where(t => t.EffectiveTaskMarkedForDeletion);
         }
         else if (TaskStatusFilter != "Все")
         {
@@ -421,7 +430,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         // Tasks sorted: non-deleted first by status, then by progress desc, then priority, name
         var list = query
-            .OrderBy(t => t.IsMarkedForDeletion)
+            .OrderBy(t => t.EffectiveTaskMarkedForDeletion)
             .ThenBy(t => t.Status switch
             {
                 TaskStatus.Planned    => 0,
@@ -456,7 +465,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         if (StageStatusFilter == "Пометка удалить")
         {
-            query = query.Where(s => s.IsMarkedForDeletion);
+            query = query.Where(s => s.EffectiveMarkedForDeletion);
         }
         else if (StageStatusFilter != "Все статусы")
         {
@@ -471,21 +480,22 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(s => s.Status == targetStatus.Value);
         }
 
-        var list = query.OrderBy(s => s.IsMarkedForDeletion).ToList();
+        var list = query.OrderBy(s => s.EffectiveMarkedForDeletion).ToList();
         FilteredStages = new ObservableCollection<LocalTaskStage>(list);
 
-        var stageItems = list
-            .Where(s => !s.IsMarkedForDeletion)
-            .Select(s => new StageItem
-            {
-                Stage = s,
-                TaskId = s.TaskId,
-                TaskName = s.TaskName,
-                ProjectId = Project?.Id ?? Guid.Empty,
-                ProjectName = Project?.Name ?? "—"
-            })
-            .ToList();
+        StageItem MakeStageItem(LocalTaskStage s) => new()
+        {
+            Stage = s,
+            TaskId = s.TaskId,
+            TaskName = s.TaskName,
+            ProjectId = Project?.Id ?? Guid.Empty,
+            ProjectName = Project?.Name ?? "—"
+        };
 
+        var markedItems = list.Where(s => s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
+        var stageItems = list.Where(s => !s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
+
+        FilteredMarkedStages = new ObservableCollection<StageItem>(markedItems);
         FilteredPlannedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Planned));
         FilteredInProgressStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.InProgress));
         FilteredCompletedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Completed));
@@ -539,6 +549,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
+        var task = await db.Tasks.FindAsync(entity.TaskId);
+        var proj = task is not null ? await db.Projects.FindAsync(task.ProjectId) : null;
+        if (task?.IsMarkedForDeletion == true || proj?.IsMarkedForDeletion == true)
+            return;
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
@@ -567,7 +581,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private async Task ChangeStageStatusAsync((LocalTaskStage stage, StageStatus newStatus) args)
     {
         var (stage, newStatus) = args;
-        if (stage.IsMarkedForDeletion) return;
+        if (stage.EffectiveMarkedForDeletion) return;
         var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus);
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
@@ -692,18 +706,23 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;
+        var proj = await db.Projects.FindAsync(entity.ProjectId);
+        if (proj?.IsMarkedForDeletion == true) return;
 
+        var wasMarked = entity.IsMarkedForDeletion;
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        // Cascade mark/unmark to all stages of this task
         var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
-        foreach (var stage in stages)
+        if (!entity.IsMarkedForDeletion && wasMarked)
         {
-            stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
-            stage.IsSynced = false;
-            stage.UpdatedAt = DateTime.UtcNow;
+            foreach (var stage in stages)
+            {
+                stage.IsMarkedForDeletion = false;
+                stage.IsSynced = false;
+                stage.UpdatedAt = DateTime.UtcNow;
+            }
         }
 
         await db.SaveChangesAsync();
@@ -726,7 +745,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
-        // Cascade mark/unmark to all tasks and their stages
         var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
@@ -737,11 +755,15 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             t.IsSynced = false;
             t.UpdatedAt = DateTime.UtcNow;
         }
-        foreach (var s in stages)
+
+        if (!project.IsMarkedForDeletion)
         {
-            s.IsMarkedForDeletion = project.IsMarkedForDeletion;
-            s.IsSynced = false;
-            s.UpdatedAt = DateTime.UtcNow;
+            foreach (var s in stages)
+            {
+                s.IsMarkedForDeletion = false;
+                s.IsSynced = false;
+                s.UpdatedAt = DateTime.UtcNow;
+            }
         }
 
         await db.SaveChangesAsync();
@@ -840,7 +862,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
 
         foreach (var task in tasks)
-            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+        {
+            task.ProjectIsMarkedForDeletion = project.IsMarkedForDeletion;
+            var taskStages = stages.Where(s => s.TaskId == task.Id).ToList();
+            foreach (var s in taskStages)
+            {
+                s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+                s.ProjectIsMarkedForDeletion = project.IsMarkedForDeletion;
+            }
+            ProgressCalculator.ApplyTaskMetrics(task, taskStages);
+        }
 
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
 

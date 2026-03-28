@@ -206,7 +206,7 @@
                                                                 <Setter Property="Background" Value="White"/>
                                                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                         <Setter Property="BorderBrush" Value="#DE350B"/>
                                                                         <Setter Property="Background" Value="#FFF5F5"/>
                                                                     </DataTrigger>
@@ -245,12 +245,16 @@
                                                                            Foreground="{StaticResource TextSecondaryBrush}"
                                                                            Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                                                                            Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
+                                                                <TextBlock Text="{Binding Stage.StageInheritedDeletionHint}"
+                                                                           FontSize="10" Foreground="#B71C1C" Margin="0,4,0,0"
+                                                                           TextWrapping="Wrap"
+                                                                           Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                             </StackPanel>
 
                                                             <!-- Status buttons (left of task, with margin) — скрываются при пометке удаления -->
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" Margin="0,0,24,0"
-                                                                        Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+                                                                        Visibility="{Binding Stage.EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                                     <Button Tag="{Binding}"
                                                                             Click="StartStage_Click" Margin="0,0,4,0"
                                                                             Style="{StaticResource IconButton}" FontSize="12"
@@ -306,7 +310,7 @@
                                                                     <Style TargetType="Border">
                                                                         <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                            <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                 <Setter Property="Background" Value="#DE350B"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -317,7 +321,7 @@
                                                                         <Style TargetType="TextBlock">
                                                                             <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
                                                                             <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                                <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Text" Value="Пометка удаления"/>
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
@@ -361,7 +365,7 @@
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                             <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                             <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                                <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
@@ -373,8 +377,17 @@
                                                                 </Button>
                                                                 <!-- Mark/unmark for deletion (Worker+) -->
                                                                 <Button Tag="{Binding}" Click="MarkStage_Click"
-                                                                        Margin="0,0,4,0" Style="{StaticResource IconButton}"
-                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}">
+                                                                        Margin="0,0,4,0">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Stage.CanToggleStageDeletionMark}" Value="False">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
                                                                     <Button.ToolTip>
                                                                         <ToolTip>
                                                                             <TextBlock>

@@ -51,7 +51,20 @@ public partial class TaskDetailOverlay : UserControl
         {
             MarkDeletionBtn.Visibility = Visibility.Collapsed;
         }
-        if (_vm?.Task?.IsMarkedForDeletion == true)
+        else if (_vm?.Task?.CanToggleTaskDeletionMark == false)
+        {
+            MarkDeletionBtn.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            MarkDeletionBtn.Visibility = Visibility.Visible;
+        }
+
+        if (isWorker)
+        {
+            /* Edit already collapsed */
+        }
+        else if (_vm?.Task?.EffectiveTaskMarkedForDeletion == true)
         {
             EditTaskBtn.Visibility = Visibility.Collapsed;
         }
@@ -59,16 +72,21 @@ public partial class TaskDetailOverlay : UserControl
         {
             EditTaskBtn.Visibility = Visibility.Visible;
         }
-        ApplyDeletionMark(_vm?.Task?.IsMarkedForDeletion ?? false);
+        else
+        {
+            EditTaskBtn.Visibility = Visibility.Collapsed;
+        }
+        ApplyDeletionFooter();
         // Статус задачи вычисляется автоматически из этапов — ручное изменение скрыто
         ChangeStatusBtn.Visibility = Visibility.Collapsed;
 
     }
 
-    private void ApplyDeletionMark(bool isMarked)
+    private void ApplyDeletionFooter()
     {
-        DeletionWarningBorder.Visibility = isMarked ? Visibility.Visible : Visibility.Collapsed;
-        MarkDeletionBtnText.Text = isMarked ? "Снять пометку" : "Пометить к удалению";
+        var t = _vm?.Task;
+        if (t is null) return;
+        MarkDeletionBtnText.Text = t.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
     }
 
     private async System.Threading.Tasks.Task LoadDataAsync()
@@ -78,7 +96,7 @@ public partial class TaskDetailOverlay : UserControl
         UpdateStagesTabLabel();
         UpdateEmptyStates();
         await LoadAssigneesAsync();
-        ApplyDeletionMark(_vm.Task?.IsMarkedForDeletion ?? false);
+        ApplyRoleRestrictions();
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
@@ -178,11 +196,7 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         await _vm.MarkTaskForDeletionCommand.ExecuteAsync(null);
-        ApplyDeletionMark(_vm.Task.IsMarkedForDeletion);
-        if (_vm.Task.IsMarkedForDeletion)
-            EditTaskBtn.Visibility = Visibility.Collapsed;
-        else
-            ApplyRoleRestrictions(); // Restore edit button if unmarked and role allows
+        ApplyRoleRestrictions();
         _onClosed?.Invoke();
     }
 

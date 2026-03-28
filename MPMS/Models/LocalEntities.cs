@@ -126,6 +126,25 @@ public class LocalTask : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
+    /// <summary>Флаг проекта при загрузке (не в БД). Нужен для наследования пометки и прогресса.</summary>
+    [NotMapped] public bool ProjectIsMarkedForDeletion { get; set; }
+
+    /// <summary>Пометка к удалению с учётом проекта (задача помечена или проект помечен).</summary>
+    [NotMapped] public bool EffectiveTaskMarkedForDeletion =>
+        IsMarkedForDeletion || ProjectIsMarkedForDeletion;
+
+    [NotMapped] public DeletionMarkSource TaskDeletionMarkSource =>
+        ProjectIsMarkedForDeletion ? DeletionMarkSource.Project :
+        IsMarkedForDeletion ? DeletionMarkSource.Task : DeletionMarkSource.None;
+
+    /// <summary>Кнопка пометки задачи скрыта, пока проект помечен — снимать только с проекта.</summary>
+    [NotMapped] public bool CanToggleTaskDeletionMark => TaskDeletionMarkSource != DeletionMarkSource.Project;
+
+    [NotMapped] public string TaskInheritedDeletionHint =>
+        TaskDeletionMarkSource == DeletionMarkSource.Project
+            ? "Пометка с уровня проекта"
+            : "";
+
     /// <summary>Task has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;
 
@@ -153,6 +172,27 @@ public class LocalTaskStage : LocalEntity
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
+
+    [NotMapped] public bool TaskIsMarkedForDeletion { get; set; }
+    [NotMapped] public bool ProjectIsMarkedForDeletion { get; set; }
+
+    [NotMapped] public bool EffectiveMarkedForDeletion =>
+        IsMarkedForDeletion || TaskIsMarkedForDeletion || ProjectIsMarkedForDeletion;
+
+    [NotMapped] public DeletionMarkSource StageDeletionMarkSource =>
+        ProjectIsMarkedForDeletion ? DeletionMarkSource.Project :
+        TaskIsMarkedForDeletion ? DeletionMarkSource.Task :
+        IsMarkedForDeletion ? DeletionMarkSource.Stage : DeletionMarkSource.None;
+
+    [NotMapped] public bool CanToggleStageDeletionMark =>
+        StageDeletionMarkSource is DeletionMarkSource.None or DeletionMarkSource.Stage;
+
+    [NotMapped] public string StageInheritedDeletionHint => StageDeletionMarkSource switch
+    {
+        DeletionMarkSource.Project => "Пометка с уровня проекта",
+        DeletionMarkSource.Task => "Пометка с уровня задачи",
+        _ => ""
+    };
 
     /// <summary>Stage has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;

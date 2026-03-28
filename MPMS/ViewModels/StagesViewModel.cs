@@ -17,6 +17,8 @@ public partial class StageItem : ObservableObject
     public string ProjectName { get; init; } = string.Empty;
     public Guid   TaskId      { get; init; }
     public Guid   ProjectId   { get; init; }
+
+    public bool CanDragInKanban => !Stage.EffectiveMarkedForDeletion;
 }
 
 public partial class StagesViewModel : ViewModelBase, ILoadable
@@ -159,6 +161,20 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 }
             }
 
+            var projectIds = tasks.Select(t => t.ProjectId).Distinct().ToList();
+            var projMarked = projectIds.Count == 0
+                ? new Dictionary<Guid, bool>()
+                : await db.Projects.Where(p => projectIds.Contains(p.Id))
+                    .Select(p => new { p.Id, p.IsMarkedForDeletion })
+                    .ToDictionaryAsync(x => x.Id, x => x.IsMarkedForDeletion);
+            foreach (var s in stageList)
+            {
+                taskDict.TryGetValue(s.TaskId, out var tk);
+                s.TaskIsMarkedForDeletion = tk?.IsMarkedForDeletion ?? false;
+                var pid = tk?.ProjectId ?? Guid.Empty;
+                s.ProjectIsMarkedForDeletion = projMarked.GetValueOrDefault(pid);
+            }
+
             var items = stageList.Select(s =>
             {
                 taskDict.TryGetValue(s.TaskId, out var task);
@@ -217,7 +233,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
         if (StatusFilter == "Пометка удалить")
         {
-            query = query.Where(s => s.Stage.IsMarkedForDeletion);
+            query = query.Where(s => s.Stage.EffectiveMarkedForDeletion);
         }
         else if (StatusFilter != "Все статусы")
         {
@@ -239,7 +255,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             .OrderBy(g => g.Key.ProjectName)
             .ThenBy(g => g.Key.TaskName)
             .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName,
-                g.OrderBy(s => s.Stage.IsMarkedForDeletion).ToList()))
+                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion).ToList()))
             .ToList();
         StageGroups = new ObservableCollection<TaskStageGroup>(groups);
     }
@@ -268,9 +284,14 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(StageItem item)
     {
+        if (!item.Stage.CanToggleStageDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(item.Stage.Id);
         if (entity is null) return;
+        var task = await db.Tasks.FindAsync(entity.TaskId);
+        var proj = task is not null ? await db.Projects.FindAsync(task.ProjectId) : null;
+        if (task?.IsMarkedForDeletion == true || proj?.IsMarkedForDeletion == true)
+            return;
 
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
@@ -331,7 +352,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private async Task ChangeStageStatusAsync((StageItem item, StageStatus newStatus) args)
     {
         var (item, newStatus) = args;
-        if (item.Stage.IsMarkedForDeletion) return;
+        if (item.Stage.EffectiveMarkedForDeletion) return;
         var vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         var task = await GetTaskForStageAsync(item.TaskId);
         if (task is null) return;

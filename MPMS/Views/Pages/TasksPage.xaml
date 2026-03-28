@@ -254,7 +254,7 @@
                                                     <Setter Property="Background" Value="White"/>
                                                     <Setter Property="BorderBrush" Value="#DFE1E6"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                             <Setter Property="BorderBrush" Value="#DE350B"/>
                                                             <Setter Property="Background" Value="#FFF5F5"/>
                                                         </DataTrigger>
@@ -306,6 +306,10 @@
                                                                TextTrimming="CharacterEllipsis"
                                                                Margin="0,2,0,0"
                                                                Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                                                    <TextBlock Text="{Binding TaskInheritedDeletionHint}"
+                                                               FontSize="10" Foreground="#B71C1C" Margin="0,4,0,0"
+                                                               TextWrapping="Wrap"
+                                                               Visibility="{Binding TaskInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
 
                                                 <!-- Assignee -->
@@ -363,7 +367,7 @@
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                     <Setter Property="Background" Value="#DE350B"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -375,7 +379,7 @@
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                         <Setter Property="Text" Value="Пометка удаления"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -413,7 +417,7 @@
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                 <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -424,9 +428,17 @@
                                                     </Button>
                                                     <!-- Mark for deletion (Foreman+) -->
                                                     <Button Tag="{Binding}" Click="MarkTask_Click"
-                                                            Margin="0,0,4,0"
-                                                            Style="{StaticResource IconButton}"
-                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
+                                                            Margin="0,0,4,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding CanToggleTaskDeletionMark}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
                                                         <Button.ToolTip>
                                                             <ToolTip>
                                                                 <TextBlock>
@@ -518,10 +530,19 @@
                     <!-- Shared Kanban card DataTemplate -->
                     <Grid.Resources>
                         <DataTemplate x:Key="KanbanCardTpl">
-                            <Border Style="{StaticResource KanbanCard}"
-                                    MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
+                            <Border MouseLeftButtonDown="KanbanCard_MouseLeftButtonDown"
                                     MouseMove="KanbanCard_MouseMove"
                                     PreviewMouseLeftButtonUp="KanbanCard_MouseUp">
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource KanbanCard}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                <Setter Property="BorderBrush" Value="#DE350B"/>
+                                                <Setter Property="Background" Value="#FFF5F5"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <StackPanel>
                                     <!-- Top row: priority badge + deletion indicator -->
                                     <Grid Margin="0,0,0,6">
@@ -540,6 +561,9 @@
                                     <!-- Task name -->
                                     <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
                                                Foreground="#172B4D" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding TaskInheritedDeletionHint}" FontSize="9" Foreground="#B71C1C"
+                                               TextWrapping="Wrap" Margin="0,0,0,4"
+                                               Visibility="{Binding TaskInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
 
                                     <!-- Description (truncated) -->
                                     <TextBlock Text="{Binding Description}" FontSize="11"

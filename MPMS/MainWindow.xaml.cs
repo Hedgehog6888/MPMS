@@ -404,14 +404,21 @@ public partial class MainWindow : Window
         var taskEntity = await db.Tasks.FindAsync(task.Id);
         if (taskEntity is null) return;
 
-        taskEntity.ProjectName = await db.Projects
+        var projectRow = await db.Projects
             .Where(p => p.Id == taskEntity.ProjectId)
-            .Select(p => p.Name)
-            .FirstOrDefaultAsync() ?? taskEntity.ProjectName;
+            .Select(p => new { p.Name, p.IsMarkedForDeletion })
+            .FirstOrDefaultAsync();
+        taskEntity.ProjectName = projectRow?.Name ?? taskEntity.ProjectName;
+        taskEntity.ProjectIsMarkedForDeletion = projectRow?.IsMarkedForDeletion ?? false;
 
         var stages = await db.TaskStages
             .Where(s => s.TaskId == taskEntity.Id && !s.IsArchived)
             .ToListAsync();
+        foreach (var s in stages)
+        {
+            s.TaskIsMarkedForDeletion = taskEntity.IsMarkedForDeletion;
+            s.ProjectIsMarkedForDeletion = taskEntity.ProjectIsMarkedForDeletion;
+        }
         Services.ProgressCalculator.ApplyTaskMetrics(taskEntity, stages);
 
         var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
@@ -440,16 +447,25 @@ public partial class MainWindow : Window
         var task = await db.Tasks.FindAsync(stageEntity.TaskId);
         if (task is null) return;
 
-        task.ProjectName = await db.Projects
+        var projInfo = await db.Projects
             .Where(p => p.Id == task.ProjectId)
-            .Select(p => p.Name)
-            .FirstOrDefaultAsync() ?? task.ProjectName;
+            .Select(p => new { p.Name, p.IsMarkedForDeletion })
+            .FirstOrDefaultAsync();
+        task.ProjectName = projInfo?.Name ?? task.ProjectName;
+        task.ProjectIsMarkedForDeletion = projInfo?.IsMarkedForDeletion ?? false;
 
         var taskStages = await db.TaskStages
             .Where(s => s.TaskId == task.Id && !s.IsArchived)
             .ToListAsync();
+        foreach (var s in taskStages)
+        {
+            s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+            s.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
+        }
         Services.ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         stageEntity.TaskName = task.Name;
+        stageEntity.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+        stageEntity.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
 
         var taskPanel = new TaskSummaryPanel();
         taskPanel.SetTask(task);

@@ -21,10 +21,17 @@ public static class ProgressCalculator
         _ => 0.08
     };
 
+    private static bool StageExcludedFromTaskProgress(LocalTaskStage s, LocalTask task)
+    {
+        if (s.IsArchived || s.IsMarkedForDeletion) return true;
+        if (task.IsMarkedForDeletion || task.ProjectIsMarkedForDeletion) return true;
+        return false;
+    }
+
     public static void ApplyTaskMetrics(LocalTask task, IReadOnlyCollection<LocalTaskStage> stages)
     {
         var activeStages = stages
-            .Where(s => !s.IsArchived && !s.IsMarkedForDeletion)
+            .Where(s => !StageExcludedFromTaskProgress(s, task))
             .ToList();
 
         task.TotalStages = activeStages.Count;
@@ -48,8 +55,12 @@ public static class ProgressCalculator
             .Where(t => !t.IsArchived && !t.IsMarkedForDeletion)
             .ToList();
         var taskIds = activeTasks.Select(t => t.Id).ToHashSet();
+        var taskById = activeTasks.ToDictionary(t => t.Id);
         var activeStages = stages
-            .Where(s => !s.IsArchived && !s.IsMarkedForDeletion && taskIds.Contains(s.TaskId))
+            .Where(s => taskIds.Contains(s.TaskId)
+                        && taskById.TryGetValue(s.TaskId, out var tk)
+                        && !s.IsArchived
+                        && !StageExcludedFromTaskProgress(s, tk))
             .ToList();
 
         project.TotalTasks = activeTasks.Count;

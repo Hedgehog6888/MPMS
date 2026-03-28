@@ -37,11 +37,38 @@ public partial class StageDetailOverlay : UserControl
 
         DescriptionText.Text = string.IsNullOrWhiteSpace(item.Stage.Description) ? "Описание не указано" : item.Stage.Description;
 
+        item.Stage.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+        item.Stage.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
         ApplyStatus(item.Stage.Status);
-        ApplyDeletionMark(item.Stage.IsMarkedForDeletion);
+        ApplyDeletionUi();
 
+        _ = EnsureStageDeletionFlagsFromDbAsync();
         _ = LoadAssigneesAsync();
         _ = LoadMaterialsAsync();
+    }
+
+    private async System.Threading.Tasks.Task EnsureStageDeletionFlagsFromDbAsync()
+    {
+        if (_stage is null || _task is null) return;
+        var stageRef = _stage;
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var proj = await db.Projects.FindAsync(_task.ProjectId);
+        var taskEnt = await db.Tasks.FindAsync(_task.Id);
+
+        await Dispatcher.InvokeAsync(() =>
+        {
+            if (!ReferenceEquals(_stage, stageRef)) return;
+            if (taskEnt != null)
+            {
+                _task.IsMarkedForDeletion = taskEnt.IsMarkedForDeletion;
+                _task.ProjectIsMarkedForDeletion = proj?.IsMarkedForDeletion ?? false;
+            }
+            _stage.TaskIsMarkedForDeletion = _task.IsMarkedForDeletion;
+            _stage.ProjectIsMarkedForDeletion = _task.ProjectIsMarkedForDeletion;
+            ApplyStatus(_stage.Status);
+            ApplyDeletionUi();
+        });
     }
 
     private void ApplyStatus(StageStatus status)
@@ -77,16 +104,28 @@ public partial class StageDetailOverlay : UserControl
         BtnCompleted.Foreground = status == StageStatus.Completed
             ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutralFg;
         BtnCompleted.FontWeight = status == StageStatus.Completed ? FontWeights.SemiBold : FontWeights.Normal;
+
+        if (_stage != null && _stage.EffectiveMarkedForDeletion)
+        {
+            StatusBadge.Background = new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B));
+            StatusText.Text = "Пометка удаления";
+        }
     }
 
-    private void ApplyDeletionMark(bool isMarked)
+    private void ApplyDeletionUi()
     {
-        DeletionWarningBorder.Visibility = isMarked ? Visibility.Visible : Visibility.Collapsed;
-        MarkDeletionBtnText.Text = isMarked ? "Снять пометку" : "Пометить к удалению";
-        EditButton.Visibility = isMarked ? Visibility.Collapsed : Visibility.Visible;
-        BtnPlanned.IsEnabled = !isMarked;
-        BtnInProgress.IsEnabled = !isMarked;
-        BtnCompleted.IsEnabled = !isMarked;
+        if (_stage is null) return;
+        bool eff = _stage.EffectiveMarkedForDeletion;
+        DeletionWarningBorder.Visibility = eff ? Visibility.Visible : Visibility.Collapsed;
+        var hint = _stage.StageInheritedDeletionHint ?? "";
+        DeletionHintText.Text = hint;
+        DeletionHintText.Visibility = string.IsNullOrEmpty(hint) ? Visibility.Collapsed : Visibility.Visible;
+        MarkDeletionBtn.Visibility = _stage.CanToggleStageDeletionMark ? Visibility.Visible : Visibility.Collapsed;
+        MarkDeletionBtnText.Text = _stage.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
+        EditButton.Visibility = eff ? Visibility.Collapsed : Visibility.Visible;
+        BtnPlanned.IsEnabled = !eff;
+        BtnInProgress.IsEnabled = !eff;
+        BtnCompleted.IsEnabled = !eff;
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
@@ -202,7 +241,7 @@ public partial class StageDetailOverlay : UserControl
 
     private async System.Threading.Tasks.Task ChangeStatusAsync(StageStatus newStatus)
     {
-        if (_stage is null || _stage.IsMarkedForDeletion) return;
+        if (_stage is null || _stage.EffectiveMarkedForDeletion) return;
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(_stage.Id);
@@ -225,8 +264,15 @@ public partial class StageDetailOverlay : UserControl
     {
         var task = await db.Tasks.FindAsync(taskId);
         if (task is null) return;
+        var proj = await db.Projects.FindAsync(task.ProjectId);
+        task.ProjectIsMarkedForDeletion = proj?.IsMarkedForDeletion ?? false;
 
         var stages = await db.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
+        foreach (var s in stages)
+        {
+            s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+            s.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
+        }
         ProgressCalculator.ApplyTaskMetrics(task, stages);
 
         task.IsSynced = false;
@@ -247,7 +293,16 @@ public partial class StageDetailOverlay : UserControl
             : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
 
         foreach (var task in tasks)
-            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+        {
+            task.ProjectIsMarkedForDeletion = project.IsMarkedForDeletion;
+            var taskStages = stages.Where(s => s.TaskId == task.Id).ToList();
+            foreach (var s in taskStages)
+            {
+                s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+                s.ProjectIsMarkedForDeletion = project.IsMarkedForDeletion;
+            }
+            ProgressCalculator.ApplyTaskMetrics(task, taskStages);
+        }
 
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
@@ -257,11 +312,15 @@ public partial class StageDetailOverlay : UserControl
 
     private async void MarkDeletion_Click(object sender, RoutedEventArgs e)
     {
-        if (_stage is null) return;
+        if (_stage is null || _task is null || !_stage.CanToggleStageDeletionMark) return;
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(_stage.Id);
         if (entity is null) return;
+        var taskEntity = await db.Tasks.FindAsync(entity.TaskId);
+        var proj = taskEntity is not null ? await db.Projects.FindAsync(taskEntity.ProjectId) : null;
+        if (taskEntity?.IsMarkedForDeletion == true || proj?.IsMarkedForDeletion == true)
+            return;
 
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
@@ -269,7 +328,15 @@ public partial class StageDetailOverlay : UserControl
         await db.SaveChangesAsync();
 
         _stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
-        ApplyDeletionMark(entity.IsMarkedForDeletion);
+        if (taskEntity != null)
+        {
+            _task!.IsMarkedForDeletion = taskEntity.IsMarkedForDeletion;
+            _task.ProjectIsMarkedForDeletion = proj?.IsMarkedForDeletion ?? false;
+        }
+        _stage.TaskIsMarkedForDeletion = _task!.IsMarkedForDeletion;
+        _stage.ProjectIsMarkedForDeletion = _task.ProjectIsMarkedForDeletion;
+        ApplyStatus(_stage.Status);
+        ApplyDeletionUi();
         _onClosed?.Invoke();
     }
 

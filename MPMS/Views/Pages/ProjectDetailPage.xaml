@@ -17,7 +17,7 @@
                         <EventSetter Event="MouseMove" Handler="KanbanCard_MouseMove"/>
                         <EventSetter Event="PreviewMouseLeftButtonUp" Handler="KanbanCard_MouseUp"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                 <Setter Property="BorderBrush" Value="#DE350B"/>
                                 <Setter Property="Background" Value="#FFF5F5"/>
                             </DataTrigger>
@@ -99,6 +99,115 @@
                         </TextBlock.Text>
                     </TextBlock>
                 </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="StageKanbanCardTemplate">
+            <Border CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderThickness="1.5">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <EventSetter Event="MouseLeftButtonDown" Handler="StageKanbanCard_MouseLeftButtonDown"/>
+                        <EventSetter Event="MouseMove" Handler="StageKanbanCard_MouseMove"/>
+                        <EventSetter Event="PreviewMouseLeftButtonUp" Handler="StageKanbanCard_MouseUp"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                <Setter Property="BorderBrush" Value="#DE350B"/>
+                                <Setter Property="Background" Value="#FFF5F5"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#172B4D"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"
+                                   Margin="0,0,28,0"/>
+                        <Image Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Top"
+                               Source="{svgc:SvgImage Source=/icons/dragAndDrop.svg, AppName=MPMS}"
+                               Opacity="0.55"
+                               IsHitTestVisible="False">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CanDragInKanban}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                    </Grid>
+                    <TextBlock Grid.Row="1" Text="{Binding Stage.Description}" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                               Margin="0,0,0,8"
+                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
+                               Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.55"/>
+                        <TextBlock Text="{Binding TaskName}" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8"
+                                Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}">
+                        <Border Style="{StaticResource AvatarCircle20}" Background="#172B4D" Margin="0,0,6,0">
+                            <Grid>
+                                <Image Style="{StaticResource AvatarImage}"
+                                       Source="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                       Width="20" Height="20"
+                                       Visibility="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource NullToVis}}"/>
+                                <TextBlock Text="{Binding Stage.AssignedUserInitials}" FontSize="8" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="4" Text="{Binding Stage.StageInheritedDeletionHint}" FontSize="10"
+                               Foreground="#B71C1C" TextWrapping="Wrap" Margin="0,0,0,6"
+                               Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
+                    <Border Grid.Row="5" CornerRadius="4" Padding="10,5" HorizontalAlignment="Left">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                        <Setter Property="Background" Value="#DE350B"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                            <Setter Property="Text" Value="Пометка удаления"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </Grid>
             </Border>
         </DataTemplate>
     </UserControl.Resources>
@@ -259,33 +368,79 @@
         <Border Grid.Row="1"
                 Background="#F4F5F7"
                 Padding="24,6">
-            <Border Background="White"
-                    BorderBrush="#DFE1E6"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="6,4"
-                    HorizontalAlignment="Left">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton Content="Общая информация" Tag="Info" IsChecked="True"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                    <RadioButton Content="Задачи" Tag="Tasks"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                    <RadioButton Content="Этапы" Tag="Stages"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                    <RadioButton Content="Обсуждение" Tag="Discussion"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                    <RadioButton Content="Файлы" Tag="Files"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                    <RadioButton Content="Материалы" Tag="Materials"
-                                 Style="{StaticResource TabButton}"
-                                 Click="Tab_Click"/>
-                </StackPanel>
-            </Border>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="White"
+                        BorderBrush="#DFE1E6"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="6,4"
+                        HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="Общая информация" Tag="Info" IsChecked="True"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                        <RadioButton Content="Задачи" Tag="Tasks"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                        <RadioButton Content="Этапы" Tag="Stages"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                        <RadioButton Content="Обсуждение" Tag="Discussion"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                        <RadioButton Content="Файлы" Tag="Files"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                        <RadioButton Content="Материалы" Tag="Materials"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="StageViewModeSwitcher" Grid.Column="1"
+                        Background="White"
+                        BorderBrush="#DFE1E6"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="4,4"
+                        VerticalAlignment="Center"
+                        Margin="12,0,0,0"
+                        Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="StageViewListRb" Tag="List" GroupName="ProjectStageViewMode"
+                                     Style="{StaticResource ViewToggleButton}" IsChecked="True"
+                                     ToolTip="Список"
+                                     Click="StageView_Click">
+                            <Grid Width="20" Height="20">
+                                <Image x:Name="StageViewListIconDark" Width="18" Height="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Source="{svgc:SvgImage Source=/icons/list.svg, AppName=MPMS}"
+                                       Visibility="Collapsed"/>
+                                <Image x:Name="StageViewListIconLight" Width="18" Height="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Source="{svgc:SvgImage Source=/icons/list_white.svg, AppName=MPMS}"/>
+                            </Grid>
+                        </RadioButton>
+                        <RadioButton x:Name="StageViewKanbanRb" Tag="Kanban" GroupName="ProjectStageViewMode"
+                                     Style="{StaticResource ViewToggleButton}"
+                                     ToolTip="Канбан"
+                                     Click="StageView_Click">
+                            <Grid Width="20" Height="20">
+                                <Image x:Name="StageViewKanbanIconDark" Width="18" Height="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Source="{svgc:SvgImage Source=/icons/kanban.svg, AppName=MPMS}"/>
+                                <Image x:Name="StageViewKanbanIconLight" Width="18" Height="18"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Source="{svgc:SvgImage Source=/icons/kanban_white.svg, AppName=MPMS}"
+                                       Visibility="Collapsed"/>
+                            </Grid>
+                        </RadioButton>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
 
         <!-- Content area -->
@@ -769,7 +924,7 @@
                                                     <Setter Property="Background" Value="White"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                             <Setter Property="BorderBrush" Value="#DE350B"/>
                                                             <Setter Property="Background" Value="#FFF5F5"/>
                                                         </DataTrigger>
@@ -806,6 +961,9 @@
                                                                FontSize="11" Margin="0,2,0,0"
                                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                                Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                                    <TextBlock Text="{Binding TaskInheritedDeletionHint}" FontSize="10"
+                                                               Foreground="#B71C1C" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                               Visibility="{Binding TaskInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
 
                                                 <Border Grid.Column="1" CornerRadius="4" Padding="8,3"
@@ -825,7 +983,7 @@
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                     <Setter Property="Background" Value="#DE350B"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -836,7 +994,7 @@
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                         <Setter Property="Text" Value="Пометка удаления"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -879,7 +1037,7 @@
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                 <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -889,11 +1047,19 @@
                                                                Width="14" Height="14"
                                                                VerticalAlignment="Center"/>
                                                     </Button>
-                                                    <!-- Mark for deletion / unmark (Foreman, Manager) -->
+                                                    <!-- Mark for deletion / unmark (Foreman, Manager) — скрыто при пометке проекта -->
                                                     <Button Tag="{Binding}" Click="MarkTaskForDeletion_Click"
-                                                            Margin="0,0,4,0"
-                                                            Style="{StaticResource IconButton}"
-                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
+                                                            Margin="0,0,4,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding CanToggleTaskDeletionMark}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
                                                         <Button.ToolTip>
                                                             <ToolTip>
                                                                 <TextBlock>
@@ -1082,13 +1248,11 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="24,16">
 
-                    <!-- Search + Filters bar for stages (similar to StagesPage) -->
-                    <Border Background="White" CornerRadius="8"
-                            BorderBrush="#DFE1E6" BorderThickness="1"
-                            Padding="16,10" Margin="0,0,0,16">
+                <!-- Search + Filters bar for stages (similar to StagesPage) -->
+                <Border Grid.Row="0" Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        Padding="16,10" Margin="24,16,24,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -1159,23 +1323,12 @@
                                       Style="{StaticResource FormCombo}"
                                       Width="160"/>
                         </Grid>
-                    </Border>
+                </Border>
 
-                    <Border Background="White"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="6,4"
-                            HorizontalAlignment="Left"
-                            Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton Content="Список" Tag="List" IsChecked="True"
-                                         Style="{StaticResource TabButton}" Click="StageView_Click"/>
-                            <RadioButton Content="Kanban" Tag="Kanban"
-                                         Style="{StaticResource TabButton}" Click="StageView_Click"/>
-                        </StackPanel>
-                    </Border>
-
+                <Grid Grid.Row="1" Margin="0,8,0,0">
+                    <ScrollViewer x:Name="StageListHost" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Padding="24,0,24,16">
                     <StackPanel x:Name="StageListPanel">
                     <!-- Column headers -->
                     <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
@@ -1213,7 +1366,7 @@
                                             <Setter Property="Background" Value="White"/>
                                             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                     <Setter Property="BorderBrush" Value="#DE350B"/>
                                                     <Setter Property="Background" Value="#FFF5F5"/>
                                                 </DataTrigger>
@@ -1252,18 +1405,16 @@
                                                        Foreground="{StaticResource TextSecondaryBrush}"
                                                        Margin="0,2,0,0"
                                                        Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                            <TextBlock Text="{Binding StageInheritedDeletionHint}" FontSize="10"
+                                                       Foreground="#B71C1C" Margin="0,4,0,0" TextWrapping="Wrap"
+                                                       Visibility="{Binding StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                         </StackPanel>
 
                                         <!-- Status buttons (left of task, with margin) -->
                                         <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                     VerticalAlignment="Center" Margin="0,0,24,0">
-                                            <Border CornerRadius="4" Padding="8,4" Background="#DE350B"
-                                                    Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVis}}">
-                                                <TextBlock Text="Пометка удаления" FontSize="11"
-                                                           Foreground="White" FontWeight="SemiBold"/>
-                                            </Border>
                                             <StackPanel Orientation="Horizontal"
-                                                        Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+                                                        Visibility="{Binding EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                 <Button Tag="{Binding}"
                                                         Click="StartStageFromProject_Click" Margin="0,0,4,0"
                                                         Style="{StaticResource IconButton}" FontSize="12"
@@ -1320,7 +1471,7 @@
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                        <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                             <Setter Property="Background" Value="#DE350B"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -1331,7 +1482,7 @@
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Text" Value="{Binding Status, Converter={StaticResource StageStatusToString}}"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                                 <Setter Property="Text" Value="Пометка удаления"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -1351,7 +1502,7 @@
                                                     <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                         <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                            <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -1360,11 +1511,19 @@
                                                 <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                        Width="14" Height="14" VerticalAlignment="Center"/>
                                             </Button>
-                                            <!-- Mark/unmark for deletion (Worker+) -->
+                                            <!-- Mark/unmark for deletion (Worker+) — скрыто, если пометка с задачи/проекта -->
                                             <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
-                                                    Margin="0,0,4,0"
-                                                    Style="{StaticResource IconButton}"
-                                                    Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}">
+                                                    Margin="0,0,4,0">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                        <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CanToggleStageDeletionMark}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
                                                 <Button.ToolTip>
                                                     <ToolTip>
                                                         <TextBlock>
@@ -1435,19 +1594,56 @@
                                    Margin="0,6,0,0"/>
                     </StackPanel>
                     </StackPanel>
+                    </ScrollViewer>
 
-                    <Grid x:Name="StageKanbanPanel" Visibility="Collapsed">
+                    <Grid x:Name="StageKanbanPanel" Visibility="Collapsed" Margin="24,0,24,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="6"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
-                            <StackPanel>
-                                <Border Background="#F4F5F7" Padding="14,10" CornerRadius="8,8,0,0">
+                        <!-- Пометка удаления -->
+                        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                AllowDrop="False" VerticalAlignment="Stretch">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#FFEBEE" Padding="14,10" CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#DE350B" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Пометка удаления" FontSize="12" FontWeight="SemiBold" Foreground="#B71C1C"/>
+                                        <Border CornerRadius="10" Background="#FFCDD2" Padding="6,1" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding FilteredMarkedStages.Count}" FontSize="11" Foreground="#B71C1C"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Padding="8,8,8,8">
+                                    <ItemsControl ItemsSource="{Binding FilteredMarkedStages}"
+                                                  ItemTemplate="{StaticResource StageKanbanCardTemplate}"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                AllowDrop="True" Tag="Planned" VerticalAlignment="Stretch"
+                                DragEnter="StageKanbanColumn_DragEnter"
+                                DragLeave="StageKanbanColumn_DragLeave"
+                                Drop="StageKanbanColumn_Drop">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#F4F5F7" Padding="14,10" CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal">
                                         <Border Width="8" Height="8" CornerRadius="4" Background="#6B778C" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="Запланировано" FontSize="12" FontWeight="SemiBold" Foreground="#6B778C"/>
@@ -1456,62 +1652,54 @@
                                         </Border>
                                     </StackPanel>
                                 </Border>
-                                <ItemsControl ItemsSource="{Binding FilteredPlannedStages}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
-                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
-                                                    MouseLeftButtonDown="StageKanbanCard_Click">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
-                                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Padding="8,8,8,8">
+                                    <ItemsControl ItemsSource="{Binding FilteredPlannedStages}"
+                                                  ItemTemplate="{StaticResource StageKanbanCardTemplate}"/>
+                                </ScrollViewer>
+                            </Grid>
                         </Border>
 
-                        <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
-                            <StackPanel>
-                                <Border Background="#FFF8E1" Padding="14,10" CornerRadius="8,8,0,0">
+                        <Border Grid.Column="4" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                AllowDrop="True" Tag="InProgress" VerticalAlignment="Stretch"
+                                DragEnter="StageKanbanColumn_DragEnter"
+                                DragLeave="StageKanbanColumn_DragLeave"
+                                Drop="StageKanbanColumn_Drop">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#E3F2FD" Padding="14,10" CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="8" Height="8" CornerRadius="4" Background="#FF8B00" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Выполняется" FontSize="12" FontWeight="SemiBold" Foreground="#856404"/>
-                                        <Border CornerRadius="10" Background="#FFD54F" Padding="6,1" Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding FilteredInProgressStages.Count}" FontSize="11" Foreground="#856404"/>
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#0082FF" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Выполняется" FontSize="12" FontWeight="SemiBold" Foreground="#0D47A1"/>
+                                        <Border CornerRadius="10" Background="#BBDEFB" Padding="6,1" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding FilteredInProgressStages.Count}" FontSize="11" Foreground="#0D47A1"/>
                                         </Border>
                                     </StackPanel>
                                 </Border>
-                                <ItemsControl ItemsSource="{Binding FilteredInProgressStages}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
-                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
-                                                    MouseLeftButtonDown="StageKanbanCard_Click">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
-                                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Padding="8,8,8,8">
+                                    <ItemsControl ItemsSource="{Binding FilteredInProgressStages}"
+                                                  ItemTemplate="{StaticResource StageKanbanCardTemplate}"/>
+                                </ScrollViewer>
+                            </Grid>
                         </Border>
 
-                        <Border Grid.Column="4" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
-                            <StackPanel>
-                                <Border Background="#E8F5E9" Padding="14,10" CornerRadius="8,8,0,0">
+                        <Border Grid.Column="6" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                AllowDrop="True" Tag="Completed" VerticalAlignment="Stretch"
+                                DragEnter="StageKanbanColumn_DragEnter"
+                                DragLeave="StageKanbanColumn_DragLeave"
+                                Drop="StageKanbanColumn_Drop">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#E8F5E9" Padding="14,10" CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal">
                                         <Border Width="8" Height="8" CornerRadius="4" Background="#00875A" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="Завершено" FontSize="12" FontWeight="SemiBold" Foreground="#1B5E20"/>
@@ -1520,29 +1708,16 @@
                                         </Border>
                                     </StackPanel>
                                 </Border>
-                                <ItemsControl ItemsSource="{Binding FilteredCompletedStages}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
-                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
-                                                    MouseLeftButtonDown="StageKanbanCard_Click">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
-                                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              Padding="8,8,8,8">
+                                    <ItemsControl ItemsSource="{Binding FilteredCompletedStages}"
+                                                  ItemTemplate="{StaticResource StageKanbanCardTemplate}"/>
+                                </ScrollViewer>
+                            </Grid>
                         </Border>
                     </Grid>
-                </StackPanel>
-                </ScrollViewer>
+                </Grid>
             </Grid>
 
             <!-- ═══ DISCUSSION TAB ═══ -->
