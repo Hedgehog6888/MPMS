@@ -250,6 +250,7 @@ public partial class StageDetailOverlay : UserControl
         entity.Status = newStatus;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         // Recalculate task progress and project status
@@ -325,6 +326,7 @@ public partial class StageDetailOverlay : UserControl
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         _stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;

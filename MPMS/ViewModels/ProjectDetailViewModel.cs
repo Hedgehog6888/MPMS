@@ -556,6 +556,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
@@ -572,6 +573,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.IsArchived = true;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
         await LogActivityAsync(db, $"Этап «{stage.Name}» перемещён в архив", "Stage", stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
@@ -589,6 +591,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.Status = newStatus;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, req);
         await LogActivityAsync(db, $"Обновлён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Updated);
@@ -692,6 +695,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             s.IsArchived = true;
             s.IsSynced = false;
             s.UpdatedAt = DateTime.UtcNow;
+            s.LastModifiedLocally = DateTime.UtcNow;
         }
 
         await db.SaveChangesAsync();
@@ -722,6 +726,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 stage.IsMarkedForDeletion = false;
                 stage.IsSynced = false;
                 stage.UpdatedAt = DateTime.UtcNow;
+                stage.LastModifiedLocally = DateTime.UtcNow;
             }
         }
 
@@ -763,6 +768,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 s.IsMarkedForDeletion = false;
                 s.IsSynced = false;
                 s.UpdatedAt = DateTime.UtcNow;
+                s.LastModifiedLocally = DateTime.UtcNow;
             }
         }
 

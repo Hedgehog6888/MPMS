@@ -296,6 +296,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен к удалению" : "Снята пометка удаления";
@@ -314,6 +315,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         entity.IsArchived = true;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id, ActivityActionKind.Deleted);

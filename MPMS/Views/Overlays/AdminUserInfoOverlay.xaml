@@ -153,7 +153,7 @@
                                                FontSize="12" Foreground="#172B4D"
                                                TextWrapping="Wrap"/>
                                     <TextBlock Grid.Column="1"
-                                               Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM HH:mm}'}"
+                                               Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM HH:mm}'}"
                                                FontSize="11" Foreground="#6B778C" Margin="8,0,0,0"
                                                VerticalAlignment="Top"/>
                                 </Grid>

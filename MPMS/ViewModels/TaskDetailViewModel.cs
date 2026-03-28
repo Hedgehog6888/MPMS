@@ -219,7 +219,8 @@ public partial class TaskDetailViewModel : ViewModelBase
             Status = StageStatus.Planned,
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            LastModifiedLocally = DateTime.UtcNow
         };
 
         db.TaskStages.Add(stage);
@@ -245,6 +246,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         stage.Status = req.Status;
         stage.IsSynced = false;
         stage.UpdatedAt = DateTime.UtcNow;
+        stage.LastModifiedLocally = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Stage", id, SyncOperation.Update, req);
@@ -327,6 +329,7 @@ public partial class TaskDetailViewModel : ViewModelBase
                 stage.IsMarkedForDeletion = false;
                 stage.IsSynced = false;
                 stage.UpdatedAt = DateTime.UtcNow;
+                stage.LastModifiedLocally = DateTime.UtcNow;
             }
         }
 
@@ -353,6 +356,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";

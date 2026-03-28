@@ -103,7 +103,70 @@
         </DataTemplate>
 
         <DataTemplate x:Key="StageKanbanCardTemplate">
-            <Border CornerRadius="8" Padding="12,10" Margin="0,0,0,8" BorderThickness="1.5">
+            <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,6" BorderThickness="1.5">
+                <Border.ToolTip>
+                    <ToolTip Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False"
+                             DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="12,10" MaxWidth="300">
+                            <StackPanel>
+                                <TextBlock Text="КАРТОЧКА ЭТАПА" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="#8993A4" Margin="0,0,0,6"/>
+                                <TextBlock Text="{Binding Stage.Name}" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                                <Border Height="1" Background="#EBECF0" Margin="0,10,0,10"/>
+                                <TextBlock Text="ЗАДАЧА" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"/>
+                                <TextBlock Text="{Binding TaskName}" FontSize="12" Foreground="#172B4D"
+                                           TextWrapping="Wrap" Margin="0,2,0,8"/>
+                                <TextBlock Text="СТАТУС" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"/>
+                                <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Left" Margin="0,2,0,8">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                                    <Setter Property="Background" Value="#DE350B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                                        <Setter Property="Text" Value="Пометка удаления"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <TextBlock Text="ОПИСАНИЕ" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"
+                                           Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
+                                <TextBlock Text="{Binding Stage.Description}" FontSize="12" Foreground="#42526E"
+                                           TextWrapping="Wrap" Margin="0,2,0,8"
+                                           Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
+                                <TextBlock Text="ИСПОЛНИТЕЛЬ" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"
+                                           Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="12" Foreground="#42526E"
+                                           TextWrapping="Wrap" Margin="0,2,0,8"
+                                           Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
+                                <TextBlock Text="{Binding Stage.StageInheritedDeletionHint}" FontSize="11"
+                                           Foreground="#B71C1C" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
+                                <Border Height="1" Background="#EBECF0" Margin="0,0,0,8"/>
+                                <TextBlock Text="ВРЕМЕННЫЕ МЕТКИ" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="#8993A4" Margin="0,0,0,6"/>
+                                <TextBlock Text="{Binding Stage.CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Создан: {0:dd.MM.yyyy HH\:mm}}"
+                                           FontSize="11" Foreground="#6B778C"/>
+                                <TextBlock Text="{Binding Stage.UpdatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Последнее обновление: {0:dd.MM.yyyy HH\:mm}}"
+                                           FontSize="11" Foreground="#6B778C" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </ToolTip>
+                </Border.ToolTip>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="White"/>
@@ -130,16 +193,46 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Margin="0,0,0,6">
-                        <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold"
+                    <!-- Заголовок: название | статус | drag -->
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"
-                                   Margin="0,0,28,0"/>
-                        <Image Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Border Grid.Column="1" CornerRadius="4" Padding="6,3" Margin="0,0,4,0"
+                                VerticalAlignment="Top" MaxWidth="104">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                            <Setter Property="Background" Value="#DE350B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap"
+                                       TextAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                                <Setter Property="Text" Value="К удалению"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <Image Grid.Column="2" Width="16" Height="16" VerticalAlignment="Top"
                                Source="{svgc:SvgImage Source=/icons/dragAndDrop.svg, AppName=MPMS}"
-                               Opacity="0.55"
-                               IsHitTestVisible="False">
+                               Opacity="0.55" IsHitTestVisible="False">
                             <Image.Style>
                                 <Style TargetType="Image">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -152,20 +245,49 @@
                             </Image.Style>
                         </Image>
                     </Grid>
-                    <TextBlock Grid.Row="1" Text="{Binding Stage.Description}" FontSize="11"
+                    <!-- Описание: до ~2 строк, полный текст в подсказке -->
+                    <TextBlock Grid.Row="1" Text="{Binding Stage.Description}" FontSize="10"
                                Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
-                               Margin="0,0,0,8"
+                               LineHeight="14" MaxHeight="28" TextTrimming="CharacterEllipsis"
+                               Margin="0,0,0,4"
                                Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,6">
-                        <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
-                               Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.55"/>
-                        <TextBlock Text="{Binding TaskName}" FontSize="11"
-                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8"
+                    <!-- Задача и относительное время изменения -->
+                    <Grid Grid.Row="2" Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
+                                   Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,5,0" Opacity="0.55"/>
+                            <TextBlock Text="{Binding TaskName}" FontSize="10"
+                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" FontSize="9" Foreground="#97A0AF" VerticalAlignment="Center"
+                                   Margin="6,0,0,0" MaxWidth="92" TextTrimming="CharacterEllipsis"
+                                   TextAlignment="Right"
+                                   Text="{Binding Stage.UpdatedAt, Converter={StaticResource DateTimeToRelative}}">
+                            <TextBlock.ToolTip>
+                                <ToolTip Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False"
+                                         DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                            CornerRadius="6" Padding="10,8" MaxWidth="260">
+                                        <StackPanel>
+                                            <TextBlock Text="Последнее обновление" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="#8993A4" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding Stage.UpdatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </ToolTip>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                    </Grid>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,4"
                                 Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}">
-                        <Border Style="{StaticResource AvatarCircle20}" Background="#172B4D" Margin="0,0,6,0">
+                        <Border Style="{StaticResource AvatarCircle20}" Background="#172B4D" Margin="0,0,5,0">
                             <Grid>
                                 <Image Style="{StaticResource AvatarImage}"
                                        Source="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource AvatarBytesToImage}}"
@@ -176,37 +298,13 @@
                                            Visibility="{Binding Stage.AssignedUserAvatarData, Converter={StaticResource NullToVisInv}}"/>
                             </Grid>
                         </Border>
-                        <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="11"
+                        <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="10"
                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Grid.Row="4" Text="{Binding Stage.StageInheritedDeletionHint}" FontSize="10"
-                               Foreground="#B71C1C" TextWrapping="Wrap" Margin="0,0,0,6"
+                    <TextBlock Grid.Row="4" Text="{Binding Stage.StageInheritedDeletionHint}" FontSize="9"
+                               Foreground="#B71C1C" TextWrapping="Wrap" Margin="0,0,0,2"
                                Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
-                    <Border Grid.Row="5" CornerRadius="4" Padding="10,5" HorizontalAlignment="Left">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                        <Setter Property="Background" Value="#DE350B"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                            <Setter Property="Text" Value="Пометка удаления"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Border>
                 </Grid>
             </Border>
         </DataTemplate>

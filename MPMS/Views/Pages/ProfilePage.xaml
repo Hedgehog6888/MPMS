@@ -610,7 +610,7 @@
                                                    VerticalAlignment="Center"
                                                    Margin="12,0,0,0">
                                             <TextBlock.Text>
-                                                <Binding Path="CreatedAt">
+                                                <Binding Path="CreatedAt" Converter="{StaticResource UtcToLocalDateTime}">
                                                     <Binding.StringFormat>dd.MM HH:mm</Binding.StringFormat>
                                                 </Binding>
                                             </TextBlock.Text>

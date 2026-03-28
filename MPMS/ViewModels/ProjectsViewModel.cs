@@ -282,7 +282,13 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
         foreach (var t in tasks) { t.IsArchived = true; t.IsSynced = false; t.UpdatedAt = DateTime.UtcNow; }
-        foreach (var s in stages) { s.IsArchived = true; s.IsSynced = false; s.UpdatedAt = DateTime.UtcNow; }
+        foreach (var s in stages)
+        {
+            s.IsArchived = true;
+            s.IsSynced = false;
+            s.UpdatedAt = DateTime.UtcNow;
+            s.LastModifiedLocally = DateTime.UtcNow;
+        }
 
         await db.SaveChangesAsync();
         await LogActivityAsync(db, $"Проект «{project.Name}» перемещён в архив", "Project", project.Id, ActivityActionKind.Deleted);
@@ -318,6 +324,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 s.IsMarkedForDeletion = false;
                 s.IsSynced = false;
                 s.UpdatedAt = DateTime.UtcNow;
+                s.LastModifiedLocally = DateTime.UtcNow;
             }
         }
 

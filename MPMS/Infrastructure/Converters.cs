@@ -467,10 +467,18 @@ public class DateTimeToRelativeConverter : IValueConverter
 {
     public static readonly DateTimeToRelativeConverter Instance = new();
 
+    /// <summary>В приложении в БД хранится UTC; SQLite/EF часто отдаёт Unspecified — считаем такие значения UTC.</summary>
+    internal static DateTime ToLocalTimeForDisplay(DateTime dt) => dt.Kind switch
+    {
+        DateTimeKind.Utc => dt.ToLocalTime(),
+        DateTimeKind.Local => dt,
+        _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToLocalTime(),
+    };
+
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not DateTime dt) return "";
-        var local = dt.Kind == DateTimeKind.Utc ? dt.ToLocalTime() : dt;
+        var local = ToLocalTimeForDisplay(dt);
         var diff = DateTime.Now - local;
         var ru = new System.Globalization.CultureInfo("ru-RU");
         var dateStr = local.ToString("d MMM", ru);
@@ -480,6 +488,28 @@ public class DateTimeToRelativeConverter : IValueConverter
         if (local.Date == DateTime.Today) return $"{dateStr}, {local:HH:mm}";
         if (diff.TotalDays < 7) return local.ToString("d MMM, HH:mm", ru);
         return local.ToString("dd MMM yyyy, HH:mm", ru);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Для привязок с StringFormat: значения из SQLite приходят как Unspecified (фактически UTC).
+/// После конвертации StringFormat даёт часы/дату уже в локальном поясе пользователя.
+/// </summary>
+public class UtcToLocalDateTimeConverter : IValueConverter
+{
+    public static readonly UtcToLocalDateTimeConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value switch
+        {
+            DateTime dt => DateTimeToRelativeConverter.ToLocalTimeForDisplay(dt),
+            null => string.Empty,
+            _ => value
+        };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

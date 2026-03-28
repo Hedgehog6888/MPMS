@@ -436,6 +436,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             s.IsArchived = true;
             s.IsSynced = false;
             s.UpdatedAt = DateTime.UtcNow;
+            s.LastModifiedLocally = DateTime.UtcNow;
         }
 
         await db.SaveChangesAsync();
@@ -468,6 +469,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 stage.IsMarkedForDeletion = false;
                 stage.IsSynced = false;
                 stage.UpdatedAt = DateTime.UtcNow;
+                stage.LastModifiedLocally = DateTime.UtcNow;
             }
         }
 
