@@ -146,20 +146,13 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         {
             var projTasks = allTasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToList();
             var taskIds = projTasks.Select(t => t.Id).ToList();
-            var projStages = allStages.Where(s => taskIds.Contains(s.TaskId)).ToList();
+            var projStages = allStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToList();
             foreach (var t in projTasks)
             {
                 var stages = projStages.Where(s => s.TaskId == t.Id).ToList();
-                t.TotalStages = stages.Count;
-                t.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
-                t.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
-                if (stages.Count > 0)
-                    t.Status = StatusCalculator.GetTaskStatusFromStages(stages);
+                ProgressCalculator.ApplyTaskMetrics(t, stages);
             }
-            project.TotalTasks = projTasks.Count;
-            project.CompletedTasks = projTasks.Count(t => t.Status == TaskStatus.Completed);
-            project.InProgressTasks = projTasks.Count(t => t.Status == TaskStatus.InProgress);
-            project.Status = StatusCalculator.GetProjectStatusFromTasks(projTasks);
+            ProgressCalculator.ApplyProjectMetrics(project, projTasks, projStages);
         }
 
         // Sort: non-deleted first by status, then by progress desc, then by date

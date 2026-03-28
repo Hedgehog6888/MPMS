@@ -155,28 +155,14 @@
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
                         <TextBlock Text="Прораб" Style="{StaticResource FormLabel}" Margin="0"/>
-                        <TextBlock Text=" (один)" FontSize="11" Foreground="#6B778C"
+                        <TextBlock Text=" (можно несколько)" FontSize="11" Foreground="#6B778C"
                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                     </StackPanel>
 
-                    <!-- Selected foreman chip -->
-                    <StackPanel x:Name="SelectedForemanPanel" Grid.Row="1"
-                                Orientation="Horizontal" Margin="0,0,0,8"
-                                Visibility="Collapsed">
-                        <Border Style="{StaticResource MemberChip}"
-                                Background="#ECFDF5" BorderBrush="#6EE7B7" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="SelectedForemanName"
-                                           FontSize="12" Foreground="#166534"
-                                           VerticalAlignment="Center"/>
-                                <Button Style="{StaticResource ChipRemoveButton}"
-                                        Click="RemoveForeman_Click" Margin="6,0,0,0"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="✕" FontSize="10" Foreground="#6B778C"/>
-                                </Button>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                    <!-- Selected foremen chips -->
+                    <WrapPanel x:Name="SelectedForemenPanel" Grid.Row="1"
+                               Margin="0,0,0,8"
+                               Visibility="Collapsed"/>
 
                     <!-- Foreman list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"

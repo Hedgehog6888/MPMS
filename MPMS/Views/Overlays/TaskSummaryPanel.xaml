@@ -104,31 +104,6 @@
                 <!-- Details section -->
                 <StackPanel Margin="16,14,16,0">
 
-                    <!-- Assignee -->
-                    <StackPanel Style="{StaticResource InfoRow}">
-                        <Border x:Name="AssigneeAvatarBorder"
-                                Style="{StaticResource AvatarCircle28}"
-                                Background="#172B4D"
-                                Margin="0,0,10,0">
-                            <Grid>
-                                <Image x:Name="AssigneeAvatarImage"
-                                       Style="{StaticResource AvatarImage}"
-                                       Width="28" Height="28"/>
-                                <TextBlock x:Name="AssigneeAvatarInitials"
-                                           Foreground="White"
-                                           FontSize="10"
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="ИСПОЛНИТЕЛЬ" Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="AssigneeText" FontSize="13" Foreground="#172B4D"
-                                       FontWeight="SemiBold" TextWrapping="Wrap" MaxWidth="180"/>
-                        </StackPanel>
-                    </StackPanel>
-
                     <!-- Due date -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
@@ -157,6 +132,27 @@
                             <TextBlock x:Name="ProjectNameText" FontSize="12" Foreground="#172B4D"
                                        TextWrapping="Wrap" MaxWidth="180"/>
                         </StackPanel>
+                    </StackPanel>
+
+                    <!-- Assignees -->
+                    <StackPanel>
+                        <TextBlock Text="ИСПОЛНИТЕЛИ" Style="{StaticResource SectionLabel}"/>
+
+                        <StackPanel x:Name="ForemenSection" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Прорабы" FontSize="11" FontWeight="SemiBold" Foreground="#166534" Margin="0,0,0,4"/>
+                            <WrapPanel x:Name="ForemenPanel"/>
+                        </StackPanel>
+
+                        <StackPanel x:Name="WorkersSection" Visibility="Collapsed">
+                            <TextBlock Text="Работники" FontSize="11" FontWeight="SemiBold" Foreground="#92400E" Margin="0,0,0,4"/>
+                            <WrapPanel x:Name="WorkersPanel"/>
+                        </StackPanel>
+
+                        <TextBlock x:Name="NoAssigneesText"
+                                   Text="Не назначено"
+                                   FontSize="12"
+                                   Foreground="#97A0AF"
+                                   Visibility="Collapsed"/>
                     </StackPanel>
 
                 </StackPanel>

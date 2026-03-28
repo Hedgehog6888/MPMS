@@ -72,48 +72,6 @@
                                FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <!-- View toggle -->
-                    <Border CornerRadius="6" BorderBrush="#DFE1E6"
-                            BorderThickness="1" Margin="0,0,10,0" Height="38">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton IsChecked="True" Tag="List"
-                                         Click="ViewMode_Click" ToolTip="Список"
-                                         Style="{StaticResource ViewToggleButton}">
-                                <Image Width="18" Height="18">
-                                    <Image.Style>
-                                        <Style TargetType="Image">
-                                            <Setter Property="Source"
-                                                    Value="{svgc:SvgImage Source=/icons/list.svg, AppName=MPMS}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                                    <Setter Property="Source"
-                                                            Value="{svgc:SvgImage Source=/icons/list_white.svg, AppName=MPMS}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
-                                </Image>
-                            </RadioButton>
-                            <RadioButton Tag="Kanban"
-                                         Click="ViewMode_Click" ToolTip="Канбан"
-                                         Style="{StaticResource ViewToggleButton}">
-                                <Image Width="18" Height="18">
-                                    <Image.Style>
-                                        <Style TargetType="Image">
-                                            <Setter Property="Source"
-                                                    Value="{svgc:SvgImage Source=/icons/kanban.svg, AppName=MPMS}"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                                    <Setter Property="Source"
-                                                            Value="{svgc:SvgImage Source=/icons/kanban_white.svg, AppName=MPMS}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Image.Style>
-                                </Image>
-                            </RadioButton>
-                        </StackPanel>
-                    </Border>
                     <!-- Export button -->
                     <Button Height="38" Padding="14,0" Margin="0,0,8,0"
                             FontSize="13" Cursor="Hand">

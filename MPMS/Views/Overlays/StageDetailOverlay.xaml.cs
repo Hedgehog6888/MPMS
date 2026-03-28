@@ -126,7 +126,7 @@ public partial class StageDetailOverlay : UserControl
                 }
             }
         }
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, a.AvatarData, a.AvatarPath)).ToList();
+        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, null, a.AvatarData, a.AvatarPath)).ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -227,11 +227,7 @@ public partial class StageDetailOverlay : UserControl
         if (task is null) return;
 
         var stages = await db.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
-        task.TotalStages = stages.Count;
-        task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
-
-        if (stages.Count > 0)
-            task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
+        ProgressCalculator.ApplyTaskMetrics(task, stages);
 
         task.IsSynced = false;
         task.UpdatedAt = DateTime.UtcNow;
@@ -245,6 +241,14 @@ public partial class StageDetailOverlay : UserControl
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = taskIds.Count == 0
+            ? new List<LocalTaskStage>()
+            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+
+        foreach (var task in tasks)
+            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;

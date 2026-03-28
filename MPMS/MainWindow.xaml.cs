@@ -13,6 +13,7 @@ using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.ViewModels;
+using MPMS.Views.Overlays;
 
 namespace MPMS;
 
@@ -371,7 +372,7 @@ public partial class MainWindow : Window
         catch (System.OperationCanceledException) { }
     }
 
-    private void SearchResult_Click(object sender, MouseButtonEventArgs e)
+    private async void SearchResult_Click(object sender, MouseButtonEventArgs e)
     {
         SearchResultsPopup.IsOpen = false;
         if (DataContext is not MainViewModel vm) return;
@@ -382,18 +383,88 @@ public partial class MainWindow : Window
             {
                 vm.NavigateToProject(project);
             }
-            else if (fe.Tag is LocalTask)
+            else if (fe.Tag is LocalTask task)
             {
-                vm.NavigateCommand.Execute("Tasks");
+                await OpenTaskFromSearchAsync(task);
             }
-            else if (fe.Tag is LocalTaskStage)
+            else if (fe.Tag is LocalTaskStage stage)
             {
-                vm.NavigateCommand.Execute("Stages");
+                await OpenStageFromSearchAsync(stage);
             }
         }
 
         GlobalSearchBox.Text = "";
         vm.SearchText = string.Empty;
+    }
+
+    private async Task OpenTaskFromSearchAsync(LocalTask task)
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var taskEntity = await db.Tasks.FindAsync(task.Id);
+        if (taskEntity is null) return;
+
+        taskEntity.ProjectName = await db.Projects
+            .Where(p => p.Id == taskEntity.ProjectId)
+            .Select(p => p.Name)
+            .FirstOrDefaultAsync() ?? taskEntity.ProjectName;
+
+        var stages = await db.TaskStages
+            .Where(s => s.TaskId == taskEntity.Id && !s.IsArchived)
+            .ToListAsync();
+        Services.ProgressCalculator.ApplyTaskMetrics(taskEntity, stages);
+
+        var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
+        var project = await tasksVm.GetProjectForTaskAsync(taskEntity.ProjectId);
+
+        UIElement? leftPanel = null;
+        if (project is not null)
+        {
+            var projectPanel = new ProjectSummaryPanel();
+            projectPanel.SetProject(project);
+            leftPanel = projectPanel;
+        }
+
+        var overlay = new TaskDetailOverlay();
+        overlay.SetTask(taskEntity);
+        ShowDrawer(leftPanel, overlay, 900);
+    }
+
+    private async Task OpenStageFromSearchAsync(LocalTaskStage stage)
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var stageEntity = await db.TaskStages.FindAsync(stage.Id);
+        if (stageEntity is null) return;
+
+        var task = await db.Tasks.FindAsync(stageEntity.TaskId);
+        if (task is null) return;
+
+        task.ProjectName = await db.Projects
+            .Where(p => p.Id == task.ProjectId)
+            .Select(p => p.Name)
+            .FirstOrDefaultAsync() ?? task.ProjectName;
+
+        var taskStages = await db.TaskStages
+            .Where(s => s.TaskId == task.Id && !s.IsArchived)
+            .ToListAsync();
+        Services.ProgressCalculator.ApplyTaskMetrics(task, taskStages);
+        stageEntity.TaskName = task.Name;
+
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(task);
+
+        var overlay = new StageDetailOverlay();
+        overlay.SetStage(new StageItem
+        {
+            Stage = stageEntity,
+            TaskId = task.Id,
+            TaskName = task.Name,
+            ProjectId = task.ProjectId,
+            ProjectName = task.ProjectName ?? "—"
+        }, task);
+
+        ShowDrawer(taskPanel, overlay, 850);
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

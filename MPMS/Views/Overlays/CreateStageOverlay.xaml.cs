@@ -191,7 +191,12 @@ public partial class CreateStageOverlay : UserControl
         else
         {
             _allAssigneeItems = taskAssignees.Select(ta => new AssigneePickerItem(
-                ta.UserId, ta.UserName, "Worker", _selectedAssigneeIds, ta.AvatarPath, ta.AvatarData)).ToList();
+                ta.UserId,
+                ta.UserName,
+                GetRoleForTaskAssignee(db, ta.UserId),
+                _selectedAssigneeIds,
+                ta.AvatarPath,
+                ta.AvatarData)).ToList();
         }
 
         // Load existing stage assignees if editing (exclude blocked users)
@@ -223,7 +228,10 @@ public partial class CreateStageOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
-        var projects = await db.Projects.OrderBy(p => p.Name).ToListAsync();
+        var projects = await db.Projects
+            .Where(p => !p.IsArchived && !p.IsMarkedForDeletion)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
         ProjectCombo.ItemsSource = projects;
         _projectItems = projects.Select(p => new StageSelectionItem(p.Id, p.Name)).ToList();
         ProjectPickerList.ItemsSource = _projectItems;
@@ -241,7 +249,10 @@ public partial class CreateStageOverlay : UserControl
         await using var db = await dbFactory.CreateDbContextAsync();
         var project = await db.Projects.FindAsync(projectId);
         ProjectNameBox.Text = project?.Name ?? "—";
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
+        var tasks = await db.Tasks
+            .Where(t => t.ProjectId == projectId && !t.IsArchived && !t.IsMarkedForDeletion)
+            .OrderBy(t => t.Name)
+            .ToListAsync();
         TaskCombo.ItemsSource = tasks;
         _taskItems = tasks.Select(t => new StageSelectionItem(t.Id, t.Name)).ToList();
         TaskPickerList.ItemsSource = _taskItems;
@@ -282,7 +293,10 @@ public partial class CreateStageOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId).OrderBy(t => t.Name).ToListAsync();
+        var tasks = await db.Tasks
+            .Where(t => t.ProjectId == projectId && !t.IsArchived && !t.IsMarkedForDeletion)
+            .OrderBy(t => t.Name)
+            .ToListAsync();
         TaskCombo.ItemsSource = tasks;
         _taskItems = tasks.Select(t => new StageSelectionItem(t.Id, t.Name)).ToList();
         TaskPickerList.ItemsSource = _taskItems;
@@ -523,6 +537,16 @@ public partial class CreateStageOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         return await db.Tasks.FindAsync(taskId);
+    }
+
+    private static string GetRoleForTaskAssignee(LocalDbContext db, Guid userId)
+    {
+        var role = db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.RoleName)
+            .FirstOrDefault();
+
+        return string.IsNullOrWhiteSpace(role) ? "Worker" : role;
     }
 }
 

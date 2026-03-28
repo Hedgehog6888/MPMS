@@ -231,39 +231,72 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Assignees (multi) -->
+                    <!-- Assignees (split by role) -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="ИСПОЛНИТЕЛИ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
 
-                        <!-- Multi-assignee avatar strip (populated in code-behind) -->
-                        <ItemsControl x:Name="AssigneesDisplay">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <Border Style="{StaticResource AvatarCircle30}"
-                                                Background="#1B6EC2" Margin="0,0,8,0">
-                                            <Grid>
-                                                <Image Style="{StaticResource AvatarImage}"
-                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                       Width="30" Height="30"
-                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                <TextBlock Text="{Binding Initials}"
-                                                           FontSize="10" FontWeight="Bold"
-                                                           Foreground="White"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                            </Grid>
-                                        </Border>
-                                        <TextBlock Text="{Binding UserName}"
-                                                   FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="#172B4D"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <StackPanel x:Name="ForemenSection" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Прорабы" FontSize="11" FontWeight="SemiBold" Foreground="#166534" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="ForemenDisplay">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <Border Style="{StaticResource AvatarCircle30}"
+                                                    Background="#166534" Margin="0,0,8,0">
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="30" Height="30"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Initials}"
+                                                               FontSize="10" FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="WorkersSection" Visibility="Collapsed">
+                            <TextBlock Text="Работники" FontSize="11" FontWeight="SemiBold" Foreground="#92400E" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="WorkersDisplay">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <Border Style="{StaticResource AvatarCircle30}"
+                                                    Background="#92400E" Margin="0,0,8,0">
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="30" Height="30"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Initials}"
+                                                               FontSize="10" FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
 
                         <!-- Fallback: no assignees -->
                         <TextBlock x:Name="NoAssigneesText"

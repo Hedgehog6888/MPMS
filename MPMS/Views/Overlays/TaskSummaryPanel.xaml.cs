@@ -31,9 +31,9 @@ public partial class TaskSummaryPanel : UserControl
         }
         Visibility = Visibility.Visible;
         TaskNameText.Text = task.Name;
-        AssigneeText.Text = task.AssignedUserName ?? "—";
-        ApplyAssigneeAvatar(task);
         DueDateText.Text = task.DueDate?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "—";
+        var loadVersion = ++_avatarLoadVersion;
+        _ = LoadAssigneesAsync(task, loadVersion);
 
         // Days left / overdue
         if (task.DueDate.HasValue)
@@ -114,56 +114,75 @@ public partial class TaskSummaryPanel : UserControl
         }
     }
 
-    private void ApplyAssigneeAvatar(LocalTask task)
-    {
-        AssigneeAvatarInitials.Text = task.AssignedUserInitials;
-        AssigneeAvatarBorder.Background = new InitialsToBrushConverter().Convert(
-            task.AssignedUserInitials, typeof(Brush), null!, CultureInfo.InvariantCulture) as Brush
-            ?? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
-
-        var avatar = AvatarHelper.GetImageSource(task.AssignedUserAvatarData, task.AssignedUserAvatarPath, task.AssignedUserName);
-        if (avatar is not null)
-        {
-            AssigneeAvatarImage.Source = avatar;
-            AssigneeAvatarImage.Visibility = Visibility.Visible;
-            AssigneeAvatarInitials.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        AssigneeAvatarImage.Source = null;
-        AssigneeAvatarImage.Visibility = Visibility.Collapsed;
-        AssigneeAvatarInitials.Visibility = Visibility.Visible;
-
-        if (!task.AssignedUserId.HasValue)
-            return;
-
-        var loadVersion = ++_avatarLoadVersion;
-        _ = LoadAssigneeAvatarAsync(task.AssignedUserId.Value, task.AssignedUserName, loadVersion);
-    }
-
-    private async Task LoadAssigneeAvatarAsync(Guid userId, string? userName, int loadVersion)
+    private async Task LoadAssigneesAsync(LocalTask task, int loadVersion)
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
-        var avatar = await db.Users
-            .Where(u => u.Id == userId)
-            .Select(u => new { u.AvatarData, u.AvatarPath })
-            .FirstOrDefaultAsync();
-        if (avatar is null || loadVersion != _avatarLoadVersion)
-            return;
 
-        var source = AvatarHelper.GetImageSource(avatar.AvatarData, avatar.AvatarPath, userName);
-        if (source is null)
-            return;
+        var assignees = await db.TaskAssignees
+            .Where(a => a.TaskId == task.Id)
+            .OrderBy(a => a.UserName)
+            .ToListAsync();
+
+        if (assignees.Count == 0 && task.AssignedUserId.HasValue)
+        {
+            assignees.Add(new LocalTaskAssignee
+            {
+                TaskId = task.Id,
+                UserId = task.AssignedUserId.Value,
+                UserName = task.AssignedUserName ?? "—"
+            });
+        }
+
+        var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
+        var roles = userIds.Count == 0
+            ? new Dictionary<Guid, string?>()
+            : await db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => (string?)u.RoleName);
+
+        var foremen = assignees
+            .Where(a => roles.TryGetValue(a.UserId, out var role) && role is "Foreman" or "Прораб")
+            .Select(a => a.UserName)
+            .Distinct()
+            .ToList();
+        var workers = assignees
+            .Where(a => !roles.TryGetValue(a.UserId, out var role) || role is "Worker" or "Работник")
+            .Select(a => a.UserName)
+            .Distinct()
+            .ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (loadVersion != _avatarLoadVersion)
                 return;
-            AssigneeAvatarImage.Source = source;
-            AssigneeAvatarImage.Visibility = Visibility.Visible;
-            AssigneeAvatarInitials.Visibility = Visibility.Collapsed;
+            ApplyAssigneeLists(ForemenPanel, ForemenSection, foremen, Color.FromRgb(0xEC, 0xFD, 0xF5), Color.FromRgb(0x16, 0x65, 0x34));
+            ApplyAssigneeLists(WorkersPanel, WorkersSection, workers, Color.FromRgb(0xFF, 0xF7, 0xED), Color.FromRgb(0x92, 0x40, 0x0E));
+            NoAssigneesText.Visibility = foremen.Count == 0 && workers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         });
+    }
+
+    private static void ApplyAssigneeLists(WrapPanel panel, FrameworkElement section, IReadOnlyCollection<string> names, Color background, Color foreground)
+    {
+        panel.Children.Clear();
+        section.Visibility = names.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+        foreach (var name in names)
+        {
+            panel.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(8, 4, 8, 4),
+                Margin = new Thickness(0, 0, 6, 6),
+                Background = new SolidColorBrush(background),
+                Child = new TextBlock
+                {
+                    Text = name,
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(foreground)
+                }
+            });
+        }
     }
 
     private void UpdateProgressWidth(int pct)

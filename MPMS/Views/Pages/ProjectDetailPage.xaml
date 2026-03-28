@@ -641,24 +641,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- View toggle -->
-                <Border Grid.Row="0"
-                        Background="{StaticResource BackgroundBrush}"
-                        Padding="24,2,24,4">
-                    <Border Background="White"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="6,4"
-                            HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton Content="Список" Tag="List" IsChecked="True"
-                                         Style="{StaticResource TabButton}" Click="TaskView_Click"/>
-                            <RadioButton Content="Kanban" Tag="Kanban"
-                                         Style="{StaticResource TabButton}" Click="TaskView_Click"/>
-                        </StackPanel>
-                    </Border>
-                </Border>
+                <Border Grid.Row="0" Visibility="Collapsed"/>
 
                 <!-- Tasks content with common filter bar for list & kanban -->
                 <Grid Grid.Row="1">
@@ -1178,6 +1161,22 @@
                         </Grid>
                     </Border>
 
+                    <Border Background="White"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="6,4"
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="Список" Tag="List" IsChecked="True"
+                                         Style="{StaticResource TabButton}" Click="StageView_Click"/>
+                            <RadioButton Content="Kanban" Tag="Kanban"
+                                         Style="{StaticResource TabButton}" Click="StageView_Click"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel x:Name="StageListPanel">
                     <!-- Column headers -->
                     <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                             BorderThickness="1.5" BorderBrush="Transparent">
@@ -1435,6 +1434,113 @@
                                    Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
+                    </StackPanel>
+
+                    <Grid x:Name="StageKanbanPanel" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
+                            <StackPanel>
+                                <Border Background="#F4F5F7" Padding="14,10" CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#6B778C" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Запланировано" FontSize="12" FontWeight="SemiBold" Foreground="#6B778C"/>
+                                        <Border CornerRadius="10" Background="#E0E0E0" Padding="6,1" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding FilteredPlannedStages.Count}" FontSize="11" Foreground="#6B778C"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <ItemsControl ItemsSource="{Binding FilteredPlannedStages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
+                                                    MouseLeftButtonDown="StageKanbanCard_Click">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
+                            <StackPanel>
+                                <Border Background="#FFF8E1" Padding="14,10" CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#FF8B00" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Выполняется" FontSize="12" FontWeight="SemiBold" Foreground="#856404"/>
+                                        <Border CornerRadius="10" Background="#FFD54F" Padding="6,1" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding FilteredInProgressStages.Count}" FontSize="11" Foreground="#856404"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <ItemsControl ItemsSource="{Binding FilteredInProgressStages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
+                                                    MouseLeftButtonDown="StageKanbanCard_Click">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1">
+                            <StackPanel>
+                                <Border Background="#E8F5E9" Padding="14,10" CornerRadius="8,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#00875A" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Завершено" FontSize="12" FontWeight="SemiBold" Foreground="#1B5E20"/>
+                                        <Border CornerRadius="10" Background="#A5D6A7" Padding="6,1" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding FilteredCompletedStages.Count}" FontSize="11" Foreground="#1B5E20"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <ItemsControl ItemsSource="{Binding FilteredCompletedStages}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="8" BorderBrush="#DFE1E6" BorderThickness="1"
+                                                    Padding="12,10" Margin="10,10,10,0" Cursor="Hand"
+                                                    MouseLeftButtonDown="StageKanbanCard_Click">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding TaskName}" FontSize="11" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding Stage.Description}" FontSize="11" Margin="0,4,0,0"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </StackPanel>
                 </ScrollViewer>
             </Grid>

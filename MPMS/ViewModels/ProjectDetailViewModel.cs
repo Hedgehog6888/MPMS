@@ -62,6 +62,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     // ─── UI state and other entities ──────────────────────────────────────────
     [ObservableProperty] private string _activeTab = "Tasks";
     [ObservableProperty] private string _taskViewMode = "List";
+    [ObservableProperty] private string _stageViewMode = "List";
     [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
     [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
 
@@ -74,6 +75,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _projectProgressPercent;
     [ObservableProperty] private IList<DonutSegment> _taskStatsSegments = [];
     [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
+    [ObservableProperty] private ObservableCollection<StageItem> _filteredPlannedStages = [];
+    [ObservableProperty] private ObservableCollection<StageItem> _filteredInProgressStages = [];
+    [ObservableProperty] private ObservableCollection<StageItem> _filteredCompletedStages = [];
 
     public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
@@ -103,6 +107,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         FilteredInProgressTasks = [];
         FilteredPausedTasks = [];
         FilteredCompletedTasks = [];
+        FilteredPlannedStages = [];
+        FilteredInProgressStages = [];
+        FilteredCompletedStages = [];
         AllStages = [];
         FilteredStages = [];
         Files = [];
@@ -230,12 +237,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         foreach (var task in tasks)
         {
             var taskStages = stages.Where(s => s.TaskId == task.Id).ToList();
-            task.TotalStages = taskStages.Count;
-            task.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
-            task.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
-            // Статус задачи: завершённый + планируемый = в работе (StatusCalculator)
-            if (taskStages.Count > 0)
-                task.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
+            ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         }
 
         // Persist task status changes and recalc project status
@@ -269,21 +271,16 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Initialize filtered task collections based on current filters
         ApplyTaskFilter();
 
-        // Progress: exclude tasks marked for deletion or archived. ProgressCalculator — единая формула с ProjectsViewModel
-        var activeTasks = tasks.Where(t => !t.IsMarkedForDeletion && !t.IsArchived).ToList();
-        TotalTasks = activeTasks.Count;
-        CompletedTasksCount = activeTasks.Count(t => t.Status == TaskStatus.Completed);
-        InProgressTasksCount = activeTasks.Count(t => t.Status == TaskStatus.InProgress);
-        OverdueTasksCount = tasks.Count(t => t.IsOverdue);
-        ProjectProgressPercent = (int)Math.Round(ProgressCalculator.GetProjectProgressPercent(CompletedTasksCount, InProgressTasksCount, TotalTasks));
         if (Project is not null)
-        {
-            Project.TotalTasks = TotalTasks;
-            Project.CompletedTasks = CompletedTasksCount;
-            Project.InProgressTasks = InProgressTasksCount;
-        }
+            ProgressCalculator.ApplyProjectMetrics(Project, tasks, stages);
 
-        int plannedCount = activeTasks.Count(t => t.Status == TaskStatus.Planned);
+        TotalTasks = Project?.TotalTasks ?? 0;
+        CompletedTasksCount = Project?.CompletedTasks ?? 0;
+        InProgressTasksCount = Project?.InProgressTasks ?? 0;
+        OverdueTasksCount = Project?.OverdueTasks ?? 0;
+        ProjectProgressPercent = Project?.ProgressPercent ?? 0;
+
+        int plannedCount = tasks.Count(t => !t.IsMarkedForDeletion && !t.IsArchived && t.Status == TaskStatus.Planned);
         TaskStatsSegments = new List<DonutSegment>
         {
             new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
@@ -476,6 +473,22 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         var list = query.OrderBy(s => s.IsMarkedForDeletion).ToList();
         FilteredStages = new ObservableCollection<LocalTaskStage>(list);
+
+        var stageItems = list
+            .Where(s => !s.IsMarkedForDeletion)
+            .Select(s => new StageItem
+            {
+                Stage = s,
+                TaskId = s.TaskId,
+                TaskName = s.TaskName,
+                ProjectId = Project?.Id ?? Guid.Empty,
+                ProjectName = Project?.Name ?? "—"
+            })
+            .ToList();
+
+        FilteredPlannedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Planned));
+        FilteredInProgressStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.InProgress));
+        FilteredCompletedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Completed));
     }
 
     public async Task UpdateProjectAsync(Guid id, UpdateProjectRequest req)
@@ -516,6 +529,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     [RelayCommand]
     private void SwitchTaskView(string mode) => TaskViewMode = mode;
+
+    [RelayCommand]
+    private void SwitchStageView(string mode) => StageViewMode = mode;
 
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
@@ -802,6 +818,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             if (entity is null) continue;
             entity.TotalStages = t.TotalStages;
             entity.CompletedStages = t.CompletedStages;
+            entity.InProgressStages = t.InProgressStages;
             entity.Status = t.Status;
             entity.IsSynced = false;
             entity.UpdatedAt = DateTime.UtcNow;
@@ -817,6 +834,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (project is null) return;
 
         var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = taskIds.Count == 0
+            ? new List<LocalTaskStage>()
+            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
+
+        foreach (var task in tasks)
+            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
 
         project.IsSynced = false;

@@ -24,6 +24,8 @@ public partial class CreateTaskOverlay : UserControl
     private Action? _onAfterSave;
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
+    private List<AssigneePickerItem> _foremanItems = [];
+    private List<AssigneePickerItem> _workerItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private TaskPriority _selectedPriority = TaskPriority.Medium;
 
@@ -137,28 +139,32 @@ public partial class CreateTaskOverlay : UserControl
             }
         }
 
-        if (members.Count == 0)
-        {
-            _allAssigneeItems = [];
-        }
-        else
-        {
-            _allAssigneeItems = members.Select(m => new AssigneePickerItem(
-                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData)).ToList();
-        }
+        _foremanItems = members
+            .Where(m => m.UserRole is "Foreman" or "Прораб")
+            .Select(m => new AssigneePickerItem(
+                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData))
+            .ToList();
+        _workerItems = members
+            .Where(m => m.UserRole is "Worker" or "Работник")
+            .Select(m => new AssigneePickerItem(
+                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData))
+            .ToList();
+        _allAssigneeItems = [.. _foremanItems, .. _workerItems];
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            if (members.Count == 0)
+            if (_allAssigneeItems.Count == 0)
             {
                 NoProjHint.Visibility = Visibility.Visible;
-                NoProjHintText.Text = "В проекте нет назначенных работников. Добавьте прораба или работников в проект.";
-                AssigneePickerBorder.Visibility = Visibility.Collapsed;
+                NoProjHintText.Text = "В проекте нет назначенных прорабов или работников. Добавьте команду в проект.";
+                ForemanPickerBorder.Visibility = Visibility.Collapsed;
+                WorkerPickerBorder.Visibility = Visibility.Collapsed;
             }
             else
             {
                 NoProjHint.Visibility = Visibility.Collapsed;
-                AssigneePickerBorder.Visibility = Visibility.Visible;
+                ForemanPickerBorder.Visibility = _foremanItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                WorkerPickerBorder.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             RefreshAssigneeItems();
         });
@@ -166,11 +172,19 @@ public partial class CreateTaskOverlay : UserControl
 
     private void RefreshAssigneeItems()
     {
-        foreach (var item in _allAssigneeItems)
+        foreach (var item in _foremanItems)
             item.RefreshSelected(_selectedAssigneeIds);
-        AssigneePickerList.ItemsSource = null;
-        AssigneePickerList.ItemsSource = _allAssigneeItems;
-        NoAssigneesHint.Visibility = _allAssigneeItems.Count == 0
+        foreach (var item in _workerItems)
+            item.RefreshSelected(_selectedAssigneeIds);
+
+        ForemanPickerList.ItemsSource = null;
+        ForemanPickerList.ItemsSource = _foremanItems;
+        WorkerPickerList.ItemsSource = null;
+        WorkerPickerList.ItemsSource = _workerItems;
+
+        NoForemenHint.Visibility = _foremanItems.Count == 0
+            ? Visibility.Visible : Visibility.Collapsed;
+        NoWorkersHint.Visibility = _workerItems.Count == 0
             ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -205,6 +219,13 @@ public partial class CreateTaskOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
+        sp.Children.Add(new TextBlock
+        {
+            Text = $"  {item.RoleDisplay}",
+            FontSize = 11,
+            Foreground = item.RoleColorBrush,
+            VerticalAlignment = VerticalAlignment.Center
+        });
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
@@ -226,7 +247,7 @@ public partial class CreateTaskOverlay : UserControl
         return chip;
     }
 
-    private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
+    private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
         if (_selectedAssigneeIds.Contains(item.UserId))
@@ -236,6 +257,9 @@ public partial class CreateTaskOverlay : UserControl
         RefreshAssigneeItems();
         RefreshAssigneeChips();
     }
+
+    private void WorkerItem_Click(object sender, MouseButtonEventArgs e)
+        => ForemanItem_Click(sender, e);
 
     private async void ProjectCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

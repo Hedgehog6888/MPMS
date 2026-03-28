@@ -15,6 +15,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private bool _suppressProjectFilterReload;
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<ProjectTaskGroup> _taskGroups = [];
@@ -47,7 +48,11 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
     partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
     partial void OnPriorityFilterChanged(string value) => _ = LoadAsync();
-    partial void OnProjectFilterChanged(Guid? value) => _ = LoadAsync();
+    partial void OnProjectFilterChanged(Guid? value)
+    {
+        if (_suppressProjectFilterReload) return;
+        _ = LoadAsync();
+    }
 
     public async Task LoadAsync()
     {
@@ -82,9 +87,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var projectList = await projectQuery.OrderBy(p => p.Name).ToListAsync();
         Projects = new ObservableCollection<LocalProject>(projectList);
-        var filterOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
-        filterOpts.AddRange(projectList.Select(p => new ProjectFilterOption(p.Id, p.Name)));
-        ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(filterOpts);
 
         var query = db.Tasks.Where(t => !t.IsArchived);
 
@@ -118,23 +120,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         if (ProjectFilter.HasValue)
             query = query.Where(t => t.ProjectId == ProjectFilter.Value);
 
-        if (StatusFilter == "Пометка удалить")
-        {
-            query = query.Where(t => t.IsMarkedForDeletion);
-        }
-        else if (StatusFilter != "Все")
-        {
-            var status = StatusFilter switch
-            {
-                "Запланирована"    => TaskStatus.Planned,
-                "Выполняется"      => TaskStatus.InProgress,
-                "Приостановлена"   => TaskStatus.Paused,
-                "Завершена"        => TaskStatus.Completed,
-                _                  => (TaskStatus?)null
-            };
-            if (status.HasValue) query = query.Where(t => t.Status == status.Value);
-        }
-
         if (PriorityFilter != "Все")
         {
             var priority = PriorityFilter switch
@@ -149,6 +134,54 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         }
 
         var list = await query.ToListAsync();
+
+        var currentProjectFilter = ProjectFilter;
+        var filterOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
+        filterOpts.AddRange(projectList.Select(p => new ProjectFilterOption(p.Id, p.Name)));
+        _suppressProjectFilterReload = true;
+        try
+        {
+            ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(filterOpts);
+            if (currentProjectFilter.HasValue && filterOpts.Any(o => o.Id == currentProjectFilter.Value))
+                ProjectFilter = currentProjectFilter;
+            else if (currentProjectFilter.HasValue)
+                ProjectFilter = null;
+        }
+        finally
+        {
+            _suppressProjectFilterReload = false;
+        }
+
+        // Load stages and recalculate task status/progress from active stages
+        var taskIds = list.Select(t => t.Id).ToList();
+        var stages = await db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived)
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync();
+
+        foreach (var t in list)
+        {
+            var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
+            ProgressCalculator.ApplyTaskMetrics(t, taskStages);
+        }
+
+        if (StatusFilter == "Пометка удалить")
+        {
+            list = list.Where(t => t.IsMarkedForDeletion).ToList();
+        }
+        else if (StatusFilter != "Все")
+        {
+            var status = StatusFilter switch
+            {
+                "Запланирована"    => TaskStatus.Planned,
+                "Выполняется"      => TaskStatus.InProgress,
+                "Приостановлена"   => TaskStatus.Paused,
+                "Завершена"        => TaskStatus.Completed,
+                _                  => (TaskStatus?)null
+            };
+            if (status.HasValue)
+                list = list.Where(t => t.Status == status.Value).ToList();
+        }
 
         // Populate AssignedUserAvatarData for tasks from Users
         var taskAssigneeIds = list.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
@@ -166,23 +199,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                     t.AssignedUserAvatarPath = av.AvatarPath;
                 }
             }
-        }
-
-        // Load stages and recalculate task status from stages (same as ProjectDetailViewModel)
-        var taskIds = list.Select(t => t.Id).ToList();
-        var stages = await db.TaskStages
-            .Where(s => taskIds.Contains(s.TaskId))
-            .OrderBy(s => s.CreatedAt)
-            .ToListAsync();
-
-        foreach (var t in list)
-        {
-            var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
-            t.TotalStages = taskStages.Count;
-            t.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
-            t.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
-            if (taskStages.Count > 0)
-                t.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
         }
 
         var searchTerm = SearchHelper.Normalize(SearchText);
@@ -273,17 +289,10 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         foreach (var t in tasks)
         {
             var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
-            t.TotalStages = taskStages.Count;
-            t.CompletedStages = taskStages.Count(s => s.Status == StageStatus.Completed);
-            t.InProgressStages = taskStages.Count(s => s.Status == StageStatus.InProgress);
-            if (taskStages.Count > 0)
-                t.Status = StatusCalculator.GetTaskStatusFromStages(taskStages);
+            ProgressCalculator.ApplyTaskMetrics(t, taskStages);
         }
 
-        project.TotalTasks = tasks.Count;
-        project.CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed);
-        project.InProgressTasks = tasks.Count(t => t.Status == TaskStatus.InProgress);
-        project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
+        ProgressCalculator.ApplyProjectMetrics(project, tasks, stages);
 
         var managerAv = await db.Users.Where(u => u.Id == project.ManagerId)
             .Select(u => new { u.AvatarData, u.AvatarPath })
@@ -343,6 +352,14 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = taskIds.Count == 0
+            ? new List<LocalTaskStage>()
+            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
+
+        foreach (var task in tasks)
+            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;

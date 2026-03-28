@@ -127,6 +127,15 @@ public partial class ProjectDetailPage : UserControl
         TaskKanbanPanel.Visibility = mode == "Kanban" ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private void StageView_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton rb || rb.Tag is not string mode) return;
+        VM?.SwitchStageViewCommand.Execute(mode);
+
+        StageListPanel.Visibility = mode == "List" ? Visibility.Visible : Visibility.Collapsed;
+        StageKanbanPanel.Visibility = mode == "Kanban" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void CreateTask_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.Project is null) return;
@@ -255,6 +264,36 @@ public partial class ProjectDetailPage : UserControl
                 if (vm != null)
                 {
                     await vm.LoadAsync();
+                    UpdateMarkProjectButton();
+                }
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask != null)
+                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
+        });
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, 850);
+    }
+
+    private void StageKanbanCard_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not StageItem item || VM is null) return;
+        var task = VM.Tasks.FirstOrDefault(t => t.Id == item.TaskId);
+        if (task is null) return;
+
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(task);
+
+        var overlay = new StageDetailOverlay();
+        var taskId = task.Id;
+        overlay.SetStage(item, task, () =>
+        {
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                if (VM is not null)
+                {
+                    await VM.LoadAsync();
                     UpdateMarkProjectButton();
                 }
                 var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();

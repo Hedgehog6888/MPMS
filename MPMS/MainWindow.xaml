@@ -808,36 +808,6 @@
                     </StackPanel>
                 </RadioButton>
 
-                <!-- Kanban -->
-                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Kanban, Mode=OneWay}"
-                             Style="{StaticResource NavButton}"
-                             Command="{Binding NavigateCommand}"
-                             CommandParameter="Kanban">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Width="20" Height="20"
-                               Margin="12,0,8,0"
-                               VerticalAlignment="Center"
-                               Source="{svgc:SvgImage Source=/icons/kanban.svg, AppName=MPMS}">
-                            <Image.Style>
-                                <Style TargetType="Image">
-                                    <Setter Property="Opacity" Value="0.7"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Image.Style>
-                        </Image>
-                        <TextBlock Text="Kanban"
-                                   FontSize="14"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </RadioButton>
-
                 <!-- Gantt -->
                 <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
                              Style="{StaticResource NavButton}"

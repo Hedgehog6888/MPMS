@@ -103,13 +103,15 @@ public partial class TaskDetailOverlay : UserControl
             });
         }
 
+        var roleMap = new Dictionary<Guid, string?>();
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
         if (userIds.Count > 0)
         {
-            var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+            var users = await db.Users.Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
                 .ToListAsync();
-            var avDict = userAvatars.ToDictionary(u => u.Id);
+            var avDict = users.ToDictionary(u => u.Id);
+            roleMap = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -119,11 +121,22 @@ public partial class TaskDetailOverlay : UserControl
                 }
             }
         }
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, a.AvatarData, a.AvatarPath)).ToList();
+        var displayItems = assignees
+            .Select(a =>
+            {
+                var role = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath);
+            })
+            .ToList();
+        var foremen = displayItems.Where(a => a.RoleDisplay == "Прораб").ToList();
+        var workers = displayItems.Where(a => a.RoleDisplay != "Прораб").ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            AssigneesDisplay.ItemsSource = displayItems;
+            ForemenDisplay.ItemsSource = foremen;
+            WorkersDisplay.ItemsSource = workers;
+            ForemenSection.Visibility = foremen.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+            WorkersSection.Visibility = workers.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
             NoAssigneesText.Visibility = displayItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         });
     }
@@ -364,14 +377,16 @@ public sealed class AssigneeDisplayItem
 {
     public Guid UserId { get; }
     public string UserName { get; }
+    public string RoleDisplay { get; }
     public string Initials { get; }
     public byte[]? AvatarData { get; }
     public string? AvatarPath { get; }
 
-    public AssigneeDisplayItem(Guid userId, string userName, byte[]? avatarData = null, string? avatarPath = null)
+    public AssigneeDisplayItem(Guid userId, string userName, string? roleName, byte[]? avatarData = null, string? avatarPath = null)
     {
         UserId = userId;
         UserName = userName;
+        RoleDisplay = roleName is "Foreman" or "Прораб" ? "Прораб" : "Работник";
         AvatarData = avatarData;
         AvatarPath = avatarPath;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);

@@ -76,12 +76,8 @@ public partial class TaskDetailViewModel : ViewModelBase
         Files = new ObservableCollection<LocalFile>(files);
         HasNoFiles = files.Count == 0;
 
-        // Refresh task progress from stages (StatusCalculator: завершённый + планируемый = в работе)
-        Task.TotalStages = stages.Count;
-        Task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
-        Task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
-        if (stages.Count > 0)
-            Task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
+        // Refresh task progress from active stages
+        ProgressCalculator.ApplyTaskMetrics(Task, stages);
         OnPropertyChanged(nameof(Task));
 
         // Load messages for this task with AvatarData from Users
@@ -347,6 +343,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id, actionType);
+        await UpdateTaskProgressAsync();
         await LoadAsync();
     }
 
@@ -376,12 +373,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         var taskEntity = await ctx.Tasks.FindAsync(taskId);
         if (taskEntity is null) return;
         var stages = await ctx.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
-        taskEntity.TotalStages = stages.Count;
-        taskEntity.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
-
-        // Auto-update task status (StatusCalculator)
-        if (stages.Count > 0)
-            taskEntity.Status = StatusCalculator.GetTaskStatusFromStages(stages);
+        ProgressCalculator.ApplyTaskMetrics(taskEntity, stages);
 
         taskEntity.IsSynced = false;
         taskEntity.UpdatedAt = DateTime.UtcNow;
@@ -391,14 +383,13 @@ public partial class TaskDetailViewModel : ViewModelBase
         await RecalcProjectStatusAsync(ctx, taskEntity.ProjectId);
 
         // Update the in-memory Task so the UI reflects the new progress immediately
-        var inProgressCount = stages.Count(s => s.Status == StageStatus.InProgress);
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (Task is not null)
             {
                 Task.TotalStages = taskEntity.TotalStages;
                 Task.CompletedStages = taskEntity.CompletedStages;
-                Task.InProgressStages = inProgressCount;
+                Task.InProgressStages = taskEntity.InProgressStages;
                 Task.Status = taskEntity.Status;
                 OnPropertyChanged(nameof(Task));
             }
@@ -410,6 +401,14 @@ public partial class TaskDetailViewModel : ViewModelBase
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var taskIds = tasks.Select(t => t.Id).ToList();
+        var stages = taskIds.Count == 0
+            ? new List<LocalTaskStage>()
+            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+
+        foreach (var task in tasks)
+            ProgressCalculator.ApplyTaskMetrics(task, stages.Where(s => s.TaskId == task.Id).ToList());
+
         project.Status = StatusCalculator.GetProjectStatusFromTasks(tasks);
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;

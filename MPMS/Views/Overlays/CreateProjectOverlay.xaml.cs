@@ -26,7 +26,7 @@ public partial class CreateProjectOverlay : UserControl
     private List<AssigneePickerItem> _workerItems = [];
     private List<LocalUser> _foremanUsers = [];
     private List<LocalUser> _workerUsers = [];
-    private LocalUser? _selectedForeman;
+    private readonly HashSet<Guid> _selectedForemanIds = [];
     private readonly HashSet<Guid> _selectedWorkerIds = [];
 
     public CreateProjectOverlay()
@@ -125,12 +125,10 @@ public partial class CreateProjectOverlay : UserControl
                 .Where(m => m.ProjectId == projectId.Value)
                 .ToListAsync();
 
-            var foremanMember = members.FirstOrDefault(m => m.UserRole is "Foreman" or "Прораб");
-            if (foremanMember is not null)
+            foreach (var fm in members.Where(m => m.UserRole is "Foreman" or "Прораб"))
             {
-                _selectedForeman = _foremanUsers.FirstOrDefault(u => u.Id == foremanMember.UserId);
-                if (_selectedForeman is not null)
-                    ShowSelectedForeman(_selectedForeman);
+                if (_foremanUsers.Any(u => u.Id == fm.UserId))
+                    _selectedForemanIds.Add(fm.UserId);
             }
 
             var workerMembers = members.Where(m => m.UserRole is "Worker" or "Работник").ToList();
@@ -142,9 +140,10 @@ public partial class CreateProjectOverlay : UserControl
         }
 
         // Создаём items с учётом выбранных (как в CreateTaskOverlay)
-        _foremanItems = _foremanUsers.Select(u => new ForemanPickerItem(u, _selectedForeman?.Id)).ToList();
+        _foremanItems = _foremanUsers.Select(u => new ForemanPickerItem(u, _selectedForemanIds)).ToList();
         ForemanPickerList.ItemsSource = _foremanItems;
         NoForemanHint.Visibility = _foremanItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        RefreshForemanChips();
 
         _workerItems = _workerUsers.Select(u => new AssigneePickerItem(
             u.Id, u.Name, "Worker", _selectedWorkerIds, u.AvatarPath, u.AvatarData)).ToList();
@@ -162,31 +161,74 @@ public partial class CreateProjectOverlay : UserControl
     {
         if (sender is Border b && b.Tag is ForemanPickerItem item)
         {
-            _selectedForeman = item.User;
-            ShowSelectedForeman(item.User);
+            if (_selectedForemanIds.Contains(item.UserId))
+                _selectedForemanIds.Remove(item.UserId);
+            else
+                _selectedForemanIds.Add(item.UserId);
+
             RefreshForemanItems();
+            RefreshForemanChips();
         }
     }
 
     private void RefreshForemanItems()
     {
         foreach (var item in _foremanItems)
-            item.RefreshSelected(_selectedForeman?.Id);
+            item.RefreshSelected(_selectedForemanIds);
         ForemanPickerList.ItemsSource = null;
         ForemanPickerList.ItemsSource = _foremanItems;
     }
 
-    private void ShowSelectedForeman(LocalUser user)
+    private void RefreshForemanChips()
     {
-        SelectedForemanName.Text = user.Name;
-        SelectedForemanPanel.Visibility = Visibility.Visible;
+        SelectedForemenPanel.Children.Clear();
+        var selectedForemen = _foremanUsers
+            .Where(u => _selectedForemanIds.Contains(u.Id))
+            .ToList();
+
+        SelectedForemenPanel.Visibility = selectedForemen.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        foreach (var foreman in selectedForemen)
+            SelectedForemenPanel.Children.Add(BuildForemanChip(foreman));
     }
 
-    private void RemoveForeman_Click(object sender, RoutedEventArgs e)
+    private Border BuildForemanChip(LocalUser user)
     {
-        _selectedForeman = null;
-        SelectedForemanPanel.Visibility = Visibility.Collapsed;
-        RefreshForemanItems();
+        var chip = new Border
+        {
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 5, 10, 5),
+            Margin = new Thickness(0, 2, 6, 2),
+            Background = new SolidColorBrush(Color.FromRgb(0xEC, 0xFD, 0xF5)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0x6E, 0xE7, 0xB7)),
+            BorderThickness = new Thickness(1)
+        };
+        var sp = new StackPanel { Orientation = Orientation.Horizontal };
+        sp.Children.Add(new TextBlock
+        {
+            Text = user.Name,
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34)),
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        var removeBtn = new Button
+        {
+            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
+            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
+            Margin = new Thickness(4, 0, 0, 0),
+            Tag = user.Id
+        };
+        removeBtn.Click += (s, _) =>
+        {
+            if (s is Button btn && btn.Tag is Guid uid)
+            {
+                _selectedForemanIds.Remove(uid);
+                RefreshForemanItems();
+                RefreshForemanChips();
+            }
+        };
+        sp.Children.Add(removeBtn);
+        chip.Child = sp;
+        return chip;
     }
 
     private async System.Threading.Tasks.Task RemoveWorkerAsync(Guid userId, string workerName)
@@ -319,7 +361,7 @@ public partial class CreateProjectOverlay : UserControl
         if (ManagerCombo.SelectedValue is not Guid managerId)
         { ShowError("Выберите ответственного менеджера."); return; }
 
-        if (_editProject is null && _selectedForeman is null && _selectedWorkerIds.Count == 0)
+        if (_editProject is null && _selectedForemanIds.Count == 0 && _selectedWorkerIds.Count == 0)
         { ShowError("Назначьте прораба или хотя бы одного работника на проект."); return; }
         if (_editProject is not null && _selectedWorkerIds.Count == 0)
         { ShowError("В проекте должен остаться хотя бы один работник."); return; }
@@ -383,7 +425,7 @@ public partial class CreateProjectOverlay : UserControl
         await using var db = await dbFactory.CreateDbContextAsync();
 
         var newMemberIds = new HashSet<Guid>();
-        if (_selectedForeman is not null) newMemberIds.Add(_selectedForeman.Id);
+        foreach (var foremanId in _selectedForemanIds) newMemberIds.Add(foremanId);
         foreach (var uid in _selectedWorkerIds) newMemberIds.Add(uid);
 
         var existing = await db.ProjectMembers
@@ -393,15 +435,16 @@ public partial class CreateProjectOverlay : UserControl
 
         db.ProjectMembers.RemoveRange(existing);
 
-        // Add foreman (можно убрать — при редактировании разрешено сохранять без прораба)
-        if (_selectedForeman is not null)
+        foreach (var foremanId in _selectedForemanIds)
         {
+            var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
+            if (foreman is null) continue;
             db.ProjectMembers.Add(new LocalProjectMember
             {
                 Id = Guid.NewGuid(),
                 ProjectId = projectId,
-                UserId = _selectedForeman.Id,
-                UserName = _selectedForeman.Name,
+                UserId = foremanId,
+                UserName = foreman.Name,
                 UserRole = "Foreman"
             });
         }
@@ -482,20 +525,20 @@ public sealed class ForemanPickerItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ForemanPickerItem(LocalUser user, Guid? selectedForemanId)
+    public ForemanPickerItem(LocalUser user, HashSet<Guid> selectedForemanIds)
     {
         User = user;
         var parts = user.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         Initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
             : user.Name.Length > 0 ? user.Name[0].ToString().ToUpper() : "?";
-        _isSelected = selectedForemanId == user.Id;
+        _isSelected = selectedForemanIds.Contains(user.Id);
         AvatarBrush = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34));
         RoleColorBrush = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34));
     }
 
-    public void RefreshSelected(Guid? selectedForemanId)
+    public void RefreshSelected(HashSet<Guid> selectedForemanIds)
     {
-        IsSelected = UserId == selectedForemanId;
+        IsSelected = selectedForemanIds.Contains(UserId);
     }
 }
