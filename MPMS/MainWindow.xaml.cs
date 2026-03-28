@@ -203,6 +203,21 @@ public partial class MainWindow : Window
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, drawerFadeOut);
     }
 
+    private void ModalOverlayContentClip_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is not Border host) return;
+        double w = host.ActualWidth;
+        double h = host.ActualHeight;
+        if (w <= 0 || h <= 0)
+        {
+            host.Clip = null;
+            return;
+        }
+
+        const double radius = 12;
+        host.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
+    }
+
     private void Backdrop_Click(object sender, MouseButtonEventArgs e)
         => HideDrawer();
 

@@ -145,13 +145,17 @@
                                        Visibility="Collapsed"/>
                             </Border>
 
-                            <!-- Upload button overlay (camera icon) -->
+                            <!-- Upload button overlay (camera icon) — EllipseGeometry как у AvatarCircle90 -->
                             <Border Width="90" Height="90" CornerRadius="45"
                                     HorizontalAlignment="Center"
+                                    ClipToBounds="True"
                                     Cursor="Hand"
                                     MouseLeftButtonDown="AvatarUpload_Click"
                                     MouseEnter="AvatarBtn_MouseEnter"
                                     MouseLeave="AvatarBtn_MouseLeave">
+                                <Border.Clip>
+                                    <EllipseGeometry Center="45,45" RadiusX="45" RadiusY="45"/>
+                                </Border.Clip>
                                 <Border x:Name="AvatarHoverOverlay"
                                         Background="#AA000000"
                                         CornerRadius="45"

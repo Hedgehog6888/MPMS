@@ -1055,27 +1055,36 @@
                 <ContentPresenter x:Name="DrawerContentPresenter"/>
             </Border>
 
-            <!-- Center modal overlay -->
+            <!-- Center modal: обводка как у ConfirmDeleteDialog; без DropShadowEffect — в WPF он даёт прямоугольную текстуру и «ломает» углы. -->
             <Border x:Name="ModalOverlayPanel"
-                    Background="White"
+                    Background="Transparent"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="840"
                     MaxWidth="900"
                     Margin="24"
-                    CornerRadius="18"
-                    ClipToBounds="True"
                     Visibility="Collapsed"
                     Opacity="0"
+                    ClipToBounds="False"
                     RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
                     <TranslateTransform x:Name="ModalOverlayTransform" Y="16"/>
                 </Border.RenderTransform>
-                <Border.Effect>
-                    <DropShadowEffect Color="Black" BlurRadius="40"
-                                      Opacity="0.18" Direction="270" ShadowDepth="0"/>
-                </Border.Effect>
-                <ContentPresenter x:Name="ModalOverlayContentPresenter"/>
+                <Border Background="White"
+                        CornerRadius="12"
+                        ClipToBounds="True"
+                        SnapsToDevicePixels="True"
+                        UseLayoutRounding="True"
+                        BorderBrush="#DFE1E6"
+                        BorderThickness="1">
+                    <!-- Явный клип содержимого по скруглению (дочерние панели иначе могут «просвечивать» квадратом). -->
+                    <Border Background="Transparent"
+                            SizeChanged="ModalOverlayContentClip_SizeChanged">
+                        <ContentPresenter x:Name="ModalOverlayContentPresenter"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch"/>
+                    </Border>
+                </Border>
             </Border>
         </Grid>
     </Grid>

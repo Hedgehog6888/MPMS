@@ -17,7 +17,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border Background="White" CornerRadius="18" ClipToBounds="True">
+    <!-- Фон и скругление задаёт ModalOverlayPanel в MainWindow; здесь только содержимое. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -25,9 +25,10 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Без своего белого фона — иначе прямоугольник ломает скругление внешней модалки -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
-                Background="White">
+                Background="Transparent">
             <Grid>
                 <StackPanel>
                     <TextBlock Text="Обрезка аватара"
@@ -207,7 +208,7 @@
 
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
-                Background="White">
+                Background="Transparent">
             <Grid>
                 <Button Content="Выбрать другое фото"
                         HorizontalAlignment="Left"
@@ -225,5 +226,4 @@
             </Grid>
         </Border>
     </Grid>
-    </Border>
 </UserControl>
