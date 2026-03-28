@@ -810,6 +810,7 @@
             <infra:ActorRoleToLabelConverter            x:Key="ActorRoleToLabel"/>
             <infra:ActorRoleToBrushConverter            x:Key="ActorRoleToBrush"/>
             <infra:ActorRoleToForegroundBrushConverter  x:Key="ActorRoleToForegroundBrush"/>
+            <infra:ActorRoleToBadgeVisibilityConverter  x:Key="ActorRoleBadgeVis"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
             <infra:AvatarBytesToImageSourceConverter    x:Key="AvatarBytesToImage"/>
             <infra:BlockedToStatusStringConverter       x:Key="BlockedToStatusString"/>

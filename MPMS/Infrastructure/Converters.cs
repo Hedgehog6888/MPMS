@@ -677,14 +677,32 @@ public class ActorRoleToLabelConverter : IValueConverter
     public static readonly ActorRoleToLabelConverter Instance = new();
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value?.ToString() ?? "") switch
+        => NormalizeRoleKey(value?.ToString()) switch
         {
-            "Administrator" or "Admin"   => "Админ",
-            "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
-            "Foreman"                    => "Прораб",
-            "Worker"                     => "Работник",
-            _                            => ""
+            "admin"    => "Админ",
+            "manager"  => "Менеджер",
+            "foreman"  => "Прораб",
+            "worker"   => "Работник",
+            _          => ""
         };
+
+    /// <summary>English keys, Russian titles from messages (RoleToRussian), short forms.</summary>
+    internal static string NormalizeRoleKey(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role) || role == "—") return "";
+        return role.Trim() switch
+        {
+            "Administrator" or "Admin" => "admin",
+            "Project Manager" or "ProjectManager" or "Manager" => "manager",
+            "Foreman" => "foreman",
+            "Worker" => "worker",
+            "Администратор" or "Админ" => "admin",
+            "Менеджер" => "manager",
+            "Прораб" => "foreman",
+            "Работник" => "worker",
+            _ => ""
+        };
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -702,13 +720,13 @@ public class ActorRoleToBrushConverter : IValueConverter
     private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0xF1, 0xF3, 0xF5));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value?.ToString() ?? "") switch
+        => ActorRoleToLabelConverter.NormalizeRoleKey(value?.ToString()) switch
         {
-            "Administrator" or "Admin"   => AdminBrush,
-            "Project Manager" or "ProjectManager" or "Manager" => ManagerBrush,
-            "Foreman"                    => ForemanBrush,
-            "Worker"                     => WorkerBrush,
-            _                            => DefaultBrush
+            "admin"    => AdminBrush,
+            "manager"  => ManagerBrush,
+            "foreman"  => ForemanBrush,
+            "worker"   => WorkerBrush,
+            _          => DefaultBrush
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -727,14 +745,29 @@ public class ActorRoleToForegroundBrushConverter : IValueConverter
     private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x4B, 0x55, 0x63));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value?.ToString() ?? "") switch
+        => ActorRoleToLabelConverter.NormalizeRoleKey(value?.ToString()) switch
         {
-            "Administrator" or "Admin"   => AdminBrush,
-            "Project Manager" or "ProjectManager" or "Manager" => ManagerBrush,
-            "Foreman"                    => ForemanBrush,
-            "Worker"                     => WorkerBrush,
-            _                            => DefaultBrush
+            "admin"    => AdminBrush,
+            "manager"  => ManagerBrush,
+            "foreman"  => ForemanBrush,
+            "worker"   => WorkerBrush,
+            _          => DefaultBrush
         };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Скрывает бейдж роли, если значение не известной роли (пусто, «—», произвольный текст).</summary>
+public class ActorRoleToBadgeVisibilityConverter : IValueConverter
+{
+    public static readonly ActorRoleToBadgeVisibilityConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var key = ActorRoleToLabelConverter.NormalizeRoleKey(value?.ToString());
+        return string.IsNullOrEmpty(key) ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
