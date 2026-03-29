@@ -17,6 +17,8 @@ public partial class StageItem : ObservableObject
     public string ProjectName { get; init; } = string.Empty;
     public Guid   TaskId      { get; init; }
     public Guid   ProjectId   { get; init; }
+
+    public bool CanDragInKanban => !Stage.EffectiveMarkedForDeletion;
 }
 
 public partial class StagesViewModel : ViewModelBase, ILoadable
@@ -27,7 +29,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
-    [ObservableProperty] private ObservableCollection<TaskStageGroup> _stageGroups = [];
+    [ObservableProperty] private ObservableCollection<ProjectStageGroup> _projectStageGroups = [];
 
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все статусы";
@@ -159,6 +161,20 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 }
             }
 
+            var projectIds = tasks.Select(t => t.ProjectId).Distinct().ToList();
+            var projMarked = projectIds.Count == 0
+                ? new Dictionary<Guid, bool>()
+                : await db.Projects.Where(p => projectIds.Contains(p.Id))
+                    .Select(p => new { p.Id, p.IsMarkedForDeletion })
+                    .ToDictionaryAsync(x => x.Id, x => x.IsMarkedForDeletion);
+            foreach (var s in stageList)
+            {
+                taskDict.TryGetValue(s.TaskId, out var tk);
+                s.TaskIsMarkedForDeletion = tk?.IsMarkedForDeletion ?? false;
+                var pid = tk?.ProjectId ?? Guid.Empty;
+                s.ProjectIsMarkedForDeletion = projMarked.GetValueOrDefault(pid);
+            }
+
             var items = stageList.Select(s =>
             {
                 taskDict.TryGetValue(s.TaskId, out var task);
@@ -217,7 +233,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
         if (StatusFilter == "Пометка удалить")
         {
-            query = query.Where(s => s.Stage.IsMarkedForDeletion);
+            query = query.Where(s => s.Stage.EffectiveMarkedForDeletion);
         }
         else if (StatusFilter != "Все статусы")
         {
@@ -229,19 +245,31 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 _              => (StageStatus?)null
             };
             if (targetStatus.HasValue)
-                query = query.Where(s => s.Stage.Status == targetStatus.Value);
+                query = query.Where(s => s.Stage.Status == targetStatus.Value && !s.Stage.EffectiveMarkedForDeletion);
         }
 
         FilteredStages = new ObservableCollection<StageItem>(query);
 
-        var groups = query
+        var taskGroups = query
             .GroupBy(s => new { s.TaskId, s.TaskName, s.ProjectId, s.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
             .ThenBy(g => g.Key.TaskName)
             .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName,
-                g.OrderBy(s => s.Stage.IsMarkedForDeletion).ToList()))
+                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion).ToList(), isFirstInProject: false))
             .ToList();
-        StageGroups = new ObservableCollection<TaskStageGroup>(groups);
+
+        var projectGroups = taskGroups
+            .GroupBy(t => new { t.ProjectId, t.ProjectName })
+            .OrderBy(g => g.Key.ProjectName)
+            .Select(g =>
+            {
+                var ordered = g.OrderBy(x => x.TaskName).ToList();
+                var withFirst = ordered.Select((tg, i) => new TaskStageGroup(
+                    tg.TaskId, tg.TaskName, tg.ProjectId, tg.ProjectName, tg.Stages, i == 0)).ToList();
+                return new ProjectStageGroup(g.Key.ProjectId, g.Key.ProjectName, withFirst);
+            })
+            .ToList();
+        ProjectStageGroups = new ObservableCollection<ProjectStageGroup>(projectGroups);
     }
 
     private void UpdateTaskFilterOptions()
@@ -268,13 +296,19 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(StageItem item)
     {
+        if (!item.Stage.CanToggleStageDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(item.Stage.Id);
         if (entity is null) return;
+        var task = await db.Tasks.FindAsync(entity.TaskId);
+        var proj = task is not null ? await db.Projects.FindAsync(task.ProjectId) : null;
+        if (task?.IsMarkedForDeletion == true || proj?.IsMarkedForDeletion == true)
+            return;
 
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         var action = entity.IsMarkedForDeletion ? "Помечен к удалению" : "Снята пометка удаления";
@@ -293,6 +327,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         entity.IsArchived = true;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
+        entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
         await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id, ActivityActionKind.Deleted);
@@ -331,7 +366,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private async Task ChangeStageStatusAsync((StageItem item, StageStatus newStatus) args)
     {
         var (item, newStatus) = args;
-        if (item.Stage.IsMarkedForDeletion) return;
+        if (item.Stage.EffectiveMarkedForDeletion) return;
         var vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         var task = await GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
@@ -349,6 +384,20 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     }
 }
 
+public class ProjectStageGroup
+{
+    public Guid ProjectId { get; }
+    public string ProjectName { get; }
+    public List<TaskStageGroup> TaskGroups { get; }
+
+    public ProjectStageGroup(Guid projectId, string projectName, List<TaskStageGroup> taskGroups)
+    {
+        ProjectId = projectId;
+        ProjectName = projectName;
+        TaskGroups = taskGroups;
+    }
+}
+
 public class TaskStageGroup
 {
     public Guid TaskId { get; }
@@ -356,14 +405,18 @@ public class TaskStageGroup
     public Guid ProjectId { get; }
     public string ProjectName { get; }
     public List<StageItem> Stages { get; }
+    /// <summary>Первая задача в проекте — в одной строке с названием проекта.</summary>
+    public bool IsFirstInProject { get; }
 
-    public TaskStageGroup(Guid taskId, string taskName, Guid projectId, string projectName, List<StageItem> stages)
+    public TaskStageGroup(Guid taskId, string taskName, Guid projectId, string projectName, List<StageItem> stages,
+        bool isFirstInProject = false)
     {
         TaskId = taskId;
         TaskName = taskName;
         ProjectId = projectId;
         ProjectName = projectName;
         Stages = stages;
+        IsFirstInProject = isFirstInProject;
     }
 }
 

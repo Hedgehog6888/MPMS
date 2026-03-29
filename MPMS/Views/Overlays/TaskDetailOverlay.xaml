@@ -115,14 +115,33 @@
                 <!-- Status + Priority badges -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Status badge -->
-                    <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0"
-                            Background="{Binding Task.Status, Converter={StaticResource TaskStatusToBrush}}">
+                    <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Task.EffectiveTaskMarkedForDeletion}" Value="True">
+                                        <Setter Property="Background" Value="#DE350B"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <StackPanel Orientation="Horizontal">
                             <Border Width="6" Height="6" CornerRadius="3"
                                     Background="White" Opacity="0.8"
                                     Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"
-                                       FontSize="11" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock FontSize="11" FontWeight="Bold" Foreground="White">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Task.EffectiveTaskMarkedForDeletion}" Value="True">
+                                                <Setter Property="Text" Value="Пометка удаления"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
 
@@ -182,14 +201,20 @@
                            Visibility="{Binding Task.Description, Converter={StaticResource StringToVis}}"/>
 
                 <!-- Deletion mark warning -->
-                <Border x:Name="DeletionWarningBorder" CornerRadius="8" Padding="14,10"
+                <Border CornerRadius="8" Padding="14,10"
                         Background="#FFEBE6" BorderBrush="#FFBDAD" BorderThickness="1"
-                        Margin="0,0,0,12" Visibility="Collapsed">
+                        Margin="0,0,0,12"
+                        Visibility="{Binding Task.EffectiveTaskMarkedForDeletion, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚠" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"
+                        <TextBlock Text="⚠" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Top"
                                    Foreground="#BF2600"/>
-                        <TextBlock Text="Задача помечена для удаления" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="#BF2600" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <TextBlock Text="Пометка удаления" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#BF2600"/>
+                            <TextBlock Text="{Binding Task.TaskInheritedDeletionHint}" FontSize="12"
+                                       Foreground="#BF2600" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Visibility="{Binding Task.TaskInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -231,39 +256,72 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Assignees (multi) -->
+                    <!-- Assignees (split by role) -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="ИСПОЛНИТЕЛИ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
 
-                        <!-- Multi-assignee avatar strip (populated in code-behind) -->
-                        <ItemsControl x:Name="AssigneesDisplay">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <Border Style="{StaticResource AvatarCircle30}"
-                                                Background="#1B6EC2" Margin="0,0,8,0">
-                                            <Grid>
-                                                <Image Style="{StaticResource AvatarImage}"
-                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                       Width="30" Height="30"
-                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                <TextBlock Text="{Binding Initials}"
-                                                           FontSize="10" FontWeight="Bold"
-                                                           Foreground="White"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                            </Grid>
-                                        </Border>
-                                        <TextBlock Text="{Binding UserName}"
-                                                   FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="#172B4D"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <StackPanel x:Name="ForemenSection" Margin="0,0,0,8" Visibility="Collapsed">
+                            <TextBlock Text="Прорабы" FontSize="11" FontWeight="SemiBold" Foreground="#166534" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="ForemenDisplay">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <Border Style="{StaticResource AvatarCircle30}"
+                                                    Background="#166534" Margin="0,0,8,0">
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="30" Height="30"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Initials}"
+                                                               FontSize="10" FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <StackPanel x:Name="WorkersSection" Visibility="Collapsed">
+                            <TextBlock Text="Работники" FontSize="11" FontWeight="SemiBold" Foreground="#92400E" Margin="0,0,0,6"/>
+                            <ItemsControl x:Name="WorkersDisplay">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <Border Style="{StaticResource AvatarCircle30}"
+                                                    Background="#92400E" Margin="0,0,8,0">
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="30" Height="30"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding Initials}"
+                                                               FontSize="10" FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
 
                         <!-- Fallback: no assignees -->
                         <TextBlock x:Name="NoAssigneesText"
@@ -344,7 +402,7 @@
                                                     <Setter Property="Background" Value="White"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                        <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                             <Setter Property="BorderBrush" Value="#DE350B"/>
                                                             <Setter Property="Background" Value="#FFF5F5"/>
                                                         </DataTrigger>
@@ -372,6 +430,9 @@
                                                            Foreground="{StaticResource TextSecondaryBrush}"
                                                            Margin="0,2,0,4" TextWrapping="Wrap"
                                                            Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
+                                                <TextBlock Text="{Binding StageInheritedDeletionHint}" FontSize="10"
+                                                           Foreground="#B71C1C" Margin="0,2,0,0" TextWrapping="Wrap"
+                                                           Visibility="{Binding StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                 <!-- Status | Assignee | Actions row -->
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
@@ -385,7 +446,7 @@
                                                                 <Style TargetType="Border">
                                                                     <Setter Property="Background" Value="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                                             <Setter Property="Background" Value="#DE350B"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
@@ -396,7 +457,7 @@
                                                                     <Style TargetType="TextBlock">
                                                                         <Setter Property="Text" Value="{Binding Status, Converter={StaticResource StageStatusToString}}"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                            <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                                                 <Setter Property="Text" Value="Пометка удаления"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -411,7 +472,7 @@
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                                     <!-- Кнопки смены статуса — скрыты при пометке удаления -->
                                                     <StackPanel Orientation="Horizontal"
-                                                                Visibility="{Binding IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+                                                                Visibility="{Binding EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                     <!-- Start: Planned → InProgress -->
                                                     <Button Tag="{Binding}" Click="StartStage_Click" Margin="0,0,4,0"
                                                             Style="{StaticResource IconButton}" FontSize="12"
@@ -460,7 +521,7 @@
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                 <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -471,8 +532,17 @@
                                                     </Button>
                                                     <!-- Mark/unmark for deletion -->
                                                     <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
-                                                            Margin="0,0,4,0" Style="{StaticResource IconButton}"
-                                                            Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman'}">
+                                                            Margin="0,0,4,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman'}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding CanToggleStageDeletionMark}" Value="False">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
                                                         <Button.ToolTip>
                                                             <ToolTip>
                                                                 <TextBlock>
@@ -660,125 +730,127 @@
 
                 <!-- MESSAGES tab content: scroll only messages, input at bottom -->
                 <Grid x:Name="MessagesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Messages list -->
-                    <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding Messages}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <!-- Avatar -->
-                                            <Border Style="{StaticResource AvatarCircle34}"
-                                                    Margin="0,0,10,0" VerticalAlignment="Top"
-                                                    Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
-                                                <Grid>
-                                                    <Image Style="{StaticResource AvatarImage}"
-                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                           Width="34" Height="34"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Text="{Binding UserInitials}"
-                                                           FontSize="11" FontWeight="Bold"
-                                                           Foreground="White"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                </Grid>
-                                            </Border>
-                                            <!-- Message bubble -->
-                                            <StackPanel Grid.Column="1">
-                                                <!-- Name + role + time row -->
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                    <TextBlock Text="{Binding UserName}"
-                                                               FontSize="12" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" Margin="0,0,6,0"/>
-                                                    <Border CornerRadius="4" Padding="5,1"
-                                                            VerticalAlignment="Center">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="#EBF2FF"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding UserRole}" Value="Прораб">
-                                                                        <Setter Property="Background" Value="#E8F5E9"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding UserRole}" Value="Работник">
-                                                                        <Setter Property="Background" Value="#FFF8E1"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock Text="{Binding UserRole}"
-                                                                   FontSize="10" FontWeight="SemiBold">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="#1B6EC2"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding UserRole}" Value="Прораб">
-                                                                            <Setter Property="Foreground" Value="#00875A"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding UserRole}" Value="Работник">
-                                                                            <Setter Property="Foreground" Value="#856404"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Border>
-                                                    <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
-                                                               FontSize="10" Foreground="#97A0AF"
-                                                               VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                </StackPanel>
-                                                <!-- Message text bubble -->
-                                                <Border Background="#F4F5F7" CornerRadius="0,8,8,8"
-                                                        Padding="10,8" MaxWidth="340" HorizontalAlignment="Left">
-                                                    <TextBlock Text="{Binding Text}"
-                                                               FontSize="13" Foreground="#172B4D"
-                                                               TextWrapping="Wrap"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Empty messages state -->
-                            <StackPanel HorizontalAlignment="Center" Margin="0,16,0,16"
-                                        Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
-                                <TextBlock Text="Нет обсуждений" FontSize="13" Foreground="#97A0AF"
-                                           HorizontalAlignment="Center"/>
-                                <TextBlock Text="Начните обсуждение задачи" FontSize="12"
-                                           Foreground="#C1C7D0" HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Message input -->
-                    <Border Grid.Row="1" Background="#F4F5F7" CornerRadius="8"
-                            Margin="0,10,0,0" Padding="4">
+                    <Border Background="White" CornerRadius="8"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="MessageInput" Grid.Column="0"
-                                     Background="Transparent" BorderThickness="0"
-                                     Foreground="#172B4D" FontSize="13"
-                                     Padding="8,8" VerticalContentAlignment="Center"
-                                     KeyDown="MessageInput_KeyDown"
-                                     AcceptsReturn="False"/>
-                            <Button Grid.Column="1" Content="Отправить"
-                                    Click="SendMessage_Click"
-                                    Height="34" Padding="14,0"
-                                    Style="{StaticResource BlackBtn}"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Messages list -->
+                            <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
+                                          VerticalScrollBarVisibility="Auto" Padding="14,12,14,10">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding Messages}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- Avatar -->
+                                                    <Border Style="{StaticResource AvatarCircle34}"
+                                                            Margin="0,0,12,0" VerticalAlignment="Top"
+                                                            Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="34" Height="34"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding UserInitials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <!-- Message bubble -->
+                                                    <StackPanel Grid.Column="1">
+                                                        <!-- Name + role + time row -->
+                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                            <TextBlock Text="{Binding UserName}"
+                                                                       FontSize="12" FontWeight="SemiBold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,6,0"/>
+                                                            <Border CornerRadius="4" Padding="5,2" Margin="0,0,6,0"
+                                                                    BorderThickness="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Background="{Binding UserRole, Converter={StaticResource ActorRoleToBrush}}"
+                                                                    BorderBrush="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
+                                                                    Visibility="{Binding UserRole, Converter={StaticResource ActorRoleBadgeVis}}">
+                                                                <TextBlock Text="{Binding UserRole, Converter={StaticResource ActorRoleToLabel}}"
+                                                                           FontSize="10" FontWeight="SemiBold"
+                                                                           Foreground="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
+                                                                       FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                        </StackPanel>
+                                                        <!-- Message text bubble -->
+                                                        <Border Background="#F4F5F7" CornerRadius="2,10,10,10"
+                                                                BorderBrush="#EBECF0" BorderThickness="1"
+                                                                Padding="10,9" MaxWidth="380" HorizontalAlignment="Left">
+                                                            <TextBlock Text="{Binding Text}"
+                                                                       FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       TextWrapping="Wrap" LineHeight="19"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty messages state -->
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,20,0,24"
+                                                Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
+                                        <Border Width="48" Height="48" CornerRadius="24"
+                                                Background="{StaticResource BackgroundBrush}"
+                                                BorderBrush="#EBECF0" BorderThickness="1"
+                                                HorizontalAlignment="Center" Margin="0,0,0,12">
+                                            <Image Source="{svgc:SvgImage Source=/icons/chat.svg, AppName=MPMS}"
+                                                   Width="22" Height="22" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" Opacity="0.42"/>
+                                        </Border>
+                                        <TextBlock Text="Нет обсуждений" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Начните обсуждение задачи" FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0" TextAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Message input -->
+                            <Border Grid.Row="1" Background="#FAFBFC" Padding="12,10,12,12"
+                                    BorderBrush="#EBECF0" BorderThickness="0,1,0,0"
+                                    CornerRadius="0,0,8,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" CornerRadius="8"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                            Margin="0,0,8,0">
+                                        <TextBox x:Name="MessageInput"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"
+                                                 Padding="10,8" MinHeight="36" VerticalContentAlignment="Center"
+                                                 CaretBrush="{StaticResource TextPrimaryBrush}"
+                                                 SelectionBrush="#B3D4FF"
+                                                 SelectionTextBrush="{StaticResource TextPrimaryBrush}"
+                                                 KeyDown="MessageInput_KeyDown"
+                                                 AcceptsReturn="False"/>
+                                    </Border>
+                                    <Button Grid.Column="1" Content="Отправить"
+                                            Click="SendMessage_Click"
+                                            Height="36" MinWidth="96" VerticalAlignment="Center"
+                                            Style="{StaticResource BlackBtn}"/>
+                                </Grid>
+                            </Border>
                         </Grid>
                     </Border>
                 </Grid>

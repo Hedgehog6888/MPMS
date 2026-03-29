@@ -518,7 +518,7 @@
                                                         <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -592,7 +592,7 @@
                                                         <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -666,7 +666,7 @@
                                                         <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
-                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
                                                                     Command="{Binding DataContext.OpenRestoreStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -835,7 +835,7 @@
                                                                FontSize="12" Foreground="#344563"
                                                                TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <TextBlock Grid.Column="3"
-                                                               Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yy HH:mm}'}"
+                                                               Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yy HH:mm}'}"
                                                                FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>
@@ -1001,7 +1001,7 @@
                                                                FontSize="12" Foreground="#344563"
                                                                TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                                     <TextBlock Grid.Column="3"
-                                                               Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yy HH:mm}'}"
+                                                               Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yy HH:mm}'}"
                                                                FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>

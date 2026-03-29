@@ -14,17 +14,29 @@ namespace MPMS.Views.Overlays;
 
 public partial class TaskDetailOverlay : UserControl
 {
+    /// <summary>Как показывать drawer при открытии и после вложенных форм (этап, редактирование задачи).</summary>
+    public enum TaskDetailDrawerMode
+    {
+        /// <summary>Только карточка задачи — пользователь уже на странице проекта.</summary>
+        TaskOnly,
+        /// <summary>Сводка проекта слева (глобальный поиск, страница «Задачи»).</summary>
+        WithProjectSummary,
+    }
+
     private TaskDetailViewModel? _vm;
     private Action? _onClosed;
+    private TaskDetailDrawerMode _drawerMode = TaskDetailDrawerMode.WithProjectSummary;
 
     public TaskDetailOverlay()
     {
         InitializeComponent();
     }
 
-    public void SetTask(LocalTask task, Action? onClosed = null)
+    public void SetTask(LocalTask task, Action? onClosed = null,
+        TaskDetailDrawerMode drawerMode = TaskDetailDrawerMode.WithProjectSummary)
     {
         _onClosed = onClosed;
+        _drawerMode = drawerMode;
         _vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         _vm.SetTask(task);
         DataContext = _vm;
@@ -51,7 +63,20 @@ public partial class TaskDetailOverlay : UserControl
         {
             MarkDeletionBtn.Visibility = Visibility.Collapsed;
         }
-        if (_vm?.Task?.IsMarkedForDeletion == true)
+        else if (_vm?.Task?.CanToggleTaskDeletionMark == false)
+        {
+            MarkDeletionBtn.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            MarkDeletionBtn.Visibility = Visibility.Visible;
+        }
+
+        if (isWorker)
+        {
+            /* Edit already collapsed */
+        }
+        else if (_vm?.Task?.EffectiveTaskMarkedForDeletion == true)
         {
             EditTaskBtn.Visibility = Visibility.Collapsed;
         }
@@ -59,16 +84,21 @@ public partial class TaskDetailOverlay : UserControl
         {
             EditTaskBtn.Visibility = Visibility.Visible;
         }
-        ApplyDeletionMark(_vm?.Task?.IsMarkedForDeletion ?? false);
+        else
+        {
+            EditTaskBtn.Visibility = Visibility.Collapsed;
+        }
+        ApplyDeletionFooter();
         // Статус задачи вычисляется автоматически из этапов — ручное изменение скрыто
         ChangeStatusBtn.Visibility = Visibility.Collapsed;
 
     }
 
-    private void ApplyDeletionMark(bool isMarked)
+    private void ApplyDeletionFooter()
     {
-        DeletionWarningBorder.Visibility = isMarked ? Visibility.Visible : Visibility.Collapsed;
-        MarkDeletionBtnText.Text = isMarked ? "Снять пометку" : "Пометить к удалению";
+        var t = _vm?.Task;
+        if (t is null) return;
+        MarkDeletionBtnText.Text = t.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
     }
 
     private async System.Threading.Tasks.Task LoadDataAsync()
@@ -78,7 +108,7 @@ public partial class TaskDetailOverlay : UserControl
         UpdateStagesTabLabel();
         UpdateEmptyStates();
         await LoadAssigneesAsync();
-        ApplyDeletionMark(_vm.Task?.IsMarkedForDeletion ?? false);
+        ApplyRoleRestrictions();
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
@@ -103,13 +133,15 @@ public partial class TaskDetailOverlay : UserControl
             });
         }
 
+        var roleMap = new Dictionary<Guid, string?>();
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
         if (userIds.Count > 0)
         {
-            var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+            var users = await db.Users.Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
                 .ToListAsync();
-            var avDict = userAvatars.ToDictionary(u => u.Id);
+            var avDict = users.ToDictionary(u => u.Id);
+            roleMap = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -119,11 +151,22 @@ public partial class TaskDetailOverlay : UserControl
                 }
             }
         }
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, a.AvatarData, a.AvatarPath)).ToList();
+        var displayItems = assignees
+            .Select(a =>
+            {
+                var role = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath);
+            })
+            .ToList();
+        var foremen = displayItems.Where(a => a.RoleDisplay == "Прораб").ToList();
+        var workers = displayItems.Where(a => a.RoleDisplay != "Прораб").ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            AssigneesDisplay.ItemsSource = displayItems;
+            ForemenDisplay.ItemsSource = foremen;
+            WorkersDisplay.ItemsSource = workers;
+            ForemenSection.Visibility = foremen.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+            WorkersSection.Visibility = workers.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
             NoAssigneesText.Visibility = displayItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         });
     }
@@ -165,11 +208,7 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         await _vm.MarkTaskForDeletionCommand.ExecuteAsync(null);
-        ApplyDeletionMark(_vm.Task.IsMarkedForDeletion);
-        if (_vm.Task.IsMarkedForDeletion)
-            EditTaskBtn.Visibility = Visibility.Collapsed;
-        else
-            ApplyRoleRestrictions(); // Restore edit button if unmarked and role allows
+        ApplyRoleRestrictions();
         _onClosed?.Invoke();
     }
 
@@ -197,6 +236,14 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
 
+        if (_drawerMode == TaskDetailDrawerMode.TaskOnly)
+        {
+            var detail = new TaskDetailOverlay();
+            detail.SetTask(_vm.Task, _onClosed, TaskDetailDrawerMode.TaskOnly);
+            MainWindow.Instance?.ShowDrawer(detail, 500);
+            return;
+        }
+
         var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
         var project = await tasksVm.GetProjectForTaskAsync(_vm.Task.ProjectId);
 
@@ -210,8 +257,8 @@ public partial class TaskDetailOverlay : UserControl
         }
 
         var projectId = _vm.Task.ProjectId;
-        var detail = new TaskDetailOverlay();
-        detail.SetTask(_vm.Task, () =>
+        var detailDual = new TaskDetailOverlay();
+        detailDual.SetTask(_vm.Task, () =>
         {
             _onClosed?.Invoke();
             _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
@@ -220,8 +267,8 @@ public partial class TaskDetailOverlay : UserControl
                 if (updatedProject != null && projectPanel != null)
                     projectPanel.SetProject(updatedProject);
             });
-        });
-        MainWindow.Instance?.ShowDrawer(leftPanel, detail, 900);
+        }, TaskDetailDrawerMode.WithProjectSummary);
+        MainWindow.Instance?.ShowDrawer(leftPanel, detailDual, 900);
     }
 
     private void ChangeStatus_Click(object sender, RoutedEventArgs e)
@@ -258,14 +305,18 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         var overlay = new CreateStageOverlay();
-        overlay.SetTask(_vm.Task, async () =>
-        {
-            await _vm.LoadAsync();
-            UpdateStagesTabLabel();
-            UpdateEmptyStates();
-            _onClosed?.Invoke(); // Refresh project page
-        });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        overlay.SetTask(
+            _vm.Task,
+            onSaved: async () =>
+            {
+                await _vm.LoadAsync();
+                UpdateStagesTabLabel();
+                UpdateEmptyStates();
+                _onClosed?.Invoke(); // Refresh project page
+            },
+            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
+
+        MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 
     private void UploadFiles_Click(object sender, RoutedEventArgs e)
@@ -354,7 +405,7 @@ public partial class TaskDetailOverlay : UserControl
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        // Только оверлей редактирования, без левой панели. После закрытия — снова проект + задача.
+        // Только форма этапа; после закрытия — снова деталь задачи в том же режиме drawer.
         MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 }
@@ -364,14 +415,17 @@ public sealed class AssigneeDisplayItem
 {
     public Guid UserId { get; }
     public string UserName { get; }
+    public string RoleDisplay { get; }
     public string Initials { get; }
     public byte[]? AvatarData { get; }
     public string? AvatarPath { get; }
 
-    public AssigneeDisplayItem(Guid userId, string userName, byte[]? avatarData = null, string? avatarPath = null)
+    public AssigneeDisplayItem(Guid userId, string userName, string? roleName, byte[]? avatarData = null, string? avatarPath = null)
     {
         UserId = userId;
         UserName = userName;
+        var label = ProjectDetailViewModel.RoleToRussian(roleName);
+        RoleDisplay = label == "—" ? "Работник" : label;
         AvatarData = avatarData;
         AvatarPath = avatarPath;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);

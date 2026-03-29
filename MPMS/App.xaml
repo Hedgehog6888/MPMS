@@ -801,6 +801,7 @@
             <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
             <infra:StageCountToStringConverter x:Key="StageCountToString"/>
             <infra:DateTimeToRelativeConverter x:Key="DateTimeToRelative"/>
+            <infra:UtcToLocalDateTimeConverter x:Key="UtcToLocalDateTime"/>
             <infra:EqualityToVisibilityConverter x:Key="EqualityToVis"/>
             <infra:ProgressPercentToBrushConverter    x:Key="ProgressPercentToBrush"/>
             <infra:EntityTypeToAccentBrushConverter     x:Key="EntityTypeToAccentBrush"/>
@@ -809,6 +810,7 @@
             <infra:ActorRoleToLabelConverter            x:Key="ActorRoleToLabel"/>
             <infra:ActorRoleToBrushConverter            x:Key="ActorRoleToBrush"/>
             <infra:ActorRoleToForegroundBrushConverter  x:Key="ActorRoleToForegroundBrush"/>
+            <infra:ActorRoleToBadgeVisibilityConverter  x:Key="ActorRoleBadgeVis"/>
             <infra:RequiredRoleToVisibilityConverter    x:Key="RoleToVis"/>
             <infra:AvatarBytesToImageSourceConverter    x:Key="AvatarBytesToImage"/>
             <infra:BlockedToStatusStringConverter       x:Key="BlockedToStatusString"/>

@@ -200,10 +200,14 @@
                         Background="#FFEBE6" BorderBrush="#FFBDAD" BorderThickness="1"
                         Margin="16,0,16,12" Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚠" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"
+                        <TextBlock Text="⚠" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Top"
                                    Foreground="#BF2600"/>
-                        <TextBlock Text="Этап помечен для удаления" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="#BF2600" VerticalAlignment="Center"/>
+                        <StackPanel>
+                            <TextBlock Text="Пометка удаления" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#BF2600"/>
+                            <TextBlock x:Name="DeletionHintText" FontSize="12" Foreground="#BF2600"
+                                       Margin="0,4,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -291,7 +295,18 @@
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding UserName}" FontSize="13"
                                                            FontWeight="SemiBold" Foreground="#172B4D"/>
-                                                <TextBlock Text="Исполнитель" FontSize="11" Foreground="#8993A4"/>
+                                                <TextBlock Text="{Binding RoleDisplay}" FontSize="11" Margin="0,1,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#8993A4"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RoleDisplay}" Value="Прораб">
+                                                                    <Setter Property="Foreground" Value="#166534"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                             </StackPanel>
                                         </StackPanel>
                                     </DataTemplate>

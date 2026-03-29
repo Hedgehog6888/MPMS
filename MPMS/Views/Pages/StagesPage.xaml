@@ -4,6 +4,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="StageRow" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor"     Value="Hand"/>
@@ -152,47 +153,100 @@
                 <!-- Stages list -->
                 <StackPanel>
 
-                        <!-- Column headers -->
-                        <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
-                                BorderThickness="1.5" BorderBrush="Transparent">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="90"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="1" Text="СМЕНА СТАТУСА"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
-                                           Margin="0,0,24,0"/>
-                                <TextBlock Grid.Column="2" Text="ЗАДАЧА"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="3" Text="СТАТУС"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Rows (grouped by task) -->
-                        <ItemsControl ItemsSource="{Binding StageGroups}">
+                        <!-- Проекты → задачи → этапы -->
+                        <ItemsControl ItemsSource="{Binding ProjectStageGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <!-- Task/Project header -->
-                                        <Border Background="#F4F5F7" Padding="10,6" Margin="0,8,0,4" CornerRadius="6">
-                                            <TextBlock FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="#6B778C">
-                                                <Run Text="{Binding TaskName, Mode=OneWay}"/>
-                                                <Run Text=" — " Foreground="#C1C7D0"/>
-                                                <Run Text="{Binding ProjectName, Mode=OneWay}" Foreground="#6B778C"/>
-                                            </TextBlock>
+                                        <ItemsControl ItemsSource="{Binding TaskGroups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Margin" Value="12,0,0,0"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFirstInProject}" Value="True">
+                                                                        <Setter Property="Margin" Value="0"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <!-- Первая задача: проект и задача в одной строке -->
+                                                        <Grid Margin="0,10,0,6" VerticalAlignment="Center"
+                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVis}}">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*" MinWidth="0"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#0C66E4"
+                                                                    VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
+                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Text="Проект"/>
+                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#172B4D"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="240"
+                                                                       Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
+                                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#C1C7D0" Margin="0,0,6,0" Text="·"/>
+                                                            <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
+                                                                       Text="Задача"/>
+                                                            <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
+                                                        </Grid>
+                                                        <!-- Следующие задачи: только строка задачи -->
+                                                        <Grid Margin="0,8,0,4" VerticalAlignment="Center"
+                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVisInv}}">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*" MinWidth="0"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#97A0AF"
+                                                                    VerticalAlignment="Center" Margin="0,0,8,0" Height="12"/>
+                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Text="Задача"/>
+                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
+                                                        </Grid>
+                                        <!-- Заголовки колонок под этой задачей -->
+                                        <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
+                                                BorderThickness="1.5" BorderBrush="Transparent">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="130"/>
+                                                    <ColumnDefinition Width="130"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="СМЕНА СТАТУСА"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Margin="0,0,24,0"/>
+                                                <TextBlock Grid.Column="2" Text="ЗАДАЧА"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="3" Text="СТАТУС"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           HorizontalAlignment="Right"/>
+                                            </Grid>
                                         </Border>
                                         <!-- Stages in task -->
                                         <ItemsControl ItemsSource="{Binding Stages}">
@@ -206,7 +260,7 @@
                                                                 <Setter Property="Background" Value="White"/>
                                                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                         <Setter Property="BorderBrush" Value="#DE350B"/>
                                                                         <Setter Property="Background" Value="#FFF5F5"/>
                                                                     </DataTrigger>
@@ -245,12 +299,16 @@
                                                                            Foreground="{StaticResource TextSecondaryBrush}"
                                                                            Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
                                                                            Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
+                                                                <TextBlock Text="{Binding Stage.StageInheritedDeletionHint}"
+                                                                           FontSize="10" Foreground="#B71C1C" Margin="0,4,0,0"
+                                                                           TextWrapping="Wrap"
+                                                                           Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                             </StackPanel>
 
                                                             <!-- Status buttons (left of task, with margin) — скрываются при пометке удаления -->
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" Margin="0,0,24,0"
-                                                                        Visibility="{Binding Stage.IsMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+                                                                        Visibility="{Binding Stage.EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
                                                                     <Button Tag="{Binding}"
                                                                             Click="StartStage_Click" Margin="0,0,4,0"
                                                                             Style="{StaticResource IconButton}" FontSize="12"
@@ -306,7 +364,7 @@
                                                                     <Style TargetType="Border">
                                                                         <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                            <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                 <Setter Property="Background" Value="#DE350B"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -317,7 +375,7 @@
                                                                         <Style TargetType="TextBlock">
                                                                             <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
                                                                             <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                                <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Text" Value="Пометка удаления"/>
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
@@ -361,7 +419,7 @@
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                             <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                             <Style.Triggers>
-                                                                                <DataTrigger Binding="{Binding Stage.IsMarkedForDeletion}" Value="True">
+                                                                                <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                                 </DataTrigger>
                                                                             </Style.Triggers>
@@ -373,8 +431,17 @@
                                                                 </Button>
                                                                 <!-- Mark/unmark for deletion (Worker+) -->
                                                                 <Button Tag="{Binding}" Click="MarkStage_Click"
-                                                                        Margin="0,0,4,0" Style="{StaticResource IconButton}"
-                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}">
+                                                                        Margin="0,0,4,0">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Stage.CanToggleStageDeletionMark}" Value="False">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
                                                                     <Button.ToolTip>
                                                                         <ToolTip>
                                                                             <TextBlock>
@@ -434,6 +501,10 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -441,7 +512,7 @@
 
                         <!-- Empty state -->
                         <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
-                                    Visibility="{Binding StageGroups.Count, Converter={StaticResource IntToVisInv}}">
+                                    Visibility="{Binding ProjectStageGroups.Count, Converter={StaticResource IntToVisInv}}">
                             <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}" Width="48" Height="48" HorizontalAlignment="Center" Opacity="0.4"/>
                             <TextBlock Text="Этапы не найдены" FontSize="15" FontWeight="SemiBold"
                                        Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>

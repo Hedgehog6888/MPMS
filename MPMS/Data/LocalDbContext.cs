@@ -8,6 +8,15 @@ public class LocalDbContext : DbContext
 {
     public LocalDbContext(DbContextOptions<LocalDbContext> options) : base(options) { }
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        configurationBuilder.Properties<DateTime>()
+            .HaveConversion<DateTimeAsUtcConverter>();
+        configurationBuilder.Properties<DateTime?>()
+            .HaveConversion<NullableDateTimeAsUtcConverter>();
+    }
+
     public DbSet<AuthSession>        AuthSessions     => Set<AuthSession>();
     public DbSet<RecentAccount>      RecentAccounts   => Set<RecentAccount>();
     public DbSet<LocalRole>          Roles            => Set<LocalRole>();
