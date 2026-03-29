@@ -424,7 +424,8 @@ public sealed class AssigneeDisplayItem
     {
         UserId = userId;
         UserName = userName;
-        RoleDisplay = roleName is "Foreman" or "Прораб" ? "Прораб" : "Работник";
+        var label = ProjectDetailViewModel.RoleToRussian(roleName);
+        RoleDisplay = label == "—" ? "Работник" : label;
         AvatarData = avatarData;
         AvatarPath = avatarPath;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);

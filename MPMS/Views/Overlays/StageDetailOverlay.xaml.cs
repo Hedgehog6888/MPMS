@@ -150,12 +150,14 @@ public partial class StageDetailOverlay : UserControl
         }
 
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
+        var roleByUser = new Dictionary<Guid, string?>();
         if (userIds.Count > 0)
         {
-            var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+            var userRows = await db.Users.Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
                 .ToListAsync();
-            var avDict = userAvatars.ToDictionary(u => u.Id);
+            var avDict = userRows.ToDictionary(u => u.Id);
+            roleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -165,7 +167,14 @@ public partial class StageDetailOverlay : UserControl
                 }
             }
         }
-        var displayItems = assignees.Select(a => new AssigneeDisplayItem(a.UserId, a.UserName, null, a.AvatarData, a.AvatarPath)).ToList();
+
+        var displayItems = assignees
+            .Select(a =>
+            {
+                roleByUser.TryGetValue(a.UserId, out var role);
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath);
+            })
+            .ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {

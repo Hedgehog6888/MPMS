@@ -135,54 +135,53 @@ public partial class TaskSummaryPanel : UserControl
         }
 
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
-        var roles = userIds.Count == 0
-            ? new Dictionary<Guid, string?>()
-            : await db.Users
+        var roles = new Dictionary<Guid, string?>();
+        if (userIds.Count > 0)
+        {
+            var userRows = await db.Users
                 .Where(u => userIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id, u => (string?)u.RoleName);
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
+                .ToListAsync();
+            roles = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            var byId = userRows.ToDictionary(u => u.Id);
+            foreach (var a in assignees)
+            {
+                if (!byId.TryGetValue(a.UserId, out var u))
+                    continue;
+                a.AvatarData = u.AvatarData;
+                a.AvatarPath = u.AvatarPath;
+                // В разметке только байты → подтянуть файл, если в БД есть путь, а PNG нет
+                if ((a.AvatarData is null || a.AvatarData.Length == 0)
+                    && !string.IsNullOrWhiteSpace(a.AvatarPath))
+                {
+                    var fromFile = AvatarHelper.FileToBytes(a.AvatarPath);
+                    if (fromFile is { Length: > 0 })
+                        a.AvatarData = fromFile;
+                }
+            }
+        }
+
+        static bool IsForemanRole(string? role) => role is "Foreman" or "Прораб";
 
         var foremen = assignees
-            .Where(a => roles.TryGetValue(a.UserId, out var role) && role is "Foreman" or "Прораб")
-            .Select(a => a.UserName)
-            .Distinct()
+            .Where(a => roles.TryGetValue(a.UserId, out var role) && IsForemanRole(role))
+            .OrderBy(a => a.UserName)
             .ToList();
         var workers = assignees
-            .Where(a => !roles.TryGetValue(a.UserId, out var role) || role is "Worker" or "Работник")
-            .Select(a => a.UserName)
-            .Distinct()
+            .Where(a => !roles.TryGetValue(a.UserId, out var role) || !IsForemanRole(role))
+            .OrderBy(a => a.UserName)
             .ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (loadVersion != _avatarLoadVersion)
                 return;
-            ApplyAssigneeLists(ForemenPanel, ForemenSection, foremen, Color.FromRgb(0xEC, 0xFD, 0xF5), Color.FromRgb(0x16, 0x65, 0x34));
-            ApplyAssigneeLists(WorkersPanel, WorkersSection, workers, Color.FromRgb(0xFF, 0xF7, 0xED), Color.FromRgb(0x92, 0x40, 0x0E));
+            ForemanSection.Visibility = foremen.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ForemanList.ItemsSource = foremen;
+            WorkersSection.Visibility = workers.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            WorkersList.ItemsSource = workers;
             NoAssigneesText.Visibility = foremen.Count == 0 && workers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         });
-    }
-
-    private static void ApplyAssigneeLists(WrapPanel panel, FrameworkElement section, IReadOnlyCollection<string> names, Color background, Color foreground)
-    {
-        panel.Children.Clear();
-        section.Visibility = names.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
-
-        foreach (var name in names)
-        {
-            panel.Children.Add(new Border
-            {
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8, 4, 8, 4),
-                Margin = new Thickness(0, 0, 6, 6),
-                Background = new SolidColorBrush(background),
-                Child = new TextBlock
-                {
-                    Text = name,
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush(foreground)
-                }
-            });
-        }
     }
 
     private void UpdateProgressWidth(int pct)
