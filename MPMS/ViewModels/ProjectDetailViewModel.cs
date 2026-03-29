@@ -783,6 +783,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Text = text.Trim(),
             CreatedAt = DateTime.UtcNow
         };
+
+        if (_auth.UserId is { } uid)
+        {
+            var avatar = await db.Users
+                .Where(u => u.Id == uid)
+                .Select(u => new { u.AvatarData, u.AvatarPath })
+                .FirstOrDefaultAsync();
+            if (avatar is not null)
+            {
+                msg.AvatarData = avatar.AvatarData;
+                msg.AvatarPath = avatar.AvatarPath;
+            }
+        }
+
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
 

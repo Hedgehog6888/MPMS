@@ -730,103 +730,127 @@
 
                 <!-- MESSAGES tab content: scroll only messages, input at bottom -->
                 <Grid x:Name="MessagesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Messages list -->
-                    <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding Messages}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,0,0,10">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <!-- Avatar -->
-                                            <Border Style="{StaticResource AvatarCircle34}"
-                                                    Margin="0,0,10,0" VerticalAlignment="Top"
-                                                    Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
-                                                <Grid>
-                                                    <Image Style="{StaticResource AvatarImage}"
-                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                           Width="34" Height="34"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Text="{Binding UserInitials}"
-                                                           FontSize="11" FontWeight="Bold"
-                                                           Foreground="White"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                </Grid>
-                                            </Border>
-                                            <!-- Message bubble -->
-                                            <StackPanel Grid.Column="1">
-                                                <!-- Name + role + time row -->
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                    <TextBlock Text="{Binding UserName}"
-                                                               FontSize="12" FontWeight="SemiBold"
-                                                               Foreground="#172B4D" Margin="0,0,6,0"/>
-                                                    <Border CornerRadius="4" Padding="5,2" Margin="0,0,6,0"
-                                                            BorderThickness="1"
-                                                            VerticalAlignment="Center"
-                                                            Background="{Binding UserRole, Converter={StaticResource ActorRoleToBrush}}"
-                                                            BorderBrush="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
-                                                            Visibility="{Binding UserRole, Converter={StaticResource ActorRoleBadgeVis}}">
-                                                        <TextBlock Text="{Binding UserRole, Converter={StaticResource ActorRoleToLabel}}"
-                                                                   FontSize="10" FontWeight="SemiBold"
-                                                                   Foreground="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
-                                                    </Border>
-                                                    <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
-                                                               FontSize="10" Foreground="#97A0AF"
-                                                               VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                </StackPanel>
-                                                <!-- Message text bubble -->
-                                                <Border Background="#F4F5F7" CornerRadius="0,8,8,8"
-                                                        Padding="10,8" MaxWidth="340" HorizontalAlignment="Left">
-                                                    <TextBlock Text="{Binding Text}"
-                                                               FontSize="13" Foreground="#172B4D"
-                                                               TextWrapping="Wrap"/>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <!-- Empty messages state -->
-                            <StackPanel HorizontalAlignment="Center" Margin="0,16,0,16"
-                                        Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
-                                <TextBlock Text="Нет обсуждений" FontSize="13" Foreground="#97A0AF"
-                                           HorizontalAlignment="Center"/>
-                                <TextBlock Text="Начните обсуждение задачи" FontSize="12"
-                                           Foreground="#C1C7D0" HorizontalAlignment="Center" Margin="0,4,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Message input -->
-                    <Border Grid.Row="1" Background="#F4F5F7" CornerRadius="8"
-                            Margin="0,10,0,0" Padding="4">
+                    <Border Background="White" CornerRadius="8"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="MessageInput" Grid.Column="0"
-                                     Background="Transparent" BorderThickness="0"
-                                     Foreground="#172B4D" FontSize="13"
-                                     Padding="8,8" VerticalContentAlignment="Center"
-                                     KeyDown="MessageInput_KeyDown"
-                                     AcceptsReturn="False"/>
-                            <Button Grid.Column="1" Content="Отправить"
-                                    Click="SendMessage_Click"
-                                    Height="34" Padding="14,0"
-                                    Style="{StaticResource BlackBtn}"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Messages list -->
+                            <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
+                                          VerticalScrollBarVisibility="Auto" Padding="14,12,14,10">
+                                <StackPanel>
+                                    <ItemsControl ItemsSource="{Binding Messages}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- Avatar -->
+                                                    <Border Style="{StaticResource AvatarCircle34}"
+                                                            Margin="0,0,12,0" VerticalAlignment="Top"
+                                                            Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="34" Height="34"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding UserInitials}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <!-- Message bubble -->
+                                                    <StackPanel Grid.Column="1">
+                                                        <!-- Name + role + time row -->
+                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                                            <TextBlock Text="{Binding UserName}"
+                                                                       FontSize="12" FontWeight="SemiBold"
+                                                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,6,0"/>
+                                                            <Border CornerRadius="4" Padding="5,2" Margin="0,0,6,0"
+                                                                    BorderThickness="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Background="{Binding UserRole, Converter={StaticResource ActorRoleToBrush}}"
+                                                                    BorderBrush="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
+                                                                    Visibility="{Binding UserRole, Converter={StaticResource ActorRoleBadgeVis}}">
+                                                                <TextBlock Text="{Binding UserRole, Converter={StaticResource ActorRoleToLabel}}"
+                                                                           FontSize="10" FontWeight="SemiBold"
+                                                                           Foreground="{Binding UserRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
+                                                                       FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                        </StackPanel>
+                                                        <!-- Message text bubble -->
+                                                        <Border Background="#F4F5F7" CornerRadius="2,10,10,10"
+                                                                BorderBrush="#EBECF0" BorderThickness="1"
+                                                                Padding="10,9" MaxWidth="380" HorizontalAlignment="Left">
+                                                            <TextBlock Text="{Binding Text}"
+                                                                       FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
+                                                                       TextWrapping="Wrap" LineHeight="19"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty messages state -->
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,20,0,24"
+                                                Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
+                                        <Border Width="48" Height="48" CornerRadius="24"
+                                                Background="{StaticResource BackgroundBrush}"
+                                                BorderBrush="#EBECF0" BorderThickness="1"
+                                                HorizontalAlignment="Center" Margin="0,0,0,12">
+                                            <Image Source="{svgc:SvgImage Source=/icons/chat.svg, AppName=MPMS}"
+                                                   Width="22" Height="22" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" Opacity="0.42"/>
+                                        </Border>
+                                        <TextBlock Text="Нет обсуждений" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Начните обсуждение задачи" FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0" TextAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Message input -->
+                            <Border Grid.Row="1" Background="#FAFBFC" Padding="12,10,12,12"
+                                    BorderBrush="#EBECF0" BorderThickness="0,1,0,0"
+                                    CornerRadius="0,0,8,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="White" CornerRadius="8"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                            Margin="0,0,8,0">
+                                        <TextBox x:Name="MessageInput"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"
+                                                 Padding="10,8" MinHeight="36" VerticalContentAlignment="Center"
+                                                 CaretBrush="{StaticResource TextPrimaryBrush}"
+                                                 SelectionBrush="#B3D4FF"
+                                                 SelectionTextBrush="{StaticResource TextPrimaryBrush}"
+                                                 KeyDown="MessageInput_KeyDown"
+                                                 AcceptsReturn="False"/>
+                                    </Border>
+                                    <Button Grid.Column="1" Content="Отправить"
+                                            Click="SendMessage_Click"
+                                            Height="36" MinWidth="96" VerticalAlignment="Center"
+                                            Style="{StaticResource BlackBtn}"/>
+                                </Grid>
+                            </Border>
                         </Grid>
                     </Border>
                 </Grid>
