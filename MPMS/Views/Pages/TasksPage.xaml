@@ -232,7 +232,8 @@
                                                     <TextBlock Grid.Column="4" Text="СТАТУС"       Style="{StaticResource ColHeader}"/>
                                                     <TextBlock Grid.Column="5" Text="ЭТАПЫ"        Style="{StaticResource ColHeader}"/>
                                                     <TextBlock Grid.Column="6" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
-                                                    <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"     Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"     Style="{StaticResource ColHeader}"
+                                                               HorizontalAlignment="Right"/>
                                                 </Grid>
                                             </Border>
                                             <!-- Tasks in project -->

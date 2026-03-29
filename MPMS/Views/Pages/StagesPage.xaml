@@ -244,7 +244,8 @@
                                                 <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ"
                                                            FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
                                                 <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ"
-                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           HorizontalAlignment="Right"/>
                                             </Grid>
                                         </Border>
                                         <!-- Stages in task -->
