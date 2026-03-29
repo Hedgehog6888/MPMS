@@ -7,8 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Services;
-using MPMS.Views.Dialogs;
-
 namespace MPMS.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
@@ -141,21 +139,6 @@ public partial class MainViewModel : ViewModelBase
 
         // Refresh sync counts when navigating
         _ = RefreshSyncCountsAsync();
-    }
-
-    [RelayCommand]
-    private void Create()
-    {
-        var window = Application.Current.MainWindow;
-        
-        var dialog = _sp.GetRequiredService<CreateProjectDialog>();
-        dialog.Owner = window;
-        if (dialog.ShowDialog() == true && dialog.Result is not null)
-        {
-            var projectsVm = _sp.GetRequiredService<ProjectsViewModel>();
-            _ = projectsVm.SaveNewProjectAsync(dialog.Result, Guid.NewGuid());
-            Navigate("Projects");
-        }
     }
 
     public void NavigateToProject(Models.LocalProject project)

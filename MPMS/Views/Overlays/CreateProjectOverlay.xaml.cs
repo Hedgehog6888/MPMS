@@ -22,6 +22,10 @@ public partial class CreateProjectOverlay : UserControl
     private Action? _onAfterSave;
 
     // User data
+    private List<ManagerPickerItem> _managerItems = [];
+    private List<LocalUser> _managerUsers = [];
+    private Guid? _selectedManagerId;
+
     private List<ForemanPickerItem> _foremanItems = [];
     private List<AssigneePickerItem> _workerItems = [];
     private List<LocalUser> _foremanUsers = [];
@@ -82,15 +86,13 @@ public partial class CreateProjectOverlay : UserControl
         if (IsManagerRole(role))
         {
             var self = await db.Users.FindAsync(auth.UserId);
-            if (self is not null)
-            {
-                ManagerCombo.ItemsSource = new[] { self };
-                ManagerCombo.SelectedIndex = 0;
-                ManagerCombo.IsEnabled = false;
-            }
+            _managerUsers = self is not null ? [self] : [];
+            _selectedManagerId = self?.Id;
+            ManagerPickerHost.IsHitTestVisible = false;
         }
         else
         {
+            ManagerPickerHost.IsHitTestVisible = true;
             var managers = await db.Users
                 .Where(u => !u.IsBlocked &&
                     (u.RoleName == "ProjectManager" || u.RoleName == "Manager"
@@ -101,12 +103,19 @@ public partial class CreateProjectOverlay : UserControl
             if (managers.Count == 0)
                 managers = await db.Users.Where(u => !u.IsBlocked).OrderBy(u => u.Name).ToListAsync();
 
-            ManagerCombo.ItemsSource = managers;
-            if (selectedManagerId.HasValue)
-                ManagerCombo.SelectedValue = selectedManagerId.Value;
+            _managerUsers = managers;
+            if (selectedManagerId.HasValue && managers.Exists(u => u.Id == selectedManagerId.Value))
+                _selectedManagerId = selectedManagerId.Value;
             else if (managers.Count > 0)
-                ManagerCombo.SelectedIndex = 0;
+                _selectedManagerId = managers[0].Id;
+            else
+                _selectedManagerId = null;
         }
+
+        _managerItems = _managerUsers.Select(u => new ManagerPickerItem(u, _selectedManagerId)).ToList();
+        ManagerPickerList.ItemsSource = _managerItems;
+        NoManagerHint.Visibility = _managerItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        RefreshManagerItems();
 
         // Load foremans and workers (only active, not blocked)
         _foremanUsers = await db.Users
@@ -155,6 +164,24 @@ public partial class CreateProjectOverlay : UserControl
             .Where(u => _selectedWorkerIds.Contains(u.Id))
             .Select(u => new WorkerChipInfo(u.Id, u.Name, GetInitials(u.Name)))
             .ToList());
+    }
+
+    private void ManagerItem_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (!ManagerPickerHost.IsHitTestVisible)
+            return;
+        if (sender is not Border b || b.Tag is not ManagerPickerItem item)
+            return;
+        _selectedManagerId = item.UserId;
+        RefreshManagerItems();
+    }
+
+    private void RefreshManagerItems()
+    {
+        foreach (var item in _managerItems)
+            item.RefreshSelected(_selectedManagerId);
+        ManagerPickerList.ItemsSource = null;
+        ManagerPickerList.ItemsSource = _managerItems;
     }
 
     private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
@@ -358,7 +385,7 @@ public partial class CreateProjectOverlay : UserControl
         { ShowError("Введите название заказчика."); return; }
         if (StartDatePicker.SelectedDate is null || EndDatePicker.SelectedDate is null)
         { ShowError("Выберите даты начала и завершения."); return; }
-        if (ManagerCombo.SelectedValue is not Guid managerId)
+        if (_selectedManagerId is not Guid managerId)
         { ShowError("Выберите ответственного менеджера."); return; }
 
         if (_editProject is null && _selectedForemanIds.Count == 0 && _selectedWorkerIds.Count == 0)
@@ -497,6 +524,51 @@ public partial class CreateProjectOverlay : UserControl
     }
 
     private record WorkerChipInfo(Guid UserId, string Name, string Initials);
+}
+
+/// <summary>Один менеджер проекта в списке выбора (одиночный выбор).</summary>
+public sealed class ManagerPickerItem : INotifyPropertyChanged
+{
+    public LocalUser User { get; }
+    public Guid UserId => User.Id;
+    public string Name => User.Name;
+    public string Initials { get; }
+    public string RoleDisplay => "Менеджер проекта";
+    public SolidColorBrush AvatarBrush { get; }
+    public SolidColorBrush RoleColorBrush { get; }
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelectedVis)));
+        }
+    }
+
+    public Visibility IsSelectedVis => _isSelected ? Visibility.Visible : Visibility.Collapsed;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ManagerPickerItem(LocalUser user, Guid? selectedManagerId)
+    {
+        User = user;
+        var parts = user.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        Initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : user.Name.Length > 0 ? user.Name[0].ToString().ToUpper() : "?";
+        _isSelected = selectedManagerId.HasValue && user.Id == selectedManagerId.Value;
+        AvatarBrush = new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D));
+        RoleColorBrush = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
+    }
+
+    public void RefreshSelected(Guid? selectedManagerId)
+    {
+        IsSelected = selectedManagerId.HasValue && UserId == selectedManagerId.Value;
+    }
 }
 
 /// <summary>Элемент пикера прораба (как AssigneePickerItem в CreateTaskOverlay).</summary>

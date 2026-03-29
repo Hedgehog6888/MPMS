@@ -328,9 +328,8 @@
                 <!-- Right: Create + icons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <!-- Create button (чёрная) -->
-                    <Button Command="{Binding CreateCommand}"
-                            Style="{StaticResource TopCreateButton}"
+                    <!-- Кнопка без действия (создание — со страниц «Проекты» / «Задачи» и т.д.) -->
+                    <Button Style="{StaticResource TopCreateButton}"
                             Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
