@@ -23,17 +23,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     // ─── Tasks collections ──────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _plannedTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _inProgressTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _pausedTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _completedTasks = [];
-
-    // Filtered views for UI (list + kanban)
     [ObservableProperty] private ObservableCollection<LocalTask> _filteredTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _filteredPlannedTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _filteredInProgressTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _filteredPausedTasks = [];
-    [ObservableProperty] private ObservableCollection<LocalTask> _filteredCompletedTasks = [];
 
     // ─── Task filters ──────────────────────────────────────────────────────────
     [ObservableProperty] private string _taskSearchText = string.Empty;
@@ -41,7 +31,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _taskPriorityFilter = "Все";
 
     public IReadOnlyList<string> TaskStatusOptions { get; } =
-        ["Все", "Запланирована", "Выполняется", "Приостановлена", "Завершена", "Пометка удалить"];
+        ["Все", "Запланирована", "Выполняется", "Завершена", "Пометка удалить"];
 
     public IReadOnlyList<string> TaskPriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
@@ -61,7 +51,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     // ─── UI state and other entities ──────────────────────────────────────────
     [ObservableProperty] private string _activeTab = "Tasks";
-    [ObservableProperty] private string _taskViewMode = "List";
     [ObservableProperty] private string _stageViewMode = "List";
     [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
     [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
@@ -99,15 +88,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private void ClearProjectData()
     {
         Tasks = [];
-        PlannedTasks = [];
-        InProgressTasks = [];
-        PausedTasks = [];
-        CompletedTasks = [];
         FilteredTasks = [];
-        FilteredPlannedTasks = [];
-        FilteredInProgressTasks = [];
-        FilteredPausedTasks = [];
-        FilteredCompletedTasks = [];
         FilteredPlannedStages = [];
         FilteredInProgressStages = [];
         FilteredCompletedStages = [];
@@ -272,12 +253,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         }
 
         Tasks = new ObservableCollection<LocalTask>(tasks);
-        PlannedTasks    = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Planned));
-        InProgressTasks = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.InProgress));
-        PausedTasks     = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Paused));
-        CompletedTasks  = new ObservableCollection<LocalTask>(tasks.Where(t => t.Status == TaskStatus.Completed));
-
-        // Initialize filtered task collections based on current filters
         ApplyTaskFilter();
 
         if (Project is not null)
@@ -404,14 +379,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         {
             var status = TaskStatusFilter switch
             {
-                "Запланирована"  => TaskStatus.Planned,
-                "Выполняется"    => TaskStatus.InProgress,
-                "Приостановлена" => TaskStatus.Paused,
-                "Завершена"      => TaskStatus.Completed,
-                _                => (TaskStatus?)null
+                "Запланирована" => TaskStatus.Planned,
+                "Выполняется"   => TaskStatus.InProgress,
+                "Завершена"     => TaskStatus.Completed,
+                _               => (TaskStatus?)null
             };
             if (status.HasValue)
-                query = query.Where(t => t.Status == status.Value);
+                query = query.Where(t => t.Status == status.Value && !t.EffectiveTaskMarkedForDeletion);
         }
 
         if (TaskPriorityFilter != "Все")
@@ -444,11 +418,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .ThenBy(t => t.Name)
             .ToList();
 
-        FilteredTasks           = new ObservableCollection<LocalTask>(list);
-        FilteredPlannedTasks    = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Planned));
-        FilteredInProgressTasks = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.InProgress));
-        FilteredPausedTasks     = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Paused));
-        FilteredCompletedTasks  = new ObservableCollection<LocalTask>(list.Where(t => t.Status == TaskStatus.Completed));
+        FilteredTasks = new ObservableCollection<LocalTask>(list);
     }
 
     private void ApplyStageFilter()
@@ -477,7 +447,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 _              => (StageStatus?)null
             };
             if (targetStatus.HasValue)
-                query = query.Where(s => s.Status == targetStatus.Value);
+                query = query.Where(s => s.Status == targetStatus.Value && !s.EffectiveMarkedForDeletion);
         }
 
         var list = query.OrderBy(s => s.EffectiveMarkedForDeletion).ToList();
@@ -536,9 +506,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     [RelayCommand]
     private void SwitchTab(string tab) => ActiveTab = tab;
-
-    [RelayCommand]
-    private void SwitchTaskView(string mode) => TaskViewMode = mode;
 
     [RelayCommand]
     private void SwitchStageView(string mode) => StageViewMode = mode;
@@ -667,13 +634,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await RecalcProjectStatusAsync(db);
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
-        await LoadAsync();
-    }
-
-    [RelayCommand]
-    private async Task MoveTaskAsync((LocalTask task, Models.TaskStatus newStatus) args)
-    {
-        // Task status is auto-calculated from stages — Kanban drag is disabled
         await LoadAsync();
     }
 

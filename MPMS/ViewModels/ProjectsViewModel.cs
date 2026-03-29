@@ -127,7 +127,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 _              => (ProjectStatus?)null
             };
             if (status.HasValue)
-                query = query.Where(p => p.Status == status.Value);
+                query = query.Where(p => p.Status == status.Value && !p.IsMarkedForDeletion);
         }
 
         var list = (await query.ToListAsync(ct)).ToList();

@@ -11,16 +11,12 @@ using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
-using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.Views.Pages;
 
 public partial class ProjectDetailPage : UserControl
 {
     private bool _canEdit;
-    private LocalTask? _draggedTask;
-    private Point _dragStartPoint;
-    private bool _isDragging;
 
     private StageItem? _draggedStageItem;
     private Point _stageDragStartPoint;
@@ -122,6 +118,7 @@ public partial class ProjectDetailPage : UserControl
         MaterialsPanel.Visibility  = tab == "Materials"  ? Visibility.Visible : Visibility.Collapsed;
 
         StageViewModeSwitcher.Visibility = tab == "Stages" ? Visibility.Visible : Visibility.Collapsed;
+
         if (tab == "Stages" && VM is not null)
         {
             bool listMode = VM.StageViewMode == "List";
@@ -142,15 +139,6 @@ public partial class ProjectDetailPage : UserControl
                 ProjectMessagesScrollViewer.ScrollToBottom(),
                 System.Windows.Threading.DispatcherPriority.Loaded);
         }
-    }
-
-    private void TaskView_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioButton rb || rb.Tag is not string mode) return;
-        VM?.SwitchTaskViewCommand.Execute(mode);
-
-        TaskListPanel.Visibility   = mode == "List"   ? Visibility.Visible : Visibility.Collapsed;
-        TaskKanbanPanel.Visibility = mode == "Kanban" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void StageView_Click(object sender, RoutedEventArgs e)
@@ -474,102 +462,6 @@ public partial class ProjectDetailPage : UserControl
                 });
         }, TaskDetailOverlay.TaskDetailDrawerMode.TaskOnly);
         MainWindow.Instance?.ShowDrawer(overlay, 500);
-    }
-
-    // ── Kanban Drag-and-Drop ────────────────────────────────────────────
-
-    private void KanbanCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is FrameworkElement fe && fe.DataContext is LocalTask task)
-        {
-            _draggedTask = task;
-            _dragStartPoint = e.GetPosition(null);
-            _isDragging = false;
-        }
-    }
-
-    private void KanbanCard_MouseMove(object sender, MouseEventArgs e)
-    {
-        if (_draggedTask is null || e.LeftButton != MouseButtonState.Pressed || _isDragging)
-            return;
-
-        var currentPos = e.GetPosition(null);
-        var diff = _dragStartPoint - currentPos;
-
-        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-            Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
-        {
-            _isDragging = true;
-            if (sender is DependencyObject dep)
-            {
-                var data = new DataObject("KanbanTask", _draggedTask);
-                DragDrop.DoDragDrop(dep, data, DragDropEffects.Move);
-            }
-            _isDragging = false;
-            _draggedTask = null;
-        }
-    }
-
-    private void KanbanCard_MouseUp(object sender, MouseButtonEventArgs e)
-    {
-        if (!_isDragging && _draggedTask is not null &&
-            sender is FrameworkElement fe && fe.DataContext is LocalTask task)
-        {
-            OpenTaskDetail(task);
-        }
-        _draggedTask = null;
-        _isDragging = false;
-    }
-
-    private void KanbanColumn_DragEnter(object sender, DragEventArgs e)
-    {
-        if (e.Data.GetDataPresent("KanbanTask") && sender is Border border)
-        {
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
-            border.BorderThickness = new Thickness(2);
-            e.Effects = DragDropEffects.Move;
-        }
-        else
-        {
-            e.Effects = DragDropEffects.None;
-        }
-        e.Handled = true;
-    }
-
-    private void KanbanColumn_DragLeave(object sender, DragEventArgs e)
-    {
-        if (sender is Border border)
-        {
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
-            border.BorderThickness = new Thickness(1);
-        }
-    }
-
-    private async void KanbanColumn_Drop(object sender, DragEventArgs e)
-    {
-        if (sender is Border border)
-        {
-            border.BorderBrush = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
-            border.BorderThickness = new Thickness(1);
-        }
-
-        if (!e.Data.GetDataPresent("KanbanTask")) return;
-        if (e.Data.GetData("KanbanTask") is not LocalTask task) return;
-        if (sender is not FrameworkElement fe || fe.Tag is not string statusStr) return;
-        if (VM is null) return;
-
-        var newStatus = statusStr switch
-        {
-            "InProgress" => TaskStatus.InProgress,
-            "Paused"     => TaskStatus.Paused,
-            "Completed"  => TaskStatus.Completed,
-            _            => TaskStatus.Planned
-        };
-
-        if (task.Status != newStatus)
-            await VM.MoveTaskCommand.ExecuteAsync((task, newStatus));
-
-        e.Handled = true;
     }
 
     private void UploadFile_Click(object sender, RoutedEventArgs e)

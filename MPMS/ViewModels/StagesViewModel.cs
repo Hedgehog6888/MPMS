@@ -245,7 +245,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 _              => (StageStatus?)null
             };
             if (targetStatus.HasValue)
-                query = query.Where(s => s.Stage.Status == targetStatus.Value);
+                query = query.Where(s => s.Stage.Status == targetStatus.Value && !s.Stage.EffectiveMarkedForDeletion);
         }
 
         FilteredStages = new ObservableCollection<StageItem>(query);
