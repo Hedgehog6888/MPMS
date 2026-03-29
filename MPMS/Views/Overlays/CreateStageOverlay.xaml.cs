@@ -33,12 +33,13 @@ public partial class CreateStageOverlay : UserControl
         InitializeComponent();
     }
 
-    public void SetTask(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null)
+    public void SetTask(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)
     {
         _task = task;
         _vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         _vm.SetTask(task);
         _onSaved = onSaved;
+        _onAfterSave = onAfterSave;
         TaskNameLabel.Text = $"Задача: {task.Name}";
         ProjectNameRow.Visibility = Visibility.Visible;
         ProjectNameBox.Text = task.ProjectName ?? "—";

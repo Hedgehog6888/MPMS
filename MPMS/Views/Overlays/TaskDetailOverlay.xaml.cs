@@ -14,17 +14,29 @@ namespace MPMS.Views.Overlays;
 
 public partial class TaskDetailOverlay : UserControl
 {
+    /// <summary>Как показывать drawer при открытии и после вложенных форм (этап, редактирование задачи).</summary>
+    public enum TaskDetailDrawerMode
+    {
+        /// <summary>Только карточка задачи — пользователь уже на странице проекта.</summary>
+        TaskOnly,
+        /// <summary>Сводка проекта слева (глобальный поиск, страница «Задачи»).</summary>
+        WithProjectSummary,
+    }
+
     private TaskDetailViewModel? _vm;
     private Action? _onClosed;
+    private TaskDetailDrawerMode _drawerMode = TaskDetailDrawerMode.WithProjectSummary;
 
     public TaskDetailOverlay()
     {
         InitializeComponent();
     }
 
-    public void SetTask(LocalTask task, Action? onClosed = null)
+    public void SetTask(LocalTask task, Action? onClosed = null,
+        TaskDetailDrawerMode drawerMode = TaskDetailDrawerMode.WithProjectSummary)
     {
         _onClosed = onClosed;
+        _drawerMode = drawerMode;
         _vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         _vm.SetTask(task);
         DataContext = _vm;
@@ -224,6 +236,14 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
 
+        if (_drawerMode == TaskDetailDrawerMode.TaskOnly)
+        {
+            var detail = new TaskDetailOverlay();
+            detail.SetTask(_vm.Task, _onClosed, TaskDetailDrawerMode.TaskOnly);
+            MainWindow.Instance?.ShowDrawer(detail, 500);
+            return;
+        }
+
         var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
         var project = await tasksVm.GetProjectForTaskAsync(_vm.Task.ProjectId);
 
@@ -237,8 +257,8 @@ public partial class TaskDetailOverlay : UserControl
         }
 
         var projectId = _vm.Task.ProjectId;
-        var detail = new TaskDetailOverlay();
-        detail.SetTask(_vm.Task, () =>
+        var detailDual = new TaskDetailOverlay();
+        detailDual.SetTask(_vm.Task, () =>
         {
             _onClosed?.Invoke();
             _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
@@ -247,8 +267,8 @@ public partial class TaskDetailOverlay : UserControl
                 if (updatedProject != null && projectPanel != null)
                     projectPanel.SetProject(updatedProject);
             });
-        });
-        MainWindow.Instance?.ShowDrawer(leftPanel, detail, 900);
+        }, TaskDetailDrawerMode.WithProjectSummary);
+        MainWindow.Instance?.ShowDrawer(leftPanel, detailDual, 900);
     }
 
     private void ChangeStatus_Click(object sender, RoutedEventArgs e)
@@ -285,14 +305,18 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm?.Task is null) return;
         var overlay = new CreateStageOverlay();
-        overlay.SetTask(_vm.Task, async () =>
-        {
-            await _vm.LoadAsync();
-            UpdateStagesTabLabel();
-            UpdateEmptyStates();
-            _onClosed?.Invoke(); // Refresh project page
-        });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        overlay.SetTask(
+            _vm.Task,
+            onSaved: async () =>
+            {
+                await _vm.LoadAsync();
+                UpdateStagesTabLabel();
+                UpdateEmptyStates();
+                _onClosed?.Invoke(); // Refresh project page
+            },
+            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
+
+        MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 
     private void UploadFiles_Click(object sender, RoutedEventArgs e)
@@ -381,7 +405,7 @@ public partial class TaskDetailOverlay : UserControl
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        // Только оверлей редактирования, без левой панели. После закрытия — снова проект + задача.
+        // Только форма этапа; после закрытия — снова деталь задачи в том же режиме drawer.
         MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 }

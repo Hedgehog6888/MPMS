@@ -477,7 +477,7 @@ public partial class ProjectDetailPage : UserControl
                     await vm.LoadAsync();
                     UpdateMarkProjectButton();
                 });
-        });
+        }, TaskDetailOverlay.TaskDetailDrawerMode.TaskOnly);
         MainWindow.Instance?.ShowDrawer(overlay, 500);
     }
 
