@@ -188,7 +188,14 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             {
                 if (managerAvatars.TryGetValue(p.ManagerId, out var av))
                 {
-                    p.ManagerAvatarData = av.AvatarData;
+                    var data = av.AvatarData;
+                    if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
+                    {
+                        var fromFile = AvatarHelper.FileToBytes(av.AvatarPath);
+                        if (fromFile is { Length: > 0 })
+                            data = fromFile;
+                    }
+                    p.ManagerAvatarData = data;
                     p.ManagerAvatarPath = av.AvatarPath;
                 }
             }

@@ -121,20 +121,35 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Reload project from DB to get latest IsMarkedForDeletion and Status
+        // Reload project from DB to get latest IsMarkedForDeletion and Status.
+        // Важно: не присваивать Project до заполнения ManagerAvatar* — иначе UI успевает отрисовать
+        // пустой аватар, а без INPC на NotMapped-свойствах Image не обновится (как у участников:
+        // у них AvatarData выставляется до попадания в коллекцию).
         var projectEntity = await db.Projects.FindAsync(Project.Id);
         if (projectEntity is not null)
         {
-            Project = projectEntity;
             var managerAv = await db.Users
                 .Where(u => u.Id == projectEntity.ManagerId)
                 .Select(u => new { u.AvatarData, u.AvatarPath })
                 .FirstOrDefaultAsync();
+            byte[]? mgrAvatarData = null;
+            string? mgrAvatarPath = null;
             if (managerAv is not null)
             {
-                Project.ManagerAvatarData = managerAv.AvatarData;
-                Project.ManagerAvatarPath = managerAv.AvatarPath;
+                mgrAvatarData = managerAv.AvatarData;
+                mgrAvatarPath = managerAv.AvatarPath;
+                if ((mgrAvatarData is null || mgrAvatarData.Length == 0)
+                    && !string.IsNullOrWhiteSpace(mgrAvatarPath))
+                {
+                    var fromFile = AvatarHelper.FileToBytes(mgrAvatarPath);
+                    if (fromFile is { Length: > 0 })
+                        mgrAvatarData = fromFile;
+                }
             }
+
+            projectEntity.ManagerAvatarData = mgrAvatarData;
+            projectEntity.ManagerAvatarPath = mgrAvatarPath;
+            Project = projectEntity;
         }
 
         var userId = _auth.UserId;
@@ -331,7 +346,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             if (userAvatars.TryGetValue(m.UserId, out var av))
             {
                 m.AvatarPath = av.AvatarPath;
-                m.AvatarData = av.AvatarData;
+                var data = av.AvatarData;
+                if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
+                {
+                    var fromFile = AvatarHelper.FileToBytes(av.AvatarPath);
+                    if (fromFile is { Length: > 0 })
+                        data = fromFile;
+                }
+                m.AvatarData = data;
             }
         }
         Members = new ObservableCollection<LocalProjectMember>(members);
@@ -497,7 +519,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await RecalcProjectStatusAsync(db);
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
 
-        Project = project;
         await LoadAsync();
     }
 

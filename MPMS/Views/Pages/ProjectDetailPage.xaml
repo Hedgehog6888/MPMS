@@ -505,7 +505,8 @@
                                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <StackPanel Orientation="Horizontal">
                                             <Border Style="{StaticResource AvatarCircle28}"
-                                                    Background="#172B4D" Margin="0,0,8,0">
+                                                    Background="{Binding Project.ManagerInitials, Converter={StaticResource InitialsToBrush}}"
+                                                    Margin="0,0,8,0">
                                                 <Grid>
                                                     <Image Style="{StaticResource AvatarImage}"
                                                            Source="{Binding Project.ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
