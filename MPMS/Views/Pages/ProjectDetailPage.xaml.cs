@@ -109,11 +109,6 @@ public partial class ProjectDetailPage : UserControl
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
 
-    private void Back_Click(object sender, MouseButtonEventArgs e)
-    {
-        VM?.GoBackCommand.Execute(null);
-    }
-
     private void Tab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not RadioButton rb || rb.Tag is not string tab) return;

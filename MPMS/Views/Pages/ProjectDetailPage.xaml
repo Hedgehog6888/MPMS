@@ -326,21 +326,6 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <!-- Breadcrumb -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <Image Source="{svgc:SvgImage Source=/icons/pathHouse.svg, AppName=MPMS}"
-                               Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,4,0" Opacity="0.7"/>
-                        <TextBlock Text="›" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0"
-                                   Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="Проекты" Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontSize="12" Cursor="Hand"
-                                   MouseLeftButtonDown="Back_Click"/>
-                        <TextBlock Text=" › " FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding Project.Name}" FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   TextTrimming="CharacterEllipsis" MaxWidth="300"/>
-                    </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
