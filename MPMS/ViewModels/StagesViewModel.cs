@@ -29,7 +29,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
-    [ObservableProperty] private ObservableCollection<TaskStageGroup> _stageGroups = [];
+    [ObservableProperty] private ObservableCollection<ProjectStageGroup> _projectStageGroups = [];
 
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все статусы";
@@ -250,14 +250,26 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
         FilteredStages = new ObservableCollection<StageItem>(query);
 
-        var groups = query
+        var taskGroups = query
             .GroupBy(s => new { s.TaskId, s.TaskName, s.ProjectId, s.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
             .ThenBy(g => g.Key.TaskName)
             .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName,
-                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion).ToList()))
+                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion).ToList(), isFirstInProject: false))
             .ToList();
-        StageGroups = new ObservableCollection<TaskStageGroup>(groups);
+
+        var projectGroups = taskGroups
+            .GroupBy(t => new { t.ProjectId, t.ProjectName })
+            .OrderBy(g => g.Key.ProjectName)
+            .Select(g =>
+            {
+                var ordered = g.OrderBy(x => x.TaskName).ToList();
+                var withFirst = ordered.Select((tg, i) => new TaskStageGroup(
+                    tg.TaskId, tg.TaskName, tg.ProjectId, tg.ProjectName, tg.Stages, i == 0)).ToList();
+                return new ProjectStageGroup(g.Key.ProjectId, g.Key.ProjectName, withFirst);
+            })
+            .ToList();
+        ProjectStageGroups = new ObservableCollection<ProjectStageGroup>(projectGroups);
     }
 
     private void UpdateTaskFilterOptions()
@@ -372,6 +384,20 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     }
 }
 
+public class ProjectStageGroup
+{
+    public Guid ProjectId { get; }
+    public string ProjectName { get; }
+    public List<TaskStageGroup> TaskGroups { get; }
+
+    public ProjectStageGroup(Guid projectId, string projectName, List<TaskStageGroup> taskGroups)
+    {
+        ProjectId = projectId;
+        ProjectName = projectName;
+        TaskGroups = taskGroups;
+    }
+}
+
 public class TaskStageGroup
 {
     public Guid TaskId { get; }
@@ -379,14 +405,18 @@ public class TaskStageGroup
     public Guid ProjectId { get; }
     public string ProjectName { get; }
     public List<StageItem> Stages { get; }
+    /// <summary>Первая задача в проекте — в одной строке с названием проекта.</summary>
+    public bool IsFirstInProject { get; }
 
-    public TaskStageGroup(Guid taskId, string taskName, Guid projectId, string projectName, List<StageItem> stages)
+    public TaskStageGroup(Guid taskId, string taskName, Guid projectId, string projectName, List<StageItem> stages,
+        bool isFirstInProject = false)
     {
         TaskId = taskId;
         TaskName = taskName;
         ProjectId = projectId;
         ProjectName = projectName;
         Stages = stages;
+        IsFirstInProject = isFirstInProject;
     }
 }
 

@@ -189,31 +189,6 @@
 
                 <StackPanel>
 
-                            <!-- Column headers -->
-                            <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
-                                    BorderThickness="1.5" BorderBrush="Transparent">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="140"/>
-                                        <ColumnDefinition Width="95"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="72"/>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="90"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="1" Text="ИСПОЛНИТЕЛЬ"  Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="2" Text="ПРИОРИТЕТ"    Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="3" Text="СРОК"         Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="4" Text="СТАТУС"       Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="5" Text="ЭТАПЫ"        Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="6" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
-                                    <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"     Style="{StaticResource ColHeader}"/>
-                                </Grid>
-                            </Border>
-
                             <!-- Task rows (grouped by project) -->
                             <ItemsControl ItemsSource="{Binding TaskGroups}">
                                 <ItemsControl.ItemTemplate>
@@ -236,6 +211,30 @@
                                                            TextTrimming="CharacterEllipsis"
                                                            Text="{Binding ProjectName, Mode=OneWay}"/>
                                             </Grid>
+                                            <!-- Заголовки колонок под этим проектом -->
+                                            <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
+                                                    BorderThickness="1.5" BorderBrush="Transparent">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="95"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="72"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="90"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="1" Text="ИСПОЛНИТЕЛЬ"  Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="2" Text="ПРИОРИТЕТ"    Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="3" Text="СРОК"         Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="4" Text="СТАТУС"       Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="5" Text="ЭТАПЫ"        Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="6" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="7" Text="ДЕЙСТВИЯ"     Style="{StaticResource ColHeader}"/>
+                                                </Grid>
+                                            </Border>
                                             <!-- Tasks in project -->
                                             <ItemsControl ItemsSource="{Binding Tasks}">
                                                 <ItemsControl.ItemTemplate>

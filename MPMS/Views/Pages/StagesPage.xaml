@@ -4,6 +4,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="StageRow" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor"     Value="Hand"/>
@@ -152,69 +153,100 @@
                 <!-- Stages list -->
                 <StackPanel>
 
-                        <!-- Column headers -->
-                        <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
-                                BorderThickness="1.5" BorderBrush="Transparent">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="90"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="1" Text="СМЕНА СТАТУСА"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
-                                           Margin="0,0,24,0"/>
-                                <TextBlock Grid.Column="2" Text="ЗАДАЧА"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="3" Text="СТАТУС"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ"
-                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Rows (grouped by task) -->
-                        <ItemsControl ItemsSource="{Binding StageGroups}">
+                        <!-- Проекты → задачи → этапы -->
+                        <ItemsControl ItemsSource="{Binding ProjectStageGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <!-- Проект → задача (задача сразу после проекта, не по центру строки) -->
-                                        <Grid Margin="0,10,0,6" VerticalAlignment="Center">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*" MinWidth="0"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#5E6C84"
-                                                    VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
-                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
-                                                       Text="Проект"/>
-                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                       FontWeight="SemiBold" Foreground="#172B4D"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       MaxWidth="240"
-                                                       Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
-                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
-                                                       Foreground="#C1C7D0" Margin="0,0,6,0" Text="·"/>
-                                            <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10"
-                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
-                                                       Text="Задача"/>
-                                            <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
-                                                       FontWeight="SemiBold" Foreground="#42526E"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Text="{Binding TaskName, Mode=OneWay}"/>
-                                        </Grid>
+                                        <ItemsControl ItemsSource="{Binding TaskGroups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Margin" Value="12,0,0,0"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFirstInProject}" Value="True">
+                                                                        <Setter Property="Margin" Value="0"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+                                                        <!-- Первая задача: проект и задача в одной строке -->
+                                                        <Grid Margin="0,10,0,6" VerticalAlignment="Center"
+                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVis}}">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*" MinWidth="0"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#0C66E4"
+                                                                    VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
+                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Text="Проект"/>
+                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#172B4D"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="240"
+                                                                       Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
+                                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#C1C7D0" Margin="0,0,6,0" Text="·"/>
+                                                            <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
+                                                                       Text="Задача"/>
+                                                            <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
+                                                        </Grid>
+                                                        <!-- Следующие задачи: только строка задачи -->
+                                                        <Grid Margin="0,8,0,4" VerticalAlignment="Center"
+                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVisInv}}">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*" MinWidth="0"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#97A0AF"
+                                                                    VerticalAlignment="Center" Margin="0,0,8,0" Height="12"/>
+                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Text="Задача"/>
+                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
+                                                        </Grid>
+                                        <!-- Заголовки колонок под этой задачей -->
+                                        <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
+                                                BorderThickness="1.5" BorderBrush="Transparent">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="130"/>
+                                                    <ColumnDefinition Width="130"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="СМЕНА СТАТУСА"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Margin="0,0,24,0"/>
+                                                <TextBlock Grid.Column="2" Text="ЗАДАЧА"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="3" Text="СТАТУС"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="4" Text="ИСПОЛНИТЕЛЬ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="5" Text="ДЕЙСТВИЯ"
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            </Grid>
+                                        </Border>
                                         <!-- Stages in task -->
                                         <ItemsControl ItemsSource="{Binding Stages}">
                                             <ItemsControl.ItemTemplate>
@@ -468,6 +500,10 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -475,7 +511,7 @@
 
                         <!-- Empty state -->
                         <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
-                                    Visibility="{Binding StageGroups.Count, Converter={StaticResource IntToVisInv}}">
+                                    Visibility="{Binding ProjectStageGroups.Count, Converter={StaticResource IntToVisInv}}">
                             <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}" Width="48" Height="48" HorizontalAlignment="Center" Opacity="0.4"/>
                             <TextBlock Text="Этапы не найдены" FontSize="15" FontWeight="SemiBold"
                                        Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>
