@@ -782,19 +782,10 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Visibility="Collapsed"/>
-
-                <!-- Tasks: filter bar + list -->
-                <Grid Grid.Row="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Filter bar (similar to TasksPage) -->
-                    <Border Grid.Row="0" Background="White" CornerRadius="8"
-                            BorderBrush="#DFE1E6" BorderThickness="1"
-                            Padding="16,10" Margin="24,8,24,8">
+                <!-- Filter bar (similar to TasksPage) -->
+                <Border Grid.Row="0" Panel.ZIndex="1" Background="White" CornerRadius="8"
+                        BorderBrush="#DFE1E6" BorderThickness="1"
+                        Padding="16,10" Margin="24,8,32.5,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -866,12 +857,15 @@
                                       Style="{StaticResource FormCombo}"
                                       Width="160"/>
                         </Grid>
-                    </Border>
+                </Border>
 
+                <Grid Grid.Row="0" Grid.RowSpan="2">
                     <!-- Task List View -->
-                    <ScrollViewer Grid.Row="1" x:Name="TaskListPanel"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="24,0,24,16">
+                    <ScrollViewer x:Name="TaskListPanel"
+                                  VerticalScrollBarVisibility="Visible"
+                                  Padding="24,68,24,16"
+                                  Panel.ZIndex="0">
+                        <StackPanel>
                             <!-- Column headers - BorderThickness matches item rows to ensure alignment -->
                             <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                                     BorderThickness="1.5" BorderBrush="Transparent">
@@ -1119,9 +1113,9 @@
                 </Grid.RowDefinitions>
 
                 <!-- Search + Filters bar for stages (similar to StagesPage) -->
-                <Border Grid.Row="0" Background="White" CornerRadius="8"
+                <Border Grid.Row="0" Panel.ZIndex="1" Background="White" CornerRadius="8"
                         BorderBrush="#DFE1E6" BorderThickness="1"
-                        Padding="16,10" Margin="24,8,24,0">
+                        Padding="16,10" Margin="24,8,32.5,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -1132,7 +1126,8 @@
                             <!-- Search -->
                             <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
                                     Padding="10,0" Height="36" Margin="0,0,12,0"
-                                    BorderThickness="1.5" BorderBrush="Transparent">
+                                    BorderThickness="1.5" BorderBrush="Transparent"
+                                    VerticalAlignment="Center" HorizontalAlignment="Stretch">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
@@ -1194,10 +1189,11 @@
                         </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" Margin="0,8,0,0">
-                    <ScrollViewer x:Name="StageListHost" VerticalScrollBarVisibility="Auto"
+                <Grid Grid.Row="0" Grid.RowSpan="2">
+                    <ScrollViewer x:Name="StageListHost" VerticalScrollBarVisibility="Visible"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  Padding="24,0,24,16">
+                                  Padding="24,68,24,16"
+                                  Panel.ZIndex="0">
                     <StackPanel x:Name="StageListPanel">
                     <!-- Column headers -->
                     <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
