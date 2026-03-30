@@ -21,17 +21,17 @@ public static class ProgressCalculator
         _ => 0.08
     };
 
-    private static bool StageExcludedFromTaskProgress(LocalTaskStage s, LocalTask task)
+    /// <summary>Этап не входит в прогресс задачи (архив / пометка этапа). Пометка задачи не обнуляет этапы — % на плашке сохраняется; помеченные задачи не попадают в статистику проекта в ApplyProjectMetrics.</summary>
+    private static bool StageExcludedFromTaskProgress(LocalTaskStage s)
     {
         if (s.IsArchived || s.IsMarkedForDeletion) return true;
-        if (task.IsMarkedForDeletion || task.ProjectIsMarkedForDeletion) return true;
         return false;
     }
 
     public static void ApplyTaskMetrics(LocalTask task, IReadOnlyCollection<LocalTaskStage> stages)
     {
         var activeStages = stages
-            .Where(s => !StageExcludedFromTaskProgress(s, task))
+            .Where(s => !StageExcludedFromTaskProgress(s))
             .ToList();
 
         task.TotalStages = activeStages.Count;
@@ -55,12 +55,10 @@ public static class ProgressCalculator
             .Where(t => !t.IsArchived && !t.IsMarkedForDeletion)
             .ToList();
         var taskIds = activeTasks.Select(t => t.Id).ToHashSet();
-        var taskById = activeTasks.ToDictionary(t => t.Id);
         var activeStages = stages
             .Where(s => taskIds.Contains(s.TaskId)
-                        && taskById.TryGetValue(s.TaskId, out var tk)
                         && !s.IsArchived
-                        && !StageExcludedFromTaskProgress(s, tk))
+                        && !StageExcludedFromTaskProgress(s))
             .ToList();
 
         project.TotalTasks = activeTasks.Count;
@@ -79,19 +77,12 @@ public static class ProgressCalculator
     {
         if (task.TotalStages <= 0)
         {
-            var rawWithoutStages = task.Status switch
-            {
-                TaskStatus.Completed => 100d,
-                TaskStatus.InProgress => 55d,
-                TaskStatus.Paused => 28d,
-                _ => 8d
-            };
-
-            if (task.IsOverdue && task.Status != TaskStatus.Completed)
-                rawWithoutStages = Math.Max(0, rawWithoutStages - 12);
-
-            return (int)Math.Round(Math.Clamp(rawWithoutStages, 0, 100), MidpointRounding.AwayFromZero);
+            return task.Status == TaskStatus.Completed ? 100 : 0;
         }
+
+        // Все этапы ещё «Запланировано» — без фактического хода работ прогресс 0% (не «паразитные» 5–8%).
+        if (task.CompletedStages == 0 && task.InProgressStages == 0)
+            return 0;
 
         double total = task.TotalStages;
         double completionRatio = task.CompletedStages / total;
@@ -111,9 +102,6 @@ public static class ProgressCalculator
         if (task.IsOverdue && task.Status != TaskStatus.Completed)
             raw -= 12;
 
-        if (task.CompletedStages == 0 && task.InProgressStages == 0)
-            raw = Math.Min(raw, 15);
-
         if (task.Status == TaskStatus.Completed && task.CompletedStages >= task.TotalStages)
             raw = 100;
 
@@ -122,7 +110,17 @@ public static class ProgressCalculator
 
     public static int GetProjectProgressPercent(LocalProject project)
     {
+        if (project.IsMarkedForDeletion)
+            return 0;
+
         if (project.TotalTasks <= 0)
+            return 0;
+
+        // Ни одна задача не в работе/на паузе/не завершена и нет активных этапов — только «запланировано» → 0%.
+        if (project.CompletedTasks == 0
+            && project.InProgressTasks == 0
+            && project.PausedTasks == 0
+            && project.InProgressStages == 0)
             return 0;
 
         double totalTasks = project.TotalTasks;
@@ -160,7 +158,7 @@ public static class ProgressCalculator
 
         if (project.CompletedTasks == project.TotalTasks)
             raw = 100;
-        else if (project.CompletedTasks == 0 && project.InProgressTasks == 0 && project.InProgressStages == 0)
+        else if (project.CompletedTasks == 0 && project.InProgressTasks == 0 && project.InProgressStages == 0 && project.PausedTasks > 0)
             raw = Math.Min(raw, 12);
 
         return (int)Math.Round(Math.Clamp(raw, 0, 100), MidpointRounding.AwayFromZero);
