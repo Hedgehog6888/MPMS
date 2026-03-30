@@ -127,7 +127,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                 }
             }
 
-            var allTasks  = await taskQuery.OrderBy(t => t.DueDate).ThenBy(t => t.Name).ToListAsync();
+            var allTasks  = await taskQuery.ToListAsync();
             var taskIds   = allTasks.Select(t => t.Id).ToList();
             var allStages = taskIds.Count > 0
                 ? await db.TaskStages.Where(s => !s.IsArchived && !s.IsMarkedForDeletion && taskIds.Contains(s.TaskId)).ToListAsync()
@@ -176,57 +176,67 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
 
             var taskDict = allTasks.ToDictionary(t => t.Id);
 
-            // Build task rows (полоса: от даты создания задачи до срока выполнения)
-            var taskRows = allTasks.Select(t =>
-            {
-                TryComputeBarForRange(
-                    DateOnlyFromCreatedAt(t.CreatedAt), t.DueDate,
-                    start, end, totalDays,
-                    out var hasBar, out var left, out var width);
-                return new GanttTaskRow
+            // Build task rows (полоса: от даты создания до срока); только пересечение с выбранным месяцем
+            var taskRows = allTasks
+                .Select(t =>
                 {
-                    Task         = t,
-                    HasBar       = hasBar,
-                    BarLeft      = left,
-                    BarWidth     = width,
-                    BarRemainder = Math.Max(0.001, 1.0 - left - width),
-                    StatusLabel  = TaskStatusLabel(t.Status),
-                    StatusColor  = TaskStatusColor(t.Status),
-                    BarColorHex  = ProgressToHex(t.ProgressPercent)
-                };
-            }).ToList();
+                    TryComputeBarForRange(
+                        DateOnlyFromCreatedAt(t.CreatedAt), t.DueDate,
+                        start, end, totalDays,
+                        out var hasBar, out var left, out var width);
+                    return new GanttTaskRow
+                    {
+                        Task         = t,
+                        HasBar       = hasBar,
+                        BarLeft      = left,
+                        BarWidth     = width,
+                        BarRemainder = Math.Max(0.001, 1.0 - left - width),
+                        StatusLabel  = TaskStatusLabel(t.Status),
+                        StatusColor  = TaskStatusColor(t.Status),
+                        BarColorHex  = ProgressToHex(t.ProgressPercent)
+                    };
+                })
+                .Where(r => r.HasBar)
+                .OrderBy(r => r.Task.CreatedAt)
+                .ThenBy(r => r.Task.Name)
+                .ToList();
             TaskRows = new ObservableCollection<GanttTaskRow>(taskRows);
 
-            // Build stage rows
-            var stageRows = stageList.Select(s =>
-            {
-                taskDict.TryGetValue(s.TaskId, out var parentTask);
-                var item = new StageItem
+            // Build stage rows — только если полоса попадает в месяц; порядок по дате создания этапа
+            var stageRows = stageList
+                .Select(s =>
                 {
-                    Stage       = s,
-                    TaskId      = s.TaskId,
-                    TaskName    = parentTask?.Name      ?? "—",
-                    ProjectId   = parentTask?.ProjectId ?? Guid.Empty,
-                    ProjectName = parentTask?.ProjectName ?? "—"
-                };
+                    taskDict.TryGetValue(s.TaskId, out var parentTask);
+                    var item = new StageItem
+                    {
+                        Stage       = s,
+                        TaskId      = s.TaskId,
+                        TaskName    = parentTask?.Name      ?? "—",
+                        ProjectId   = parentTask?.ProjectId ?? Guid.Empty,
+                        ProjectName = parentTask?.ProjectName ?? "—"
+                    };
 
-                TryComputeBarForRange(
-                    DateOnlyFromCreatedAt(s.CreatedAt), s.DueDate,
-                    start, end, totalDays,
-                    out var hasBar, out var left, out var width);
-                return new GanttStageRow
-                {
-                    Stage        = item,
-                    ParentTask   = parentTask,
-                    HasBar       = hasBar,
-                    BarLeft      = left,
-                    BarWidth     = width,
-                    BarRemainder = Math.Max(0.001, 1.0 - left - width),
-                    StatusLabel  = StageStatusLabel(s.Status),
-                    StatusColor  = StageStatusColor(s.Status),
-                    BarColorHex  = StageBarColor(s.Status)
-                };
-            }).ToList();
+                    TryComputeBarForRange(
+                        DateOnlyFromCreatedAt(s.CreatedAt), s.DueDate,
+                        start, end, totalDays,
+                        out var hasBar, out var left, out var width);
+                    return new GanttStageRow
+                    {
+                        Stage        = item,
+                        ParentTask   = parentTask,
+                        HasBar       = hasBar,
+                        BarLeft      = left,
+                        BarWidth     = width,
+                        BarRemainder = Math.Max(0.001, 1.0 - left - width),
+                        StatusLabel  = StageStatusLabel(s.Status),
+                        StatusColor  = StageStatusColor(s.Status),
+                        BarColorHex  = StageBarColor(s.Status)
+                    };
+                })
+                .Where(r => r.HasBar)
+                .OrderBy(r => r.Stage.Stage.CreatedAt)
+                .ThenBy(r => r.Stage.Stage.Name)
+                .ToList();
             StageRows = new ObservableCollection<GanttStageRow>(stageRows);
         }
         finally

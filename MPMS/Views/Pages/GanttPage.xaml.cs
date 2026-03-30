@@ -97,7 +97,7 @@ public partial class GanttPage : UserControl
             Stroke          = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
             StrokeThickness = 1.5,
             StrokeDashArray = new DoubleCollection { 4, 3 },
-            Opacity         = 0.85
+            Opacity         = 0.9
         };
         TodayLineCanvas.Children.Add(line);
 
