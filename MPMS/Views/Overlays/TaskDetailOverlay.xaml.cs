@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
@@ -240,7 +241,7 @@ public partial class TaskDetailOverlay : UserControl
         {
             var detail = new TaskDetailOverlay();
             detail.SetTask(_vm.Task, _onClosed, TaskDetailDrawerMode.TaskOnly);
-            MainWindow.Instance?.ShowDrawer(detail, 500);
+            MainWindow.Instance?.ShowDrawer(detail, MainWindow.TaskOrStageDetailDrawerWidth);
             return;
         }
 
@@ -268,7 +269,7 @@ public partial class TaskDetailOverlay : UserControl
                     projectPanel.SetProject(updatedProject);
             });
         }, TaskDetailDrawerMode.WithProjectSummary);
-        MainWindow.Instance?.ShowDrawer(leftPanel, detailDual, 900);
+        MainWindow.Instance?.ShowDrawer(leftPanel, detailDual, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 
     private void ChangeStatus_Click(object sender, RoutedEventArgs e)

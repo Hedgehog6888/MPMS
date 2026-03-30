@@ -164,6 +164,6 @@ public partial class StagesPage : UserControl
             });
         });
 
-        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, 850);
+        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 }

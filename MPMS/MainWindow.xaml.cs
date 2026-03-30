@@ -20,6 +20,13 @@ namespace MPMS;
 public partial class MainWindow : Window
 {
     public static MainWindow? Instance { get; private set; }
+
+    /// <summary>Ширина drawer только карточки задачи или этапа (без левой панели).</summary>
+    public const double TaskOrStageDetailDrawerWidth = 700;
+
+    /// <summary>Сводка слева (300) + карточка задачи/этапа (700).</summary>
+    public const double TaskOrStageDetailWithLeftTotalWidth = 1000;
+
     private enum OverlayPresentationMode { None, Drawer, Modal }
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
 
@@ -133,7 +140,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Shows a dual-panel drawer: left panel (e.g. project context) + right panel (e.g. task detail).</summary>
-    public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 900)
+    public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 1000)
     {
         // Clear drawer first so leftContent/rightContent can be reparented if they are the current drawer content
         DrawerContentPresenter.Content = null;
@@ -434,7 +441,7 @@ public partial class MainWindow : Window
 
         var overlay = new TaskDetailOverlay();
         overlay.SetTask(taskEntity);
-        ShowDrawer(leftPanel, overlay, 900);
+        ShowDrawer(leftPanel, overlay, TaskOrStageDetailWithLeftTotalWidth);
     }
 
     private async Task OpenStageFromSearchAsync(LocalTaskStage stage)
@@ -480,7 +487,7 @@ public partial class MainWindow : Window
             ProjectName = task.ProjectName ?? "—"
         }, task);
 
-        ShowDrawer(taskPanel, overlay, 850);
+        ShowDrawer(taskPanel, overlay, TaskOrStageDetailWithLeftTotalWidth);
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

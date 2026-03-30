@@ -1,6 +1,11 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MPMS;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
@@ -81,13 +86,41 @@ public partial class CalendarPage : UserControl
     }
 
     private void OpenTaskDetail(LocalTask task)
+        => _ = OpenTaskDetailAsync(task);
+
+    private async Task OpenTaskDetailAsync(LocalTask task)
     {
+        var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
+        ProjectSummaryPanel? projectPanel = null;
+        UIElement? leftPanel = null;
+        var project = await tasksVm.GetProjectForTaskAsync(task.ProjectId);
+        if (project is not null)
+        {
+            projectPanel = new ProjectSummaryPanel();
+            projectPanel.SetProject(project);
+            leftPanel = projectPanel;
+        }
+
+        var projectId = task.ProjectId;
         var detail = new TaskDetailOverlay();
         detail.SetTask(
             task,
-            onClosed: () => _ = (_vm?.LoadAsync()),
-            drawerMode: TaskDetailOverlay.TaskDetailDrawerMode.WithProjectSummary);
-        MainWindow.Instance?.ShowDrawer(detail);
+            () =>
+            {
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    await RefreshCalendarAsync();
+                    var p = await tasksVm.GetProjectForTaskAsync(projectId);
+                    if (p is not null && projectPanel is not null)
+                        projectPanel.SetProject(p);
+                });
+            },
+            TaskDetailOverlay.TaskDetailDrawerMode.WithProjectSummary);
+
+        if (leftPanel is not null)
+            MainWindow.Instance?.ShowDrawer(leftPanel, detail, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+        else
+            MainWindow.Instance?.ShowDrawer(detail, MainWindow.TaskOrStageDetailDrawerWidth);
     }
 
     private void OpenStageDetail(LocalTaskStage stage, LocalTask parentTask)
@@ -100,8 +133,31 @@ public partial class CalendarPage : UserControl
             ProjectId   = parentTask.ProjectId,
             ProjectName = parentTask.ProjectName ?? "—"
         };
+
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(parentTask);
+
         var overlay = new StageDetailOverlay();
-        overlay.SetStage(item, parentTask, onClosed: () => _ = (_vm?.LoadAsync()));
-        MainWindow.Instance?.ShowDrawer(overlay);
+        var taskId = parentTask.Id;
+        overlay.SetStage(item, parentTask, () =>
+        {
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                await RefreshCalendarAsync();
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask is not null)
+                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
+        });
+
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+    }
+
+    private async Task RefreshCalendarAsync()
+    {
+        if (_vm is not null)
+            await _vm.LoadAsync();
     }
 }

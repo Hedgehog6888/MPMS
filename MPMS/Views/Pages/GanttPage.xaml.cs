@@ -1,8 +1,13 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MPMS;
+using MPMS.Data;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
@@ -126,17 +131,75 @@ public partial class GanttPage : UserControl
     {
         if (sender is not FrameworkElement fe || fe.Tag is not GanttTaskRow row) return;
         e.Handled = true;
+        _ = OpenTaskRowDetailAsync(row);
+    }
+
+    private async Task OpenTaskRowDetailAsync(GanttTaskRow row)
+    {
+        var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
+        ProjectSummaryPanel? projectPanel = null;
+        UIElement? leftPanel = null;
+        var project = await tasksVm.GetProjectForTaskAsync(row.Task.ProjectId);
+        if (project is not null)
+        {
+            projectPanel = new ProjectSummaryPanel();
+            projectPanel.SetProject(project);
+            leftPanel = projectPanel;
+        }
+
+        var projectId = row.Task.ProjectId;
         var overlay = new TaskDetailOverlay();
-        overlay.SetTask(row.Task, onClosed: null, TaskDetailOverlay.TaskDetailDrawerMode.WithProjectSummary);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        overlay.SetTask(
+            row.Task,
+            () =>
+            {
+                _ = Dispatcher.InvokeAsync(async () =>
+                {
+                    if (_vm is not null)
+                        await _vm.LoadAsync();
+                    var p = await tasksVm.GetProjectForTaskAsync(projectId);
+                    if (p is not null && projectPanel is not null)
+                        projectPanel.SetProject(p);
+                });
+            },
+            TaskDetailOverlay.TaskDetailDrawerMode.WithProjectSummary);
+
+        if (leftPanel is not null)
+            MainWindow.Instance?.ShowDrawer(leftPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+        else
+            MainWindow.Instance?.ShowDrawer(overlay, MainWindow.TaskOrStageDetailDrawerWidth);
     }
 
     private void StageRow_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.Tag is not GanttStageRow row) return;
         e.Handled = true;
+        OpenStageRowDetail(row);
+    }
+
+    private void OpenStageRowDetail(GanttStageRow row)
+    {
+        if (row.ParentTask is null) return;
+
+        var taskPanel = new TaskSummaryPanel();
+        taskPanel.SetTask(row.ParentTask);
+
         var overlay = new StageDetailOverlay();
-        overlay.SetStage(row.Stage, row.ParentTask!, onClosed: null);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        var taskId = row.ParentTask.Id;
+        overlay.SetStage(row.Stage, row.ParentTask, () =>
+        {
+            _ = Dispatcher.InvokeAsync(async () =>
+            {
+                if (_vm is not null)
+                    await _vm.LoadAsync();
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var updatedTask = await db.Tasks.FindAsync(taskId);
+                if (updatedTask is not null)
+                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+            });
+        });
+
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 }

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -140,6 +141,6 @@ public partial class TasksPage : UserControl
             }
         });
 
-        MainWindow.Instance?.ShowDrawer(leftPanel, overlay, 900);
+        MainWindow.Instance?.ShowDrawer(leftPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 }

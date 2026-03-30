@@ -6,6 +6,7 @@ using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
+using MPMS;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
@@ -288,7 +289,7 @@ public partial class ProjectDetailPage : UserControl
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
             });
         });
-        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, 850);
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 
     private void OpenStageKanbanDetail(StageItem item)
@@ -319,7 +320,7 @@ public partial class ProjectDetailPage : UserControl
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
             });
         });
-        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, 850);
+        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 
     private void StageKanbanCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -461,7 +462,7 @@ public partial class ProjectDetailPage : UserControl
                     UpdateMarkProjectButton();
                 });
         }, TaskDetailOverlay.TaskDetailDrawerMode.TaskOnly);
-        MainWindow.Instance?.ShowDrawer(overlay, 500);
+        MainWindow.Instance?.ShowDrawer(overlay, MainWindow.TaskOrStageDetailDrawerWidth);
     }
 
     private void UploadFile_Click(object sender, RoutedEventArgs e)

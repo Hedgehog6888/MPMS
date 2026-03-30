@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
@@ -400,7 +401,7 @@ public partial class StageDetailOverlay : UserControl
             });
         });
 
-        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, 850);
+        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
         await System.Threading.Tasks.Task.CompletedTask;
     }
 }
