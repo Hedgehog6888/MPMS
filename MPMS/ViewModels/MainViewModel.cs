@@ -122,8 +122,10 @@ public partial class MainViewModel : ViewModelBase
         ViewModelBase? vm = page switch
         {
             "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
-            "Tasks" or "Gantt" or "Calendar" or "Files" or "Journal"
-                => _sp.GetRequiredService<TasksViewModel>(),
+            "Tasks" or "Files" or "Journal"
+                        => _sp.GetRequiredService<TasksViewModel>(),
+            "Calendar"  => _sp.GetRequiredService<CalendarViewModel>(),
+            "Gantt"     => _sp.GetRequiredService<GanttViewModel>(),
             "Materials" => _sp.GetRequiredService<MaterialsViewModel>(),
             "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
             "Profile"   => _sp.GetRequiredService<ProfileViewModel>(),

@@ -1,0 +1,281 @@
+<UserControl x:Class="MPMS.Views.Pages.CalendarPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:MPMS.Infrastructure"
+             xmlns:vm="clr-namespace:MPMS.ViewModels">
+
+    <UserControl.Resources>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
+
+        <!-- Nav button -->
+        <Style x:Key="CalNavBtn" TargetType="Button">
+            <Setter Property="Width"           Value="30"/>
+            <Setter Property="Height"          Value="30"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6" Padding="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#F4F5F7">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- header -->
+            <RowDefinition Height="*"/>     <!-- calendar fills rest -->
+        </Grid.RowDefinitions>
+
+        <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
+        <Border Grid.Row="0" Background="White" Padding="24,14"
+                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Календарь задач" FontSize="22" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Визуализация сроков выполнения задач"
+                               FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Today button -->
+                    <Button Height="30" Padding="14,0" Margin="0,0,10,0"
+                            Command="{Binding GoToTodayCommand}" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="White" CornerRadius="6"
+                                        BorderBrush="#DFE1E6" BorderThickness="1"
+                                        Padding="{TemplateBinding Padding}">
+                                    <TextBlock Text="Сегодня" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="#172B4D" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- Month selector -->
+                    <Border Background="White" CornerRadius="8"
+                            BorderBrush="#DFE1E6" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource CalNavBtn}"
+                                    Command="{Binding PreviousMonthCommand}">
+                                <Path Data="M7,2 L2,8 L7,14" Stroke="#374151" StrokeThickness="2"
+                                      StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" Stretch="None"/>
+                            </Button>
+                            <TextBlock Text="{Binding MonthTitle}"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#172B4D" VerticalAlignment="Center"
+                                       MinWidth="165" TextAlignment="Center"/>
+                            <Button Style="{StaticResource CalNavBtn}"
+                                    Command="{Binding NextMonthCommand}">
+                                <Path Data="M2,2 L7,8 L2,14" Stroke="#374151" StrokeThickness="2"
+                                      StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round" Stretch="None"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ── CALENDAR (fills remaining space) ─────────────────────── -->
+        <Border Grid.Row="1" Background="White" Margin="16,14,16,14"
+                CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
+                ClipToBounds="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>  <!-- weekday headers -->
+                    <RowDefinition Height="*"/>     <!-- cells stretch -->
+                </Grid.RowDefinitions>
+
+                <!-- Weekday headers -->
+                <UniformGrid Grid.Row="0" Columns="7" Background="#F9FAFB">
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Пн" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Вт" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Ср" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Чт" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Пт" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
+                        <TextBlock Text="Сб" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Padding="0,8">
+                        <TextBlock Text="Вс" TextAlignment="Center" FontSize="11"
+                                   FontWeight="SemiBold" Foreground="#6B778C"/>
+                    </Border>
+                </UniformGrid>
+
+                <!-- Calendar cells — stretch to fill -->
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarCells}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="7"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:CalendarCell}">
+                            <Border Tag="{Binding}"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="0,0,1,1"
+                                    Padding="5,4,3,3"
+                                    MouseLeftButtonDown="Cell_Click">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Cursor"     Value="Hand"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                <Setter Property="Background" Value="#F9FAFB"/>
+                                                <Setter Property="Cursor"     Value="Arrow"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                <Setter Property="Background" Value="#EFF6FF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+
+                                <StackPanel>
+                                    <!-- Day number -->
+                                    <Grid Margin="0,0,0,3" HorizontalAlignment="Left">
+                                        <!-- Today: blue circle -->
+                                        <Border Width="22" Height="22" Background="#2563EB"
+                                                CornerRadius="11"
+                                                Visibility="{Binding IsToday, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding Date.Day}"
+                                                       FontSize="11" FontWeight="Bold"
+                                                       Foreground="White"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <!-- Normal or empty day -->
+                                        <TextBlock Text="{Binding Date.Day}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Margin="2,2,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#374151"/>
+                                                    <Setter Property="Visibility"  Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                            <Setter Property="Foreground" Value="#C0C7D0"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <!-- Task chips -->
+                                    <ItemsControl ItemsSource="{Binding Tasks}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,2"
+                                                        CornerRadius="3"
+                                                        Padding="5,2"
+                                                        BorderThickness="1"
+                                                        Cursor="Hand"
+                                                        Tag="{Binding}"
+                                                        MouseLeftButtonDown="TaskChip_Click">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background"   Value="{Binding Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
+                                                            <Setter Property="BorderBrush"  Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                                    <Setter Property="Background"   Value="#FFEBE6"/>
+                                                                    <Setter Property="BorderBrush"  Value="#DE350B"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding Name}"
+                                                                   FontSize="10"
+                                                                   FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{Binding Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#BF2600"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <!-- Overdue indicator: small circle -->
+                                                        <Ellipse Grid.Column="1"
+                                                                 Width="6" Height="6"
+                                                                 Fill="#DE350B"
+                                                                 Margin="3,0,0,0"
+                                                                 VerticalAlignment="Center"
+                                                                 Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </Grid>
+        </Border>
+
+        <!-- Loading overlay -->
+        <Border Grid.Row="1" Background="#80FFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="Загрузка..." FontSize="16" Foreground="#6B778C"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

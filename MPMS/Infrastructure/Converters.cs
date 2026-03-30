@@ -795,6 +795,59 @@ public class NullToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Maps TaskStatus to a pale/tinted background Brush (light version of the status colour).</summary>
+public class TaskStatusToPaleBrushConverter : IValueConverter
+{
+    public static readonly TaskStatusToPaleBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is TaskStatus s ? s switch
+        {
+            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5)),  // pale gray
+            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),  // pale blue
+            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5)),  // same gray as planned
+            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xE3, 0xFC, 0xEF)),  // pale green
+            _                     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5))
+        } : new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5));
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps TaskStatus to the dark foreground colour matching the pale background badge.</summary>
+public class TaskStatusToForegroundBrushConverter : IValueConverter
+{
+    public static readonly TaskStatusToForegroundBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is TaskStatus s ? s switch
+        {
+            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E)),  // dark gray
+            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x00, 0x52, 0xCC)),  // dark blue
+            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E)),  // dark gray
+            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x66, 0x44)),  // dark green
+            _                     => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E))
+        } : new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E));
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts a 0–1 double fraction to a Star GridLength for proportional Gantt bar columns.</summary>
+public class FractionToGridLengthConverter : IValueConverter
+{
+    public static readonly FractionToGridLengthConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var fraction = value is double d ? d : 0.0;
+        return new GridLength(Math.Max(0.001, fraction), GridUnitType.Star);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Converts initials string to a deterministic SolidColorBrush accent color.</summary>
 public class InitialsToBrushConverter : IValueConverter
 {

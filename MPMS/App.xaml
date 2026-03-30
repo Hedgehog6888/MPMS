@@ -820,6 +820,9 @@
             <infra:NullToVisibilityConverter            x:Key="NullToVis"/>
             <infra:NullToVisibilityConverter            x:Key="NullToVisInv" Invert="True"/>
             <infra:InitialsToBrushConverter             x:Key="InitialsToBrush"/>
+            <infra:FractionToGridLengthConverter        x:Key="FracToGL"/>
+            <infra:TaskStatusToPaleBrushConverter       x:Key="TaskStatusToPaleBrush"/>
+            <infra:TaskStatusToForegroundBrushConverter x:Key="TaskStatusToFgBrush"/>
 
             <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
             <Style x:Key="AvatarCircle20" TargetType="Border">
@@ -939,6 +942,12 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:AdminViewModel}">
                 <pages:AdminPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CalendarViewModel}">
+                <pages:CalendarPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:GanttViewModel}">
+                <pages:GanttPage/>
             </DataTemplate>
 
         </ResourceDictionary>
