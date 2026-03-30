@@ -39,8 +39,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
-        <Border Grid.Row="0" Background="White" Padding="24,14"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="Transparent" Padding="24,14,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -101,7 +100,7 @@
         </Border>
 
         <!-- ── CALENDAR (fills remaining space) ─────────────────────── -->
-        <Border x:Name="CalendarCardBorder" Grid.Row="1" Background="White" Margin="16,14,16,14"
+        <Border x:Name="CalendarCardBorder" Grid.Row="1" Background="White" Margin="16,10,16,14"
                 CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
                 ClipToBounds="True"
                 SizeChanged="CalendarCardBorder_SizeChanged"

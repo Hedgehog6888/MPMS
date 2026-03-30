@@ -40,8 +40,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── PAGE HEADER (title left, nav+today right — same pattern as Calendar) ── -->
-        <Border Grid.Row="0" Background="White" Padding="24,14"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="Transparent" Padding="24,14,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -101,11 +100,10 @@
         </Border>
 
         <!-- ── TABS ROW ─────────────────────────────────────────────── -->
-        <Border Grid.Row="1" Background="White" Padding="16,0"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="1" Background="Transparent" Padding="16,0">
             <Border Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1"
-                    Padding="6,4" Margin="0,8"
+                    Padding="6,4" Margin="0,6"
                     HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton x:Name="TabTasks" Content="Задачи"
@@ -120,7 +118,7 @@
         </Border>
 
         <!-- ── GANTT BODY ────────────────────────────────────────────── -->
-        <Border Grid.Row="2" Background="White" Margin="16,12,16,16"
+        <Border Grid.Row="2" Background="White" Margin="16,8,16,16"
                 CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
                 ClipToBounds="True">
             <Grid>

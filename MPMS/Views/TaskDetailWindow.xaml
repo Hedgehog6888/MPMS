@@ -64,8 +64,8 @@
         </Grid.RowDefinitions>
 
         <!-- ── Row 0: Close + Status + Priority badges ── -->
-        <Grid Grid.Row="0" Background="White" Margin="0,0,0,0">
-            <Grid Margin="16,12,16,10">
+        <Grid Grid.Row="0" Background="Transparent" Margin="0,0,0,0">
+            <Grid Margin="16,10,16,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>

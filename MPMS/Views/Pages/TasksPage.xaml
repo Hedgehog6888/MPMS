@@ -42,8 +42,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
-        <Border Grid.Row="0" Background="White" Padding="24,16"
-                BorderBrush="#DFE1E6" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -104,7 +103,7 @@
 
         <!-- ── SCROLLABLE BODY ─────────────────────────────────────── -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24,20,24,24">
+            <StackPanel Margin="24,12,24,24">
 
                 <!-- Filter bar -->
                 <Border Background="White" CornerRadius="8"
