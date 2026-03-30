@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 
@@ -201,6 +202,9 @@ public partial class TaskDetailViewModel : ViewModelBase
 
     public async Task SaveNewStageAsync(CreateStageRequest req, Guid localId)
     {
+        if (!DueDatePolicy.IsAllowed(req.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var assignedName = req.AssignedUserId.HasValue
@@ -237,6 +241,9 @@ public partial class TaskDetailViewModel : ViewModelBase
 
     public async Task SaveUpdatedStageAsync(Guid id, UpdateStageRequest req)
     {
+        if (!DueDatePolicy.IsAllowed(req.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(id);
         if (stage is null) return;
@@ -259,6 +266,9 @@ public partial class TaskDetailViewModel : ViewModelBase
 
     public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)
     {
+        if (!DueDatePolicy.IsAllowed(req.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var task = await db.Tasks.FindAsync(taskId);
         if (task is null) return;

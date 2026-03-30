@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MPMS.API;
 using MPMS.API.Data;
 using MPMS.API.DTOs;
 using MPMS.API.Models;
@@ -51,6 +52,9 @@ public class TaskStagesController : ControllerBase
             if (!userExists) return BadRequest(new { message = "Исполнитель не найден" });
         }
 
+        if (!DueDatePolicy.IsAllowed(request.DueDate))
+            return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
+
         var stage = new TaskStage
         {
             Id = id,
@@ -80,6 +84,9 @@ public class TaskStagesController : ControllerBase
     {
         var stage = await _db.TaskStages.FindAsync(id);
         if (stage is null) return NotFound();
+
+        if (!DueDatePolicy.IsAllowed(request.DueDate))
+            return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
         var oldStatus = stage.Status;
 

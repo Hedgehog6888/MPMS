@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 
 namespace MPMS.Views.Dialogs;
@@ -19,6 +20,7 @@ public partial class CreateStageDialog : Window
     {
         InitializeComponent();
         _dbFactory = dbFactory;
+        Loaded += (_, _) => DueDatePicker.DisplayDateStart = DateTime.Today;
         _ = LoadUsersAsync();
     }
 
@@ -94,6 +96,12 @@ public partial class CreateStageDialog : Window
         DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd
             ? DateOnly.FromDateTime(sd)
             : null;
+        if (!DueDatePolicy.IsAllowed(dueDate))
+        {
+            ErrorText.Text = DueDatePolicy.PastNotAllowedMessage;
+            ErrorText.Visibility = Visibility.Visible;
+            return;
+        }
 
         if (_isEditMode)
         {

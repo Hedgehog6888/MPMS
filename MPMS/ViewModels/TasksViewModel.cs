@@ -306,6 +306,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
     public async Task SaveNewTaskAsync(CreateTaskRequest req, Guid localId)
     {
+        if (!DueDatePolicy.IsAllowed(req.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var projectName = await db.Projects
@@ -376,6 +379,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
     public async Task SaveUpdatedTaskAsync(Guid id, UpdateTaskRequest req)
     {
+        if (!DueDatePolicy.IsAllowed(req.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var task = await db.Tasks.FindAsync(id);
         if (task is null) return;

@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -20,6 +21,7 @@ public partial class CreateTaskDialog : Window
     {
         InitializeComponent();
         _dbFactory = dbFactory;
+        Loaded += (_, _) => DueDatePicker.DisplayDateStart = DateTime.Today;
         _ = LoadDataAsync();
     }
 
@@ -113,6 +115,11 @@ public partial class CreateTaskDialog : Window
         var assignedUser = AssigneeCombo.SelectedItem as LocalUser;
         DateOnly? dueDate = DueDatePicker.SelectedDate.HasValue
             ? DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value) : null;
+        if (!DueDatePolicy.IsAllowed(dueDate))
+        {
+            ShowError(DueDatePolicy.PastNotAllowedMessage);
+            return;
+        }
 
         if (_isEditMode)
         {

@@ -9,6 +9,7 @@ using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.ViewModels;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -32,7 +33,11 @@ public partial class CreateTaskOverlay : UserControl
     public CreateTaskOverlay()
     {
         InitializeComponent();
-        Loaded += (_, _) => ApplyPrioritySelection(_selectedPriority);
+        Loaded += (_, _) =>
+        {
+            DueDatePicker.DisplayDateStart = DateTime.Today;
+            ApplyPrioritySelection(_selectedPriority);
+        };
     }
 
     public void SetCreateMode(TasksViewModel vm, Guid? projectId = null,
@@ -295,6 +300,9 @@ public partial class CreateTaskOverlay : UserControl
 
         var priority = GetPriority();
         var dueDate  = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);
+        if (!DueDatePolicy.IsAllowed(dueDate))
+        { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
+
         var primaryAssigneeId = _selectedAssigneeIds.Count > 0
             ? _selectedAssigneeIds.First()
             : (Guid?)null;

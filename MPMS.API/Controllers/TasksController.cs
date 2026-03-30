@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MPMS.API;
 using MPMS.API.Data;
 using MPMS.API.DTOs;
 using MPMS.API.Models;
@@ -121,6 +122,9 @@ public class TasksController : ControllerBase
             if (!userExists) return BadRequest(new { message = "Исполнитель не найден" });
         }
 
+        if (!DueDatePolicy.IsAllowed(request.DueDate))
+            return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
+
         var task = new ProjectTask
         {
             Id = id,
@@ -151,6 +155,9 @@ public class TasksController : ControllerBase
     {
         var task = await _db.Tasks.FindAsync(id);
         if (task is null) return NotFound();
+
+        if (!DueDatePolicy.IsAllowed(request.DueDate))
+            return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
         var oldStatus = task.Status;
 

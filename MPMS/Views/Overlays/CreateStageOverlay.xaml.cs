@@ -8,6 +8,7 @@ using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -31,6 +32,7 @@ public partial class CreateStageOverlay : UserControl
     public CreateStageOverlay()
     {
         InitializeComponent();
+        Loaded += (_, _) => DueDatePicker.DisplayDateStart = DateTime.Today;
     }
 
     public void SetTask(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)
@@ -462,6 +464,8 @@ public partial class CreateStageOverlay : UserControl
         DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd
             ? DateOnly.FromDateTime(sd)
             : null;
+        if (!DueDatePolicy.IsAllowed(dueDate))
+        { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
 
         SaveButton.IsEnabled = false;
         try
