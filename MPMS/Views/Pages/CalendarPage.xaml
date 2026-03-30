@@ -47,7 +47,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Календарь задач" FontSize="22" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Календарь задач" FontSize="22" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock Text="Визуализация сроков задач и этапов с дедлайном"
                                FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
                 </StackPanel>
@@ -62,7 +62,7 @@
                                         BorderBrush="#DFE1E6" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}">
                                     <TextBlock Text="Сегодня" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#172B4D" VerticalAlignment="Center"/>
+                                               Foreground="#000000" VerticalAlignment="Center"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -85,7 +85,7 @@
                             </Button>
                             <TextBlock Text="{Binding MonthTitle}"
                                        FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#172B4D" VerticalAlignment="Center"
+                                       Foreground="#000000" VerticalAlignment="Center"
                                        MinWidth="165" TextAlignment="Center"/>
                             <Button Style="{StaticResource CalNavBtn}"
                                     Command="{Binding NextMonthCommand}">

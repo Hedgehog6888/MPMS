@@ -18,7 +18,7 @@
             <Color x:Key="TopBarColor">#FFFFFF</Color>
             <Color x:Key="BackgroundColor">#F4F5F7</Color>
             <Color x:Key="CardColor">#FFFFFF</Color>
-            <Color x:Key="TextPrimaryColor">#172B4D</Color>
+            <Color x:Key="TextPrimaryColor">#000000</Color>
             <Color x:Key="TextSecondaryColor">#6B778C</Color>
             <Color x:Key="BorderColor">#DFE1E6</Color>
             <Color x:Key="SuccessColor">#00875A</Color>
@@ -277,7 +277,7 @@
             <Style x:Key="FormLabel" TargetType="TextBlock">
                 <Setter Property="FontSize"   Value="12"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Foreground" Value="#172B4D"/>
+                <Setter Property="Foreground" Value="#000000"/>
                 <Setter Property="Margin"     Value="0,0,0,6"/>
             </Style>
 
@@ -300,21 +300,21 @@
             <!-- Single-line / multi-line TextBox - uses default template to avoid text visibility issues -->
             <Style x:Key="FormInput" TargetType="TextBox">
                 <Setter Property="Background"      Value="White"/>
-                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="Foreground"      Value="#000000"/>
                 <Setter Property="BorderBrush"     Value="#DFE1E6"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding"         Value="10,9"/>
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                <Setter Property="CaretBrush"      Value="#172B4D"/>
+                <Setter Property="CaretBrush"      Value="#000000"/>
                 <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
-                <Setter Property="SelectionTextBrush" Value="#172B4D"/>
+                <Setter Property="SelectionTextBrush" Value="#000000"/>
             </Style>
 
             <!-- ComboBox with rounded corners, custom dropdown popup -->
             <Style x:Key="FormCombo" TargetType="ComboBox">
                 <Setter Property="Background"      Value="White"/>
-                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="Foreground"      Value="#000000"/>
                 <Setter Property="BorderBrush"     Value="#DFE1E6"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="FontSize"        Value="13"/>
@@ -324,7 +324,7 @@
                     <Setter.Value>
                         <Style TargetType="ComboBoxItem">
                             <Setter Property="FontSize"   Value="13"/>
-                            <Setter Property="Foreground" Value="#172B4D"/>
+                            <Setter Property="Foreground" Value="#000000"/>
                             <Setter Property="Padding"    Value="10,8"/>
                             <Setter Property="Cursor"     Value="Hand"/>
                             <Setter Property="Template">
@@ -436,7 +436,7 @@
             <!-- Outline (cancel) button -->
             <Style x:Key="OutlineBtn" TargetType="Button">
                 <Setter Property="Background"      Value="White"/>
-                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="Foreground"      Value="#000000"/>
                 <Setter Property="BorderBrush"     Value="#DFE1E6"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding"         Value="16,9"/>
@@ -521,7 +521,7 @@
 
             <Style x:Key="StatusMenuItem" TargetType="MenuItem">
                 <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Foreground" Value="#172B4D"/>
+                <Setter Property="Foreground" Value="#000000"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -627,7 +627,7 @@
                                            Text="{TemplateBinding Content}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           FontSize="12" Foreground="#172B4D"/>
+                                           FontSize="12" Foreground="#000000"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsToday" Value="True">
@@ -636,7 +636,7 @@
                                     <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#172B4D"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#000000"/>
                                     <Setter TargetName="Content" Property="Foreground" Value="White"/>
                                     <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
@@ -665,7 +665,7 @@
                                            Text="{TemplateBinding Content}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           FontSize="12" Foreground="#172B4D"/>
+                                           FontSize="12" Foreground="#000000"/>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -706,7 +706,7 @@
 
             <Style TargetType="DatePicker">
                 <Setter Property="Background"      Value="White"/>
-                <Setter Property="Foreground"      Value="#172B4D"/>
+                <Setter Property="Foreground"      Value="#000000"/>
                 <Setter Property="BorderBrush"     Value="#DFE1E6"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="FontSize"        Value="13"/>

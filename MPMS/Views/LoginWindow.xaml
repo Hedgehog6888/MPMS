@@ -29,7 +29,7 @@
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
             <Setter Property="FontSize"               Value="14"/>
-            <Setter Property="Foreground"             Value="#172B4D"/>
+            <Setter Property="Foreground"             Value="#000000"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding"                Value="0,0,14,0"/>
             <Setter Property="CaretBrush"             Value="#1B6EC2"/>
@@ -48,7 +48,7 @@
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
             <Setter Property="FontSize"               Value="14"/>
-            <Setter Property="Foreground"             Value="#172B4D"/>
+            <Setter Property="Foreground"             Value="#000000"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding"                Value="0,0,14,2"/>
             <Setter Property="CaretBrush"             Value="#1B6EC2"/>

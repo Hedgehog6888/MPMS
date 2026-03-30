@@ -47,7 +47,7 @@
                     <TextBox Grid.Column="1"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              BorderThickness="0" Background="Transparent"
-                             VerticalAlignment="Center" FontSize="13" Foreground="#172B4D"
+                             VerticalAlignment="Center" FontSize="13" Foreground="#000000"
                              GotFocus="SearchBox_GotFocus"
                              LostFocus="SearchBox_LostFocus"/>
                     <Button Grid.Column="2" Click="ClearSearch_Click"

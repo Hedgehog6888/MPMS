@@ -578,7 +578,7 @@ public sealed class ManagerPickerItem : INotifyPropertyChanged
             ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
             : user.Name.Length > 0 ? user.Name[0].ToString().ToUpper() : "?";
         _isSelected = selectedManagerId.HasValue && user.Id == selectedManagerId.Value;
-        AvatarBrush = new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D));
+        AvatarBrush = new SolidColorBrush(Colors.Black);
         RoleColorBrush = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
     }
 

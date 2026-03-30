@@ -33,7 +33,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock x:Name="TitleLabel" Text="Добавить этап"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock x:Name="TaskNameLabel" Text=""
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
                 </StackPanel>
@@ -80,7 +80,7 @@
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
                     <TextBox x:Name="NameBox" BorderThickness="0" Background="Transparent"
-                             Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                             Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
                              Padding="0"/>
                 </Border>
 
@@ -89,7 +89,7 @@
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
                     <TextBox x:Name="DescriptionBox" BorderThickness="0" Background="Transparent"
-                             Foreground="#172B4D" FontSize="13"
+                             Foreground="#000000" FontSize="13"
                              Height="72" TextWrapping="Wrap" AcceptsReturn="True"
                              VerticalContentAlignment="Top" Padding="0"
                              VerticalScrollBarVisibility="Auto"/>
@@ -127,7 +127,7 @@
                                                     <Grid>
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"
+                                                                   Foreground="#000000"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Width="22" Height="22" CornerRadius="11"
                                                                 Background="#111111"
@@ -180,7 +180,7 @@
                                                     <Grid>
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"
+                                                                   Foreground="#000000"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Width="22" Height="22" CornerRadius="11"
                                                                 Background="#111111"
@@ -264,7 +264,7 @@
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"/>
+                                                                   Foreground="#000000"/>
                                                         <TextBlock Text="{Binding RoleDisplay}"
                                                                    FontSize="11"
                                                                    Foreground="{Binding RoleColorBrush}"/>

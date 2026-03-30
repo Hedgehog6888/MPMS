@@ -32,7 +32,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock Text="Обрезка аватара"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock Text="Настройте положение и размер круга перед сохранением"
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
                 </StackPanel>

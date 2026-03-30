@@ -26,7 +26,7 @@
             <Grid>
                 <StackPanel Margin="0,0,40,0">
                     <TextBlock x:Name="TitleText"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"
                                TextWrapping="Wrap"/>
                     <TextBlock x:Name="SubtitleText"
                                FontSize="12" Foreground="#6B778C" Margin="0,6,0,0"
@@ -120,7 +120,7 @@
                                             <TextBlock Grid.Row="0" Grid.Column="0"
                                                        Text="{Binding Name}"
                                                        FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        TextWrapping="Wrap"
                                                        Margin="0,0,10,0"
                                                        VerticalAlignment="Top"/>
@@ -218,7 +218,7 @@
                                             <TextBlock Grid.Row="0" Grid.Column="0"
                                                        Text="{Binding Stage.Name}"
                                                        FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        TextWrapping="Wrap"
                                                        Margin="0,0,10,0"
                                                        VerticalAlignment="Top"/>

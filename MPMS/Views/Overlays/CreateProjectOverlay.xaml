@@ -39,7 +39,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock x:Name="TitleLabel" Text="Создать проект"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock Text="Заполните информацию о монтажном проекте"
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
                 </StackPanel>
@@ -74,7 +74,7 @@
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
                     <TextBox x:Name="NameBox" BorderThickness="0" Background="Transparent"
-                             Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                             Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
                              Padding="0"/>
                 </Border>
 
@@ -83,7 +83,7 @@
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
                     <TextBox x:Name="DescriptionBox" BorderThickness="0" Background="Transparent"
-                             Foreground="#172B4D" FontSize="13"
+                             Foreground="#000000" FontSize="13"
                              Height="76" TextWrapping="Wrap" AcceptsReturn="True"
                              VerticalContentAlignment="Top" Padding="0"
                              VerticalScrollBarVisibility="Auto"/>
@@ -101,7 +101,7 @@
                         <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                                 CornerRadius="8" Padding="12,10" Height="42">
                             <TextBox x:Name="ClientBox" BorderThickness="0" Background="Transparent"
-                                     Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                                     Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
                                      Padding="0"/>
                         </Border>
                     </StackPanel>
@@ -110,7 +110,7 @@
                         <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                                 CornerRadius="8" Padding="12,10" Height="42">
                             <TextBox x:Name="AddressBox" BorderThickness="0" Background="Transparent"
-                                     Foreground="#172B4D" FontSize="13" VerticalContentAlignment="Center"
+                                     Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
                                      Padding="0"/>
                         </Border>
                     </StackPanel>
@@ -126,12 +126,12 @@
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Дата начала *" Style="{StaticResource FormLabel}"/>
                         <DatePicker x:Name="StartDatePicker" Height="42"
-                                    FontSize="13" Foreground="#172B4D"/>
+                                    FontSize="13" Foreground="#000000"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="Дата завершения *" Style="{StaticResource FormLabel}"/>
                         <DatePicker x:Name="EndDatePicker" Height="42"
-                                    FontSize="13" Foreground="#172B4D"/>
+                                    FontSize="13" Foreground="#000000"/>
                     </StackPanel>
                 </Grid>
 
@@ -180,7 +180,7 @@
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"/>
+                                                                   Foreground="#000000"/>
                                                         <TextBlock Text="{Binding RoleDisplay}"
                                                                    FontSize="11"
                                                                    Foreground="{Binding RoleColorBrush}"/>
@@ -265,7 +265,7 @@
                                                         <StackPanel VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontSize="13" FontWeight="SemiBold"
-                                                                       Foreground="#172B4D"/>
+                                                                       Foreground="#000000"/>
                                                             <TextBlock Text="{Binding RoleDisplay}"
                                                                        FontSize="11"
                                                                        Foreground="{Binding RoleColorBrush}"/>
@@ -350,7 +350,7 @@
                                                         <StackPanel VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontSize="13" FontWeight="SemiBold"
-                                                                       Foreground="#172B4D"/>
+                                                                       Foreground="#000000"/>
                                                             <TextBlock Text="{Binding RoleDisplay}"
                                                                        FontSize="11"
                                                                        Foreground="{Binding RoleColorBrush}"/>

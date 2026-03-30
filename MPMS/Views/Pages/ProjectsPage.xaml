@@ -37,7 +37,7 @@
         <!-- Cell text style -->
         <Style x:Key="CellText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
@@ -67,7 +67,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <TextBlock Text="Проекты" FontSize="24" FontWeight="Bold"
-                               Foreground="#172B4D"/>
+                               Foreground="#000000"/>
                     <TextBlock Text="Управление монтажными проектами"
                                FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
                 </StackPanel>
@@ -106,7 +106,7 @@
                         Padding="20,16" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Последние действия"
-                                   FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#000000"
                                    Margin="0,0,0,2"/>
                         <TextBlock Text="Недавняя активность в системе"
                                    FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
@@ -171,10 +171,10 @@
                                                         </Border>
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D" VerticalAlignment="Center"/>
+                                                                   Foreground="#000000" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                     <TextBlock Text="{Binding ActionText}"
-                                                               FontSize="12" Foreground="#42526E"
+                                                               FontSize="12" Foreground="#000000"
                                                                TextWrapping="Wrap"/>
                                                 </StackPanel>
                                                 <!-- Time -->
@@ -243,7 +243,7 @@
                                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent" BorderThickness="0"
                                              VerticalAlignment="Center" FontSize="13"
-                                             Foreground="#172B4D"
+                                             Foreground="#000000"
                                              GotFocus="SearchBox_GotFocus"
                                              LostFocus="SearchBox_LostFocus"/>
                                 </Grid>
@@ -311,7 +311,7 @@
                                                         <Setter Property="Background" Value="#FFF5F5"/>
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="BorderBrush" Value="#172B4D"/>
+                                                        <Setter Property="BorderBrush" Value="#000000"/>
                                                     </Trigger>
                                                     <EventTrigger RoutedEvent="Loaded">
                                                         <BeginStoryboard>
@@ -341,7 +341,7 @@
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding Name}"
                                                        FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"
                                                        Cursor="Hand"
@@ -439,12 +439,12 @@
                                                                    FontSize="10" FontWeight="Bold"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"
-                                                                   Foreground="#172B4D"
+                                                                   Foreground="#000000"
                                                                    Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                     </Grid>
                                                 </Border>
                                                 <TextBlock Text="{Binding ManagerName}"
-                                                           FontSize="12" Foreground="#172B4D"
+                                                           FontSize="12" Foreground="#000000"
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
                                                            MaxWidth="90"/>

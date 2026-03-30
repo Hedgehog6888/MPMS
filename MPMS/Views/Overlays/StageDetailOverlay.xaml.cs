@@ -84,11 +84,11 @@ public partial class StageDetailOverlay : UserControl
         var neutralFg = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
 
         BtnPlanned.BorderBrush = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutral;
+            ? new SolidColorBrush(Colors.Black) : neutral;
         BtnPlanned.Background = status == StageStatus.Planned
             ? new SolidColorBrush(Color.FromRgb(0xF4, 0xF5, 0xF7)) : neutralBg;
         BtnPlanned.Foreground = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)) : neutralFg;
+            ? new SolidColorBrush(Colors.Black) : neutralFg;
         BtnPlanned.FontWeight = status == StageStatus.Planned ? FontWeights.SemiBold : FontWeights.Normal;
 
         BtnInProgress.BorderBrush = status == StageStatus.InProgress

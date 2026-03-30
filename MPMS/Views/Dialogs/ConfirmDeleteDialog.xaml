@@ -45,7 +45,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="TitleText" Text="Удалить элемент?"
-                                       FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                       FontSize="16" FontWeight="Bold" Foreground="#000000"/>
                             <TextBlock Text="Это действие нельзя отменить" FontSize="12"
                                        Foreground="#6B778C" Margin="0,3,0,0"/>
                         </StackPanel>
@@ -78,7 +78,7 @@
                         <TextBlock x:Name="EntityTypeText" Text="Элемент"
                                    FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
                         <TextBlock x:Name="ItemNameText" Text=""
-                                   FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#000000"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
@@ -103,7 +103,7 @@
                                 <Border x:Name="Bg" Background="White" CornerRadius="8"
                                         BorderBrush="#DFE1E6" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
-                                    <TextBlock Text="Отмена" Foreground="#172B4D"
+                                    <TextBlock Text="Отмена" Foreground="#000000"
                                                FontSize="13" FontWeight="SemiBold"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>

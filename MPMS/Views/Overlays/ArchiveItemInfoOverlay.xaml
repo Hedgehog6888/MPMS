@@ -20,7 +20,7 @@
         </Style>
         <Style x:Key="InfoValue" TargetType="TextBlock">
             <Setter Property="FontSize"     Value="13"/>
-            <Setter Property="Foreground"   Value="#172B4D"/>
+            <Setter Property="Foreground"   Value="#000000"/>
             <Setter Property="FontWeight"   Value="SemiBold"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
@@ -79,7 +79,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock x:Name="TitleText"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock x:Name="SubtitleText"
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
                 </StackPanel>
@@ -165,7 +165,7 @@
                     <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionHeader}"/>
                     <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12">
                         <TextBlock x:Name="DescriptionText"
-                                   FontSize="13" Foreground="#172B4D"
+                                   FontSize="13" Foreground="#000000"
                                    TextWrapping="Wrap" LineHeight="20"/>
                     </Border>
                 </StackPanel>

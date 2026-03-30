@@ -18,7 +18,7 @@
 
         <Style x:Key="OutlineBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,9"/>
@@ -154,7 +154,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Задача: " FontSize="11" Foreground="#8993A4"/>
                             <TextBlock x:Name="TaskNameText" FontSize="11" FontWeight="SemiBold"
-                                       Foreground="#172B4D" MaxWidth="140"
+                                       Foreground="#000000" MaxWidth="140"
                                        TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
@@ -196,7 +196,7 @@
                             <TextBlock Text="ЭТАП" FontSize="10" FontWeight="SemiBold"
                                        Foreground="#8993A4" Margin="0,0,0,4"/>
                             <TextBlock x:Name="StageNameText" FontSize="22" FontWeight="Bold"
-                                       Foreground="#172B4D" TextWrapping="Wrap"/>
+                                       Foreground="#000000" TextWrapping="Wrap"/>
                         </StackPanel>
                         <StackPanel x:Name="StageDueDatePanel" Grid.Column="1"
                                     VerticalAlignment="Top" HorizontalAlignment="Right"
@@ -204,7 +204,7 @@
                             <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
                                        Foreground="#8993A4" Margin="0,0,0,8"/>
                             <TextBlock x:Name="StageDueDateLongText" FontSize="15" FontWeight="Bold"
-                                       Foreground="#172B4D" Margin="0,0,0,2" TextAlignment="Right"/>
+                                       Foreground="#000000" Margin="0,0,0,2" TextAlignment="Right"/>
                             <TextBlock x:Name="StageDueDayNameText" FontSize="12" Foreground="#6B778C"
                                        TextAlignment="Right"/>
                             <Border x:Name="StageOverdueBadge" CornerRadius="4" Padding="6,3"
@@ -301,7 +301,7 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                             <Border Style="{StaticResource AvatarCircle34}"
-                                                    Background="#172B4D" Margin="0,0,10,0">
+                                                    Background="#000000" Margin="0,0,10,0">
                                                 <Grid>
                                                     <Image Style="{StaticResource AvatarImage}"
                                                            Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
@@ -316,7 +316,7 @@
                                             </Border>
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding UserName}" FontSize="13"
-                                                           FontWeight="SemiBold" Foreground="#172B4D"/>
+                                                           FontWeight="SemiBold" Foreground="#000000"/>
                                                 <TextBlock Text="{Binding RoleDisplay}" FontSize="11" Margin="0,1,0,0">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
@@ -367,7 +367,7 @@
                                                 </Border>
                                                 <TextBlock Grid.Column="1" Text="{Binding MaterialName}"
                                                            FontSize="13" FontWeight="SemiBold"
-                                                           Foreground="#172B4D" VerticalAlignment="Center"/>
+                                                           Foreground="#000000" VerticalAlignment="Center"/>
                                                 <Border Grid.Column="2" CornerRadius="6" Padding="8,4"
                                                         Background="#EBF2FF">
                                                     <TextBlock FontSize="12" FontWeight="SemiBold"

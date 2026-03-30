@@ -8,7 +8,7 @@
         <Style x:Key="ProfileSectionTitle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="Margin" Value="0,0,0,12"/>
         </Style>
 
@@ -21,7 +21,7 @@
 
         <Style x:Key="ProfileValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
         </Style>
 
         <Style x:Key="ProfileCard" TargetType="Border">
@@ -67,7 +67,7 @@
 
         <Style x:Key="OutlineBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,10"/>
@@ -96,7 +96,7 @@
         <Style x:Key="EditInputBox" TargetType="TextBox">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding" Value="0"/>
@@ -187,7 +187,7 @@
                         <TextBlock x:Name="NameText"
                                    Text="Имя пользователя"
                                    FontSize="18" FontWeight="Bold"
-                                   Foreground="#172B4D"
+                                   Foreground="#000000"
                                    HorizontalAlignment="Center"
                                    TextWrapping="Wrap"
                                    TextAlignment="Center"
@@ -224,7 +224,7 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Email" FontSize="10" Foreground="#6B778C"
                                                FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="EmailText" FontSize="12" Foreground="#172B4D"
+                                    <TextBlock x:Name="EmailText" FontSize="12" Foreground="#000000"
                                                TextWrapping="Wrap" MaxWidth="180"/>
                                 </StackPanel>
                             </StackPanel>
@@ -239,7 +239,7 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Логин" FontSize="10" Foreground="#6B778C"
                                                FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="LoginText" FontSize="12" Foreground="#172B4D"/>
+                                    <TextBlock x:Name="LoginText" FontSize="12" Foreground="#000000"/>
                                 </StackPanel>
                             </StackPanel>
 
@@ -252,7 +252,7 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="В системе с" FontSize="10" Foreground="#6B778C"
                                                FontWeight="SemiBold"/>
-                                    <TextBlock x:Name="CreatedText" FontSize="12" Foreground="#172B4D"/>
+                                    <TextBlock x:Name="CreatedText" FontSize="12" Foreground="#000000"/>
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>
@@ -349,7 +349,7 @@
                             <Grid>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Изменить пароль" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#172B4D"/>
+                                               Foreground="#000000"/>
                                     <TextBlock Text="Последнее изменение неизвестно" FontSize="11"
                                                Foreground="#6B778C" Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -364,7 +364,7 @@
                             <Grid>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="2FA аутентификация" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#172B4D"/>
+                                               Foreground="#000000"/>
                                     <TextBlock Text="Не настроена" FontSize="11"
                                                Foreground="#EA580C" Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -383,7 +383,7 @@
                 <Grid Margin="0,0,0,20">
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Мой профиль" FontSize="22" FontWeight="Bold"
-                                   Foreground="#172B4D"/>
+                                   Foreground="#000000"/>
                         <TextBlock Text="Управление персональными данными и настройками аккаунта"
                                    FontSize="13" Foreground="#6B778C" Margin="0,4,0,0"/>
                     </StackPanel>
@@ -480,7 +480,7 @@
                         <Border Style="{StaticResource ProfileInput}">
                             <PasswordBox x:Name="CurrentPasswordBox"
                                          BorderThickness="0" Background="Transparent"
-                                         Foreground="#172B4D" FontSize="13"
+                                         Foreground="#000000" FontSize="13"
                                          VerticalContentAlignment="Center"/>
                         </Border>
 
@@ -507,7 +507,7 @@
                                                 BorderThickness="1" CornerRadius="8" Padding="12,10">
                                             <PasswordBox x:Name="NewPasswordBox"
                                                          BorderThickness="0" Background="Transparent"
-                                                         Foreground="#172B4D" FontSize="13"
+                                                         Foreground="#000000" FontSize="13"
                                                          VerticalContentAlignment="Center"/>
                                         </Border>
                                     </StackPanel>
@@ -517,7 +517,7 @@
                                                 BorderThickness="1" CornerRadius="8" Padding="12,10">
                                             <PasswordBox x:Name="ConfirmPasswordBox"
                                                          BorderThickness="0" Background="Transparent"
-                                                         Foreground="#172B4D" FontSize="13"
+                                                         Foreground="#000000" FontSize="13"
                                                          VerticalContentAlignment="Center"/>
                                         </Border>
                                     </StackPanel>
@@ -577,7 +577,7 @@
                                                 Background="#E8E9EC">
                                             <TextBlock Text="{Binding UserInitials}"
                                                        FontSize="11" FontWeight="Bold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"/>
                                         </Border>
@@ -587,7 +587,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding UserName}"
                                                            FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="#172B4D"/>
+                                                           Foreground="#000000"/>
                                                 <Border CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
                                                         Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
                                                         BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
@@ -647,7 +647,7 @@
 
                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                 <TextBlock x:Name="RoleCardTitle" FontSize="14" FontWeight="Bold"
-                                           Foreground="#172B4D"/>
+                                           Foreground="#000000"/>
                                 <TextBlock x:Name="RoleCardDesc" FontSize="12" Foreground="#6B778C"
                                            Margin="0,4,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
@@ -663,7 +663,7 @@
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                         <TextBlock Text="✓" FontSize="11" Foreground="#22C55E"
                                                    Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding}" FontSize="12" Foreground="#172B4D"
+                                        <TextBlock Text="{Binding}" FontSize="12" Foreground="#000000"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>

@@ -11,7 +11,7 @@
     <Window.Resources>
         <Style x:Key="FooterBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="18,9"/>

@@ -30,7 +30,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock Text="Все этапы задач проектов"
                                FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
                 </StackPanel>
@@ -104,7 +104,7 @@
                                                                        Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
                                                                        Text="Проект"/>
                                                             <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#172B4D"
+                                                                       FontWeight="SemiBold" Foreground="#000000"
                                                                        TextTrimming="CharacterEllipsis" MaxWidth="240"
                                                                        Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
                                                             <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
@@ -113,7 +113,7 @@
                                                                        Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
                                                                        Text="Задача"/>
                                                             <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       FontWeight="SemiBold" Foreground="#000000"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Text="{Binding TaskName, Mode=OneWay}"/>
                                                         </Grid>
@@ -131,7 +131,7 @@
                                                                        Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
                                                                        Text="Задача"/>
                                                             <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#42526E"
+                                                                       FontWeight="SemiBold" Foreground="#000000"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Text="{Binding TaskName, Mode=OneWay}"/>
                                                         </Grid>
@@ -180,7 +180,7 @@
                                                                         <Setter Property="Background" Value="#FFF5F5"/>
                                                                     </DataTrigger>
                                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="BorderBrush" Value="#172B4D"/>
+                                                                        <Setter Property="BorderBrush" Value="#000000"/>
                                                                     </Trigger>
                                                                     <EventTrigger RoutedEvent="Loaded">
                                                                         <BeginStoryboard>
@@ -488,7 +488,7 @@
                                 <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                          Background="Transparent" BorderThickness="0"
                                          VerticalAlignment="Center" FontSize="13"
-                                         Foreground="#172B4D"
+                                         Foreground="#000000"
                                          GotFocus="SearchBox_GotFocus"
                                          LostFocus="SearchBox_LostFocus"/>
                             </Grid>

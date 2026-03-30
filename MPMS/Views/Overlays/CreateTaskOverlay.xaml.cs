@@ -539,7 +539,7 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
                 new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E))),
             _ => (
                 role,
-                new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)),
+                new SolidColorBrush(Colors.Black),
                 new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)))
         };
     }

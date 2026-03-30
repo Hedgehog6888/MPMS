@@ -18,7 +18,7 @@
         <!-- Outline button style -->
         <Style x:Key="OutlineBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="16,9"/>
@@ -189,7 +189,7 @@
                 <!-- Task title -->
                 <TextBlock Text="{Binding Task.Name}"
                            FontSize="20" FontWeight="Bold"
-                           Foreground="#172B4D"
+                           Foreground="#000000"
                            TextWrapping="Wrap"
                            Margin="0,0,0,6"/>
 
@@ -237,7 +237,7 @@
                     </StackPanel>
                     <TextBlock Text="{Binding Task.ProgressPercent, StringFormat='{}{0}%'}"
                                FontSize="32" FontWeight="Bold"
-                               Foreground="#172B4D"
+                               Foreground="#000000"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Center"/>
                 </Grid>
@@ -284,7 +284,7 @@
                                             </Border>
                                             <TextBlock Text="{Binding UserName}"
                                                        FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -315,7 +315,7 @@
                                             </Border>
                                             <TextBlock Text="{Binding UserName}"
                                                        FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"
+                                                       Foreground="#000000"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -333,7 +333,7 @@
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
-                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="#172B4D"
+                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="#000000"
                                    Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=long}"
                                    Margin="0,0,0,2"/>
                         <TextBlock FontSize="12" Foreground="#6B778C"
@@ -407,7 +407,7 @@
                                                             <Setter Property="Background" Value="#FFF5F5"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#172B4D"/>
+                                                            <Setter Property="BorderBrush" Value="#000000"/>
                                                         </Trigger>
                                                         <EventTrigger RoutedEvent="Loaded">
                                                             <BeginStoryboard>
@@ -648,7 +648,7 @@
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding MaterialName}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"/>
+                                                                   Foreground="#000000"/>
                                                         <TextBlock Text="{Binding StageName, StringFormat='Этап: {0}'}"
                                                                    FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
                                                     </StackPanel>
@@ -656,7 +656,7 @@
                                                 <TextBlock HorizontalAlignment="Right"
                                                            VerticalAlignment="Center"
                                                            FontSize="14" FontWeight="SemiBold"
-                                                           Foreground="#172B4D">
+                                                           Foreground="#000000">
                                                     <TextBlock.Text>
                                                         <MultiBinding StringFormat="{}{0} {1}">
                                                             <Binding Path="Quantity"/>
@@ -699,7 +699,7 @@
                                                 <Image Source="{svgc:SvgImage Source=/icons/file.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding FileName}" FontSize="13"
-                                                               FontWeight="SemiBold" Foreground="#172B4D"/>
+                                                               FontWeight="SemiBold" Foreground="#000000"/>
                                                     <TextBlock Text="{Binding FileType}" FontSize="11"
                                                                Foreground="#6B778C" Margin="0,2,0,0"/>
                                                 </StackPanel>

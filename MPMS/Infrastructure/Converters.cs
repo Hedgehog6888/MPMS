@@ -822,12 +822,12 @@ public class TaskStatusToForegroundBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is TaskStatus s ? s switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E)),  // dark gray
-            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x00, 0x52, 0xCC)),  // dark blue
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E)),  // dark gray
+            TaskStatus.Planned    => new SolidColorBrush(Colors.Black),
+            TaskStatus.InProgress => new SolidColorBrush(Colors.Black),
+            TaskStatus.Paused     => new SolidColorBrush(Colors.Black),
             TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x66, 0x44)),  // dark green
-            _                     => new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E))
-        } : new SolidColorBrush(Color.FromRgb(0x42, 0x52, 0x6E));
+            _                     => new SolidColorBrush(Colors.Black)
+        } : new SolidColorBrush(Colors.Black);
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

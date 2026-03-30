@@ -48,7 +48,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Диаграмма Ганта" FontSize="22" FontWeight="Bold" Foreground="#172B4D"/>
+                    <TextBlock Text="Диаграмма Ганта" FontSize="22" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock Text="Временная шкала задач и этапов проекта"
                                FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
                 </StackPanel>
@@ -63,7 +63,7 @@
                                         BorderBrush="#DFE1E6" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}">
                                     <TextBlock Text="Сегодня" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#172B4D" VerticalAlignment="Center"/>
+                                               Foreground="#000000" VerticalAlignment="Center"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -85,7 +85,7 @@
                             </Button>
                             <TextBlock Text="{Binding MonthTitle}"
                                        FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#172B4D" VerticalAlignment="Center"
+                                       Foreground="#000000" VerticalAlignment="Center"
                                        MinWidth="165" TextAlignment="Center"/>
                             <Button Style="{StaticResource NavBtn}"
                                     Command="{Binding NextMonthCommand}">
@@ -227,7 +227,7 @@
                                                         <TextBlock Grid.Column="0"
                                                                    Text="{Binding Task.Name}"
                                                                    FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"
+                                                                   Foreground="#000000"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Grid.Column="1" CornerRadius="4"
@@ -443,7 +443,7 @@
                                                         <TextBlock Grid.Column="0"
                                                                    Text="{Binding Stage.Stage.Name}"
                                                                    FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"
+                                                                   Foreground="#000000"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Grid.Column="1" CornerRadius="4"

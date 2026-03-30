@@ -110,7 +110,7 @@
                                 BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,12">
                             <StackPanel>
                                 <TextBlock Text="Пользователей" FontSize="11" Foreground="#6B778C" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding TotalUsersCount}" FontSize="24" FontWeight="Bold" Foreground="#172B4D" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding TotalUsersCount}" FontSize="24" FontWeight="Bold" Foreground="#000000" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
                         <Border Grid.Column="2" Background="White" CornerRadius="8"
@@ -177,7 +177,7 @@
                                         <TextBox Text="{Binding UserSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
-                                                 Foreground="#172B4D"
+                                                 Foreground="#000000"
                                                  GotFocus="UserSearch_GotFocus"
                                                  LostFocus="UserSearch_LostFocus"/>
                                     </Grid>
@@ -288,7 +288,7 @@
                                                             </Grid>
                                                         </Border>
                                                         <StackPanel VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/>
+                                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
                                                             <TextBlock Text="{Binding Username, StringFormat='@{0}'}"
                                                                        FontSize="11" Foreground="#6B778C" Margin="0,1,0,0"/>
                                                         </StackPanel>
@@ -413,7 +413,7 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding ArchiveSearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent" BorderThickness="0"
-                                             VerticalAlignment="Center" FontSize="13" Foreground="#172B4D"
+                                             VerticalAlignment="Center" FontSize="13" Foreground="#000000"
                                              GotFocus="ArchiveSearch_GotFocus" LostFocus="ArchiveSearch_LostFocus"/>
                                 </Grid>
                                 <Button Grid.Column="2"
@@ -515,7 +515,7 @@
                                                             <ColumnDefinition Width="130"/>
                                                             <ColumnDefinition Width="90"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
@@ -589,7 +589,7 @@
                                                             <ColumnDefinition Width="130"/>
                                                             <ColumnDefinition Width="90"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
@@ -663,7 +663,7 @@
                                                             <ColumnDefinition Width="130"/>
                                                             <ColumnDefinition Width="90"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
@@ -740,7 +740,7 @@
                                         </TextBlock>
                                         <TextBox Text="{Binding HistorySearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
-                                                 VerticalAlignment="Center" FontSize="13" Foreground="#172B4D"
+                                                 VerticalAlignment="Center" FontSize="13" Foreground="#000000"
                                                  GotFocus="HistorySearch_GotFocus" LostFocus="HistorySearch_LostFocus"/>
                                     </Grid>
                                     <Button Grid.Column="2"
@@ -821,7 +821,7 @@
                                                             </Grid>
                                                         </Border>
                                                         <TextBlock Text="{Binding UserName}"
-                                                                   FontSize="12" FontWeight="SemiBold" Foreground="#172B4D"
+                                                                   FontSize="12" FontWeight="SemiBold" Foreground="#000000"
                                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                                    MaxWidth="110"/>
                                                     </StackPanel>
@@ -905,7 +905,7 @@
                                         </TextBlock>
                                         <TextBox Text="{Binding ActivitySearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
-                                                 VerticalAlignment="Center" FontSize="13" Foreground="#172B4D"
+                                                 VerticalAlignment="Center" FontSize="13" Foreground="#000000"
                                                  GotFocus="ActivitySearch_GotFocus" LostFocus="ActivitySearch_LostFocus"/>
                                     </Grid>
                                     <Button Grid.Column="2"
@@ -986,7 +986,7 @@
                                                             </Grid>
                                                         </Border>
                                                         <TextBlock Text="{Binding UserName}"
-                                                                   FontSize="12" FontWeight="SemiBold" Foreground="#172B4D"
+                                                                   FontSize="12" FontWeight="SemiBold" Foreground="#000000"
                                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                                                    MaxWidth="110"/>
                                                     </StackPanel>
@@ -995,7 +995,7 @@
                                                             HorizontalAlignment="Left" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding ActionType, Converter={StaticResource ActionKindToLabel}}"
                                                                    FontSize="11" FontWeight="SemiBold"
-                                                                   Foreground="#172B4D"/>
+                                                                   Foreground="#000000"/>
                                                     </Border>
                                                     <TextBlock Grid.Column="2" Text="{Binding ActionText}"
                                                                FontSize="12" Foreground="#344563"
@@ -1047,7 +1047,7 @@
                                            Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Заблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                    <TextBlock Text="Заблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#000000"/>
                                     <TextBlock Text="Пользователь не сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#92400E"/>
                                 </StackPanel>
                             </StackPanel>
@@ -1076,7 +1076,7 @@
                             <StackPanel>
                                 <TextBlock Text="Пользователь" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding BlockTargetName}"
-                                           FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
@@ -1087,7 +1087,7 @@
                                     CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
                                 <TextBox Text="{Binding BlockReason, UpdateSourceTrigger=PropertyChanged}"
                                          BorderThickness="0" Background="Transparent"
-                                         Foreground="#172B4D" FontSize="13"
+                                         Foreground="#000000" FontSize="13"
                                          Height="72" TextWrapping="Wrap" AcceptsReturn="True"
                                          VerticalContentAlignment="Top"/>
                             </Border>
@@ -1106,7 +1106,7 @@
                                                 BorderBrush="#DFE1E6" BorderThickness="1"
                                                 Padding="{TemplateBinding Padding}"
                                                 Height="{TemplateBinding Height}">
-                                            <TextBlock Text="Отмена" Foreground="#172B4D"
+                                            <TextBlock Text="Отмена" Foreground="#000000"
                                                        FontSize="13" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
@@ -1165,7 +1165,7 @@
                                            Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Разблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                    <TextBlock Text="Разблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#000000"/>
                                     <TextBlock Text="Пользователь снова сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#2E7D32"/>
                                 </StackPanel>
                             </StackPanel>
@@ -1194,7 +1194,7 @@
                             <StackPanel>
                                 <TextBlock Text="Пользователь" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding BlockTargetName}"
-                                           FontSize="14" FontWeight="SemiBold" Foreground="#172B4D"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
@@ -1218,7 +1218,7 @@
                                                 BorderBrush="#DFE1E6" BorderThickness="1"
                                                 Padding="{TemplateBinding Padding}"
                                                 Height="{TemplateBinding Height}">
-                                            <TextBlock Text="Отмена" Foreground="#172B4D"
+                                            <TextBlock Text="Отмена" Foreground="#000000"
                                                        FontSize="13" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
@@ -1312,7 +1312,7 @@
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{Binding ConfirmTitle}"
-                                               FontSize="16" FontWeight="Bold" Foreground="#172B4D"/>
+                                               FontSize="16" FontWeight="Bold" Foreground="#000000"/>
                                     <TextBlock FontSize="12" Margin="0,3,0,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -1353,7 +1353,7 @@
                     <StackPanel Margin="24,16,24,0">
                         <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,0">
                             <TextBlock Text="{Binding ConfirmEntityName}"
-                                       FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#000000"
                                        TextWrapping="Wrap"/>
                         </Border>
                     </StackPanel>
@@ -1369,7 +1369,7 @@
                                                 BorderBrush="#DFE1E6" BorderThickness="1"
                                                 Padding="{TemplateBinding Padding}"
                                                 Height="{TemplateBinding Height}">
-                                            <TextBlock Text="Отмена" Foreground="#172B4D"
+                                            <TextBlock Text="Отмена" Foreground="#000000"
                                                        FontSize="13" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>

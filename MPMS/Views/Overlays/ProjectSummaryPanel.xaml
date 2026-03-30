@@ -45,7 +45,7 @@
                         <!-- Project name -->
                         <TextBlock x:Name="ProjectNameText"
                                    FontSize="16" FontWeight="Bold"
-                                   Foreground="#172B4D"
+                                   Foreground="#000000"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"/>
 
@@ -68,7 +68,7 @@
                     <StackPanel>
                         <Grid Margin="0,0,0,8">
                             <TextBlock Text="Прогресс" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="#172B4D" VerticalAlignment="Center"/>
+                                       Foreground="#000000" VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <TextBlock x:Name="CompletedTasksText" FontSize="12"
                                            Foreground="#6B778C"/>
@@ -92,7 +92,7 @@
 
                         <Grid>
                             <TextBlock x:Name="ProgressText" FontSize="20" FontWeight="Bold"
-                                       Foreground="#172B4D"/>
+                                       Foreground="#000000"/>
                             <TextBlock x:Name="ProgressLabel" Text="выполнено"
                                        FontSize="11" Foreground="#6B778C"
                                        HorizontalAlignment="Right"
@@ -113,7 +113,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="ЗАКАЗЧИК" Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="ClientText" FontSize="13" Foreground="#172B4D"
+                            <TextBlock x:Name="ClientText" FontSize="13" Foreground="#000000"
                                        FontWeight="SemiBold" TextWrapping="Wrap" MaxWidth="180"/>
                         </StackPanel>
                     </StackPanel>
@@ -127,7 +127,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Top">
                             <TextBlock Text="АДРЕС ОБЪЕКТА" Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="AddressText" FontSize="12" Foreground="#172B4D"
+                            <TextBlock x:Name="AddressText" FontSize="12" Foreground="#000000"
                                        TextWrapping="Wrap" MaxWidth="180"/>
                         </StackPanel>
                     </StackPanel>
@@ -141,7 +141,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="СРОКИ" Style="{StaticResource SectionLabel}"/>
-                            <TextBlock x:Name="DatesText" FontSize="12" Foreground="#172B4D"
+                            <TextBlock x:Name="DatesText" FontSize="12" Foreground="#000000"
                                        TextWrapping="Wrap"/>
                             <TextBlock x:Name="DaysLeftText" FontSize="11"
                                        Foreground="#6B778C" Margin="0,2,0,0"/>
@@ -156,7 +156,7 @@
                         <TextBlock Text="МЕНЕДЖЕР" Style="{StaticResource SectionLabel}"/>
                         <StackPanel Orientation="Horizontal">
                             <Border x:Name="ManagerAvatar" Style="{StaticResource AvatarCircle32}"
-                                    Background="#172B4D" Margin="0,0,8,0">
+                                    Background="#000000" Margin="0,0,8,0">
                                 <Grid>
                                     <Image x:Name="ManagerAvatarImage" Style="{StaticResource AvatarImage}"
                                            Width="32" Height="32"/>
@@ -167,7 +167,7 @@
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock x:Name="ManagerNameText" FontSize="13"
-                                           FontWeight="SemiBold" Foreground="#172B4D"/>
+                                           FontWeight="SemiBold" Foreground="#000000"/>
                                 <TextBlock Text="Менеджер проекта" FontSize="11"
                                            Foreground="#6B778C" Margin="0,1,0,0"/>
                             </StackPanel>
@@ -197,7 +197,7 @@
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="{Binding UserName}" FontSize="13"
-                                                       FontWeight="SemiBold" Foreground="#172B4D"/>
+                                                       FontWeight="SemiBold" Foreground="#000000"/>
                                             <TextBlock Text="Прораб" FontSize="11"
                                                        Foreground="#166534" Margin="0,1,0,0"/>
                                         </StackPanel>
@@ -235,7 +235,7 @@
                                             </Grid>
                                         </Border>
                                         <TextBlock Text="{Binding UserName}" FontSize="12"
-                                                   Foreground="#172B4D"
+                                                   Foreground="#000000"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>

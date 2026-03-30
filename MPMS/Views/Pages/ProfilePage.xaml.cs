@@ -107,7 +107,7 @@ public partial class ProfilePage : UserControl
                 "Project Manager" or "ProjectManager" or "Manager" => ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
                 "Foreman"                    => ("#F0FDF4", "#166534", "#86EFAC"),
                 "Worker"                     => ("#FFF7ED", "#9A3412", "#FED7AA"),
-                _                            => ("#F4F5F7", "#172B4D", "#DFE1E6")
+                _                            => ("#F4F5F7", "#000000", "#DFE1E6")
             };
             RoleBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(bg)!);
             RoleBadge.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border)!);

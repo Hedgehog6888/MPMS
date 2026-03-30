@@ -21,7 +21,7 @@
         </Style>
         <Style x:Key="InfoValue" TargetType="TextBlock">
             <Setter Property="FontSize"   Value="13"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="Foreground" Value="#000000"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
@@ -40,7 +40,7 @@
             <Grid>
                 <StackPanel>
                     <TextBlock Text="Информация о пользователе"
-                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"/>
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
                     <TextBlock x:Name="HeaderSubtitle"
                                Text="Просмотр и управление пользователем"
                                FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
@@ -86,7 +86,7 @@
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock x:Name="FullNameText"
-                                   FontSize="18" FontWeight="Bold" Foreground="#172B4D"/>
+                                   FontSize="18" FontWeight="Bold" Foreground="#000000"/>
                         <TextBlock x:Name="UsernameText"
                                    FontSize="13" Foreground="#6B778C" Margin="0,3,0,4"/>
                         <Border x:Name="RoleBadge" CornerRadius="4" Padding="8,3" HorizontalAlignment="Left">
@@ -150,7 +150,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding ActionText}"
-                                               FontSize="12" Foreground="#172B4D"
+                                               FontSize="12" Foreground="#000000"
                                                TextWrapping="Wrap"/>
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM HH:mm}'}"

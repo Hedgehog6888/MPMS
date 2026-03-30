@@ -19,7 +19,7 @@
         <Style x:Key="NavButton" TargetType="RadioButton">
             <Setter Property="Background"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground"     Value="#172B4D"/>
+            <Setter Property="Foreground"     Value="#000000"/>
             <Setter Property="FontSize"       Value="14"/>
             <Setter Property="FontWeight"     Value="SemiBold"/>
             <Setter Property="Padding"        Value="0"/>
@@ -40,12 +40,12 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                <Setter Property="Foreground" Value="#172B4D"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <!-- Активный пункт без синего цвета -->
                                 <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                <Setter Property="Foreground" Value="#172B4D"/>
+                                <Setter Property="Foreground" Value="#000000"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -223,7 +223,7 @@
                                                                     Background="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"
                                                                     Margin="0,0,8,0" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding Name}" FontSize="13"
-                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
                                                                        VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding Client}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
@@ -264,7 +264,7 @@
                                                                            FontSize="9" Foreground="White"/>
                                                             </Border>
                                                             <TextBlock Text="{Binding Name}" FontSize="13"
-                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
                                                                        VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding ProjectName}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
@@ -302,7 +302,7 @@
                                                                     Background="{Binding Status, Converter={StaticResource StageStatusToBrush}}"
                                                                     Margin="0,0,8,0" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding Name}" FontSize="13"
-                                                                       Foreground="#172B4D" FontWeight="SemiBold"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
                                                                        VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding TaskName}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
@@ -464,7 +464,7 @@
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Text" Value="Синхронизировано"/>
-                                                        <Setter Property="Foreground" Value="#172B4D"/>
+                                                        <Setter Property="Foreground" Value="#000000"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsOnline}" Value="False">
                                                                 <Setter Property="Text" Value="Нет подключения"/>
@@ -537,17 +537,17 @@
                                         <Border Grid.Column="3" Background="#F0F0F0" Margin="0,8,0,8"/>
                                         <StackPanel Grid.Column="0" HorizontalAlignment="Center" Margin="0,10">
                                             <TextBlock Text="{Binding SyncProjectCount}" FontSize="16" FontWeight="Bold"
-                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                                       Foreground="#000000" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Проектов" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" HorizontalAlignment="Center" Margin="0,10">
                                             <TextBlock Text="{Binding SyncTaskCount}" FontSize="16" FontWeight="Bold"
-                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                                       Foreground="#000000" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Задач" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="4" HorizontalAlignment="Center" Margin="0,10">
                                             <TextBlock Text="{Binding SyncStageCount}" FontSize="16" FontWeight="Bold"
-                                                       Foreground="#172B4D" HorizontalAlignment="Center"/>
+                                                       Foreground="#000000" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Этапов" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
@@ -585,8 +585,8 @@
                                                             Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="↻" FontSize="13" Margin="0,0,6,0"
-                                                                       VerticalAlignment="Center" Foreground="#172B4D"/>
-                                                            <TextBlock Text="Синхронизировать" Foreground="#172B4D"
+                                                                       VerticalAlignment="Center" Foreground="#000000"/>
+                                                            <TextBlock Text="Синхронизировать" Foreground="#000000"
                                                                        FontSize="12" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
@@ -649,7 +649,7 @@
                                         <StackPanel>
                                             <TextBlock Text="{Binding UserName}"
                                                        FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="#172B4D"/>
+                                                       Foreground="#000000"/>
                                             <TextBlock Text="{Binding UserRoleDisplay}"
                                                        FontSize="11" Foreground="#1B6EC2"
                                                        Margin="0,2,0,0"/>
@@ -698,7 +698,7 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{Binding UserName}"
                                                FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#172B4D"/>
+                                               Foreground="#000000"/>
                                     <TextBlock Text="{Binding UserRoleDisplay}"
                                                FontSize="10" Foreground="#6B778C"/>
                                 </StackPanel>

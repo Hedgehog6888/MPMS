@@ -166,7 +166,7 @@ public partial class ArchiveItemInfoOverlay : UserControl
         {
             Text       = name,
             FontSize   = 13,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x17, 0x2B, 0x4D)),
+            Foreground = new SolidColorBrush(Colors.Black),
             FontWeight = FontWeights.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             Margin     = new Thickness(8, 0, 0, 0),
