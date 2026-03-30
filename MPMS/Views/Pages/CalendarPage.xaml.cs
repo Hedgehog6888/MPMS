@@ -23,14 +23,17 @@ public partial class CalendarPage : UserControl
         _vm = DataContext as CalendarViewModel;
     }
 
-    /// <summary>Click on a day cell (no overlay action).</summary>
+    /// <summary>Click on a day cell → centered overlay with all tasks for that date.</summary>
     private void Cell_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border border || border.Tag is not CalendarCell cell) return;
         if (cell.IsEmpty) return;
 
-        // Day click no longer opens a summary drawer.
         e.Handled = true;
+
+        var overlay = new CalendarDayTasksOverlay();
+        overlay.SetDay(cell.Date, cell.Tasks, OpenTaskDetail);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 480);
     }
 
     /// <summary>Click on a task chip inside a cell → open TaskDetailOverlay directly.</summary>

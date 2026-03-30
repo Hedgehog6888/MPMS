@@ -1,0 +1,156 @@
+<UserControl x:Class="MPMS.Views.Overlays.CalendarDayTasksOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="520" d:DesignWidth="480"
+             MaxHeight="560">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel Margin="0,0,40,0">
+                    <TextBlock x:Name="TitleText"
+                               FontSize="20" FontWeight="Bold" Foreground="#172B4D"
+                               TextWrapping="Wrap"/>
+                    <TextBlock x:Name="SubtitleText"
+                               FontSize="12" Foreground="#6B778C" Margin="0,6,0,0"
+                               TextWrapping="Wrap" Visibility="Visible"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="Close_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Task list -->
+        <ScrollViewer Grid.Row="1" Padding="24,16,24,20"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <ItemsControl x:Name="TasksList" Visibility="Collapsed">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="Transparent" Cursor="Hand"
+                                    Padding="0,0,0,8"
+                                    MouseLeftButtonDown="TaskRow_Click"
+                                    Tag="{Binding}">
+                                <Border BorderBrush="#E5E7EB" BorderThickness="1"
+                                        CornerRadius="8" Background="White"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F9FAFB"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Margin="12,10,12,10">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                   Text="{Binding Name}"
+                                                   FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="#172B4D"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,0,10,0"
+                                                   VerticalAlignment="Top"/>
+                                        <Border Grid.Row="0" Grid.Column="1"
+                                                VerticalAlignment="Top"
+                                                CornerRadius="4" Padding="8,4">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                            <Setter Property="Background" Value="#DE350B"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Foreground="White"
+                                                       FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                <Setter Property="Text" Value="Пометка удаления"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                   Text="{Binding ProjectName}"
+                                                   FontSize="12" Foreground="#6B778C"
+                                                   Margin="0,8,10,0"
+                                                   VerticalAlignment="Bottom"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Border Grid.Row="1" Grid.Column="1"
+                                                CornerRadius="4" Padding="6,3"
+                                                Background="#FEF2F2"
+                                                BorderBrush="#FCA5A5" BorderThickness="1"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Bottom"
+                                                Margin="0,8,0,0"
+                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Просрочена"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="#DC2626"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Margin="0,32,0,32"
+                            Visibility="Collapsed">
+                    <TextBlock Text="На эту дату нет задач с дедлайном"
+                               FontSize="14" Foreground="#6B778C"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
