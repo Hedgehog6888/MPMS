@@ -57,7 +57,7 @@
         </Border>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,0,24,8">
 
                 <!-- Section: Основная информация -->
@@ -108,7 +108,8 @@
                                   Visibility="Collapsed"/>
                         <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                                 CornerRadius="8" MaxHeight="180">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                                 <StackPanel>
                                     <ItemsControl x:Name="ProjectPickerList">
                                         <ItemsControl.ItemTemplate>
@@ -160,7 +161,8 @@
                                   Visibility="Collapsed"/>
                         <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                                 CornerRadius="8" MaxHeight="180">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                                 <StackPanel>
                                     <ItemsControl x:Name="TaskPickerList">
                                         <ItemsControl.ItemTemplate>
@@ -224,7 +226,8 @@
                     <!-- Assignee picker list -->
                     <Border x:Name="AssigneePickerBorder" Background="White" BorderBrush="#DFE1E6"
                             BorderThickness="1" CornerRadius="8" MaxHeight="200">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                         <StackPanel>
                             <ItemsControl x:Name="AssigneePickerList">
                                 <ItemsControl.ItemTemplate>

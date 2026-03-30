@@ -86,7 +86,7 @@
         </Border>
 
         <!-- Form content -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,0,24,8">
 
                 <!-- Section: Основная информация -->
@@ -199,7 +199,8 @@
                 <Border x:Name="ForemanPickerBorder" Background="White" BorderBrush="#DFE1E6"
                         BorderThickness="1" CornerRadius="8" MaxHeight="180"
                         Visibility="Collapsed" Margin="0,0,0,10">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                         <StackPanel>
                             <ItemsControl x:Name="ForemanPickerList">
                                 <ItemsControl.ItemTemplate>
@@ -268,7 +269,8 @@
                 <Border x:Name="WorkerPickerBorder" Background="White" BorderBrush="#DFE1E6"
                         BorderThickness="1" CornerRadius="8" MaxHeight="220"
                         Visibility="Collapsed">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                         <StackPanel>
                             <ItemsControl x:Name="WorkerPickerList">
                                 <ItemsControl.ItemTemplate>

@@ -418,6 +418,23 @@ public partial class CreateStageOverlay : UserControl
         RefreshAssigneeChips();
     }
 
+    private void NestedScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer nested)
+            return;
+
+        var atTop = nested.VerticalOffset <= 0;
+        var atBottom = nested.VerticalOffset >= nested.ScrollableHeight;
+        var scrollingUp = e.Delta > 0;
+        var scrollingDown = e.Delta < 0;
+
+        if ((atTop && scrollingUp) || (atBottom && scrollingDown))
+        {
+            MainScrollViewer.ScrollToVerticalOffset(MainScrollViewer.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
+    }
+
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         if (_onAfterSave is not null)

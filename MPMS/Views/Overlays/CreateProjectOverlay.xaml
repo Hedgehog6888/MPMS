@@ -63,7 +63,7 @@
         </Border>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,0,24,8">
 
                 <!-- Section: Основная информация -->
@@ -142,7 +142,8 @@
                 <TextBlock Text="Менеджер проекта *" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
                 <Border x:Name="ManagerPickerHost" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" MaxHeight="200" Margin="0,0,0,16">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                         <StackPanel>
                             <ItemsControl x:Name="ManagerPickerList">
                                 <ItemsControl.ItemTemplate>
@@ -226,7 +227,8 @@
                     <!-- Foreman list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                             <StackPanel>
                                 <ItemsControl x:Name="ForemanPickerList">
                                     <ItemsControl.ItemTemplate>
@@ -310,7 +312,8 @@
                     <!-- Workers list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                             <StackPanel>
                                 <ItemsControl x:Name="WorkerPickerList">
                                     <ItemsControl.ItemTemplate>
