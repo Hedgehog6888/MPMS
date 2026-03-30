@@ -72,6 +72,8 @@ public partial class App : Application
         services.AddTransient<StagesViewModel>();
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<AdminViewModel>();
+        services.AddTransient<CalendarViewModel>();
+        services.AddTransient<GanttViewModel>();
 
         // ── Windows ───────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();
