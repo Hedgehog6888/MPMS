@@ -6,6 +6,9 @@ namespace MPMS.Services;
 /// <summary>Единая формула прогресса: учитывает статусы, этапы, средний прогресс и просрочку.</summary>
 public static class ProgressCalculator
 {
+    /// <summary>Вес этапа в доле «объёма»: завершён = 1, в работе ≈ половина пути (согласовано с 0.58 в агрегате).</summary>
+    private const double InProgressStagePartial = 0.55;
+
     private static double GetStageWeight(StageStatus status) => status switch
     {
         StageStatus.Completed => 1.00,
@@ -20,6 +23,9 @@ public static class ProgressCalculator
         TaskStatus.Paused => 0.32,
         _ => 0.08
     };
+
+    private static double NormalizeTaskStatusWeight(TaskStatus status) =>
+        Math.Clamp(GetTaskWeight(status), 0, 1);
 
     /// <summary>Этап не входит в прогресс задачи (архив / пометка этапа). Пометка задачи не обнуляет этапы — % на плашке сохраняется; помеченные задачи не попадают в статистику проекта в ApplyProjectMetrics.</summary>
     private static bool StageExcludedFromTaskProgress(LocalTaskStage s)
@@ -85,19 +91,20 @@ public static class ProgressCalculator
             return 0;
 
         double total = task.TotalStages;
-        double completionRatio = task.CompletedStages / total;
-        double activeRatio = task.InProgressStages / total;
+        // Доля объёма: завершённые + частичный зачёт «в работе» (без двойного учёта с completionRatio).
+        double volumeProgress = (task.CompletedStages + InProgressStagePartial * task.InProgressStages) / total;
         double stageStatusScore = (
             task.CompletedStages * GetStageWeight(StageStatus.Completed) +
             task.InProgressStages * GetStageWeight(StageStatus.InProgress) +
             task.PlannedStages * GetStageWeight(StageStatus.Planned)) / total;
-        double statusScore = GetTaskWeight(task.Status);
+        double statusNorm = NormalizeTaskStatusWeight(task.Status);
 
+        // Веса подобраны так, чтобы сохранить прежний порядок величин (~калибровка старой смеси 55/25/10/10),
+        // но убрать избыточное дублирование completionRatio + activeRatio вместе со stageStatusScore.
         double raw = (
-            stageStatusScore * 0.55 +
-            completionRatio * 0.25 +
-            activeRatio * 0.10 +
-            statusScore * 0.10) * 100;
+            stageStatusScore * 0.52 +
+            volumeProgress * 0.33 +
+            statusNorm * 0.15) * 100;
 
         if (task.IsOverdue && task.Status != TaskStatus.Completed)
             raw -= 12;
@@ -133,26 +140,30 @@ public static class ProgressCalculator
 
         double completionScore = project.CompletedTasks / totalTasks;
         double averageTaskScore = Math.Clamp(project.AverageTaskProgress / 100d, 0, 1);
-        double stageStatusScore = averageTaskScore;
 
+        double stageAggregateScore = averageTaskScore;
         if (project.TotalStages > 0)
         {
             double plannedStages = Math.Max(0, project.TotalStages - project.CompletedStages - project.InProgressStages);
-            stageStatusScore = (
+            stageAggregateScore = (
                 project.CompletedStages * GetStageWeight(StageStatus.Completed) +
                 project.InProgressStages * GetStageWeight(StageStatus.InProgress) +
                 plannedStages * GetStageWeight(StageStatus.Planned)) / project.TotalStages;
         }
+
+        // Один «сигнал работы»: этапы по проекту + средний % задач (важно для задач без этапов в том же проекте).
+        double workScore = project.TotalStages > 0
+            ? Math.Clamp(0.62 * stageAggregateScore + 0.38 * averageTaskScore, 0, 1)
+            : averageTaskScore;
 
         double overduePenalty = project.OverdueTasks <= 0
             ? 0
             : Math.Min(0.18, (project.OverdueTasks / totalTasks) * 0.18);
 
         double raw = (
-            taskStatusScore * 0.30 +
-            averageTaskScore * 0.40 +
-            stageStatusScore * 0.20 +
-            completionScore * 0.10) * 100;
+            taskStatusScore * 0.28 +
+            workScore * 0.57 +
+            completionScore * 0.15) * 100;
 
         raw -= overduePenalty * 100;
 
