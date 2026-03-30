@@ -220,13 +220,7 @@
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background"   Value="{Binding Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
-                                                            <Setter Property="BorderBrush"  Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
-                                                                    <Setter Property="Background"   Value="#FFEBE6"/>
-                                                                    <Setter Property="BorderBrush"  Value="#DE350B"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
+                                                            <Setter Property="BorderBrush"  Value="{Binding Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
                                                         </Style>
                                                     </Border.Style>
                                                     <Grid>
@@ -242,11 +236,6 @@
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Setter Property="Foreground" Value="{Binding Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
-                                                                            <Setter Property="Foreground" Value="#BF2600"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
