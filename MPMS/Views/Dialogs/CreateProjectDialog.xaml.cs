@@ -1,6 +1,8 @@
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 
 namespace MPMS.Views.Dialogs;
@@ -17,7 +19,28 @@ public partial class CreateProjectDialog : Window
     {
         InitializeComponent();
         _dbFactory = dbFactory;
+        StartDatePicker.SelectedDateChanged += (_, _) => RefreshEndDateBlackoutFromStart();
+        Loaded += (_, _) => RefreshEndDateBlackoutFromStart();
         _ = LoadUsersAsync();
+    }
+
+    private void RefreshEndDateBlackoutFromStart()
+    {
+        EndDatePicker.BlackoutDates.Clear();
+        if (StartDatePicker.SelectedDate is not { } start)
+        {
+            EndDatePicker.ClearValue(DatePicker.DisplayDateStartProperty);
+            return;
+        }
+        var startDay = start.Date;
+        DueDatePickerRestrictions.SetDisplayDateStartFirstOfMonth(EndDatePicker, startDay);
+
+        if (EndDatePicker.SelectedDate is { } end && end.Date < startDay)
+            EndDatePicker.SelectedDate = startDay;
+
+        var minBlackoutEnd = startDay.AddDays(-1);
+        if (minBlackoutEnd >= new DateTime(1900, 1, 1))
+            EndDatePicker.BlackoutDates.Add(new CalendarDateRange(new DateTime(1900, 1, 1), minBlackoutEnd));
     }
 
     private async Task LoadUsersAsync()
@@ -43,6 +66,7 @@ public partial class CreateProjectDialog : Window
             StartDatePicker.SelectedDate = project.StartDate.Value.ToDateTime(TimeOnly.MinValue);
         if (project.EndDate.HasValue)
             EndDatePicker.SelectedDate = project.EndDate.Value.ToDateTime(TimeOnly.MinValue);
+        RefreshEndDateBlackoutFromStart();
 
         Loaded += (_, _) =>
         {

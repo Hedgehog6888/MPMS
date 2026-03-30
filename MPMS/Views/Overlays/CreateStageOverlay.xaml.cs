@@ -32,7 +32,7 @@ public partial class CreateStageOverlay : UserControl
     public CreateStageOverlay()
     {
         InitializeComponent();
-        Loaded += (_, _) => DueDatePicker.DisplayDateStart = DateTime.Today;
+        DueDatePickerRestrictions.AttachNoPastSelectableBlackout(DueDatePicker);
     }
 
     public void SetTask(LocalTask task, Func<System.Threading.Tasks.Task>? onSaved = null, Action? onAfterSave = null)

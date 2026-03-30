@@ -8,6 +8,7 @@ using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -36,6 +37,28 @@ public partial class CreateProjectOverlay : UserControl
     public CreateProjectOverlay()
     {
         InitializeComponent();
+        StartDatePicker.SelectedDateChanged += (_, _) => RefreshEndDateBlackoutFromStart();
+        Loaded += (_, _) => RefreshEndDateBlackoutFromStart();
+    }
+
+    private void RefreshEndDateBlackoutFromStart()
+    {
+        EndDatePicker.BlackoutDates.Clear();
+        if (StartDatePicker.SelectedDate is not { } start)
+        {
+            EndDatePicker.ClearValue(DatePicker.DisplayDateStartProperty);
+            return;
+        }
+        var startDay = start.Date;
+        DueDatePickerRestrictions.SetDisplayDateStartFirstOfMonth(EndDatePicker, startDay);
+
+        // Сначала сдвинуть окончание: blackout не может включать текущую SelectedDate (иначе ArgumentOutOfRangeException).
+        if (EndDatePicker.SelectedDate is { } end && end.Date < startDay)
+            EndDatePicker.SelectedDate = startDay;
+
+        var minBlackoutEnd = startDay.AddDays(-1);
+        if (minBlackoutEnd >= new DateTime(1900, 1, 1))
+            EndDatePicker.BlackoutDates.Add(new CalendarDateRange(new DateTime(1900, 1, 1), minBlackoutEnd));
     }
 
     public void SetCreateMode(ProjectsViewModel vm)
@@ -65,6 +88,7 @@ public partial class CreateProjectOverlay : UserControl
             StartDatePicker.SelectedDate = project.StartDate.Value.ToDateTime(TimeOnly.MinValue);
         if (project.EndDate.HasValue)
             EndDatePicker.SelectedDate = project.EndDate.Value.ToDateTime(TimeOnly.MinValue);
+        RefreshEndDateBlackoutFromStart();
 
         _ = LoadUsersAsync(project.ManagerId, project.Id);
     }

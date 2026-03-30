@@ -630,6 +630,9 @@
                                            FontSize="12" Foreground="#000000"/>
                             </Border>
                             <ControlTemplate.Triggers>
+                                <Trigger Property="IsInactive" Value="True">
+                                    <Setter TargetName="Content" Property="Foreground" Value="#C1C7D0"/>
+                                </Trigger>
                                 <Trigger Property="IsToday" Value="True">
                                     <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
                                     <Setter TargetName="Content" Property="Foreground" Value="#1B6EC2"/>
@@ -640,12 +643,49 @@
                                     <Setter TargetName="Content" Property="Foreground" Value="White"/>
                                     <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
+                                <!-- Недоступные дни: IsEnabled=False и/или IsBlackedOut (blackout часто остаётся Enabled=True) -->
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Cursor" Value="Arrow"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="Transparent"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#A8B0BC"/>
+                                    <Setter TargetName="Content" Property="Opacity" Value="0.92"/>
+                                </Trigger>
+                                <Trigger Property="IsBlackedOut" Value="True">
+                                    <Setter Property="Cursor" Value="Arrow"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="Transparent"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#A8B0BC"/>
+                                    <Setter TargetName="Content" Property="Opacity" Value="0.92"/>
+                                </Trigger>
+                                <!-- Подсветка наведения только у реально доступных дней -->
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsEnabled" Value="True"/>
+                                        <Condition Property="IsBlackedOut" Value="False"/>
+                                    </MultiTrigger.Conditions>
                                     <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
-                                </Trigger>
-                                <Trigger Property="IsInactive" Value="True">
-                                    <Setter TargetName="Content" Property="Foreground" Value="#C1C7D0"/>
-                                </Trigger>
+                                </MultiTrigger>
+                                <!-- Сегодня: при наведении оставляем голубой фон, без «белой» подсветки -->
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsToday" Value="True"/>
+                                        <Condition Property="IsSelected" Value="False"/>
+                                        <Condition Property="IsEnabled" Value="True"/>
+                                        <Condition Property="IsBlackedOut" Value="False"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#1B6EC2"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                        <Condition Property="IsSelected" Value="True"/>
+                                        <Condition Property="IsBlackedOut" Value="False"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bg" Property="Background" Value="#000000"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="White"/>
+                                </MultiTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>

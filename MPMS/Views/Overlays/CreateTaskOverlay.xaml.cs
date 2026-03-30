@@ -33,11 +33,8 @@ public partial class CreateTaskOverlay : UserControl
     public CreateTaskOverlay()
     {
         InitializeComponent();
-        Loaded += (_, _) =>
-        {
-            DueDatePicker.DisplayDateStart = DateTime.Today;
-            ApplyPrioritySelection(_selectedPriority);
-        };
+        DueDatePickerRestrictions.AttachNoPastSelectableBlackout(DueDatePicker);
+        Loaded += (_, _) => ApplyPrioritySelection(_selectedPriority);
     }
 
     public void SetCreateMode(TasksViewModel vm, Guid? projectId = null,

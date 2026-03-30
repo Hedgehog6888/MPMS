@@ -21,7 +21,7 @@ public partial class CreateTaskDialog : Window
     {
         InitializeComponent();
         _dbFactory = dbFactory;
-        Loaded += (_, _) => DueDatePicker.DisplayDateStart = DateTime.Today;
+        DueDatePickerRestrictions.AttachNoPastSelectableBlackout(DueDatePicker);
         _ = LoadDataAsync();
     }
 
