@@ -1,5 +1,7 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -138,6 +140,15 @@ public partial class StagesPage : UserControl
     private void ClearSearch_Click(object sender, RoutedEventArgs e)
     {
         if (VM is not null) VM.SearchText = string.Empty;
+    }
+
+    private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (MainListScroll is null) return;
+        var next = MainListScroll.VerticalOffset - e.Delta;
+        next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));
+        MainListScroll.ScrollToVerticalOffset(next);
+        e.Handled = true;
     }
 
     private async void Stage_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)

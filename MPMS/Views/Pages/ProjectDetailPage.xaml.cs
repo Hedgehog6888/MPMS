@@ -570,4 +570,5 @@ public partial class ProjectDetailPage : UserControl
     {
         if (DataContext is ProjectDetailViewModel vm) vm.StageSearchText = string.Empty;
     }
+
 }

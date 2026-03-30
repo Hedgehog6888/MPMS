@@ -74,6 +74,15 @@ public partial class TasksPage : UserControl
         if (VM is not null) VM.SearchText = string.Empty;
     }
 
+    private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (MainListScroll is null) return;
+        var next = MainListScroll.VerticalOffset - e.Delta;
+        next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));
+        MainListScroll.ScrollToVerticalOffset(next);
+        e.Handled = true;
+    }
+
     private void CreateTask_Click(object sender, RoutedEventArgs e)
     {
         if (VM is null) return;
