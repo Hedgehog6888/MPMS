@@ -176,25 +176,13 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
 
             var taskDict = allTasks.ToDictionary(t => t.Id);
 
-            // Build task rows
+            // Build task rows (полоса: от даты создания задачи до срока выполнения)
             var taskRows = allTasks.Select(t =>
             {
-                bool hasBar = t.DueDate.HasValue;
-                double left = 0, width = 0;
-                if (hasBar)
-                {
-                    var due      = t.DueDate!.Value.ToDateTime(TimeOnly.MinValue);
-                    var barEnd   = due;
-                    var barStart = barEnd.AddDays(-7);
-                    if (barStart < start) barStart = start;
-                    if (barEnd   > end)   barEnd   = end;
-                    if (barStart > end || barEnd < start) { hasBar = false; }
-                    else
-                    {
-                        left  = (barStart - start).TotalDays / totalDays;
-                        width = Math.Max((barEnd - barStart).TotalDays + 1, 1) / totalDays;
-                    }
-                }
+                TryComputeBarForRange(
+                    DateOnlyFromCreatedAt(t.CreatedAt), t.DueDate,
+                    start, end, totalDays,
+                    out var hasBar, out var left, out var width);
                 return new GanttTaskRow
                 {
                     Task         = t,
@@ -222,22 +210,10 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                     ProjectName = parentTask?.ProjectName ?? "—"
                 };
 
-                bool hasBar = parentTask?.DueDate.HasValue == true;
-                double left = 0, width = 0;
-                if (hasBar)
-                {
-                    var due      = parentTask!.DueDate!.Value.ToDateTime(TimeOnly.MinValue);
-                    var barEnd   = due;
-                    var barStart = barEnd.AddDays(-7);
-                    if (barStart < start) barStart = start;
-                    if (barEnd   > end)   barEnd   = end;
-                    if (barStart > end || barEnd < start) { hasBar = false; }
-                    else
-                    {
-                        left  = (barStart - start).TotalDays / totalDays;
-                        width = Math.Max((barEnd - barStart).TotalDays + 1, 1) / totalDays;
-                    }
-                }
+                TryComputeBarForRange(
+                    DateOnlyFromCreatedAt(s.CreatedAt), s.DueDate,
+                    start, end, totalDays,
+                    out var hasBar, out var left, out var width);
                 return new GanttStageRow
                 {
                     Stage        = item,
@@ -309,6 +285,41 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
         StageStatus.Completed  => "#16A34A",
         _                      => "#EF4444"
     };
+
+    /// <summary>Календарная дата создания сущности для шкалы Ганта (UTC → локальная).</summary>
+    private static DateOnly DateOnlyFromCreatedAt(DateTime createdAt)
+    {
+        var dt = createdAt.Kind == DateTimeKind.Utc
+            ? createdAt.ToLocalTime()
+            : createdAt;
+        return DateOnly.FromDateTime(dt);
+    }
+
+    /// <summary>Полоса от barStart до due в пределах видимого месяца.</summary>
+    private static void TryComputeBarForRange(
+        DateOnly barStart, DateOnly? dueDate,
+        DateTime monthStart, DateTime monthEnd, double totalDaysInMonth,
+        out bool hasBar, out double left, out double width)
+    {
+        left = width = 0;
+        hasBar = false;
+        if (!dueDate.HasValue) return;
+
+        var endDate = dueDate.Value;
+        var startDate = barStart;
+        if (endDate < startDate)
+            (startDate, endDate) = (endDate, startDate);
+
+        var startDt = startDate.ToDateTime(TimeOnly.MinValue);
+        var endDt   = endDate.ToDateTime(TimeOnly.MinValue);
+        if (startDt > monthEnd || endDt < monthStart) return;
+
+        var clipStart = startDt < monthStart ? monthStart : startDt;
+        var clipEnd   = endDt > monthEnd ? monthEnd : endDt;
+        left  = (clipStart - monthStart).TotalDays / totalDaysInMonth;
+        width = Math.Max((clipEnd - clipStart).TotalDays + 1, 1) / totalDaysInMonth;
+        hasBar = true;
+    }
 }
 
 public sealed class GanttDayHeader

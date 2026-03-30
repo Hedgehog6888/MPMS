@@ -95,6 +95,9 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
+                <TextBlock Text="Срок выполнения" Style="{StaticResource FormLabel}"/>
+                <DatePicker x:Name="DueDatePicker" Height="42" FontSize="13" Margin="0,0,0,12"/>
+
                 <!-- Project + Task picker (when creating from StagesPage) -->
                 <StackPanel x:Name="ProjectTaskPickerRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <StackPanel x:Name="ProjectPickerSection" Margin="0,0,0,12">

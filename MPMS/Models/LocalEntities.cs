@@ -169,6 +169,7 @@ public class LocalTaskStage : LocalEntity
     [NotMapped] public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
         : string.Join("", AssignedUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
     public StageStatus Status { get; set; } = StageStatus.Planned;
+    public DateOnly? DueDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
@@ -198,6 +199,11 @@ public class LocalTaskStage : LocalEntity
     public bool IsArchived { get; set; } = false;
 
     [NotMapped] public string TaskName { get; set; } = string.Empty;
+
+    [NotMapped]
+    public bool IsOverdue => DueDate.HasValue
+        && DueDate < DateOnly.FromDateTime(DateTime.Today)
+        && Status != StageStatus.Completed;
 }
 
 public class LocalMaterial : LocalEntity

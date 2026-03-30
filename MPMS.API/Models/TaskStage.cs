@@ -19,6 +19,8 @@ public class TaskStage
 
     public StageStatus Status { get; set; } = StageStatus.Planned;
 
+    public DateOnly? DueDate { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

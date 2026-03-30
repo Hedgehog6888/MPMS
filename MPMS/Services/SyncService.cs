@@ -233,7 +233,10 @@ public class SyncService : ISyncService
                 {
                     localStage.Name = s.Name; localStage.Description = s.Description;
                     localStage.AssignedUserName = s.AssignedUserName;
+                    localStage.AssignedUserId = s.AssignedUserId;
+                    localStage.DueDate = s.DueDate;
                     localStage.Status = Enum.Parse<StageStatus>(s.Status);
+                    localStage.UpdatedAt = s.UpdatedAt;
                     localStage.IsSynced = true;
                 }
                 else
@@ -243,8 +246,11 @@ public class SyncService : ISyncService
                         Id = s.Id, TaskId = s.TaskId, Name = s.Name,
                         Description = s.Description, AssignedUserName = s.AssignedUserName,
                         AssignedUserId = s.AssignedUserId,
+                        DueDate = s.DueDate,
                         Status = Enum.Parse<StageStatus>(s.Status),
-                        IsSynced = true, CreatedAt = s.CreatedAt
+                        IsSynced = true,
+                        CreatedAt = s.CreatedAt,
+                        UpdatedAt = s.UpdatedAt
                     });
                 }
 

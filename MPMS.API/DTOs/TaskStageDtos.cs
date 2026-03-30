@@ -8,6 +8,7 @@ public record CreateStageRequest(
     [Required, MaxLength(200)] string Name,
     string? Description,
     Guid? AssignedUserId,
+    DateOnly? DueDate = null,
     Guid? Id = null
 );
 
@@ -15,7 +16,8 @@ public record UpdateStageRequest(
     [Required, MaxLength(200)] string Name,
     string? Description,
     Guid? AssignedUserId,
-    StageStatus Status
+    StageStatus Status,
+    DateOnly? DueDate = null
 );
 
 public record TaskStageResponse(
@@ -26,6 +28,7 @@ public record TaskStageResponse(
     Guid? AssignedUserId,
     string? AssignedUserName,
     string Status,
+    DateOnly? DueDate,
     List<StageMaterialResponse> Materials,
     List<FileResponse> Files,
     DateTime CreatedAt,

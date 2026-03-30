@@ -572,7 +572,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         var (stage, newStatus) = args;
         if (stage.EffectiveMarkedForDeletion) return;
-        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus);
+        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus, stage.DueDate);
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;

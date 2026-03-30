@@ -45,6 +45,7 @@ public partial class CreateStageOverlay : UserControl
         ProjectNameBox.Text = task.ProjectName ?? "—";
         ProjectTaskPickerRow.Visibility = Visibility.Collapsed;
         _isWorkerMode = IsCurrentUserWorker();
+        DueDatePicker.SelectedDate = null;
         _ = LoadAssigneesFromTaskAsync(task.Id);
     }
 
@@ -58,6 +59,7 @@ public partial class CreateStageOverlay : UserControl
         TitleLabel.Text = "Добавить этап";
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите проект и задачу";
+        DueDatePicker.SelectedDate = null;
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
         ProjectPickerSection.Visibility = Visibility.Visible;
         ApplyWorkerModeUi();
@@ -74,6 +76,7 @@ public partial class CreateStageOverlay : UserControl
         TitleLabel.Text = "Добавить этап";
         SaveButton.Content = "Добавить этап";
         TaskNameLabel.Text = "Выберите задачу";
+        DueDatePicker.SelectedDate = null;
         ProjectTaskPickerRow.Visibility = Visibility.Visible;
         ProjectPickerSection.Visibility = Visibility.Collapsed;
         ProjectCombo.Visibility = Visibility.Collapsed;
@@ -97,6 +100,7 @@ public partial class CreateStageOverlay : UserControl
 
         NameBox.Text = stage.Name;
         DescriptionBox.Text = stage.Description ?? "";
+        DueDatePicker.SelectedDate = stage.DueDate?.ToDateTime(TimeOnly.MinValue);
 
         ApplyWorkerModeUi();
         _ = LoadAssigneesFromTaskAsync(task.Id, stage.Id);
@@ -455,6 +459,10 @@ public partial class CreateStageOverlay : UserControl
             ? _selectedAssigneeIds.First()
             : (Guid?)null;
 
+        DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd
+            ? DateOnly.FromDateTime(sd)
+            : null;
+
         SaveButton.IsEnabled = false;
         try
         {
@@ -468,7 +476,8 @@ public partial class CreateStageOverlay : UserControl
                     taskId,
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId);
+                    primaryAssigneeId,
+                    dueDate);
                 await vm.SaveNewStageAsync(req, localId);
                 stageId = localId;
             }
@@ -477,7 +486,7 @@ public partial class CreateStageOverlay : UserControl
                 var req = new UpdateStageRequest(
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId, _editStage.Status);
+                    primaryAssigneeId, _editStage.Status, dueDate);
                 await vm.SaveUpdatedStageAsync(_editStage.Id, req);
                 stageId = _editStage.Id;
             }

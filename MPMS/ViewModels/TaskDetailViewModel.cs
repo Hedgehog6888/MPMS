@@ -216,6 +216,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             Description = req.Description,
             AssignedUserId = req.AssignedUserId,
             AssignedUserName = assignedName,
+            DueDate = req.DueDate,
             Status = StageStatus.Planned,
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
@@ -244,6 +245,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         stage.Description = req.Description;
         stage.AssignedUserId = req.AssignedUserId;
         stage.Status = req.Status;
+        stage.DueDate = req.DueDate;
         stage.IsSynced = false;
         stage.UpdatedAt = DateTime.UtcNow;
         stage.LastModifiedLocally = DateTime.UtcNow;
@@ -302,7 +304,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         var (stage, newStatus) = args;
         if (stage.EffectiveMarkedForDeletion) return;
         var req = new UpdateStageRequest(stage.Name, stage.Description,
-            stage.AssignedUserId, newStatus);
+            stage.AssignedUserId, newStatus, stage.DueDate);
         await SaveUpdatedStageAsync(stage.Id, req);
     }
 

@@ -41,6 +41,7 @@ public partial class StageDetailOverlay : UserControl
         item.Stage.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
         ApplyStatus(item.Stage.Status);
         ApplyDeletionUi();
+        ApplyDueDateUi(item.Stage);
 
         _ = EnsureStageDeletionFlagsFromDbAsync();
         _ = LoadAssigneesAsync();
@@ -110,6 +111,23 @@ public partial class StageDetailOverlay : UserControl
             StatusBadge.Background = new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B));
             StatusText.Text = "Пометка удаления";
         }
+    }
+
+    private void ApplyDueDateUi(LocalTaskStage stage)
+    {
+        if (!stage.DueDate.HasValue)
+        {
+            StageDueDatePanel.Visibility = Visibility.Collapsed;
+            StageOverdueBadge.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var conv = DateOnlyToStringConverter.Instance;
+        var d = stage.DueDate.Value;
+        StageDueDateLongText.Text = conv.Convert(d, typeof(string), "long", CultureInfo.CurrentCulture) as string ?? "—";
+        StageDueDayNameText.Text = conv.Convert(d, typeof(string), "dayname", CultureInfo.CurrentCulture) as string ?? "";
+        StageDueDatePanel.Visibility = Visibility.Visible;
+        StageOverdueBadge.Visibility = stage.IsOverdue ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void ApplyDeletionUi()

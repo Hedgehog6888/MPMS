@@ -107,6 +107,11 @@ public class TasksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TaskResponse>> Create([FromBody] CreateTaskRequest request)
     {
+        var id = request.Id ?? Guid.NewGuid();
+
+        if (await _db.Tasks.AnyAsync(t => t.Id == id))
+            return await GetById(id);
+
         var projectExists = await _db.Projects.AnyAsync(p => p.Id == request.ProjectId);
         if (!projectExists) return BadRequest(new { message = "Проект не найден" });
 
@@ -118,7 +123,7 @@ public class TasksController : ControllerBase
 
         var task = new ProjectTask
         {
-            Id = request.Id ?? Guid.NewGuid(),
+            Id = id,
             ProjectId = request.ProjectId,
             Name = request.Name,
             Description = request.Description,
@@ -239,6 +244,7 @@ public class TasksController : ControllerBase
             s.AssignedUserId,
             s.AssignedUser?.Name,
             s.Status.ToString(),
+            s.DueDate,
             s.StageMaterials.Select(sm => new StageMaterialResponse(
                 sm.Id, sm.MaterialId, sm.Material.Name, sm.Material.Unit, sm.Quantity)).ToList(),
             s.Files.Select(f => new FileResponse(

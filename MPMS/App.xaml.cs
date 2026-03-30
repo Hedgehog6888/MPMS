@@ -41,9 +41,9 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // ── Local SQLite DB ───────────────────────────────────────────────────
+        // ── Local SQLite DB (%LocalAppData%\MPMS\ — не в bin\Debug) ────────────
         services.AddDbContextFactory<LocalDbContext>(options =>
-            options.UseSqlite("Data Source=mpms_local.db"));
+            options.UseSqlite(LocalDbPaths.GetConnectionString()));
 
         // ── HTTP Client ───────────────────────────────────────────────────────
         services.AddHttpClient("MPMS", client =>
@@ -86,15 +86,13 @@ public partial class App : Application
         services.AddTransient(sp => new ConfirmDeleteDialog());
     }
 
-    private const string LocalDbConnectionString = "Data Source=mpms_local.db";
-
     private static void EnsureLocalDatabase()
     {
         using var scope = Services.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         using var db = factory.CreateDbContext();
         db.Database.EnsureCreated();
-        LocalSchemaMigrator.Apply(LocalDbConnectionString);
+        LocalSchemaMigrator.Apply(LocalDbPaths.GetConnectionString());
     }
 
     public static void OpenMainWindow()

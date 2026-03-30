@@ -36,6 +36,12 @@ public class TaskStagesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TaskStageResponse>> Create([FromBody] CreateStageRequest request)
     {
+        var id = request.Id ?? Guid.NewGuid();
+
+        // Повтор POST с тем же Id (очередь синхронизации) — идемпотентно, без конфликта PK
+        if (await LoadStage(id) is { } existingStage)
+            return Ok(MapToResponse(existingStage));
+
         var taskExists = await _db.Tasks.AnyAsync(t => t.Id == request.TaskId);
         if (!taskExists) return BadRequest(new { message = "Задача не найдена" });
 
@@ -47,11 +53,12 @@ public class TaskStagesController : ControllerBase
 
         var stage = new TaskStage
         {
-            Id = request.Id ?? Guid.NewGuid(),
+            Id = id,
             TaskId = request.TaskId,
             Name = request.Name,
             Description = request.Description,
             AssignedUserId = request.AssignedUserId,
+            DueDate = request.DueDate,
             Status = StageStatus.Planned,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -80,6 +87,7 @@ public class TaskStagesController : ControllerBase
         stage.Description = request.Description;
         stage.AssignedUserId = request.AssignedUserId;
         stage.Status = request.Status;
+        stage.DueDate = request.DueDate;
         stage.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -171,6 +179,7 @@ public class TaskStagesController : ControllerBase
         new(s.Id, s.TaskId, s.Name, s.Description,
             s.AssignedUserId, s.AssignedUser?.Name,
             s.Status.ToString(),
+            s.DueDate,
             s.StageMaterials.Select(sm => new StageMaterialResponse(
                 sm.Id, sm.MaterialId, sm.Material.Name, sm.Material.Unit, sm.Quantity)).ToList(),
             s.Files.Select(f => new FileResponse(

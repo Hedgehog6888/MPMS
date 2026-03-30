@@ -27,6 +27,7 @@ public static class LocalSchemaMigrator
         AddUserBlockingColumns(conn);
         AddAvatarDataColumn(conn);
         AddIsArchivedColumn(conn);
+        AddTaskStagesDueDateColumn(conn);
         AddPasswordHashColumn(conn);
         SplitUserNameToFirstLast(conn);
         CreateDeletedUserIdsTable(conn);
@@ -195,6 +196,11 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"Projects\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Tasks\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
+    }
+
+    private static void AddTaskStagesDueDateColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"DueDate\" TEXT NULL;");
     }
 
     private static void AddPasswordHashColumn(SqliteConnection conn)

@@ -184,15 +184,37 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
-                <!-- Stage title block -->
+                <!-- Stage title + срок (как блок срока в оверлее задачи) -->
                 <Border Background="White" Padding="20,16,20,16"
                         BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Margin="0,0,0,12">
-                    <StackPanel>
-                        <TextBlock Text="ЭТАП" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="#8993A4" Margin="0,0,0,4"/>
-                        <TextBlock x:Name="StageNameText" FontSize="22" FontWeight="Bold"
-                                   Foreground="#172B4D" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" MinWidth="0">
+                            <TextBlock Text="ЭТАП" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#8993A4" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="StageNameText" FontSize="22" FontWeight="Bold"
+                                       Foreground="#172B4D" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel x:Name="StageDueDatePanel" Grid.Column="1"
+                                    VerticalAlignment="Top" HorizontalAlignment="Right"
+                                    Margin="16,0,0,0" Visibility="Collapsed">
+                            <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#8993A4" Margin="0,0,0,8"/>
+                            <TextBlock x:Name="StageDueDateLongText" FontSize="15" FontWeight="Bold"
+                                       Foreground="#172B4D" Margin="0,0,0,2" TextAlignment="Right"/>
+                            <TextBlock x:Name="StageDueDayNameText" FontSize="12" Foreground="#6B778C"
+                                       TextAlignment="Right"/>
+                            <Border x:Name="StageOverdueBadge" CornerRadius="4" Padding="6,3"
+                                    Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                    HorizontalAlignment="Right" Margin="0,4,0,0" Visibility="Collapsed">
+                                <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="#DC2626"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- Deletion mark warning -->

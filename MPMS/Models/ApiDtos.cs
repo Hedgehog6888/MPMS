@@ -53,13 +53,14 @@ public record TaskResponse(Guid Id, Guid ProjectId, string ProjectName,
 
 // ── Stages ────────────────────────────────────────────────────────────────────
 public record CreateStageRequest(Guid TaskId, string Name, string? Description,
-    Guid? AssignedUserId, Guid? Id = null);
+    Guid? AssignedUserId, DateOnly? DueDate = null, Guid? Id = null);
 
 public record UpdateStageRequest(string Name, string? Description,
-    Guid? AssignedUserId, StageStatus Status);
+    Guid? AssignedUserId, StageStatus Status, DateOnly? DueDate = null);
 
 public record StageResponse(Guid Id, Guid TaskId, string Name, string? Description,
     Guid? AssignedUserId, string? AssignedUserName, string Status,
+    DateOnly? DueDate,
     List<StageMaterialResponse> Materials, List<FileDto> Files,
     DateTime CreatedAt, DateTime UpdatedAt);
 

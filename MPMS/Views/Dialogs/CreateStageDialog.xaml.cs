@@ -63,6 +63,7 @@ public partial class CreateStageDialog : Window
 
         NameBox.Text = stage.Name;
         DescriptionBox.Text = stage.Description;
+        DueDatePicker.SelectedDate = stage.DueDate?.ToDateTime(TimeOnly.MinValue);
 
         Loaded += (_, _) =>
         {
@@ -90,6 +91,9 @@ public partial class CreateStageDialog : Window
         }
 
         var assignedUser = AssigneeCombo.SelectedItem as LocalUser;
+        DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd
+            ? DateOnly.FromDateTime(sd)
+            : null;
 
         if (_isEditMode)
         {
@@ -100,7 +104,8 @@ public partial class CreateStageDialog : Window
                 NameBox.Text.Trim(),
                 string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
                 assignedUser?.Id,
-                status);
+                status,
+                dueDate);
         }
         else
         {
@@ -108,7 +113,8 @@ public partial class CreateStageDialog : Window
                 _taskId,
                 NameBox.Text.Trim(),
                 string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                assignedUser?.Id);
+                assignedUser?.Id,
+                dueDate);
         }
 
         DialogResult = true;

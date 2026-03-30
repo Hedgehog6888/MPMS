@@ -372,7 +372,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         if (task is null) return;
         vm.SetTask(task);
         var req = new UpdateStageRequest(item.Stage.Name, item.Stage.Description,
-            item.Stage.AssignedUserId, newStatus);
+            item.Stage.AssignedUserId, newStatus, item.Stage.DueDate);
         await vm.SaveUpdatedStageAsync(item.Stage.Id, req);
         await LoadAsync();
     }
