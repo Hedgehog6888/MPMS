@@ -49,7 +49,7 @@
 
                 <StackPanel>
                     <TextBlock Text="Календарь задач" FontSize="22" FontWeight="Bold" Foreground="#172B4D"/>
-                    <TextBlock Text="Визуализация сроков выполнения задач"
+                    <TextBlock Text="Визуализация сроков задач и этапов с дедлайном"
                                FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
                 </StackPanel>
 
@@ -101,9 +101,11 @@
         </Border>
 
         <!-- ── CALENDAR (fills remaining space) ─────────────────────── -->
-        <Border Grid.Row="1" Background="White" Margin="16,14,16,14"
+        <Border x:Name="CalendarCardBorder" Grid.Row="1" Background="White" Margin="16,14,16,14"
                 CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
-                ClipToBounds="True">
+                ClipToBounds="True"
+                SizeChanged="CalendarCardBorder_SizeChanged"
+                Loaded="CalendarCardBorder_Loaded">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>  <!-- weekday headers -->
@@ -206,21 +208,29 @@
                                         </TextBlock>
                                     </Grid>
 
-                                    <!-- Task chips -->
-                                    <ItemsControl ItemsSource="{Binding Tasks}">
+                                    <!-- Задачи и этапы (2–4 плашки по ширине ячейки; остальное — MoreLabel) -->
+                                    <ItemsControl ItemsSource="{Binding DisplayChips}">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate DataType="{x:Type vm:CalendarChipItem}">
                                                 <Border Margin="0,0,0,2"
                                                         CornerRadius="3"
                                                         Padding="5,2"
                                                         BorderThickness="1"
                                                         Cursor="Hand"
                                                         Tag="{Binding}"
-                                                        MouseLeftButtonDown="TaskChip_Click">
+                                                        MouseLeftButtonDown="Chip_Click">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background"   Value="{Binding Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
-                                                            <Setter Property="BorderBrush"  Value="{Binding Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsStage}" Value="False">
+                                                                    <Setter Property="Background"   Value="{Binding Task.Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
+                                                                    <Setter Property="BorderBrush"  Value="{Binding Task.Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                    <Setter Property="Background" Value="#EDE9FE"/>
+                                                                    <Setter Property="BorderBrush" Value="#7C3AED"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                     <Grid>
@@ -229,28 +239,55 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock Grid.Column="0"
-                                                                   Text="{Binding Name}"
                                                                    FontSize="10"
                                                                    FontWeight="SemiBold"
                                                                    TextTrimming="CharacterEllipsis">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
-                                                                    <Setter Property="Foreground" Value="{Binding Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsStage}" Value="False">
+                                                                            <Setter Property="Text" Value="{Binding Task.Name}"/>
+                                                                            <Setter Property="Foreground" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                            <Setter Property="Text" Value="{Binding Stage.Name}"/>
+                                                                            <Setter Property="Foreground" Value="#5B21B6"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
-                                                        <!-- Overdue indicator: small circle -->
                                                         <Ellipse Grid.Column="1"
                                                                  Width="6" Height="6"
                                                                  Fill="#DE350B"
                                                                  Margin="3,0,0,0"
-                                                                 VerticalAlignment="Center"
-                                                                 Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}"/>
+                                                                 VerticalAlignment="Center">
+                                                            <Ellipse.Style>
+                                                                <Style TargetType="Ellipse">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsStage}" Value="False">
+                                                                            <Setter Property="Visibility" Value="{Binding Task.IsOverdue, Converter={StaticResource BoolToVis}}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                            <Setter Property="Visibility" Value="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Ellipse.Style>
+                                                        </Ellipse>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+                                    <TextBlock Text="{Binding MoreLabel}"
+                                               FontSize="10"
+                                               FontWeight="SemiBold"
+                                               Foreground="#6B778C"
+                                               Margin="0,1,0,0"
+                                               HorizontalAlignment="Left"
+                                               Visibility="{Binding MoreCount, Converter={StaticResource IntToVis}}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

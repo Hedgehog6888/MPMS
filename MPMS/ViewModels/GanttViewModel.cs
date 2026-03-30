@@ -25,6 +25,8 @@ public sealed class GanttTaskRow
     public string StatusColor     { get; init; } = "#6B778C";
     /// <summary>Bar colour based on task progress % (same palette as ProgressPercentToBrushConverter).</summary>
     public string BarColorHex     { get; init; } = "#EF4444";
+    /// <summary>Срок полосы: от даты начала (создание) до дедлайна, «dd.MM.yyyy — dd.MM.yyyy».</summary>
+    public string BarRangeLabel   { get; init; } = "";
 }
 
 /// <summary>A single row in the Gantt chart (stage).</summary>
@@ -41,6 +43,8 @@ public sealed class GanttStageRow
     public string StatusColor     { get; init; } = "#6B778C";
     /// <summary>Bar colour — matches task progress palette (red/blue/green).</summary>
     public string BarColorHex     { get; init; } = "#EF4444";
+    /// <summary>Срок полосы этапа: от создания до дедлайна.</summary>
+    public string BarRangeLabel   { get; init; } = "";
 }
 
 public partial class GanttViewModel : ViewModelBase, ILoadable
@@ -180,8 +184,9 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
             var taskRows = allTasks
                 .Select(t =>
                 {
+                    var barStart = DateOnlyFromCreatedAt(t.CreatedAt);
                     TryComputeBarForRange(
-                        DateOnlyFromCreatedAt(t.CreatedAt), t.DueDate,
+                        barStart, t.DueDate,
                         start, end, totalDays,
                         out var hasBar, out var left, out var width);
                     return new GanttTaskRow
@@ -193,7 +198,8 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
                         StatusLabel  = TaskStatusLabel(t.Status),
                         StatusColor  = TaskStatusColor(t.Status),
-                        BarColorHex  = ProgressToHex(t.ProgressPercent)
+                        BarColorHex  = ProgressToHex(t.ProgressPercent),
+                        BarRangeLabel = FormatGanttBarRangeLabel(barStart, t.DueDate)
                     };
                 })
                 .Where(r => r.HasBar)
@@ -216,8 +222,9 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         ProjectName = parentTask?.ProjectName ?? "—"
                     };
 
+                    var stageBarStart = DateOnlyFromCreatedAt(s.CreatedAt);
                     TryComputeBarForRange(
-                        DateOnlyFromCreatedAt(s.CreatedAt), s.DueDate,
+                        stageBarStart, s.DueDate,
                         start, end, totalDays,
                         out var hasBar, out var left, out var width);
                     return new GanttStageRow
@@ -230,7 +237,8 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
                         StatusLabel  = StageStatusLabel(s.Status),
                         StatusColor  = StageStatusColor(s.Status),
-                        BarColorHex  = StageBarColor(s.Status)
+                        BarColorHex  = StageBarColor(s.Status),
+                        BarRangeLabel = FormatGanttBarRangeLabel(stageBarStart, s.DueDate)
                     };
                 })
                 .Where(r => r.HasBar)
@@ -295,6 +303,17 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
         StageStatus.Completed  => "#16A34A",
         _                      => "#EF4444"
     };
+
+    /// <summary>Текст «с — по» для подсказки на полосе (та же логика, что у отрезка на шкале).</summary>
+    private static string FormatGanttBarRangeLabel(DateOnly barStart, DateOnly? dueDate)
+    {
+        if (!dueDate.HasValue) return "";
+        var endDate = dueDate.Value;
+        var startDate = barStart;
+        if (endDate < startDate)
+            (startDate, endDate) = (endDate, startDate);
+        return $"{startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy}";
+    }
 
     /// <summary>Календарная дата создания сущности для шкалы Ганта (UTC → локальная).</summary>
     private static DateOnly DateOnlyFromCreatedAt(DateTime createdAt)

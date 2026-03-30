@@ -3,9 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
              mc:Ignorable="d"
              d:DesignHeight="520" d:DesignWidth="480"
-             MaxHeight="560">
+             Width="480"
+             Height="520">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -13,6 +15,7 @@
 
     <Grid Background="White">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -49,107 +52,216 @@
             </Grid>
         </Border>
 
-        <!-- Task list -->
-        <ScrollViewer Grid.Row="1" Padding="24,16,24,20"
+        <!-- Tabs (как на Gantt / детали проекта) -->
+        <Border x:Name="TabsBorder" Grid.Row="1" Background="White" Padding="24,12,24,0"
+                Visibility="Collapsed">
+            <Border Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1"
+                    Padding="6,4"
+                    HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="TabTasks" Content="Задачи"
+                                 GroupName="CalDayOverlayTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="TabTasks_Click"/>
+                    <RadioButton x:Name="TabStages" Content="Этапы"
+                                 GroupName="CalDayOverlayTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="TabStages_Click"/>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" Padding="24,16,24,20"
                       VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <Grid>
-                <ItemsControl x:Name="TasksList" Visibility="Collapsed">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="Transparent" Cursor="Hand"
-                                    Padding="0,0,0,8"
-                                    MouseLeftButtonDown="TaskRow_Click"
-                                    Tag="{Binding}">
-                                <Border BorderBrush="#E5E7EB" BorderThickness="1"
-                                        CornerRadius="8" Background="White"
-                                        SnapsToDevicePixels="True">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#F9FAFB"/>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <Grid Margin="12,10,12,10">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                   Text="{Binding Name}"
-                                                   FontSize="14" FontWeight="SemiBold"
-                                                   Foreground="#172B4D"
-                                                   TextWrapping="Wrap"
-                                                   Margin="0,0,10,0"
-                                                   VerticalAlignment="Top"/>
-                                        <Border Grid.Row="0" Grid.Column="1"
-                                                VerticalAlignment="Top"
-                                                CornerRadius="4" Padding="8,4">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                            <Setter Property="Background" Value="#DE350B"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Foreground="White"
-                                                       FontSize="11" FontWeight="SemiBold">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                                <Setter Property="Text" Value="Пометка удаления"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
-
-                                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                                   Text="{Binding ProjectName}"
-                                                   FontSize="12" Foreground="#6B778C"
-                                                   Margin="0,8,10,0"
-                                                   VerticalAlignment="Bottom"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <Border Grid.Row="1" Grid.Column="1"
-                                                CornerRadius="4" Padding="6,3"
-                                                Background="#FEF2F2"
-                                                BorderBrush="#FCA5A5" BorderThickness="1"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Bottom"
-                                                Margin="0,8,0,0"
-                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="Просрочена"
-                                                       FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="#DC2626"/>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalAlignment="Stretch">
+            <Grid MinHeight="120">
+                <!-- Нет ни задач, ни этапов -->
+                <StackPanel x:Name="FullEmptyState" HorizontalAlignment="Center"
                             VerticalAlignment="Center" Margin="0,32,0,32"
                             Visibility="Collapsed">
-                    <TextBlock Text="На эту дату нет задач с дедлайном"
+                    <TextBlock Text="На эту дату нет задач и этапов с дедлайном"
                                FontSize="14" Foreground="#6B778C"
                                TextAlignment="Center" TextWrapping="Wrap"/>
                 </StackPanel>
+
+                <!-- Вкладка «Задачи» -->
+                <Grid x:Name="TasksTabPanel" Visibility="Collapsed">
+                    <ItemsControl x:Name="TasksList" Visibility="Collapsed">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="Transparent" Cursor="Hand"
+                                        Padding="0,0,0,8"
+                                        MouseLeftButtonDown="TaskRow_Click"
+                                        Tag="{Binding}">
+                                    <Border BorderBrush="#E5E7EB" BorderThickness="1"
+                                            CornerRadius="8" Background="White"
+                                            SnapsToDevicePixels="True">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F9FAFB"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid Margin="12,10,12,10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Name}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,0,10,0"
+                                                       VerticalAlignment="Top"/>
+                                            <Border Grid.Row="0" Grid.Column="1"
+                                                    VerticalAlignment="Top"
+                                                    CornerRadius="4" Padding="8,4">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                <Setter Property="Background" Value="#DE350B"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Foreground="White"
+                                                           FontSize="11" FontWeight="SemiBold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                    <Setter Property="Text" Value="Пометка удаления"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding ProjectName}"
+                                                       FontSize="12" Foreground="#6B778C"
+                                                       Margin="0,8,10,0"
+                                                       VerticalAlignment="Bottom"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Border Grid.Row="1" Grid.Column="1"
+                                                    CornerRadius="4" Padding="6,3"
+                                                    Background="#FEF2F2"
+                                                    BorderBrush="#FCA5A5" BorderThickness="1"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="0,8,0,0"
+                                                    Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Просрочена"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="#DC2626"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock x:Name="TasksEmptyState" Text="Нет задач с дедлайном на эту дату"
+                               FontSize="14" Foreground="#6B778C"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Margin="0,32,0,32"
+                               Visibility="Collapsed"/>
+                </Grid>
+
+                <!-- Вкладка «Этапы» -->
+                <Grid x:Name="StagesTabPanel" Visibility="Collapsed">
+                    <ItemsControl x:Name="StagesList" Visibility="Collapsed">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:CalendarDayStage}">
+                                <Border Background="Transparent" Cursor="Hand"
+                                        Padding="0,0,0,8"
+                                        MouseLeftButtonDown="StageRow_Click"
+                                        Tag="{Binding}">
+                                    <Border BorderBrush="#E5E7EB" BorderThickness="1"
+                                            CornerRadius="8" Background="White"
+                                            SnapsToDevicePixels="True">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#F9FAFB"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid Margin="12,10,12,10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                       Text="{Binding Stage.Name}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="#172B4D"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,0,10,0"
+                                                       VerticalAlignment="Top"/>
+                                            <Border Grid.Row="0" Grid.Column="1"
+                                                    VerticalAlignment="Top"
+                                                    CornerRadius="4" Padding="8,4"
+                                                    Background="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}">
+                                                <TextBlock Text="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"
+                                                           Foreground="White"
+                                                           FontSize="11" FontWeight="SemiBold"/>
+                                            </Border>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                                       Text="{Binding ParentTask.Name}"
+                                                       Margin="0,8,10,0"
+                                                       FontSize="12" Foreground="#6B778C"
+                                                       VerticalAlignment="Bottom"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Border Grid.Row="1" Grid.Column="1"
+                                                    CornerRadius="4" Padding="6,3"
+                                                    Background="#FEF2F2"
+                                                    BorderBrush="#FCA5A5" BorderThickness="1"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="0,8,0,0"
+                                                    Visibility="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Просрочен"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="#DC2626"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock x:Name="StagesEmptyState" Text="Нет этапов с дедлайном на эту дату"
+                               FontSize="14" Foreground="#6B778C"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Margin="0,32,0,32"
+                               Visibility="Collapsed"/>
+                </Grid>
             </Grid>
         </ScrollViewer>
     </Grid>

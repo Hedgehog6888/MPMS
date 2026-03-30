@@ -9,6 +9,22 @@ using MPMS.Services;
 
 namespace MPMS.ViewModels;
 
+/// <summary>Одна плашка в ячейке календаря: задача или этап (с родительской задачей).</summary>
+public sealed class CalendarChipItem
+{
+    public bool IsStage { get; init; }
+    public LocalTask? Task { get; init; }
+    public LocalTaskStage? Stage { get; init; }
+    public LocalTask? StageParentTask { get; init; }
+}
+
+/// <summary>Этап в календаре с родительской задачей (дедлайн этапа может не совпадать с дедлайном задачи).</summary>
+public sealed class CalendarDayStage
+{
+    public LocalTaskStage Stage { get; init; } = null!;
+    public LocalTask ParentTask { get; init; } = null!;
+}
+
 /// <summary>Data for a single calendar grid cell.</summary>
 public sealed class CalendarCell
 {
@@ -16,12 +32,36 @@ public sealed class CalendarCell
     public DateTime Date   { get; init; }
     public bool IsToday    { get; init; }
     public List<LocalTask> Tasks { get; init; } = [];
+    public List<CalendarDayStage> DayStages { get; init; } = [];
+    /// <summary>Видимые плашки (число задаётся шириной ячейки); остальное — в <see cref="MoreCount"/>.</summary>
+    public List<CalendarChipItem> DisplayChips { get; init; } = [];
+    public int MoreCount { get; init; }
+    public string MoreLabel => MoreCount > 0 ? $"+{MoreCount}" : "";
 }
 
 public partial class CalendarViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
+
+    private List<LocalTask>? _cachedAllTasks;
+    private List<LocalTaskStage>? _cachedStagesForCalendar;
+    private int _maxVisibleChipsPerDay = 2;
+
+    /// <summary>Сколько плашек показывать в ячейке (2–4), по ширине области календаря.</summary>
+    public int MaxVisibleChipsPerDay
+    {
+        get => _maxVisibleChipsPerDay;
+        set
+        {
+            var v = Math.Clamp(value, 2, 4);
+            if (v == _maxVisibleChipsPerDay) return;
+            _maxVisibleChipsPerDay = v;
+            OnPropertyChanged(nameof(MaxVisibleChipsPerDay));
+            if (_cachedAllTasks is not null && _cachedStagesForCalendar is not null)
+                BuildCells(_cachedAllTasks, _cachedStagesForCalendar);
+        }
+    }
 
     [ObservableProperty] private DateTime _currentDate = DateTime.Today;
     [ObservableProperty] private ObservableCollection<CalendarCell> _calendarCells = [];
@@ -94,17 +134,23 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
             var allTasks = await taskQuery.ToListAsync();
 
-            // Compute progress metrics
             var taskIds = allTasks.Select(t => t.Id).ToList();
+            List<LocalTaskStage> allStagesForTasks = [];
             if (taskIds.Count > 0)
             {
-                var stages = await db.TaskStages
+                allStagesForTasks = await db.TaskStages
                     .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
                 foreach (var t in allTasks)
-                    ProgressCalculator.ApplyTaskMetrics(t, stages.Where(s => s.TaskId == t.Id).ToList());
+                    ProgressCalculator.ApplyTaskMetrics(t, allStagesForTasks.Where(s => s.TaskId == t.Id).ToList());
             }
 
-            BuildCells(allTasks);
+            var stagesForCalendar = allStagesForTasks
+                .Where(s => !s.IsMarkedForDeletion && s.DueDate != null)
+                .ToList();
+
+            _cachedAllTasks = allTasks;
+            _cachedStagesForCalendar = stagesForCalendar;
+            BuildCells(allTasks, stagesForCalendar);
         }
         finally
         {
@@ -112,13 +158,14 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         }
     }
 
-    private void BuildCells(List<LocalTask> allTasks)
+    private void BuildCells(List<LocalTask> allTasks, List<LocalTaskStage> stagesWithDueDate)
     {
         var year  = CurrentDate.Year;
         var month = CurrentDate.Month;
         var monthStart  = new DateTime(year, month, 1);
         var daysInMonth = DateTime.DaysInMonth(year, month);
         var today = DateTime.Today;
+        var taskById = allTasks.ToDictionary(t => t.Id);
 
         // Monday-based: DayOfWeek.Monday=1 → 0 empty, Sunday=0 → 6 empty
         var dow   = (int)monthStart.DayOfWeek;
@@ -132,11 +179,41 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         {
             var date     = new DateTime(year, month, d);
             var dateOnly = DateOnly.FromDateTime(date);
+            var dayTasks = allTasks
+                .Where(t => t.DueDate == dateOnly)
+                .OrderBy(t => t.Status)
+                .ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+            var dayStages = stagesWithDueDate
+                .Where(s => s.DueDate == dateOnly && taskById.ContainsKey(s.TaskId))
+                .OrderBy(s => s.Status)
+                .ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                .Select(s => new CalendarDayStage { Stage = s, ParentTask = taskById[s.TaskId] })
+                .ToList();
+
+            var chips = new List<CalendarChipItem>();
+            foreach (var t in dayTasks)
+                chips.Add(new CalendarChipItem { IsStage = false, Task = t });
+            foreach (var ds in dayStages)
+                chips.Add(new CalendarChipItem
+                {
+                    IsStage = true,
+                    Stage = ds.Stage,
+                    StageParentTask = ds.ParentTask
+                });
+
+            var cap = MaxVisibleChipsPerDay;
+            var more = Math.Max(0, chips.Count - cap);
+            var display = chips.Take(cap).ToList();
+
             cells.Add(new CalendarCell
             {
-                Date    = date,
-                IsToday = date.Date == today.Date,
-                Tasks   = allTasks.Where(t => t.DueDate == dateOnly).ToList()
+                Date         = date,
+                IsToday      = date.Date == today.Date,
+                Tasks        = dayTasks,
+                DayStages    = dayStages,
+                DisplayChips = display,
+                MoreCount    = more
             });
         }
 
