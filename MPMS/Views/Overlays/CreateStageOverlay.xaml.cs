@@ -24,7 +24,6 @@ public partial class CreateStageOverlay : UserControl
     private Action? _onAfterSave;
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
-    private List<AssigneePickerItem> _foremanAssigneeItems = [];
     private List<AssigneePickerItem> _workerAssigneeItems = [];
     private List<StageSelectionItem> _projectItems = [];
     private List<StageSelectionItem> _taskItems = [];
@@ -194,7 +193,6 @@ public partial class CreateStageOverlay : UserControl
         if (taskAssignees.Count == 0)
         {
             _allAssigneeItems = [];
-            _foremanAssigneeItems = [];
             _workerAssigneeItems = [];
         }
         else
@@ -213,8 +211,9 @@ public partial class CreateStageOverlay : UserControl
                     ur?.SubRole,
                     ur?.AdditionalSubRoles);
             }).ToList();
-            _foremanAssigneeItems = _allAssigneeItems.Where(i => i.IsForemanPicker).ToList();
-            _workerAssigneeItems = _allAssigneeItems.Where(i => !i.IsForemanPicker).ToList();
+            _workerAssigneeItems = _allAssigneeItems
+                .Where(i => i.RoleDisplay == "Работник")
+                .ToList();
         }
 
         // Load existing stage assignees if editing (exclude blocked users)
@@ -233,22 +232,20 @@ public partial class CreateStageOverlay : UserControl
                 _selectedAssigneeIds.Add(stageEntity.AssignedUserId.Value);
         }
 
+        // На этапе разрешены только работники: очищаем любые не-worker назначения.
+        var workerIds = _workerAssigneeItems.Select(i => i.UserId).ToHashSet();
+        _selectedAssigneeIds.RemoveWhere(id => !workerIds.Contains(id));
+
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             RefreshAssigneeItems();
             RefreshAssigneeChips();
-            var total = _allAssigneeItems.Count;
+            var total = _workerAssigneeItems.Count;
             NoAssigneesHint.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
             var showSections = total > 0;
-            StageForemanSectionTitle.Visibility = showSections && _foremanAssigneeItems.Count > 0
-                ? Visibility.Visible : Visibility.Collapsed;
             StageWorkerSectionTitle.Visibility = showSections && _workerAssigneeItems.Count > 0
                 ? Visibility.Visible : Visibility.Collapsed;
-            StageForemanPickerBorder.Visibility = showSections && _foremanAssigneeItems.Count > 0
-                ? Visibility.Visible : Visibility.Collapsed;
             StageWorkerPickerBorder.Visibility = showSections && _workerAssigneeItems.Count > 0
-                ? Visibility.Visible : Visibility.Collapsed;
-            NoStageForemenHint.Visibility = showSections && _foremanAssigneeItems.Count == 0
                 ? Visibility.Visible : Visibility.Collapsed;
             NoStageWorkersHint.Visibility = showSections && _workerAssigneeItems.Count == 0
                 ? Visibility.Visible : Visibility.Collapsed;
@@ -378,10 +375,8 @@ public partial class CreateStageOverlay : UserControl
 
     private void RefreshAssigneeItems()
     {
-        foreach (var item in _allAssigneeItems)
+        foreach (var item in _workerAssigneeItems)
             item.RefreshSelected(_selectedAssigneeIds);
-        StageForemanPickerList.ItemsSource = null;
-        StageForemanPickerList.ItemsSource = _foremanAssigneeItems;
         StageWorkerPickerList.ItemsSource = null;
         StageWorkerPickerList.ItemsSource = _workerAssigneeItems;
     }
@@ -389,7 +384,7 @@ public partial class CreateStageOverlay : UserControl
     private void RefreshAssigneeChips()
     {
         SelectedAssigneesPanel.Children.Clear();
-        var selected = _allAssigneeItems.Where(i => _selectedAssigneeIds.Contains(i.UserId)).ToList();
+        var selected = _workerAssigneeItems.Where(i => _selectedAssigneeIds.Contains(i.UserId)).ToList();
         SelectedAssigneesPanel.Visibility = selected.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         foreach (var item in selected)
             SelectedAssigneesPanel.Children.Add(BuildChip(item));
@@ -424,6 +419,11 @@ public partial class CreateStageOverlay : UserControl
         {
             if (s is Button b && b.Tag is Guid uid)
             {
+                if (!_isWorkerMode && _selectedAssigneeIds.Contains(uid) && _selectedAssigneeIds.Count <= 1)
+                {
+                    ShowError("На этапе должен остаться хотя бы один работник.");
+                    return;
+                }
                 _selectedAssigneeIds.Remove(uid);
                 RefreshAssigneeItems();
                 RefreshAssigneeChips();
@@ -434,9 +434,6 @@ public partial class CreateStageOverlay : UserControl
         return chip;
     }
 
-    private void StageForemanAssignee_Click(object sender, MouseButtonEventArgs e)
-        => ToggleAssigneeFromClick(sender);
-
     private void StageWorkerAssignee_Click(object sender, MouseButtonEventArgs e)
         => ToggleAssigneeFromClick(sender);
 
@@ -444,9 +441,19 @@ public partial class CreateStageOverlay : UserControl
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
         if (_selectedAssigneeIds.Contains(item.UserId))
+        {
+            if (!_isWorkerMode && _selectedAssigneeIds.Count <= 1)
+            {
+                ShowError("На этапе должен остаться хотя бы один работник.");
+                return;
+            }
             _selectedAssigneeIds.Remove(item.UserId);
+        }
         else
+        {
             _selectedAssigneeIds.Add(item.UserId);
+            ErrorPanel.Visibility = Visibility.Collapsed;
+        }
         RefreshAssigneeItems();
         RefreshAssigneeChips();
     }
@@ -483,9 +490,6 @@ public partial class CreateStageOverlay : UserControl
         if (string.IsNullOrWhiteSpace(NameBox.Text))
         { ShowError("Введите название этапа."); return; }
 
-        if (_editStage is null && _selectedAssigneeIds.Count == 0)
-        { ShowError("Назначьте хотя бы одного исполнителя на этап."); return; }
-
         Guid taskId;
         TaskDetailViewModel? vm;
 
@@ -507,9 +511,24 @@ public partial class CreateStageOverlay : UserControl
             vm = _vm;
         }
 
-        var primaryAssigneeId = _selectedAssigneeIds.Count > 0
-            ? _selectedAssigneeIds.First()
-            : (Guid?)null;
+        if (!_isWorkerMode && _selectedAssigneeIds.Count == 0)
+        { ShowError("Назначьте хотя бы одного работника на этап."); return; }
+
+        Guid? primaryAssigneeId = _workerAssigneeItems
+            .Select(i => i.UserId)
+            .FirstOrDefault(id => _selectedAssigneeIds.Contains(id));
+        if (primaryAssigneeId == Guid.Empty)
+            primaryAssigneeId = null;
+        if (_isWorkerMode && _editStage is null)
+        {
+            var auth = App.Services.GetRequiredService<IAuthService>();
+            if (auth.UserId.HasValue)
+            {
+                _selectedAssigneeIds.Clear();
+                _selectedAssigneeIds.Add(auth.UserId.Value);
+                primaryAssigneeId = auth.UserId.Value;
+            }
+        }
 
         DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd
             ? DateOnly.FromDateTime(sd)
@@ -577,7 +596,7 @@ public partial class CreateStageOverlay : UserControl
         // Add selected (only from task assignees)
         foreach (var uid in _selectedAssigneeIds)
         {
-            var item = _allAssigneeItems.FirstOrDefault(i => i.UserId == uid);
+            var item = _workerAssigneeItems.FirstOrDefault(i => i.UserId == uid);
             if (item is null) continue;
             db.StageAssignees.Add(new LocalStageAssignee
             {

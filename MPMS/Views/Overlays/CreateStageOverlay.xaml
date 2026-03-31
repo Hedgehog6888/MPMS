@@ -223,78 +223,6 @@
                     <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8"
                                Visibility="Collapsed"/>
 
-                    <TextBlock x:Name="StageForemanSectionTitle" Text="Прорабы" FontSize="11" FontWeight="SemiBold"
-                               Foreground="#166534" Margin="0,0,0,6" Visibility="Collapsed"/>
-                    <TextBlock x:Name="NoStageForemenHint"
-                               Text="Среди исполнителей задачи нет прорабов"
-                               FontSize="12" Foreground="#97A0AF"
-                               Margin="0,0,0,10" Visibility="Collapsed"/>
-                    <Border x:Name="StageForemanPickerBorder" Background="White" BorderBrush="#DFE1E6"
-                            BorderThickness="1" CornerRadius="8" MaxHeight="180" Margin="0,0,0,10"
-                            Visibility="Collapsed">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
-                            <StackPanel>
-                                <ItemsControl x:Name="StageForemanPickerList">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Tag="{Binding}"
-                                                    MouseLeftButtonDown="StageForemanAssignee_Click">
-                                                <Border.Style>
-                                                    <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#F8F9FA"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border Style="{StaticResource AvatarCircle32}"
-                                                                Background="{Binding AvatarBrush}"
-                                                                Margin="0,0,10,0">
-                                                            <Grid>
-                                                                <Image Style="{StaticResource AvatarImage}"
-                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                       Width="32" Height="32"
-                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                                <TextBlock Text="{Binding Initials}"
-                                                                           FontSize="11" FontWeight="Bold"
-                                                                           Foreground="White"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center"
-                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                            </Grid>
-                                                        </Border>
-                                                        <StackPanel VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Name}"
-                                                                       FontSize="13" FontWeight="SemiBold"
-                                                                       Foreground="#000000"/>
-                                                            <TextBlock Text="{Binding RoleSubtitle}"
-                                                                       FontSize="11"
-                                                                       Foreground="{Binding RoleSubtitleBrush}"
-                                                                       Visibility="{Binding RoleSubtitleVis}"/>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                    <Border Width="22" Height="22" CornerRadius="11"
-                                                            Background="#111111"
-                                                            HorizontalAlignment="Right"
-                                                            VerticalAlignment="Center"
-                                                            Visibility="{Binding IsSelectedVis}">
-                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-
                     <TextBlock x:Name="StageWorkerSectionTitle" Text="Работники" FontSize="11" FontWeight="SemiBold"
                                Foreground="#92400E" Margin="0,0,0,6" Visibility="Collapsed"/>
                     <TextBlock x:Name="NoStageWorkersHint"
@@ -378,7 +306,7 @@
                 <Border x:Name="WorkerAutoAssignHint" Background="#F0F9FF" CornerRadius="8"
                         Padding="12,10" Margin="0,0,0,12"
                         BorderBrush="#BAE6FD" BorderThickness="1" Visibility="Collapsed">
-                    <TextBlock Text="Вы будете автоматически назначены исполнителем этапа. Прораб может добавить других участников позже."
+                    <TextBlock Text="Вы будете автоматически назначены исполнителем этапа."
                                FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
                 </Border>
 
