@@ -965,25 +965,24 @@
                              CommandParameter="Admin"
                              Visibility="{Binding IsAdminPanelVisible, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="20" Height="20" Margin="12,0,8,0"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="🛡" FontSize="14"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Opacity" Value="0.7"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                                <Setter Property="Opacity" Value="1"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                                <Setter Property="Opacity" Value="1"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
+                        <Image Width="20" Height="20"
+                               Margin="12,0,8,0"
+                               VerticalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/admin_gear.svg, AppName=MPMS}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.7"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                            <Setter Property="Opacity" Value="1"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
                         <TextBlock Text="Администрирование"
                                    FontSize="14"
                                    VerticalAlignment="Center"/>

@@ -995,7 +995,7 @@
                                                             HorizontalAlignment="Left" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding ActionType, Converter={StaticResource ActionKindToLabel}}"
                                                                    FontSize="11" FontWeight="SemiBold"
-                                                                   Foreground="#000000"/>
+                                                                   Foreground="White"/>
                                                     </Border>
                                                     <TextBlock Grid.Column="2" Text="{Binding ActionText}"
                                                                FontSize="12" Foreground="#344563"

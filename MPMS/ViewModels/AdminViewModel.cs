@@ -747,6 +747,36 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             .Where(l => l.ActionType != null && ActivityKinds.Contains(l.ActionType))
             .OrderByDescending(l => l.CreatedAt)
             .ToListAsync();
+
+        var activityUserIds = _allActivityLogs
+            .Where(l => l.UserId.HasValue)
+            .Select(l => l.UserId!.Value)
+            .Distinct()
+            .ToList();
+        if (activityUserIds.Count > 0)
+        {
+            var activityUserAvatars = await db.Users.Where(u => activityUserIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                .ToListAsync();
+            var avDict = activityUserAvatars.ToDictionary(u => u.Id);
+            foreach (var l in _allActivityLogs)
+            {
+                if (!l.UserId.HasValue || !avDict.TryGetValue(l.UserId.Value, out var av))
+                    continue;
+
+                var data = av.AvatarData;
+                if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
+                {
+                    var fromFile = AvatarHelper.FileToBytes(av.AvatarPath);
+                    if (fromFile is { Length: > 0 })
+                        data = fromFile;
+                }
+
+                l.AvatarData = data;
+                l.AvatarPath = av.AvatarPath;
+            }
+        }
+
         var userNames = _allActivityLogs.Select(l => l.UserName).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().OrderBy(n => n).ToList();
         Application.Current.Dispatcher.Invoke(() =>
         {
