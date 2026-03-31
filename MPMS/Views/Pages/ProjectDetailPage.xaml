@@ -1472,7 +1472,7 @@
                     </StackPanel>
                     </ScrollViewer>
 
-                    <Grid x:Name="StageKanbanPanel" Visibility="Collapsed" Margin="24,8,24,16">
+                    <Grid x:Name="StageKanbanPanel" Visibility="Collapsed" Margin="24,80,24,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="6"/>
