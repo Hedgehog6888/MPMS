@@ -21,6 +21,8 @@ public class AdminUserRow : ObservableObject
     public string LastName       { get; set; } = string.Empty;
     public string Username       { get; set; } = string.Empty;
     public string Email          { get; set; } = string.Empty;
+    public DateOnly? BirthDate   { get; set; }
+    public string? HomeAddress   { get; set; }
     public string RoleName       { get; set; } = string.Empty;
     public string RoleDisplay    { get; set; } = string.Empty;
     public Guid   RoleId         { get; set; }
@@ -247,6 +249,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 LastName      = parts.Length > 1 ? parts[1] : u.LastName,
                 Username      = u.Username,
                 Email         = u.Email ?? string.Empty,
+                BirthDate     = u.BirthDate,
+                HomeAddress   = u.HomeAddress,
                 RoleName      = u.RoleName,
                 RoleDisplay   = u.RoleDisplayName,
                 RoleId        = u.RoleId,

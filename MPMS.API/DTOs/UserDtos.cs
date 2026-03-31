@@ -7,10 +7,13 @@ public record UserResponse(
     string Username,
     string? Email,
     string Role,
+    Guid RoleId,
     DateTime CreatedAt,
     byte[]? AvatarData = null,
     string? SubRole = null,
-    string? AdditionalSubRoles = null
+    string? AdditionalSubRoles = null,
+    DateOnly? BirthDate = null,
+    string? HomeAddress = null
 );
 
 public record UploadAvatarRequest(byte[] AvatarData);
@@ -25,7 +28,9 @@ public record CreateUserRequest(
     Guid? Id = null,
     byte[]? AvatarData = null,
     string? SubRole = null,
-    string? AdditionalSubRoles = null
+    string? AdditionalSubRoles = null,
+    DateOnly? BirthDate = null,
+    string? HomeAddress = null
 );
 
 public record UpdateUserRequest(
@@ -36,7 +41,9 @@ public record UpdateUserRequest(
     Guid RoleId,
     string? NewPassword = null,
     string? SubRole = null,
-    string? AdditionalSubRoles = null
+    string? AdditionalSubRoles = null,
+    DateOnly? BirthDate = null,
+    string? HomeAddress = null
 );
 
 public record ActivityLogResponse(

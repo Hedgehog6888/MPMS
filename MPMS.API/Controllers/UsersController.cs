@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +39,7 @@ public class UsersController : ControllerBase
         var users = await query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles))
+            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.RoleId, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles, u.BirthDate, u.HomeAddress))
             .ToListAsync();
 
         return Ok(users);
@@ -71,6 +72,8 @@ public class UsersController : ControllerBase
             RoleId = request.RoleId,
             SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim(),
             AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim(),
+            BirthDate = request.BirthDate,
+            HomeAddress = string.IsNullOrWhiteSpace(request.HomeAddress) ? null : request.HomeAddress.Trim(),
             AvatarData = avatarData,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -81,7 +84,7 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles));
+            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress));
     }
 
     /// <summary>Update user (admin only)</summary>
@@ -90,6 +93,15 @@ public class UsersController : ControllerBase
     {
         var user = await _db.Users.FindAsync(id);
         if (user is null) return NotFound();
+
+        var currentUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid) ? cid : (Guid?)null;
+        var isAdmin = User.IsInRole("Administrator");
+        if (!isAdmin)
+        {
+            if (currentUserId != id) return Forbid();
+            if (request.RoleId != user.RoleId)
+                return BadRequest(new { message = "Нельзя изменить роль самостоятельно" });
+        }
 
         if (await _db.Users.AnyAsync(u => u.Username == request.Username && u.Id != id))
             return Conflict(new { message = "Пользователь с таким логином уже существует" });
@@ -105,6 +117,8 @@ public class UsersController : ControllerBase
         user.RoleId = request.RoleId;
         user.SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim();
         user.AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim();
+        user.BirthDate = request.BirthDate;
+        user.HomeAddress = string.IsNullOrWhiteSpace(request.HomeAddress) ? null : request.HomeAddress.Trim();
         user.UpdatedAt = DateTime.UtcNow;
 
         if (!string.IsNullOrEmpty(request.NewPassword))
@@ -114,7 +128,7 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles));
+            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress));
     }
 
     /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>

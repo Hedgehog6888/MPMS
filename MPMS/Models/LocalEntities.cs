@@ -27,6 +27,8 @@ public class LocalUser : LocalEntity
     [MaxLength(50)] public string LastName  { get; set; } = string.Empty;
     [MaxLength(50)] public string Username { get; set; } = string.Empty;
     [MaxLength(255)] public string? Email { get; set; }
+    public DateOnly? BirthDate { get; set; }
+    [MaxLength(500)] public string? HomeAddress { get; set; }
     public Guid RoleId { get; set; }
     [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }

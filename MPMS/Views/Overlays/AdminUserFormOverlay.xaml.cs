@@ -185,6 +185,8 @@ public partial class AdminUserFormOverlay : UserControl
         LastNameBox.Text  = row.LastName;
         UsernameBox.Text  = row.Username;
         EmailBox.Text     = row.Email;
+        BirthDatePicker.SelectedDate = row.BirthDate?.ToDateTime(TimeOnly.MinValue);
+        HomeAddressBox.Text = row.HomeAddress ?? string.Empty;
     }
 
     private void RoleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -320,6 +322,8 @@ public partial class AdminUserFormOverlay : UserControl
             var password  = PasswordBox.Password;
             var passConfirm = PasswordConfirmBox.Password;
             var role = RoleCombo.SelectedItem as RoleItem;
+            DateOnly? birthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
+            var homeAddress = string.IsNullOrWhiteSpace(HomeAddressBox.Text) ? null : HomeAddressBox.Text.Trim();
 
             // Validation
             if (string.IsNullOrWhiteSpace(firstName))  { ShowError("Введите имя"); return; }
@@ -352,6 +356,8 @@ public partial class AdminUserFormOverlay : UserControl
                 user.LastName  = lastName;
                 user.Username  = username;
                 user.Email     = string.IsNullOrWhiteSpace(email) ? null : email;
+                user.BirthDate = birthDate;
+                user.HomeAddress = homeAddress;
                 user.RoleId    = role.Id;
                 user.RoleName  = role.Name;
                 user.SubRole             = subRole;
@@ -372,7 +378,17 @@ public partial class AdminUserFormOverlay : UserControl
 
                 if (api.IsOnline)
                 {
-                    var updateReq = new UpdateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, role.Id, string.IsNullOrEmpty(password) ? null : password, subRole, additionalJson);
+                    var updateReq = new UpdateUserRequest(
+                        firstName,
+                        lastName,
+                        username,
+                        string.IsNullOrWhiteSpace(email) ? null : email,
+                        role.Id,
+                        string.IsNullOrEmpty(password) ? null : password,
+                        subRole,
+                        additionalJson,
+                        birthDate,
+                        homeAddress);
                     var apiResult = await api.UpdateUserAsync(user.Id, updateReq);
                     if (apiResult is null)
                     {
@@ -397,6 +413,8 @@ public partial class AdminUserFormOverlay : UserControl
                     LastName     = lastName,
                     Username     = username,
                     Email        = string.IsNullOrWhiteSpace(email) ? null : email,
+                    BirthDate    = birthDate,
+                    HomeAddress  = homeAddress,
                     RoleId       = role.Id,
                     RoleName     = role.Name,
                     SubRole             = subRole,
@@ -415,7 +433,19 @@ public partial class AdminUserFormOverlay : UserControl
 
                 if (api.IsOnline)
                 {
-                    var createReq = new CreateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, password, role.Id, newId, avatarData, subRole, additionalJson);
+                    var createReq = new CreateUserRequest(
+                        firstName,
+                        lastName,
+                        username,
+                        string.IsNullOrWhiteSpace(email) ? null : email,
+                        password,
+                        role.Id,
+                        newId,
+                        avatarData,
+                        subRole,
+                        additionalJson,
+                        birthDate,
+                        homeAddress);
                     var apiResult = await api.CreateUserAsync(createReq);
                     if (apiResult is null)
                     {

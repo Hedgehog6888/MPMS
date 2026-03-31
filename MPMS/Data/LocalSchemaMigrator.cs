@@ -34,6 +34,7 @@ public static class LocalSchemaMigrator
         CreateAppFlagsTable(conn);
         AddSubRoleColumn(conn);
         AddAdditionalSubRolesColumn(conn);
+        AddBirthDateAndAddressColumns(conn);
     }
 
     private static void CreateAppFlagsTable(SqliteConnection conn)
@@ -243,6 +244,12 @@ public static class LocalSchemaMigrator
     private static void AddAdditionalSubRolesColumn(SqliteConnection conn)
     {
         TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"AdditionalSubRoles\" TEXT NULL;");
+    }
+
+    private static void AddBirthDateAndAddressColumns(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"BirthDate\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"HomeAddress\" TEXT NULL;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

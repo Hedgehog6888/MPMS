@@ -29,6 +29,11 @@
             <Setter Property="Height"          Value="42"/>
             <Setter Property="Margin"          Value="0,0,0,12"/>
         </Style>
+        <!-- DatePicker внутри DatePicker выше однострочного TextBox; меньше вертикальный padding -->
+        <Style x:Key="FormFieldDate" TargetType="Border" BasedOn="{StaticResource FormField}">
+            <Setter Property="Padding" Value="10,4,10,6"/>
+            <Setter Property="Height" Value="44"/>
+        </Style>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="UserPickerItem" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
@@ -124,6 +129,23 @@
                 <TextBlock Text="Email" Style="{StaticResource FormLabel}"/>
                 <Border Style="{StaticResource FormField}">
                     <TextBox x:Name="EmailBox"
+                             BorderThickness="0" Background="Transparent"
+                             Foreground="#000000" FontSize="13"
+                             VerticalContentAlignment="Center" Padding="0"/>
+                </Border>
+
+                <TextBlock Text="Дата рождения" Style="{StaticResource FormLabel}"/>
+                <Border Style="{StaticResource FormFieldDate}" Margin="0,0,0,0">
+                    <DatePicker x:Name="BirthDatePicker"
+                                BorderThickness="0" Background="Transparent"
+                                Foreground="#000000" FontSize="13"
+                                VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"/>
+                </Border>
+
+                <TextBlock Text="Адрес проживания" Style="{StaticResource FormLabel}"/>
+                <Border Style="{StaticResource FormField}" Margin="0,0,0,0">
+                    <TextBox x:Name="HomeAddressBox"
                              BorderThickness="0" Background="Transparent"
                              Foreground="#000000" FontSize="13"
                              VerticalContentAlignment="Center" Padding="0"/>

@@ -120,6 +120,8 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="16"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Column="0" Grid.Row="0">
@@ -137,6 +139,14 @@
                     <StackPanel Grid.Column="1" Grid.Row="2">
                         <TextBlock Text="Последний вход" Style="{StaticResource InfoLabel}"/>
                         <TextBlock x:Name="LastLoginText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Grid.Row="4">
+                        <TextBlock Text="Дата рождения" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="BirthDateText" Style="{StaticResource InfoValue}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Grid.Row="4">
+                        <TextBlock Text="Адрес проживания" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock x:Name="HomeAddressText" Style="{StaticResource InfoValue}"/>
                     </StackPanel>
                 </Grid>
 

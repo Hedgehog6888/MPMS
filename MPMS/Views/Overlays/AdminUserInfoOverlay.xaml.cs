@@ -102,6 +102,10 @@ public partial class AdminUserInfoOverlay : UserControl
         // Contact info
         EmailText.Text     = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
         CreatedAtText.Text = _row.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
+        BirthDateText.Text = _row.BirthDate.HasValue
+            ? _row.BirthDate.Value.ToString("dd.MM.yyyy")
+            : "Не указана";
+        HomeAddressText.Text = string.IsNullOrWhiteSpace(_row.HomeAddress) ? "Не указан" : _row.HomeAddress;
 
         HeaderSubtitle.Text = $"ID: {_row.Id.ToString()[..8]}…";
 

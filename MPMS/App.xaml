@@ -757,14 +757,15 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="DatePicker">
                             <Border x:Name="Bg"
+                                    HorizontalAlignment="Stretch"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="6">
-                                <Grid>
+                                <Grid HorizontalAlignment="Stretch">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="32"/>
+                                        <ColumnDefinition Width="*" MinWidth="0"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="28"/>
                                     </Grid.ColumnDefinitions>
                                     <DatePickerTextBox x:Name="PART_TextBox"
                                                        Grid.Column="0"
@@ -772,8 +773,10 @@
                                                        BorderThickness="0"
                                                        Foreground="{TemplateBinding Foreground}"
                                                        FontSize="{TemplateBinding FontSize}"
-                                                       VerticalAlignment="Center"
-                                                       Margin="10,0,0,0"
+                                                       VerticalAlignment="Stretch"
+                                                       HorizontalAlignment="Stretch"
+                                                       VerticalContentAlignment="Center"
+                                                       Margin="0,0,2,0"
                                                        Focusable="True"/>
                                     <Button x:Name="PART_Button"
                                             Grid.Column="1"
@@ -815,6 +818,35 @@
                                     <Setter Property="Opacity" Value="0.5"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Плоский шаблон: тема по умолчанию рисует белый «чип» внутри DatePicker -->
+            <Style TargetType="DatePickerTextBox">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CaretBrush" Value="#172B4D"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePickerTextBox">
+                            <Border HorizontalAlignment="Stretch"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    SnapsToDevicePixels="True">
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              HorizontalAlignment="Stretch"
+                                              Focusable="False"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

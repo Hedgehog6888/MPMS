@@ -23,6 +23,11 @@ public class User
     [MaxLength(255)]
     public string? Email { get; set; }
 
+    public DateOnly? BirthDate { get; set; }
+
+    [MaxLength(500)]
+    public string? HomeAddress { get; set; }
+
     [Required, MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;
 

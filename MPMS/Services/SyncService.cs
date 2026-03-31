@@ -112,17 +112,30 @@ public class SyncService : ISyncService
                 var fullName = $"{u.FirstName} {u.LastName}".Trim();
                 if (existing.TryGetValue(u.Id, out var local))
                 {
-                    local.Name = fullName;
-                    local.FirstName = u.FirstName; local.LastName = u.LastName;
-                    local.Username = u.Username;
-                    local.Email = u.Email;
-                    local.RoleName = u.Role;
-                    local.SubRole = u.SubRole;
-                    local.AdditionalSubRoles = u.AdditionalSubRoles;
-                    // Обновляем аватар с сервера только если нет несинхронизированных локальных изменений
-                    if (local.IsSynced && u.AvatarData is { Length: > 0 })
-                        local.AvatarData = u.AvatarData;
-                    local.IsSynced = true;
+                    if (local.IsSynced)
+                    {
+                        local.Name = fullName;
+                        local.FirstName = u.FirstName; local.LastName = u.LastName;
+                        local.Username = u.Username;
+                        local.Email = u.Email;
+                        local.RoleName = u.Role;
+                        local.RoleId = u.RoleId;
+                        local.SubRole = u.SubRole;
+                        local.AdditionalSubRoles = u.AdditionalSubRoles;
+                        local.BirthDate = u.BirthDate;
+                        local.HomeAddress = u.HomeAddress;
+                        if (u.AvatarData is { Length: > 0 })
+                            local.AvatarData = u.AvatarData;
+                        local.IsSynced = true;
+                    }
+                    else
+                    {
+                        // Локальные правки профиля ещё не на сервере — не затираем ФИО, дату, адрес и аватар
+                        local.RoleName = u.Role;
+                        local.RoleId = u.RoleId;
+                        local.SubRole = u.SubRole;
+                        local.AdditionalSubRoles = u.AdditionalSubRoles;
+                    }
                 }
                 else
                 {
@@ -131,8 +144,11 @@ public class SyncService : ISyncService
                         Id = u.Id, Name = fullName,
                         FirstName = u.FirstName, LastName = u.LastName,
                         Username = u.Username, Email = u.Email, RoleName = u.Role,
+                        RoleId = u.RoleId,
                         SubRole = u.SubRole,
                         AdditionalSubRoles = u.AdditionalSubRoles,
+                        BirthDate = u.BirthDate,
+                        HomeAddress = u.HomeAddress,
                         AvatarData = u.AvatarData,
                         IsSynced = true, CreatedAt = u.CreatedAt
                     });
@@ -316,12 +332,13 @@ public class SyncService : ISyncService
         {
             return op.EntityType switch
             {
-                "Project"  => await SyncProjectAsync(op),
-                "Task"     => await SyncTaskAsync(op),
-                "Stage"    => await SyncStageAsync(op),
-                "Material" => await SyncMaterialAsync(op),
-                "User"     => await SyncUserAvatarAsync(op),
-                _          => true
+                "Project"     => await SyncProjectAsync(op),
+                "Task"        => await SyncTaskAsync(op),
+                "Stage"       => await SyncStageAsync(op),
+                "Material"    => await SyncMaterialAsync(op),
+                "User"        => await SyncUserAvatarAsync(op),
+                "UserProfile" => await SyncUserProfileAsync(op),
+                _             => true
             };
         }
         catch { return false; }
@@ -392,6 +409,25 @@ public class SyncService : ISyncService
             if (user is not null) { user.IsSynced = true; await db.SaveChangesAsync(); }
         }
         return ok;
+    }
+
+    private async Task<bool> SyncUserProfileAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Update) return true;
+        var req = JsonSerializer.Deserialize<UpdateUserRequest>(op.Payload);
+        if (req is null) return false;
+        var updated = await _api.UpdateUserAsync(op.EntityId, req);
+        if (updated is null) return false;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var user = await db.Users.FindAsync(op.EntityId);
+        if (user is not null)
+        {
+            user.IsSynced = true;
+            user.LastModifiedLocally = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+        }
+
+        return true;
     }
 
     private async Task<bool> SyncMaterialAsync(PendingOperation op)

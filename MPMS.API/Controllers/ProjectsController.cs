@@ -162,7 +162,7 @@ public class ProjectsController : ControllerBase
             .ThenInclude(u => u.Role)
             .Select(pm => new UserResponse(
                 pm.User.Id, pm.User.FirstName, pm.User.LastName, pm.User.Username,
-                pm.User.Email, pm.User.Role.Name, pm.User.CreatedAt, pm.User.AvatarData, pm.User.SubRole, pm.User.AdditionalSubRoles))
+                pm.User.Email, pm.User.Role.Name, pm.User.RoleId, pm.User.CreatedAt, pm.User.AvatarData, pm.User.SubRole, pm.User.AdditionalSubRoles, pm.User.BirthDate, pm.User.HomeAddress))
             .ToListAsync();
 
         return Ok(members);

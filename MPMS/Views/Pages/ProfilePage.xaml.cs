@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -20,6 +24,8 @@ namespace MPMS.Views.Pages;
 public partial class ProfilePage : UserControl
 {
     private LocalUser? _user;
+    private DispatcherTimer? _copyToastHideTimer;
+    private bool _copyToastActive;
 
     private static string AvatarDirectory =>
         System.IO.Path.Combine(
@@ -29,30 +35,37 @@ public partial class ProfilePage : UserControl
     public ProfilePage()
     {
         InitializeComponent();
-        Loaded += async (_, _) => await LoadUserAsync();
+        Loaded += async (_, _) =>
+        {
+            SkeletonOverlay.Visibility = Visibility.Visible;
+            await LoadUserAsync();
+            SkeletonOverlay.Visibility = Visibility.Collapsed;
+        };
+        EmailRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(EmailText.Text, e);
+        LoginRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(LoginText.Text, e);
     }
 
-    private static readonly Dictionary<string, (string label, string icon, string desc, string[] perms)> RoleInfo = new()
+    private static readonly Dictionary<string, (string label, string desc, string[] perms)> RoleInfo = new()
     {
-        ["Administrator"] = ("Администратор", "👑",
+        ["Administrator"] = ("Администратор",
             "Полный доступ ко всем функциям системы",
             ["Создание и удаление проектов", "Управление пользователями", "Просмотр всех данных", "Управление ролями"]),
-        ["Admin"] = ("Администратор", "👑",
+        ["Admin"] = ("Администратор",
             "Полный доступ ко всем функциям системы",
             ["Создание и удаление проектов", "Управление пользователями", "Просмотр всех данных", "Управление ролями"]),
-        ["Project Manager"] = ("Менеджер проектов", "🗂️",
+        ["Project Manager"] = ("Менеджер проектов",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["ProjectManager"] = ("Менеджер проектов", "🗂️",
+        ["ProjectManager"] = ("Менеджер проектов",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["Manager"] = ("Менеджер проектов", "🗂️",
+        ["Manager"] = ("Менеджер проектов",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["Foreman"] = ("Прораб", "🦺",
+        ["Foreman"] = ("Прораб",
             "Руководство монтажными работами на объекте",
             ["Просмотр своих проектов", "Управление этапами", "Отчёт о выполнении", "Добавление материалов"]),
-        ["Worker"] = ("Работник", "🔧",
+        ["Worker"] = ("Работник",
             "Выполнение монтажных работ на объекте",
             ["Просмотр назначенных задач", "Обновление статусов этапов", "Добавление материалов"]),
     };
@@ -79,18 +92,23 @@ public partial class ProfilePage : UserControl
         LoginText.Text = _user.Username;
         EmailText.Text = string.IsNullOrWhiteSpace(_user.Email) ? "—" : _user.Email;
         CreatedText.Text = _user.CreatedAt.ToString("dd.MM.yyyy");
+        LastDeviceText.Text = $"Устройство: {Environment.MachineName}";
 
         // View mode fields
         ViewFirstName.Text = _user.FirstName;
         ViewLastName.Text  = _user.LastName;
         ViewUsername.Text  = _user.Username;
         ViewEmail.Text     = string.IsNullOrWhiteSpace(_user.Email) ? "Не указан" : _user.Email;
-        ViewCreated.Text   = _user.CreatedAt.ToString("dd MMMM yyyy");
+        ViewBirthDate.Text = _user.BirthDate.HasValue ? _user.BirthDate.Value.ToString("dd.MM.yyyy") : "Не указана";
+        ViewAddress.Text = string.IsNullOrWhiteSpace(_user.HomeAddress) ? "Не указан" : _user.HomeAddress;
+        ViewCreated.Text   = _user.CreatedAt.ToString("dd.MM.yyyy");
 
         // Edit mode pre-fill
         FirstNameBox.Text = _user.FirstName;
         LastNameBox.Text  = _user.LastName;
         EmailBox.Text     = _user.Email ?? "";
+        BirthDatePicker.SelectedDate = _user.BirthDate?.ToDateTime(TimeOnly.MinValue);
+        AddressBox.Text = _user.HomeAddress ?? "";
 
         // Role info
         var roleName = _user.RoleName;
@@ -100,32 +118,15 @@ public partial class ProfilePage : UserControl
         {
             var roleLabel = info.label;
             positionLabel = roleLabel;
-            RoleText.Text = roleLabel;
-            RoleIcon.Text = info.icon;
             ViewRole.Text = roleLabel;
             RoleCardTitle.Text = roleLabel;
-            RoleCardIcon.Text = info.icon;
             RoleCardDesc.Text = info.desc;
             PermissionsList.ItemsSource = info.perms;
-
-            var (bg, fg, border) = roleName switch
-            {
-                "Administrator" or "Admin"   => ("#FEF2F2", "#991B1B", "#FCA5A5"),
-                "Project Manager" or "ProjectManager" or "Manager" => ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
-                "Foreman"                    => ("#F0FDF4", "#166534", "#86EFAC"),
-                "Worker"                     => ("#FFF7ED", "#9A3412", "#FED7AA"),
-                _                            => ("#F4F5F7", "#000000", "#DFE1E6")
-            };
-            RoleBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(bg)!);
-            RoleBadge.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border)!);
-            RoleText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(fg)!);
         }
         else
         {
-            RoleText.Text = roleName;
             ViewRole.Text = roleName;
             RoleCardTitle.Text = roleName;
-            RoleCardIcon.Text = "👤";
             RoleCardDesc.Text = "";
         }
 
@@ -137,14 +138,11 @@ public partial class ProfilePage : UserControl
                            || WorkerSpecialtiesJson.Deserialize(_user.AdditionalSubRoles).Count > 0;
             SubRoleBadge.Visibility = hasSpecs ? Visibility.Visible : Visibility.Collapsed;
             SubRoleText.Text = specLine;
-            ViewSubRolePanel.Visibility = hasSpecs ? Visibility.Visible : Visibility.Collapsed;
-            ViewSubRole.Text = specLine;
             PositionText.Text = hasSpecs ? specLine : positionLabel;
         }
         else
         {
             SubRoleBadge.Visibility = Visibility.Collapsed;
-            ViewSubRolePanel.Visibility = Visibility.Collapsed;
             PositionText.Text = positionLabel;
         }
 
@@ -159,6 +157,14 @@ public partial class ProfilePage : UserControl
         // Activity count
         var activityCount = await ActivityFilterService.GetFilteredActivityCountAsync(db, auth);
         ActivityCountText.Text = activityCount.ToString();
+
+        var recent = await db.RecentAccounts
+            .Where(a => a.Username == _user.Username)
+            .OrderByDescending(a => a.LastLoginAt)
+            .FirstOrDefaultAsync();
+        LastLoginText.Text = recent is null
+            ? "Нет данных"
+            : recent.LastLoginAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
     }
 
     private void Edit_Click(object sender, RoutedEventArgs e)
@@ -170,16 +176,17 @@ public partial class ProfilePage : UserControl
         EditBtn.Visibility = Visibility.Collapsed;
         CancelBtn.Visibility = Visibility.Visible;
         SaveBtn.Visibility = Visibility.Visible;
+        ChangePasswordBtn.Visibility = Visibility.Collapsed;
 
         if (_user is not null)
         {
             FirstNameBox.Text = _user.FirstName;
             LastNameBox.Text  = _user.LastName;
             EmailBox.Text     = _user.Email ?? "";
+            BirthDatePicker.SelectedDate = _user.BirthDate?.ToDateTime(TimeOnly.MinValue);
+            AddressBox.Text = _user.HomeAddress ?? "";
         }
         CurrentPasswordBox.Password = "";
-        NewPasswordBox.Password = "";
-        ConfirmPasswordBox.Password = "";
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -189,6 +196,7 @@ public partial class ProfilePage : UserControl
         EditBtn.Visibility = Visibility.Visible;
         CancelBtn.Visibility = Visibility.Collapsed;
         SaveBtn.Visibility = Visibility.Collapsed;
+        ChangePasswordBtn.Visibility = Visibility.Visible;
         ErrorPanel.Visibility = Visibility.Collapsed;
         SuccessPanel.Visibility = Visibility.Collapsed;
     }
@@ -210,20 +218,6 @@ public partial class ProfilePage : UserControl
         if (string.IsNullOrWhiteSpace(CurrentPasswordBox.Password))
         {
             ShowError("Введите текущий пароль для подтверждения изменений.");
-            return;
-        }
-
-        var newPass = NewPasswordBox.Password;
-        var confirmPass = ConfirmPasswordBox.Password;
-        if (!string.IsNullOrEmpty(newPass) && newPass != confirmPass)
-        {
-            ShowError("Пароли не совпадают.");
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(newPass) && newPass.Length < 6)
-        {
-            ShowError("Пароль должен содержать не менее 6 символов.");
             return;
         }
 
@@ -249,26 +243,69 @@ public partial class ProfilePage : UserControl
 
             var fullName = $"{firstName} {lastName}".Trim();
 
+            LocalUser? userEntity = null;
             if (_user is not null)
             {
-                var userEntity = await db.Users.FindAsync(_user.Id);
+                userEntity = await db.Users.FindAsync(_user.Id);
                 if (userEntity is not null)
                 {
                     userEntity.FirstName = firstName;
                     userEntity.LastName  = lastName;
                     userEntity.Name      = fullName;
                     userEntity.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
+                    userEntity.BirthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
+                    userEntity.HomeAddress = string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim();
                     userEntity.IsSynced  = false;
+                    userEntity.LastModifiedLocally = DateTime.UtcNow;
                 }
             }
-
-            if (!string.IsNullOrEmpty(newPass))
-                session.LocalPasswordHash = BCrypt.Net.BCrypt.HashPassword(newPass);
 
             if (_user is not null)
                 session.UserName = fullName;
 
             await db.SaveChangesAsync();
+
+            if (_user is not null && userEntity is not null && auth.Token is not null)
+            {
+                var roleId = userEntity.RoleId;
+                if (roleId == Guid.Empty)
+                {
+                    var roleRow = await db.Roles.AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.Name == userEntity.RoleName);
+                    if (roleRow is not null)
+                        roleId = roleRow.Id;
+                }
+
+                if (roleId != Guid.Empty)
+                {
+                    var updateReq = new UpdateUserRequest(
+                        userEntity.FirstName,
+                        userEntity.LastName,
+                        userEntity.Username,
+                        userEntity.Email,
+                        roleId,
+                        null,
+                        userEntity.SubRole,
+                        userEntity.AdditionalSubRoles,
+                        userEntity.BirthDate,
+                        userEntity.HomeAddress);
+
+                    var api = App.Services.GetRequiredService<IApiService>();
+                    var sync = App.Services.GetRequiredService<ISyncService>();
+
+                    await api.ProbeAsync();
+                    var remote = api.IsOnline ? await api.UpdateUserAsync(userEntity.Id, updateReq) : null;
+
+                    if (remote is not null)
+                    {
+                        userEntity.IsSynced = true;
+                        userEntity.RoleId = remote.RoleId;
+                        await db.SaveChangesAsync();
+                    }
+                    else
+                        await sync.QueueOperationAsync("UserProfile", userEntity.Id, SyncOperation.Update, updateReq);
+                }
+            }
 
             if (_user is not null)
             {
@@ -276,24 +313,12 @@ public partial class ProfilePage : UserControl
                 _user.LastName  = lastName;
                 _user.Name      = fullName;
                 _user.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
-            }
-
-            if (!string.IsNullOrEmpty(newPass) && _user is not null)
-            {
-                db.ActivityLogs.Add(new LocalActivityLog
-                {
-                    UserId      = _user.Id,
-                    ActorRole   = auth.UserRole,
-                    UserName    = _user.Name,
-                    UserInitials = AvatarHelper.GetInitials(_user.Name),
-                    UserColor   = "#1B6EC2",
-                    ActionType  = ActivityActionKind.PasswordChanged,
-                    ActionText  = "Изменил пароль своего аккаунта",
-                    EntityType  = "User",
-                    EntityId    = _user.Id,
-                    CreatedAt   = DateTime.UtcNow
-                });
-                await db.SaveChangesAsync();
+                _user.BirthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
+                _user.HomeAddress = string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim();
+                if (userEntity is not null)
+                    _user.IsSynced = userEntity.IsSynced;
+                if (userEntity is not null && userEntity.RoleId != Guid.Empty)
+                    _user.RoleId = userEntity.RoleId;
             }
 
             SuccessPanel.Visibility = Visibility.Visible;
@@ -302,6 +327,8 @@ public partial class ProfilePage : UserControl
             ViewFirstName.Text = _user?.FirstName ?? "";
             ViewLastName.Text  = _user?.LastName  ?? "";
             ViewEmail.Text     = _user?.Email ?? "Не указан";
+            ViewBirthDate.Text = _user?.BirthDate?.ToString("dd.MM.yyyy") ?? "Не указана";
+            ViewAddress.Text = string.IsNullOrWhiteSpace(_user?.HomeAddress) ? "Не указан" : _user!.HomeAddress!;
             EmailText.Text     = _user?.Email ?? "—";
             AvatarInitials.Text = AvatarHelper.GetInitials(_user?.Name ?? "");
             ApplyAvatarDisplay(_user?.AvatarData, _user?.AvatarPath);
@@ -442,5 +469,85 @@ public partial class ProfilePage : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+    }
+
+    private void ChangePassword_Click(object sender, RoutedEventArgs e)
+    {
+        if (_user is null) return;
+        var overlay = new ChangePasswordOverlay(_user.Id, _user.Name, onSaved: async () => await LoadUserAsync());
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 520);
+    }
+
+    private void CopyToClipboard(string? text, MouseButtonEventArgs e)
+    {
+        if (_copyToastActive) return;
+        if (string.IsNullOrWhiteSpace(text) || text == "—") return;
+        if (!TrySetClipboardText(text))
+            return;
+        _copyToastActive = true;
+        CopyToastText.Text = "Скопировано";
+        var p = e.GetPosition(CopyToastLayer);
+        PositionCopyToastAboveClick(p);
+        CopyToast.BeginAnimation(UIElement.OpacityProperty, null);
+        CopyToast.Opacity = 1;
+        CopyToast.Visibility = Visibility.Visible;
+        _copyToastHideTimer?.Stop();
+        _copyToastHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _copyToastHideTimer.Tick += (_, _) =>
+        {
+            _copyToastHideTimer!.Stop();
+            CopyToast.Visibility = Visibility.Collapsed;
+            _copyToastActive = false;
+        };
+        _copyToastHideTimer.Start();
+    }
+
+    /// <summary>
+    /// OpenClipboard часто занят при быстрых повторных кликах или сторонних программах (CLIPBRD_E_CANT_OPEN).
+    /// </summary>
+    private static bool TrySetClipboardText(string text, int maxAttempts = 15, int delayMs = 25)
+    {
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                Clipboard.SetText(text);
+                return true;
+            }
+            catch (COMException ex) when (ex.HResult == unchecked((int)0x800401D0) && attempt < maxAttempts - 1)
+            {
+                Thread.Sleep(delayMs);
+            }
+            catch (COMException) when (attempt < maxAttempts - 1)
+            {
+                Thread.Sleep(delayMs);
+            }
+        }
+
+        return false;
+    }
+
+    private void PositionCopyToastAboveClick(Point clickInLayer)
+    {
+        try
+        {
+            CopyToast.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var toastW = Math.Max(CopyToast.DesiredSize.Width, 1);
+            var toastH = Math.Max(CopyToast.DesiredSize.Height, 1);
+            const double pad = 4;
+            var layerW = CopyToastLayer.ActualWidth;
+            var x = clickInLayer.X - toastW / 2.0;
+            if (x < pad) x = pad;
+            if (layerW > 1 && x + toastW > layerW - pad)
+                x = Math.Max(pad, layerW - toastW - pad);
+            // Всегда над точкой нажатия (не переносим под палец)
+            var y = clickInLayer.Y - toastH - 8;
+            if (y < pad) y = pad;
+            CopyToast.Margin = new Thickness(x, y, 0, 0);
+        }
+        catch
+        {
+            CopyToast.Margin = new Thickness(8, 8, 0, 0);
+        }
     }
 }
