@@ -1,0 +1,220 @@
+<UserControl x:Class="MPMS.Views.Overlays.QuickTeamMembersOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+            <Setter Property="Margin" Value="0,16,0,10"/>
+        </Style>
+
+        <Style x:Key="UserPickerItem" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Состав проекта"
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock Text="Быстрое добавление/удаление прорабов и работников"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,0,24,8">
+                <TextBlock Text="КОМАНДА ПРОЕКТА" Style="{StaticResource SectionHeader}"/>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Прорабы" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                    <WrapPanel x:Name="SelectedForemenPanel" Grid.Row="1" Margin="0,0,0,8" Visibility="Collapsed"/>
+
+                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" MaxHeight="220">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
+                            <StackPanel>
+                                <ItemsControl x:Name="ForemanPickerList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Tag="{Binding}" MouseLeftButtonDown="ForemanItem_Click">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F8F9FA"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Style="{StaticResource AvatarCircle32}" Background="{Binding AvatarBrush}" Margin="0,0,10,0">
+                                                            <Grid>
+                                                                <Image Style="{StaticResource AvatarImage}"
+                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                       Width="32" Height="32"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                <TextBlock Text="{Binding Initials}" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <Border Width="22" Height="22" CornerRadius="11" Background="#111111"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelectedVis}">
+                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="NoForemanHint"
+                                           Text="Нет доступных прорабов"
+                                           FontSize="12" Foreground="#97A0AF"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,12,0,12" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                    <WrapPanel x:Name="SelectedWorkersPanel" Grid.Row="1" Margin="0,0,0,8" Visibility="Collapsed"/>
+
+                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" MaxHeight="220">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
+                            <StackPanel>
+                                <ItemsControl x:Name="WorkerPickerList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Tag="{Binding}" MouseLeftButtonDown="WorkerItem_Click">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#F8F9FA"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Style="{StaticResource AvatarCircle32}" Background="{Binding AvatarBrush}" Margin="0,0,10,0">
+                                                            <Grid>
+                                                                <Image Style="{StaticResource AvatarImage}"
+                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                       Width="32" Height="32"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                <TextBlock Text="{Binding Initials}" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                                                            <TextBlock Text="{Binding RoleSubtitle}" FontSize="11"
+                                                                       Foreground="{Binding RoleSubtitleBrush}"
+                                                                       Visibility="{Binding RoleSubtitleVis}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <Border Width="22" Height="22" CornerRadius="11" Background="#111111"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelectedVis}">
+                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock x:Name="NoWorkersHint"
+                                           Text="Нет доступных работников"
+                                           FontSize="12" Foreground="#97A0AF"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,12,0,12" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <Border x:Name="ErrorPanel" Background="#FFF0F0"
+                        CornerRadius="8" Padding="14,10"
+                        Margin="0,0,0,8" Visibility="Collapsed"
+                        BorderBrush="#FCA5A5" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
+                                   Foreground="#DC2626" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#DC2626"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="24,14" BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button x:Name="SaveButton" Content="Сохранить состав"
+                        HorizontalAlignment="Right"
+                        Click="Save_Click" Style="{StaticResource BlackBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

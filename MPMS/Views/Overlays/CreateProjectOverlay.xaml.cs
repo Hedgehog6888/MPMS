@@ -372,13 +372,12 @@ public partial class CreateProjectOverlay : UserControl
         SelectedWorkersPanel.Visibility = Visibility.Visible;
         foreach (var w in workers)
         {
-            var item = _workerItems.FirstOrDefault(i => i.UserId == w.UserId);
-            var chip = BuildWorkerChip(w, item);
+            var chip = BuildWorkerChip(w);
             SelectedWorkersPanel.Children.Add(chip);
         }
     }
 
-    private Border BuildWorkerChip(WorkerChipInfo info, AssigneePickerItem? item)
+    private Border BuildWorkerChip(WorkerChipInfo info)
     {
         var chip = new Border
         {
@@ -397,16 +396,6 @@ public partial class CreateProjectOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
-        if (item is not null && !string.IsNullOrWhiteSpace(item.RoleSubtitle))
-        {
-            sp.Children.Add(new TextBlock
-            {
-                Text = $"  {item.RoleSubtitle}",
-                FontSize = 11,
-                Foreground = item.RoleSubtitleBrush,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-        }
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),

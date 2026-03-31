@@ -18,6 +18,7 @@ namespace MPMS.Views.Pages;
 public partial class ProjectDetailPage : UserControl
 {
     private bool _canEdit;
+    private bool _canManageTeam;
 
     private StageItem? _draggedStageItem;
     private Point _stageDragStartPoint;
@@ -54,6 +55,7 @@ public partial class ProjectDetailPage : UserControl
         var auth = App.Services.GetRequiredService<IAuthService>();
         _userRole = auth.UserRole ?? "";
         _canEdit = _userRole is "Administrator" or "Project Manager" or "Foreman";
+        _canManageTeam = _userRole is "Administrator" or "Project Manager";
         bool isManagerOrAbove = _userRole is "Administrator" or "Project Manager";
         bool canMarkProject   = _userRole is "Administrator" or "Project Manager";
 
@@ -62,6 +64,7 @@ public partial class ProjectDetailPage : UserControl
         CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
         CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+        QuickTeamBtn.Visibility        = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
         _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
         _ = Dispatcher.InvokeAsync(SyncStageViewToggleIcons, System.Windows.Threading.DispatcherPriority.Loaded);
     }
@@ -100,6 +103,7 @@ public partial class ProjectDetailPage : UserControl
         // Hide editing buttons when project is marked for deletion
         EditProjectBtn.Visibility  = marked ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
         CreateTaskQuickBtn.Visibility = marked ? Visibility.Collapsed : (_canEdit ? Visibility.Visible : Visibility.Collapsed);
+        QuickTeamBtn.Visibility = marked ? Visibility.Collapsed : (_canManageTeam ? Visibility.Visible : Visibility.Collapsed);
         CreateTaskBtn.Visibility  = marked ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = marked ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
@@ -186,6 +190,19 @@ public partial class ProjectDetailPage : UserControl
                 }
             });
         MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
+    private void OpenQuickTeamOverlay_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.Project is null) return;
+        var vm = VM;
+        var overlay = new QuickTeamMembersOverlay();
+        overlay.SetProject(vm.Project.Id, onSaved: async () =>
+        {
+            await vm.LoadAsync();
+            _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+        });
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 532);
     }
 
     private void EditTask_Click(object sender, RoutedEventArgs e)

@@ -413,26 +413,6 @@ public partial class CreateStageOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
-        if (item.IsForemanPicker)
-        {
-            sp.Children.Add(new TextBlock
-            {
-                Text = "  Прораб",
-                FontSize = 11,
-                Foreground = item.RoleColorBrush,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-        }
-        else if (!string.IsNullOrWhiteSpace(item.RoleSubtitle))
-        {
-            sp.Children.Add(new TextBlock
-            {
-                Text = $"  {item.RoleSubtitle}",
-                FontSize = 11,
-                Foreground = item.RoleSubtitleBrush,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-        }
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
