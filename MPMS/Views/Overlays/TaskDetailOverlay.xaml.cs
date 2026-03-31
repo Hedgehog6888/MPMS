@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS;
@@ -134,15 +135,19 @@ public partial class TaskDetailOverlay : UserControl
             });
         }
 
-        var roleMap = new Dictionary<Guid, string?>();
+        var roleMap    = new Dictionary<Guid, string?>();
+        var subRoleMap = new Dictionary<Guid, string?>();
+        var addSpecMap = new Dictionary<Guid, string?>();
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
         if (userIds.Count > 0)
         {
             var users = await db.Users.Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
             var avDict = users.ToDictionary(u => u.Id);
-            roleMap = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            roleMap    = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            subRoleMap = users.ToDictionary(u => u.Id, u => (string?)u.SubRole);
+            addSpecMap = users.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -155,8 +160,10 @@ public partial class TaskDetailOverlay : UserControl
         var displayItems = assignees
             .Select(a =>
             {
-                var role = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
-                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath);
+                var role    = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
+                var subRole = subRoleMap.TryGetValue(a.UserId, out var sr) ? sr : null;
+                var addSpec = addSpecMap.TryGetValue(a.UserId, out var aj) ? aj : null;
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec);
             })
             .ToList();
         var foremen = displayItems.Where(a => a.RoleDisplay == "Прораб").ToList();
@@ -417,16 +424,32 @@ public sealed class AssigneeDisplayItem
     public Guid UserId { get; }
     public string UserName { get; }
     public string RoleDisplay { get; }
+    public string SubRoleLabel { get; }
+    public Visibility SubRoleLabelVis =>
+        string.IsNullOrWhiteSpace(SubRoleLabel) ? Visibility.Collapsed : Visibility.Visible;
+    public SolidColorBrush SubRoleLabelBrush { get; }
     public string Initials { get; }
     public byte[]? AvatarData { get; }
     public string? AvatarPath { get; }
 
-    public AssigneeDisplayItem(Guid userId, string userName, string? roleName, byte[]? avatarData = null, string? avatarPath = null)
+    public AssigneeDisplayItem(Guid userId, string userName, string? roleName, byte[]? avatarData = null, string? avatarPath = null, string? subRole = null, string? additionalSubRolesJson = null)
     {
         UserId = userId;
         UserName = userName;
         var label = ProjectDetailViewModel.RoleToRussian(roleName);
         RoleDisplay = label == "—" ? "Работник" : label;
+        var isWorker = roleName is "Worker" or "Работник";
+        SubRoleLabel = isWorker
+            ? WorkerSpecialtiesJson.FormatWorkerLineCompact(subRole, additionalSubRolesJson)
+            : "";
+        if (isWorker)
+        {
+            var fg = WorkerSpecialtiesJson.BadgeForegroundRgbForSpecName(
+                WorkerSpecialtiesJson.PrimaryDisplaySpecForColor(subRole, additionalSubRolesJson));
+            SubRoleLabelBrush = new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B));
+        }
+        else
+            SubRoleLabelBrush = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
         AvatarData = avatarData;
         AvatarPath = avatarPath;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);

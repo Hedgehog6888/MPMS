@@ -195,7 +195,8 @@
                 <!-- Selected assignees chips -->
                 <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8" Visibility="Collapsed"/>
 
-                <TextBlock Text="Прорабы" Style="{StaticResource FormLabel}"/>
+                <TextBlock x:Name="ForemanSectionTitle" Text="Прорабы" FontSize="11" FontWeight="SemiBold"
+                           Foreground="#166534" Margin="0,0,0,6" Visibility="Collapsed"/>
                 <Border x:Name="ForemanPickerBorder" Background="White" BorderBrush="#DFE1E6"
                         BorderThickness="1" CornerRadius="8" MaxHeight="180"
                         Visibility="Collapsed" Margin="0,0,0,10">
@@ -237,9 +238,10 @@
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
                                                                    Foreground="#000000"/>
-                                                        <TextBlock Text="{Binding RoleDisplay}"
+                                                        <TextBlock Text="{Binding RoleSubtitle}"
                                                                    FontSize="11"
-                                                                   Foreground="{Binding RoleColor}"/>
+                                                                   Foreground="{Binding RoleSubtitleBrush}"
+                                                                   Visibility="{Binding RoleSubtitleVis}"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <Border Width="22" Height="22" CornerRadius="11"
@@ -265,7 +267,8 @@
                     </ScrollViewer>
                 </Border>
 
-                <TextBlock Text="Работники" Style="{StaticResource FormLabel}"/>
+                <TextBlock x:Name="WorkerSectionTitle" Text="Работники" FontSize="11" FontWeight="SemiBold"
+                           Foreground="#92400E" Margin="0,0,0,6" Visibility="Collapsed"/>
                 <Border x:Name="WorkerPickerBorder" Background="White" BorderBrush="#DFE1E6"
                         BorderThickness="1" CornerRadius="8" MaxHeight="220"
                         Visibility="Collapsed">
@@ -307,9 +310,10 @@
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
                                                                    Foreground="#000000"/>
-                                                        <TextBlock Text="{Binding RoleDisplay}"
+                                                        <TextBlock Text="{Binding RoleSubtitle}"
                                                                    FontSize="11"
-                                                                   Foreground="{Binding RoleColor}"/>
+                                                                   Foreground="{Binding RoleSubtitleBrush}"
+                                                                   Visibility="{Binding RoleSubtitleVis}"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <Border Width="22" Height="22" CornerRadius="11"

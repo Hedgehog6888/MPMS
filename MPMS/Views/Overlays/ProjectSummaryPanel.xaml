@@ -168,8 +168,6 @@
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock x:Name="ManagerNameText" FontSize="13"
                                            FontWeight="SemiBold" Foreground="#000000"/>
-                                <TextBlock Text="Менеджер проекта" FontSize="11"
-                                           Foreground="#6B778C" Margin="0,1,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -198,8 +196,6 @@
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="{Binding UserName}" FontSize="13"
                                                        FontWeight="SemiBold" Foreground="#000000"/>
-                                            <TextBlock Text="Прораб" FontSize="11"
-                                                       Foreground="#166534" Margin="0,1,0,0"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>
@@ -234,9 +230,24 @@
                                                            Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
                                             </Grid>
                                         </Border>
-                                        <TextBlock Text="{Binding UserName}" FontSize="12"
-                                                   Foreground="#000000"
-                                                   VerticalAlignment="Center"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding UserName}" FontSize="12"
+                                                       Foreground="#000000" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding RoleLabel}" FontSize="10"
+                                                       Foreground="{Binding WorkerLineForegroundHex, Converter={StaticResource HexToBrush}}"
+                                                       Margin="0,1,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding RoleLabel}" Value="">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

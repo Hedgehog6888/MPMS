@@ -135,7 +135,7 @@ public partial class ProjectSummaryPanel : UserControl
             if (userIds.Count > 0)
             {
                 var userAvatars = await db.Users.Where(u => userIds.Contains(u.Id))
-                    .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+                    .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.SubRole, u.AdditionalSubRoles })
                     .ToListAsync();
                 var avDict = userAvatars.ToDictionary(u => u.Id);
                 foreach (var m in members)
@@ -144,6 +144,8 @@ public partial class ProjectSummaryPanel : UserControl
                     {
                         m.AvatarData = av.AvatarData;
                         m.AvatarPath = av.AvatarPath;
+                        m.SubRole               = av.SubRole;
+                        m.AdditionalSubRolesJson = av.AdditionalSubRoles;
                     }
                 }
             }

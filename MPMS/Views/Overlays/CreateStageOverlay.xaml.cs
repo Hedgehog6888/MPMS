@@ -24,6 +24,8 @@ public partial class CreateStageOverlay : UserControl
     private Action? _onAfterSave;
 
     private List<AssigneePickerItem> _allAssigneeItems = [];
+    private List<AssigneePickerItem> _foremanAssigneeItems = [];
+    private List<AssigneePickerItem> _workerAssigneeItems = [];
     private List<StageSelectionItem> _projectItems = [];
     private List<StageSelectionItem> _taskItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
@@ -175,35 +177,44 @@ public partial class CreateStageOverlay : UserControl
             }
         }
 
-        // Populate AvatarData/AvatarPath from Users
         var userIds = taskAssignees.Select(ta => ta.UserId).Distinct().ToList();
-        var userAvatars = await db.Users
+        var userRows = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData, u.RoleName, u.SubRole, u.AdditionalSubRoles })
             .ToDictionaryAsync(u => u.Id);
         foreach (var ta in taskAssignees)
         {
-            if (userAvatars.TryGetValue(ta.UserId, out var av))
+            if (userRows.TryGetValue(ta.UserId, out var ur))
             {
-                ta.AvatarPath = av.AvatarPath;
-                ta.AvatarData = av.AvatarData;
+                ta.AvatarPath = ur.AvatarPath;
+                ta.AvatarData = ur.AvatarData;
             }
         }
 
-        // Only task assignees (project members assigned to task) can be assigned to stages
         if (taskAssignees.Count == 0)
         {
             _allAssigneeItems = [];
+            _foremanAssigneeItems = [];
+            _workerAssigneeItems = [];
         }
         else
         {
-            _allAssigneeItems = taskAssignees.Select(ta => new AssigneePickerItem(
-                ta.UserId,
-                ta.UserName,
-                GetRoleForTaskAssignee(db, ta.UserId),
-                _selectedAssigneeIds,
-                ta.AvatarPath,
-                ta.AvatarData)).ToList();
+            _allAssigneeItems = taskAssignees.Select(ta =>
+            {
+                userRows.TryGetValue(ta.UserId, out var ur);
+                var role = string.IsNullOrWhiteSpace(ur?.RoleName) ? "Worker" : ur.RoleName;
+                return new AssigneePickerItem(
+                    ta.UserId,
+                    ta.UserName,
+                    role,
+                    _selectedAssigneeIds,
+                    ta.AvatarPath,
+                    ta.AvatarData,
+                    ur?.SubRole,
+                    ur?.AdditionalSubRoles);
+            }).ToList();
+            _foremanAssigneeItems = _allAssigneeItems.Where(i => i.IsForemanPicker).ToList();
+            _workerAssigneeItems = _allAssigneeItems.Where(i => !i.IsForemanPicker).ToList();
         }
 
         // Load existing stage assignees if editing (exclude blocked users)
@@ -226,7 +237,21 @@ public partial class CreateStageOverlay : UserControl
         {
             RefreshAssigneeItems();
             RefreshAssigneeChips();
-            NoAssigneesHint.Visibility = _allAssigneeItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            var total = _allAssigneeItems.Count;
+            NoAssigneesHint.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
+            var showSections = total > 0;
+            StageForemanSectionTitle.Visibility = showSections && _foremanAssigneeItems.Count > 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            StageWorkerSectionTitle.Visibility = showSections && _workerAssigneeItems.Count > 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            StageForemanPickerBorder.Visibility = showSections && _foremanAssigneeItems.Count > 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            StageWorkerPickerBorder.Visibility = showSections && _workerAssigneeItems.Count > 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            NoStageForemenHint.Visibility = showSections && _foremanAssigneeItems.Count == 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            NoStageWorkersHint.Visibility = showSections && _workerAssigneeItems.Count == 0
+                ? Visibility.Visible : Visibility.Collapsed;
             ApplyWorkerModeUi();
         });
     }
@@ -355,8 +380,10 @@ public partial class CreateStageOverlay : UserControl
     {
         foreach (var item in _allAssigneeItems)
             item.RefreshSelected(_selectedAssigneeIds);
-        AssigneePickerList.ItemsSource = null;
-        AssigneePickerList.ItemsSource = _allAssigneeItems;
+        StageForemanPickerList.ItemsSource = null;
+        StageForemanPickerList.ItemsSource = _foremanAssigneeItems;
+        StageWorkerPickerList.ItemsSource = null;
+        StageWorkerPickerList.ItemsSource = _workerAssigneeItems;
     }
 
     private void RefreshAssigneeChips()
@@ -386,6 +413,26 @@ public partial class CreateStageOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
+        if (item.IsForemanPicker)
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = "  Прораб",
+                FontSize = 11,
+                Foreground = item.RoleColorBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        }
+        else if (!string.IsNullOrWhiteSpace(item.RoleSubtitle))
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = $"  {item.RoleSubtitle}",
+                FontSize = 11,
+                Foreground = item.RoleSubtitleBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        }
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
@@ -407,7 +454,13 @@ public partial class CreateStageOverlay : UserControl
         return chip;
     }
 
-    private void AssigneeItem_Click(object sender, MouseButtonEventArgs e)
+    private void StageForemanAssignee_Click(object sender, MouseButtonEventArgs e)
+        => ToggleAssigneeFromClick(sender);
+
+    private void StageWorkerAssignee_Click(object sender, MouseButtonEventArgs e)
+        => ToggleAssigneeFromClick(sender);
+
+    private void ToggleAssigneeFromClick(object sender)
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
         if (_selectedAssigneeIds.Contains(item.UserId))
@@ -570,15 +623,6 @@ public partial class CreateStageOverlay : UserControl
         return await db.Tasks.FindAsync(taskId);
     }
 
-    private static string GetRoleForTaskAssignee(LocalDbContext db, Guid userId)
-    {
-        var role = db.Users
-            .Where(u => u.Id == userId)
-            .Select(u => u.RoleName)
-            .FirstOrDefault();
-
-        return string.IsNullOrWhiteSpace(role) ? "Worker" : role;
-    }
 }
 
 public sealed class StageSelectionItem : INotifyPropertyChanged

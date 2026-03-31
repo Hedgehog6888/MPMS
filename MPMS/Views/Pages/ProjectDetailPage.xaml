@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="MPMS.Views.Pages.ProjectDetailPage"
+<UserControl x:Class="MPMS.Views.Pages.ProjectDetailPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:MPMS.Controls"
@@ -557,8 +557,6 @@
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="13" FontWeight="SemiBold"
                                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                        <TextBlock Text="Прораб" FontSize="11"
-                                                                   Foreground="#000000"/>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -602,8 +600,20 @@
                                                         <TextBlock Text="{Binding UserName}"
                                                                    FontSize="13" FontWeight="SemiBold"
                                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                        <TextBlock Text="Работник" FontSize="11"
-                                                                   Foreground="#6B778C"/>
+                                                        <TextBlock Text="{Binding RoleLabel}" FontSize="11"
+                                                                   Foreground="{Binding WorkerLineForegroundHex, Converter={StaticResource HexToBrush}}"
+                                                                   Margin="0,2,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding RoleLabel}" Value="">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
                                                     </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>

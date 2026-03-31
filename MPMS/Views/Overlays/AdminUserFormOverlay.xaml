@@ -30,6 +30,13 @@
             <Setter Property="Margin"          Value="0,0,0,12"/>
         </Style>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="UserPickerItem" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="White">
@@ -71,7 +78,7 @@
         </Border>
 
         <!-- ═══ Form Body ════════════════════════════════════════════════ -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="FormMainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,0,24,8">
 
                 <!-- PERSONAL INFO -->
@@ -127,7 +134,32 @@
                 <ComboBox x:Name="RoleCombo"
                           Style="{StaticResource FormCombo}"
                           Margin="0,0,0,12"
-                          DisplayMemberPath="Display"/>
+                          DisplayMemberPath="Display"
+                          SelectionChanged="RoleCombo_SelectionChanged"/>
+
+                <!-- Main + additional specialties (visible only for Worker) -->
+                <StackPanel x:Name="SubRolePanel" Visibility="Collapsed">
+                    <TextBlock Text="Основная специализация *" Style="{StaticResource FormLabel}"/>
+                    <Border Style="{StaticResource FormField}" Margin="0,0,0,10" Padding="0">
+                        <ComboBox x:Name="SubRoleCombo"
+                                  Style="{StaticResource FormCombo}"
+                                  Margin="0"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  VerticalContentAlignment="Center"
+                                  IsEditable="False"
+                                  SelectionChanged="SubRoleCombo_OnSelectionChanged"/>
+                    </Border>
+
+                    <TextBlock Text="Дополнительные специализации" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" CornerRadius="8" Padding="0"
+                            BorderBrush="#DFE1E6" BorderThickness="1" Margin="0,0,0,12" MaxHeight="200">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="SpecsScroll_PreviewMouseWheel">
+                            <StackPanel x:Name="AdditionalSpecsPanel" Margin="0,4,0,4"/>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
 
                 <!-- CREDENTIALS -->
                 <TextBlock Text="УЧЁТНЫЕ ДАННЫЕ" Style="{StaticResource SectionHeader}"/>

@@ -32,6 +32,8 @@ public static class LocalSchemaMigrator
         SplitUserNameToFirstLast(conn);
         CreateDeletedUserIdsTable(conn);
         CreateAppFlagsTable(conn);
+        AddSubRoleColumn(conn);
+        AddAdditionalSubRolesColumn(conn);
     }
 
     private static void CreateAppFlagsTable(SqliteConnection conn)
@@ -231,6 +233,16 @@ public static class LocalSchemaMigrator
                 """);
         }
         catch (SqliteException) { /* ignore */ }
+    }
+
+    private static void AddSubRoleColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"SubRole\" TEXT NULL;");
+    }
+
+    private static void AddAdditionalSubRolesColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"AdditionalSubRoles\" TEXT NULL;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

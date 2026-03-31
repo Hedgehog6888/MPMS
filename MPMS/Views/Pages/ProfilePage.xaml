@@ -119,16 +119,15 @@
                     <StackPanel>
                         <!-- Avatar area -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,16">
-                            <!-- Outer ring (subtle glow) -->
+                            <!-- Outer ring -->
                             <Border Width="96" Height="96" CornerRadius="48"
                                     HorizontalAlignment="Center"
                                     BorderBrush="#BFDBFE" BorderThickness="2"/>
 
-                            <!-- Avatar circle: photo OR initials — EllipseGeometry для идеального круга -->
+                            <!-- Avatar circle -->
                             <Border x:Name="AvatarBorder" Style="{StaticResource AvatarCircle90}"
                                     HorizontalAlignment="Center"
                                     Background="#1B6EC2">
-                                <!-- Initials (visible when no photo) -->
                                 <TextBlock x:Name="AvatarInitials" Text="ИИ"
                                            FontSize="30" FontWeight="Bold"
                                            Foreground="White"
@@ -136,7 +135,7 @@
                                            VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Photo image (EllipseGeometry для идеального круга) -->
+                            <!-- Photo image -->
                             <Border Style="{StaticResource AvatarCircle90}"
                                     HorizontalAlignment="Center">
                                 <Image x:Name="AvatarImage"
@@ -145,7 +144,7 @@
                                        Visibility="Collapsed"/>
                             </Border>
 
-                            <!-- Upload button overlay (camera icon) — EllipseGeometry как у AvatarCircle90 -->
+                            <!-- Upload button overlay -->
                             <Border Width="90" Height="90" CornerRadius="45"
                                     HorizontalAlignment="Center"
                                     ClipToBounds="True"
@@ -196,7 +195,16 @@
                                    Text="Должность"
                                    FontSize="13" Foreground="#6B778C"
                                    HorizontalAlignment="Center"
-                                   Margin="0,0,0,12"/>
+                                   Margin="0,0,0,6"/>
+
+                        <!-- Sub-role badge for workers -->
+                        <Border x:Name="SubRoleBadge" CornerRadius="12" Padding="12,5"
+                                HorizontalAlignment="Center" Margin="0,0,0,8"
+                                Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1"
+                                Visibility="Collapsed">
+                            <TextBlock x:Name="SubRoleText" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#9A3412" HorizontalAlignment="Center"/>
+                        </Border>
 
                         <!-- Role badge -->
                         <Border x:Name="RoleBadge" CornerRadius="20" Padding="14,6"
@@ -273,7 +281,6 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Projects -->
                             <Border Grid.Row="0" Grid.Column="0" CornerRadius="8" Padding="12"
                                     Background="#EFF6FF" Margin="0,0,6,6">
                                 <StackPanel>
@@ -285,7 +292,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Tasks -->
                             <Border Grid.Row="0" Grid.Column="1" CornerRadius="8" Padding="12"
                                     Background="#F0FDF4" Margin="6,0,0,6">
                                 <StackPanel>
@@ -297,7 +303,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Stages -->
                             <Border Grid.Row="1" Grid.Column="0" CornerRadius="8" Padding="12"
                                     Background="#FFF7ED" Margin="0,0,6,0">
                                 <StackPanel>
@@ -309,7 +314,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Actions -->
                             <Border Grid.Row="1" Grid.Column="1" CornerRadius="8" Padding="12"
                                     Background="#FDF4FF" Margin="6,0,0,0">
                                 <StackPanel>
@@ -324,17 +328,16 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Security card -->
+                <!-- Change password card -->
                 <Border Style="{StaticResource ProfileCard}" Padding="20">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <TextBlock Text="🔐" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Безопасность" Style="{StaticResource ProfileSectionTitle}"
+                            <TextBlock Text="🔑" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Пароль" Style="{StaticResource ProfileSectionTitle}"
                                        Margin="0"/>
                         </StackPanel>
 
-                        <!-- Change password -->
-                        <Border CornerRadius="8" Padding="12,10" Margin="0,0,0,6"
+                        <Border CornerRadius="8" Padding="12,10" Margin="0,0,0,0"
                                 Cursor="Hand" Background="Transparent"
                                 BorderBrush="#F0F0F0" BorderThickness="1">
                             <Border.Style>
@@ -350,23 +353,8 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Изменить пароль" FontSize="12" FontWeight="SemiBold"
                                                Foreground="#000000"/>
-                                    <TextBlock Text="Последнее изменение неизвестно" FontSize="11"
+                                    <TextBlock Text="Доступно в режиме редактирования" FontSize="11"
                                                Foreground="#6B778C" Margin="0,2,0,0"/>
-                                </StackPanel>
-                                <TextBlock Text="›" FontSize="18" Foreground="#C1C7D0"
-                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-
-                        <Border CornerRadius="8" Padding="12,10"
-                                Cursor="Hand" Background="#FFF7ED"
-                                BorderBrush="#FED7AA" BorderThickness="1">
-                            <Grid>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="2FA аутентификация" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#000000"/>
-                                    <TextBlock Text="Не настроена" FontSize="11"
-                                               Foreground="#EA580C" Margin="0,2,0,0"/>
                                 </StackPanel>
                                 <TextBlock Text="›" FontSize="18" Foreground="#C1C7D0"
                                            HorizontalAlignment="Right" VerticalAlignment="Center"/>
@@ -420,25 +408,35 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,16">
-                                <TextBlock Text="ПОЛНОЕ ИМЯ" Style="{StaticResource ProfileLabel}"/>
-                                <TextBlock x:Name="ViewName" Style="{StaticResource ProfileValue}"/>
+                                <TextBlock Text="ИМЯ" Style="{StaticResource ProfileLabel}"/>
+                                <TextBlock x:Name="ViewFirstName" Style="{StaticResource ProfileValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,16">
+                                <TextBlock Text="ФАМИЛИЯ" Style="{StaticResource ProfileLabel}"/>
+                                <TextBlock x:Name="ViewLastName" Style="{StaticResource ProfileValue}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,0,16">
                                 <TextBlock Text="ЛОГИН" Style="{StaticResource ProfileLabel}"/>
                                 <TextBlock x:Name="ViewUsername" Style="{StaticResource ProfileValue}"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,0,16">
+                            <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,0,16">
                                 <TextBlock Text="EMAIL" Style="{StaticResource ProfileLabel}"/>
                                 <TextBlock x:Name="ViewEmail" Style="{StaticResource ProfileValue}"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,0,16">
+                            <StackPanel Grid.Column="0" Grid.Row="2" Margin="0,0,0,16">
                                 <TextBlock Text="РОЛЬ В СИСТЕМЕ" Style="{StaticResource ProfileLabel}"/>
                                 <TextBlock x:Name="ViewRole" Style="{StaticResource ProfileValue}"/>
                             </StackPanel>
-                            <StackPanel Grid.Column="0" Grid.Row="2">
+                            <StackPanel x:Name="ViewSubRolePanel" Grid.Column="2" Grid.Row="2" Margin="0,0,0,16"
+                                        Visibility="Collapsed">
+                                <TextBlock Text="СПЕЦИАЛИЗАЦИЯ" Style="{StaticResource ProfileLabel}"/>
+                                <TextBlock x:Name="ViewSubRole" Style="{StaticResource ProfileValue}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="0" Grid.Row="3">
                                 <TextBlock Text="ДАТА РЕГИСТРАЦИИ" Style="{StaticResource ProfileLabel}"/>
                                 <TextBlock x:Name="ViewCreated" Style="{StaticResource ProfileValue}"/>
                             </StackPanel>
@@ -452,7 +450,7 @@
                     <StackPanel>
                         <TextBlock Text="Редактирование профиля" Style="{StaticResource ProfileSectionTitle}"/>
 
-                        <!-- Name + Email row -->
+                        <!-- First name + Last name row -->
                         <Grid Margin="0,0,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -461,18 +459,24 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Полное имя *" Style="{StaticResource ProfileLabel}"/>
+                                <TextBlock Text="Имя *" Style="{StaticResource ProfileLabel}"/>
                                 <Border Style="{StaticResource ProfileInput}">
-                                    <TextBox x:Name="NameBox" Style="{StaticResource EditInputBox}"/>
+                                    <TextBox x:Name="FirstNameBox" Style="{StaticResource EditInputBox}"/>
                                 </Border>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Email" Style="{StaticResource ProfileLabel}"/>
+                                <TextBlock Text="Фамилия *" Style="{StaticResource ProfileLabel}"/>
                                 <Border Style="{StaticResource ProfileInput}">
-                                    <TextBox x:Name="EmailBox" Style="{StaticResource EditInputBox}"/>
+                                    <TextBox x:Name="LastNameBox" Style="{StaticResource EditInputBox}"/>
                                 </Border>
                             </StackPanel>
                         </Grid>
+
+                        <!-- Email -->
+                        <TextBlock Text="Email" Style="{StaticResource ProfileLabel}"/>
+                        <Border Style="{StaticResource ProfileInput}">
+                            <TextBox x:Name="EmailBox" Style="{StaticResource EditInputBox}"/>
+                        </Border>
 
                         <!-- Current password (required to save changes) -->
                         <TextBlock Text="Текущий пароль (для подтверждения) *"
@@ -550,81 +554,6 @@
                                            Foreground="#16A34A" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-                    </StackPanel>
-                </Border>
-
-                <!-- Recent Activity -->
-                <Border Style="{StaticResource ProfileCard}" Padding="24" Margin="0,0,0,16">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,14">
-                            <TextBlock Text="Последние действия" Style="{StaticResource ProfileSectionTitle}"
-                                       Margin="0" VerticalAlignment="Center"/>
-                        </Grid>
-
-                        <ItemsControl x:Name="ActivityList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="36"/>
-                                            <ColumnDefinition Width="8"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <!-- Avatar circle -->
-                                        <Border Width="36" Height="36" CornerRadius="18"
-                                                Background="#E8E9EC">
-                                            <TextBlock Text="{Binding UserInitials}"
-                                                       FontSize="11" FontWeight="Bold"
-                                                       Foreground="#000000"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
-                                        </Border>
-
-                                        <!-- Action text -->
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding UserName}"
-                                                           FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="#000000"/>
-                                                <Border CornerRadius="3" Padding="4,1" Margin="6,0,0,0"
-                                                        Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
-                                                        BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
-                                                        BorderThickness="1"
-                                                        Visibility="{Binding ActorRole, Converter={StaticResource StringToVis}}"
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
-                                                               FontSize="9" FontWeight="SemiBold"
-                                                               Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
-                                                </Border>
-                                            </StackPanel>
-                                            <TextBlock Text="{Binding ActionText}"
-                                                       FontSize="12" Foreground="#6B778C"
-                                                       TextWrapping="Wrap" Margin="0,2,0,0"/>
-                                        </StackPanel>
-
-                                        <!-- Time -->
-                                        <TextBlock Grid.Column="3"
-                                                   FontSize="11" Foreground="#97A0AF"
-                                                   VerticalAlignment="Center"
-                                                   Margin="12,0,0,0">
-                                            <TextBlock.Text>
-                                                <Binding Path="CreatedAt" Converter="{StaticResource UtcToLocalDateTime}">
-                                                    <Binding.StringFormat>dd.MM HH:mm</Binding.StringFormat>
-                                                </Binding>
-                                            </TextBlock.Text>
-                                        </TextBlock>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Empty activity -->
-                        <TextBlock x:Name="NoActivityText"
-                                   Text="Действий пока нет" FontSize="13"
-                                   Foreground="#97A0AF" HorizontalAlignment="Center"
-                                   Margin="0,12,0,0" Visibility="Collapsed"/>
                     </StackPanel>
                 </Border>
 

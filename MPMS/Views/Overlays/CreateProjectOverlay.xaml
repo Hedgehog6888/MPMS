@@ -177,15 +177,12 @@
                                                                        Visibility="{Binding User.AvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                         </Grid>
                                                     </Border>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}"
-                                                                   FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#000000"/>
-                                                        <TextBlock Text="{Binding RoleDisplay}"
-                                                                   FontSize="11"
-                                                                   Foreground="{Binding RoleColorBrush}"/>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontSize="13" FontWeight="SemiBold"
+                                                                       Foreground="#000000"/>
+                                                        </StackPanel>
                                                     </StackPanel>
-                                                </StackPanel>
                                                 <Border Width="22" Height="22" CornerRadius="11"
                                                         Background="#111111"
                                                         HorizontalAlignment="Right"
@@ -266,9 +263,6 @@
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontSize="13" FontWeight="SemiBold"
                                                                        Foreground="#000000"/>
-                                                            <TextBlock Text="{Binding RoleDisplay}"
-                                                                       FontSize="11"
-                                                                       Foreground="{Binding RoleColorBrush}"/>
                                                         </StackPanel>
                                                     </StackPanel>
                                                     <Border Width="22" Height="22" CornerRadius="11"
@@ -351,9 +345,10 @@
                                                             <TextBlock Text="{Binding Name}"
                                                                        FontSize="13" FontWeight="SemiBold"
                                                                        Foreground="#000000"/>
-                                                            <TextBlock Text="{Binding RoleDisplay}"
+                                                            <TextBlock Text="{Binding RoleSubtitle}"
                                                                        FontSize="11"
-                                                                       Foreground="{Binding RoleColorBrush}"/>
+                                                                       Foreground="{Binding RoleSubtitleBrush}"
+                                                                       Visibility="{Binding RoleSubtitleVis}"/>
                                                         </StackPanel>
                                                     </StackPanel>
                                                     <Border Width="22" Height="22" CornerRadius="11"

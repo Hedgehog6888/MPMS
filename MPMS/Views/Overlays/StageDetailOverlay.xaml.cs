@@ -169,14 +169,18 @@ public partial class StageDetailOverlay : UserControl
         }
 
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
-        var roleByUser = new Dictionary<Guid, string?>();
+        var roleByUser    = new Dictionary<Guid, string?>();
+        var subRoleByUser = new Dictionary<Guid, string?>();
+        var addSpecByUser = new Dictionary<Guid, string?>();
         if (userIds.Count > 0)
         {
             var userRows = await db.Users.Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
             var avDict = userRows.ToDictionary(u => u.Id);
-            roleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            roleByUser    = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            subRoleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.SubRole);
+            addSpecByUser = userRows.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -191,7 +195,9 @@ public partial class StageDetailOverlay : UserControl
             .Select(a =>
             {
                 roleByUser.TryGetValue(a.UserId, out var role);
-                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath);
+                subRoleByUser.TryGetValue(a.UserId, out var subRole);
+                addSpecByUser.TryGetValue(a.UserId, out var addSpec);
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec);
             })
             .ToList();
 

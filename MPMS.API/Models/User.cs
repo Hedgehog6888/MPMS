@@ -29,6 +29,13 @@ public class User
     public Guid RoleId { get; set; }
     public Role Role { get; set; } = null!;
 
+    /// <summary>Primary worker specialty (e.g. "Электромонтажник").</summary>
+    [MaxLength(100)]
+    public string? SubRole { get; set; }
+
+    /// <summary>JSON array of additional specialties.</summary>
+    public string? AdditionalSubRoles { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

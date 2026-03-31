@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -14,19 +18,155 @@ public partial class AdminUserFormOverlay : UserControl
     private AdminViewModel? _adminVm;
     private AdminUserRow?   _editingRow;
     private bool            _isEditMode;
+    private bool            _loadingRoles;
+    private bool            _suppressSubRoleRebuild;
+
+    /// <summary>Состояние выбора доп. специализаций (как в списке работников проекта).</summary>
+    private readonly Dictionary<string, bool> _additionalSpecSelected = new(StringComparer.OrdinalIgnoreCase);
+
+    private static bool IsDbWorkerRole(string? roleName) =>
+        roleName is "Worker" or "Работник";
+
+    /// <summary>Совпадает с <see cref="WorkerSpecialtiesJson.CanonicalWorkerSpecialties"/> (цвета привязаны к порядку).</summary>
+    public static readonly IReadOnlyList<string> WorkerSubRoles = WorkerSpecialtiesJson.CanonicalWorkerSpecialties;
 
     public AdminUserFormOverlay()
     {
         InitializeComponent();
+        SubRoleCombo.ItemsSource = WorkerSubRoles.ToList();
+        BuildAdditionalRows(null, null);
         Loaded += async (_, _) => await LoadRolesAsync();
+    }
+
+    private void BuildAdditionalRows(string? excludeMain, IEnumerable<string>? restoreChecked)
+    {
+        var restore = restoreChecked?.ToHashSet(StringComparer.Ordinal) ?? new HashSet<string>(StringComparer.Ordinal);
+        var mainNorm = excludeMain?.Trim();
+        _additionalSpecSelected.Clear();
+        AdditionalSpecsPanel.Children.Clear();
+        foreach (var spec in WorkerSubRoles)
+        {
+            if (!string.IsNullOrEmpty(mainNorm) && string.Equals(spec, mainNorm, StringComparison.OrdinalIgnoreCase))
+                continue;
+            _additionalSpecSelected[spec] = restore.Contains(spec);
+            AdditionalSpecsPanel.Children.Add(CreateAdditionalSpecPickRow(spec));
+        }
+    }
+
+    private Style? TryFindPickerStyle(string key) =>
+        TryFindResource(key) as Style ?? Application.Current.TryFindResource(key) as Style;
+
+    private Border CreateAdditionalSpecPickRow(string spec)
+    {
+        const double checkColW = 18;
+        var selected = _additionalSpecSelected.GetValueOrDefault(spec);
+        var checkMark = new Border
+        {
+            Width = 16,
+            Height = 16,
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromRgb(0x11, 0x11, 0x11)),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = selected ? Visibility.Visible : Visibility.Hidden,
+            Child = new TextBlock
+            {
+                Text = "✓",
+                FontSize = 8,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }
+        };
+
+        var nameBlock = new TextBlock
+        {
+            Text = spec,
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0)),
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(checkColW) });
+        Grid.SetColumn(nameBlock, 0);
+        Grid.SetColumn(checkMark, 1);
+        grid.Children.Add(nameBlock);
+        grid.Children.Add(checkMark);
+
+        var row = new Border
+        {
+            Style = TryFindPickerStyle("UserPickerItem"),
+            Child = grid,
+            Tag = spec
+        };
+
+        row.MouseEnter += (_, _) => row.Background = new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA));
+        row.MouseLeave += (_, _) => row.Background = Brushes.Transparent;
+        row.MouseLeftButtonDown += (_, e) =>
+        {
+            var on = !_additionalSpecSelected.GetValueOrDefault(spec);
+            _additionalSpecSelected[spec] = on;
+            checkMark.Visibility = on ? Visibility.Visible : Visibility.Hidden;
+            e.Handled = true;
+        };
+
+        return row;
+    }
+
+    private void SpecsScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer nested)
+            return;
+        var atTop = nested.VerticalOffset <= 0;
+        var atBottom = nested.VerticalOffset >= nested.ScrollableHeight;
+        var up = e.Delta > 0;
+        var down = e.Delta < 0;
+        if ((atTop && up) || (atBottom && down))
+        {
+            FormMainScrollViewer.ScrollToVerticalOffset(FormMainScrollViewer.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
+    }
+
+    private HashSet<string> GetCheckedAdditional() =>
+        _additionalSpecSelected.Where(kv => kv.Value).Select(kv => kv.Key).ToHashSet(StringComparer.Ordinal);
+
+    private string? GetMainSubRoleFromCombo()
+    {
+        if (SubRoleCombo.SelectedItem is string s && !string.IsNullOrWhiteSpace(s))
+            return s.Trim();
+        return null;
+    }
+
+    private void SubRoleCombo_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressSubRoleRebuild)
+            return;
+        var main = GetMainSubRoleFromCombo();
+        var saved = GetCheckedAdditional();
+        BuildAdditionalRows(main, saved);
+    }
+
+    private string? CollectAdditionalSubRolesJson(string? mainTrimmed)
+    {
+        var list = GetCheckedAdditional()
+            .Where(s => string.IsNullOrEmpty(mainTrimmed)
+                || !string.Equals(s, mainTrimmed, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        return WorkerSpecialtiesJson.Serialize(list);
     }
 
     // ── Setup ─────────────────────────────────────────────────────────────
 
     public void SetCreateMode(AdminViewModel vm)
     {
-        _adminVm   = vm;
+        _adminVm    = vm;
         _isEditMode = false;
+        _editingRow = null;
         TitleLabel.Text    = "Создать пользователя";
         SubtitleLabel.Text = "Заполните данные нового пользователя";
         PasswordHint.Visibility = Visibility.Collapsed;
@@ -47,6 +187,21 @@ public partial class AdminUserFormOverlay : UserControl
         EmailBox.Text     = row.Email;
     }
 
+    private void RoleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (RoleCombo.SelectedItem is not RoleItem role)
+            return;
+        SubRolePanel.Visibility = role.Name == "Worker" ? Visibility.Visible : Visibility.Collapsed;
+        if (_loadingRoles || role.Name != "Worker")
+            return;
+        if (e.RemovedItems.Count > 0 && e.RemovedItems[0] is RoleItem prev && prev.Name != "Worker")
+        {
+            SubRoleCombo.ItemsSource = WorkerSubRoles.ToList();
+            SubRoleCombo.SelectedIndex = -1;
+            BuildAdditionalRows(null, null);
+        }
+    }
+
     // Fallback roles — IDs must match API (ApplicationDbContext seed)
     private static readonly List<RoleItem> _defaultRoles =
     [
@@ -58,6 +213,7 @@ public partial class AdminUserFormOverlay : UserControl
 
     private async Task LoadRolesAsync()
     {
+        _loadingRoles = true;
         var api = App.Services.GetRequiredService<IApiService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
@@ -94,11 +250,53 @@ public partial class AdminUserFormOverlay : UserControl
         RoleCombo.ItemsSource = items;
 
         if (_isEditMode && _editingRow is not null)
+        {
             RoleCombo.SelectedItem = items.FirstOrDefault(r =>
                 r.Id == _editingRow.RoleId ||
                 string.Equals(r.Name, _editingRow.RoleName, StringComparison.OrdinalIgnoreCase));
+            if (IsDbWorkerRole(_editingRow.RoleName))
+                SubRolePanel.Visibility = Visibility.Visible;
+        }
         else
             RoleCombo.SelectedIndex = 0;
+
+        if (_isEditMode && _editingRow is not null && IsDbWorkerRole(_editingRow.RoleName))
+        {
+            var rolesList = WorkerSubRoles.ToList();
+            var sub = _editingRow.SubRole?.Trim();
+            if (!string.IsNullOrWhiteSpace(sub) &&
+                !rolesList.Any(s => string.Equals(s, sub, StringComparison.OrdinalIgnoreCase)))
+                rolesList.Insert(0, sub);
+            SubRoleCombo.ItemsSource = rolesList;
+            _suppressSubRoleRebuild = true;
+            try
+            {
+                SubRoleCombo.SelectedItem = rolesList.FirstOrDefault(s =>
+                    string.Equals(s, sub, StringComparison.OrdinalIgnoreCase));
+            }
+            finally
+            {
+                _suppressSubRoleRebuild = false;
+            }
+            var main = GetMainSubRoleFromCombo() ?? sub;
+            BuildAdditionalRows(main, WorkerSpecialtiesJson.Deserialize(_editingRow.AdditionalSubRoles));
+        }
+        else
+        {
+            SubRoleCombo.ItemsSource = WorkerSubRoles.ToList();
+            _suppressSubRoleRebuild = true;
+            try
+            {
+                SubRoleCombo.SelectedIndex = -1;
+            }
+            finally
+            {
+                _suppressSubRoleRebuild = false;
+            }
+            BuildAdditionalRows(null, null);
+        }
+
+        _loadingRoles = false;
     }
 
     // ── Actions ───────────────────────────────────────────────────────────
@@ -121,15 +319,20 @@ public partial class AdminUserFormOverlay : UserControl
             var email     = EmailBox.Text.Trim();
             var password  = PasswordBox.Password;
             var passConfirm = PasswordConfirmBox.Password;
-            var role      = RoleCombo.SelectedItem as RoleItem;
+            var role = RoleCombo.SelectedItem as RoleItem;
 
             // Validation
             if (string.IsNullOrWhiteSpace(firstName))  { ShowError("Введите имя"); return; }
             if (string.IsNullOrWhiteSpace(lastName))   { ShowError("Введите фамилию"); return; }
             if (string.IsNullOrWhiteSpace(username))   { ShowError("Введите логин"); return; }
             if (role is null)                          { ShowError("Выберите роль"); return; }
+            if (role.Name == "Worker" && string.IsNullOrWhiteSpace(GetMainSubRoleFromCombo()))
+            { ShowError("Выберите основную специализацию работника."); return; }
             if (!_isEditMode && string.IsNullOrWhiteSpace(password)) { ShowError("Введите пароль"); return; }
             if (!string.IsNullOrEmpty(password) && password != passConfirm) { ShowError("Пароли не совпадают"); return; }
+
+            var subRole = role.Name == "Worker" ? GetMainSubRoleFromCombo()?.Trim() : null;
+            var additionalJson = role.Name == "Worker" ? CollectAdditionalSubRolesJson(subRole) : null;
 
             var fullName = $"{firstName} {lastName}".Trim();
             var api = App.Services.GetRequiredService<IApiService>();
@@ -151,6 +354,8 @@ public partial class AdminUserFormOverlay : UserControl
                 user.Email     = string.IsNullOrWhiteSpace(email) ? null : email;
                 user.RoleId    = role.Id;
                 user.RoleName  = role.Name;
+                user.SubRole             = subRole;
+                user.AdditionalSubRoles  = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
 
                 if (!string.IsNullOrEmpty(password))
@@ -167,7 +372,7 @@ public partial class AdminUserFormOverlay : UserControl
 
                 if (api.IsOnline)
                 {
-                    var updateReq = new UpdateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, role.Id, string.IsNullOrEmpty(password) ? null : password);
+                    var updateReq = new UpdateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, role.Id, string.IsNullOrEmpty(password) ? null : password, subRole, additionalJson);
                     var apiResult = await api.UpdateUserAsync(user.Id, updateReq);
                     if (apiResult is null)
                     {
@@ -194,6 +399,8 @@ public partial class AdminUserFormOverlay : UserControl
                     Email        = string.IsNullOrWhiteSpace(email) ? null : email,
                     RoleId       = role.Id,
                     RoleName     = role.Name,
+                    SubRole             = subRole,
+                    AdditionalSubRoles  = additionalJson,
                     PasswordHash = hash,
                     AvatarData   = avatarData,
                     CreatedAt    = DateTime.UtcNow,
@@ -208,7 +415,7 @@ public partial class AdminUserFormOverlay : UserControl
 
                 if (api.IsOnline)
                 {
-                    var createReq = new CreateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, password, role.Id, newId, avatarData);
+                    var createReq = new CreateUserRequest(firstName, lastName, username, string.IsNullOrWhiteSpace(email) ? null : email, password, role.Id, newId, avatarData, subRole, additionalJson);
                     var apiResult = await api.CreateUserAsync(createReq);
                     if (apiResult is null)
                     {

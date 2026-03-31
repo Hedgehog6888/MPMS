@@ -128,28 +128,34 @@ public partial class CreateTaskOverlay : UserControl
             .ToListAsync();
 
         var userIds = members.Select(m => m.UserId).Distinct().ToList();
-        var userAvatars = await db.Users
+        var userRows = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData, u.SubRole, u.AdditionalSubRoles })
             .ToDictionaryAsync(u => u.Id);
         foreach (var m in members)
         {
-            if (userAvatars.TryGetValue(m.UserId, out var av))
+            if (userRows.TryGetValue(m.UserId, out var ur))
             {
-                m.AvatarPath = av.AvatarPath;
-                m.AvatarData = av.AvatarData;
+                m.AvatarPath = ur.AvatarPath;
+                m.AvatarData = ur.AvatarData;
             }
+        }
+
+        AssigneePickerItem BuildItem(LocalProjectMember m)
+        {
+            userRows.TryGetValue(m.UserId, out var ur);
+            return new AssigneePickerItem(
+                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds,
+                m.AvatarPath, m.AvatarData, ur?.SubRole, ur?.AdditionalSubRoles);
         }
 
         _foremanItems = members
             .Where(m => m.UserRole is "Foreman" or "Прораб")
-            .Select(m => new AssigneePickerItem(
-                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData))
+            .Select(BuildItem)
             .ToList();
         _workerItems = members
             .Where(m => m.UserRole is "Worker" or "Работник")
-            .Select(m => new AssigneePickerItem(
-                m.UserId, m.UserName, m.UserRole, _selectedAssigneeIds, m.AvatarPath, m.AvatarData))
+            .Select(BuildItem)
             .ToList();
         _allAssigneeItems = [.. _foremanItems, .. _workerItems];
 
@@ -161,12 +167,16 @@ public partial class CreateTaskOverlay : UserControl
                 NoProjHintText.Text = "В проекте нет назначенных прорабов или работников. Добавьте команду в проект.";
                 ForemanPickerBorder.Visibility = Visibility.Collapsed;
                 WorkerPickerBorder.Visibility = Visibility.Collapsed;
+                ForemanSectionTitle.Visibility = Visibility.Collapsed;
+                WorkerSectionTitle.Visibility = Visibility.Collapsed;
             }
             else
             {
                 NoProjHint.Visibility = Visibility.Collapsed;
                 ForemanPickerBorder.Visibility = _foremanItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 WorkerPickerBorder.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                ForemanSectionTitle.Visibility = _foremanItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                WorkerSectionTitle.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             RefreshAssigneeItems();
         });
@@ -221,13 +231,26 @@ public partial class CreateTaskOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
-        sp.Children.Add(new TextBlock
+        if (item.IsForemanPicker)
         {
-            Text = $"  {item.RoleDisplay}",
-            FontSize = 11,
-            Foreground = item.RoleColorBrush,
-            VerticalAlignment = VerticalAlignment.Center
-        });
+            sp.Children.Add(new TextBlock
+            {
+                Text = "  Прораб",
+                FontSize = 11,
+                Foreground = item.RoleColorBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        }
+        else if (!string.IsNullOrWhiteSpace(item.RoleSubtitle))
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = $"  {item.RoleSubtitle}",
+                FontSize = 11,
+                Foreground = item.RoleSubtitleBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        }
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
@@ -490,11 +513,19 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
     public string Name { get; }
     public string? AvatarPath { get; }
     public byte[]? AvatarData { get; }
+    /// <summary>Короткая роль для внутренней логики (Прораб / Работник).</summary>
     public string RoleDisplay { get; }
+    /// <summary>Подпись под именем: спец. у работника; у прораба и др. — пусто.</summary>
+    public string? RoleSubtitle { get; }
+    public Visibility RoleSubtitleVis =>
+        string.IsNullOrWhiteSpace(RoleSubtitle) ? Visibility.Collapsed : Visibility.Visible;
+    public SolidColorBrush RoleSubtitleBrush { get; }
     public string Initials { get; }
     public SolidColorBrush AvatarBrush { get; }
     public SolidColorBrush RoleColorBrush { get; }
     public string RoleColor => RoleColorBrush.Color.ToString();
+    public bool IsForemanPicker =>
+        RoleDisplay == "Прораб";
 
     private bool _isSelected;
     public bool IsSelected
@@ -511,7 +542,15 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public AssigneePickerItem(Guid userId, string name, string role, HashSet<Guid> selectedIds, string? avatarPath = null, byte[]? avatarData = null)
+    public AssigneePickerItem(
+        Guid userId,
+        string name,
+        string role,
+        HashSet<Guid> selectedIds,
+        string? avatarPath = null,
+        byte[]? avatarData = null,
+        string? subRole = null,
+        string? additionalSubRolesJson = null)
     {
         UserId = userId;
         Name = name;
@@ -524,21 +563,38 @@ public sealed class AssigneePickerItem : INotifyPropertyChanged
             ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
             : name.Length > 0 ? name[0].ToString().ToUpper() : "?";
 
-        (RoleDisplay, AvatarBrush, RoleColorBrush) = role switch
+        (RoleDisplay, AvatarBrush, RoleColorBrush, RoleSubtitle, RoleSubtitleBrush) = role switch
         {
             "Foreman" or "Прораб" => (
                 "Прораб",
                 new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34)),
-                new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34))),
-            "Worker" or "Работник" => (
-                "Работник",
-                new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E)),
+                new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34)),
+                null,
                 new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E))),
+            "Worker" or "Работник" => BuildWorkerPickerBrushes(subRole, additionalSubRolesJson),
             _ => (
                 role,
                 new SolidColorBrush(Colors.Black),
+                new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)),
+                null,
                 new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)))
         };
+    }
+
+    private static (string RoleDisplay, SolidColorBrush AvatarBrush, SolidColorBrush RoleColorBrush, string? RoleSubtitle, SolidColorBrush RoleSubtitleBrush) BuildWorkerPickerBrushes(
+        string? subRole, string? additionalSubRolesJson)
+    {
+        var specKey = WorkerSpecialtiesJson.PrimaryDisplaySpecForColor(subRole, additionalSubRolesJson);
+        var av = WorkerSpecialtiesJson.PickerAvatarRgbForSpecName(specKey);
+        var fg = WorkerSpecialtiesJson.BadgeForegroundRgbForSpecName(specKey);
+        var avatarBrush = new SolidColorBrush(Color.FromRgb(av.R, av.G, av.B));
+        var lineBrush = new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B));
+        return (
+            "Работник",
+            avatarBrush,
+            lineBrush,
+            WorkerSpecialtiesJson.FormatWorkerLineCompact(subRole, additionalSubRolesJson),
+            lineBrush);
     }
 
     public void RefreshSelected(HashSet<Guid> selectedIds)

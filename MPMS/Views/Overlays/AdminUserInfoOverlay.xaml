@@ -84,14 +84,16 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center" MaxWidth="340">
                         <TextBlock x:Name="FullNameText"
                                    FontSize="18" FontWeight="Bold" Foreground="#000000"/>
                         <TextBlock x:Name="UsernameText"
                                    FontSize="13" Foreground="#6B778C" Margin="0,3,0,4"/>
-                        <Border x:Name="RoleBadge" CornerRadius="4" Padding="8,3" HorizontalAlignment="Left">
-                            <TextBlock x:Name="RoleBadgeText" FontSize="11" FontWeight="SemiBold"/>
-                        </Border>
+                        <WrapPanel x:Name="BadgesRowWrap" Orientation="Horizontal" VerticalAlignment="Top">
+                            <Border x:Name="RoleBadge" CornerRadius="4" Padding="8,3" Margin="0,0,6,4">
+                                <TextBlock x:Name="RoleBadgeText" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
+                        </WrapPanel>
                     </StackPanel>
                 </StackPanel>
 

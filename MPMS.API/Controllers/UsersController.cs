@@ -38,7 +38,7 @@ public class UsersController : ControllerBase
         var users = await query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt, u.AvatarData))
+            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles))
             .ToListAsync();
 
         return Ok(users);
@@ -69,6 +69,8 @@ public class UsersController : ControllerBase
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             RoleId = request.RoleId,
+            SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim(),
+            AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim(),
             AvatarData = avatarData,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -79,7 +81,7 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData));
+            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles));
     }
 
     /// <summary>Update user (admin only)</summary>
@@ -101,6 +103,8 @@ public class UsersController : ControllerBase
         user.Username = request.Username.Trim();
         user.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         user.RoleId = request.RoleId;
+        user.SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim();
+        user.AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim();
         user.UpdatedAt = DateTime.UtcNow;
 
         if (!string.IsNullOrEmpty(request.NewPassword))
@@ -110,7 +114,7 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData));
+            user.Username, user.Email, user.Role.Name, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles));
     }
 
     /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>

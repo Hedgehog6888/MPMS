@@ -117,6 +117,8 @@ public class SyncService : ISyncService
                     local.Username = u.Username;
                     local.Email = u.Email;
                     local.RoleName = u.Role;
+                    local.SubRole = u.SubRole;
+                    local.AdditionalSubRoles = u.AdditionalSubRoles;
                     // Обновляем аватар с сервера только если нет несинхронизированных локальных изменений
                     if (local.IsSynced && u.AvatarData is { Length: > 0 })
                         local.AvatarData = u.AvatarData;
@@ -129,6 +131,8 @@ public class SyncService : ISyncService
                         Id = u.Id, Name = fullName,
                         FirstName = u.FirstName, LastName = u.LastName,
                         Username = u.Username, Email = u.Email, RoleName = u.Role,
+                        SubRole = u.SubRole,
+                        AdditionalSubRoles = u.AdditionalSubRoles,
                         AvatarData = u.AvatarData,
                         IsSynced = true, CreatedAt = u.CreatedAt
                     });

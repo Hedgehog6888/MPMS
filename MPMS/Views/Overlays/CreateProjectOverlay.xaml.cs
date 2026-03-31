@@ -179,7 +179,8 @@ public partial class CreateProjectOverlay : UserControl
         RefreshForemanChips();
 
         _workerItems = _workerUsers.Select(u => new AssigneePickerItem(
-            u.Id, u.Name, "Worker", _selectedWorkerIds, u.AvatarPath, u.AvatarData)).ToList();
+            u.Id, u.Name, "Worker", _selectedWorkerIds, u.AvatarPath, u.AvatarData,
+            u.SubRole, u.AdditionalSubRoles)).ToList();
         WorkerPickerList.ItemsSource = _workerItems;
         NoWorkersHint.Visibility = _workerItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -396,6 +397,16 @@ public partial class CreateProjectOverlay : UserControl
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
+        if (item is not null && !string.IsNullOrWhiteSpace(item.RoleSubtitle))
+        {
+            sp.Children.Add(new TextBlock
+            {
+                Text = $"  {item.RoleSubtitle}",
+                FontSize = 11,
+                Foreground = item.RoleSubtitleBrush,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+        }
         var removeBtn = new Button
         {
             Style = (Style)Application.Current.FindResource("ChipRemoveButton"),

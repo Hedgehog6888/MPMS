@@ -339,13 +339,15 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var userIds = members.Select(m => m.UserId).Distinct().ToList();
         var userAvatars = await db.Users
             .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData })
+            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData, u.SubRole, u.AdditionalSubRoles })
             .ToDictionaryAsync(u => u.Id);
         foreach (var m in members)
         {
             if (userAvatars.TryGetValue(m.UserId, out var av))
             {
                 m.AvatarPath = av.AvatarPath;
+                m.SubRole               = av.SubRole;
+                m.AdditionalSubRolesJson = av.AdditionalSubRoles;
                 var data = av.AvatarData;
                 if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
                 {
@@ -894,8 +896,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         "Administrator" or "Admin" => "Администратор",
         "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
-        "Foreman" => "Прораб",
-        "Worker" => "Работник",
+        "Foreman" or "Прораб" => "Прораб",
+        "Worker" or "Работник" => "Работник",
         _ => role ?? "—"
     };
 }

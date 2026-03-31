@@ -79,7 +79,7 @@ public class AuthController : ControllerBase
         if (user is null) return NotFound();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName, user.Username,
-            user.Email, user.Role.Name, user.CreatedAt, user.AvatarData));
+            user.Email, user.Role.Name, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles));
     }
 
     /// <summary>Change password</summary>

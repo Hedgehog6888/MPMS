@@ -24,6 +24,8 @@ public class AdminUserRow : ObservableObject
     public string RoleName       { get; set; } = string.Empty;
     public string RoleDisplay    { get; set; } = string.Empty;
     public Guid   RoleId         { get; set; }
+    public string? SubRole            { get; set; }
+    public string? AdditionalSubRoles { get; set; }
     public DateTime CreatedAt    { get; set; }
     public bool   IsBlocked      { get; set; }
     public string? BlockedReason { get; set; }
@@ -248,6 +250,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 RoleName      = u.RoleName,
                 RoleDisplay   = u.RoleDisplayName,
                 RoleId        = u.RoleId,
+                SubRole            = u.SubRole,
+                AdditionalSubRoles = u.AdditionalSubRoles,
                 CreatedAt     = u.CreatedAt,
                 IsBlocked     = u.IsBlocked,
                 BlockedReason = u.BlockedReason,

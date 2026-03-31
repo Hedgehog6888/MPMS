@@ -38,6 +38,12 @@ public class LocalUser : LocalEntity
     /// <summary>BCrypt hash for offline login — set by admin when creating/editing the user locally.</summary>
     public string? PasswordHash { get; set; }
 
+    /// <summary>Primary worker specialty (e.g. "Электромонтажник").</summary>
+    [MaxLength(100)] public string? SubRole { get; set; }
+
+    /// <summary>JSON array of additional specialties (see WorkerSpecialtiesJson).</summary>
+    public string? AdditionalSubRoles { get; set; }
+
     /// <summary>Indicates the account is blocked — user cannot log in.</summary>
     public bool IsBlocked { get; set; } = false;
     public DateTime? BlockedAt { get; set; }
@@ -54,6 +60,7 @@ public class LocalUser : LocalEntity
         }
     }
 
+    /// <summary>Base role in Russian (always «Работник» for Worker — for filters and admin list).</summary>
     [NotMapped]
     public string RoleDisplayName => RoleName switch
     {
@@ -64,6 +71,11 @@ public class LocalUser : LocalEntity
         { Length: > 0 } r                                       => r,
         _                                                       => "—"
     };
+
+    [NotMapped]
+    public string WorkerLabel => RoleName is "Worker"
+        ? WorkerSpecialtiesJson.FormatWorkerLine(SubRole, AdditionalSubRoles)
+        : RoleDisplayName;
 }
 
 public class LocalProject : LocalEntity
@@ -253,6 +265,24 @@ public class LocalProjectMember
     /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
 
+    /// <summary>Primary specialty — populated from LocalUser when loading.</summary>
+    [NotMapped] public string? SubRole { get; set; }
+
+    /// <summary>JSON additional specialties — populated from LocalUser.</summary>
+    [NotMapped] public string? AdditionalSubRolesJson { get; set; }
+
+    /// <summary>Подпись под именем только у работников (компактная специализация).</summary>
+    [NotMapped]
+    public string RoleLabel => UserRole is "Worker" or "Работник"
+        ? WorkerSpecialtiesJson.FormatWorkerLineCompact(SubRole, AdditionalSubRolesJson)
+        : "";
+
+    /// <summary>Цвет подписи работника (#RRGGBB) для HexToBrush.</summary>
+    [NotMapped]
+    public string WorkerLineForegroundHex => UserRole is "Worker" or "Работник"
+        ? WorkerSpecialtiesJson.ForegroundHexForWorkerLine(SubRole, AdditionalSubRolesJson)
+        : "#6B778C";
+
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
@@ -271,6 +301,25 @@ public class LocalTaskAssignee
 
     /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
+
+    /// <summary>Primary specialty — populated from LocalUser when loading.</summary>
+    [NotMapped] public string? SubRole { get; set; }
+
+    /// <summary>JSON additional specialties — populated from LocalUser.</summary>
+    [NotMapped] public string? AdditionalSubRolesJson { get; set; }
+
+    /// <summary>Role name for display — populated from LocalUser when loading.</summary>
+    [NotMapped] public string? RoleName { get; set; }
+
+    [NotMapped]
+    public string RoleLabel => RoleName is "Worker" or "Работник"
+        ? WorkerSpecialtiesJson.FormatWorkerLineCompact(SubRole, AdditionalSubRolesJson)
+        : "";
+
+    [NotMapped]
+    public string WorkerLineForegroundHex => RoleName is "Worker" or "Работник"
+        ? WorkerSpecialtiesJson.ForegroundHexForWorkerLine(SubRole, AdditionalSubRolesJson)
+        : "#6B778C";
 
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"

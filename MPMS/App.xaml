@@ -361,11 +361,11 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="22"/>
                                         </Grid.ColumnDefinitions>
                                         <ContentPresenter x:Name="contentPresenter"
                                                           Grid.Column="0"
-                                                          Margin="10,0,0,0"
+                                                          Margin="10,0,4,0"
                                                           VerticalAlignment="Center"
                                                           HorizontalAlignment="Left"
                                                           Content="{TemplateBinding SelectionBoxItem}"
@@ -374,8 +374,8 @@
                                                           ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                                           IsHitTestVisible="False"/>
                                         <Path x:Name="Arrow" Grid.Column="1"
-                                              Data="M 0 0 L 5 4 L 10 0"
-                                              Stroke="#6B778C" StrokeThickness="1.5"
+                                              Data="M 0 0 L 3.5 3 L 7 0"
+                                              Stroke="#6B778C" StrokeThickness="1.2"
                                               StrokeLineJoin="Round"
                                               HorizontalAlignment="Center"
                                               VerticalAlignment="Center"

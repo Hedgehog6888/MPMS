@@ -21,7 +21,6 @@ public partial class ProfilePage : UserControl
 {
     private LocalUser? _user;
 
-
     private static string AvatarDirectory =>
         System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -69,38 +68,46 @@ public partial class ProfilePage : UserControl
 
         if (_user is null) return;
 
-        var initials = AvatarHelper.GetInitials(_user.Name);
+        var displayName = !string.IsNullOrWhiteSpace(_user.Name)
+            ? _user.Name
+            : $"{_user.FirstName} {_user.LastName}".Trim();
+
+        var initials = AvatarHelper.GetInitials(displayName);
         AvatarInitials.Text = initials;
         ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);
-        NameText.Text = _user.Name;
+        NameText.Text = displayName;
         LoginText.Text = _user.Username;
         EmailText.Text = string.IsNullOrWhiteSpace(_user.Email) ? "—" : _user.Email;
         CreatedText.Text = _user.CreatedAt.ToString("dd.MM.yyyy");
 
         // View mode fields
-        ViewName.Text = _user.Name;
-        ViewUsername.Text = _user.Username;
-        ViewEmail.Text = string.IsNullOrWhiteSpace(_user.Email) ? "Не указан" : _user.Email;
-        ViewCreated.Text = _user.CreatedAt.ToString("dd MMMM yyyy");
+        ViewFirstName.Text = _user.FirstName;
+        ViewLastName.Text  = _user.LastName;
+        ViewUsername.Text  = _user.Username;
+        ViewEmail.Text     = string.IsNullOrWhiteSpace(_user.Email) ? "Не указан" : _user.Email;
+        ViewCreated.Text   = _user.CreatedAt.ToString("dd MMMM yyyy");
 
         // Edit mode pre-fill
-        NameBox.Text = _user.Name;
-        EmailBox.Text = _user.Email ?? "";
+        FirstNameBox.Text = _user.FirstName;
+        LastNameBox.Text  = _user.LastName;
+        EmailBox.Text     = _user.Email ?? "";
 
         // Role info
         var roleName = _user.RoleName;
-        PositionText.Text = roleName;
+        string positionLabel = roleName;
+
         if (RoleInfo.TryGetValue(roleName, out var info))
         {
-            RoleText.Text = info.label;
+            var roleLabel = info.label;
+            positionLabel = roleLabel;
+            RoleText.Text = roleLabel;
             RoleIcon.Text = info.icon;
-            ViewRole.Text = info.label;
-            RoleCardTitle.Text = info.label;
+            ViewRole.Text = roleLabel;
+            RoleCardTitle.Text = roleLabel;
             RoleCardIcon.Text = info.icon;
             RoleCardDesc.Text = info.desc;
             PermissionsList.ItemsSource = info.perms;
 
-            // Color badge by role
             var (bg, fg, border) = roleName switch
             {
                 "Administrator" or "Admin"   => ("#FEF2F2", "#991B1B", "#FCA5A5"),
@@ -122,6 +129,25 @@ public partial class ProfilePage : UserControl
             RoleCardDesc.Text = "";
         }
 
+        // Specialties for workers (основная + дополнительные)
+        if (roleName == "Worker")
+        {
+            var specLine = WorkerSpecialtiesJson.FormatWorkerLine(_user.SubRole, _user.AdditionalSubRoles);
+            var hasSpecs = !string.IsNullOrWhiteSpace(_user.SubRole)
+                           || WorkerSpecialtiesJson.Deserialize(_user.AdditionalSubRoles).Count > 0;
+            SubRoleBadge.Visibility = hasSpecs ? Visibility.Visible : Visibility.Collapsed;
+            SubRoleText.Text = specLine;
+            ViewSubRolePanel.Visibility = hasSpecs ? Visibility.Visible : Visibility.Collapsed;
+            ViewSubRole.Text = specLine;
+            PositionText.Text = hasSpecs ? specLine : positionLabel;
+        }
+        else
+        {
+            SubRoleBadge.Visibility = Visibility.Collapsed;
+            ViewSubRolePanel.Visibility = Visibility.Collapsed;
+            PositionText.Text = positionLabel;
+        }
+
         // Load stats
         var projectCount = await db.Projects.CountAsync();
         var taskCount = await db.Tasks.CountAsync();
@@ -130,11 +156,9 @@ public partial class ProfilePage : UserControl
         TaskCountText.Text = taskCount.ToString();
         StageCountText.Text = stageCount.ToString();
 
-        // Load recent activity with role-based filtering (last 8 entries)
-        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, auth, 8);
-        ActivityCountText.Text = (await ActivityFilterService.GetFilteredActivityCountAsync(db, auth)).ToString();
-        ActivityList.ItemsSource = activities;
-        NoActivityText.Visibility = activities.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        // Activity count
+        var activityCount = await ActivityFilterService.GetFilteredActivityCountAsync(db, auth);
+        ActivityCountText.Text = activityCount.ToString();
     }
 
     private void Edit_Click(object sender, RoutedEventArgs e)
@@ -149,8 +173,9 @@ public partial class ProfilePage : UserControl
 
         if (_user is not null)
         {
-            NameBox.Text = _user.Name;
-            EmailBox.Text = _user.Email ?? "";
+            FirstNameBox.Text = _user.FirstName;
+            LastNameBox.Text  = _user.LastName;
+            EmailBox.Text     = _user.Email ?? "";
         }
         CurrentPasswordBox.Password = "";
         NewPasswordBox.Password = "";
@@ -173,9 +198,12 @@ public partial class ProfilePage : UserControl
         ErrorPanel.Visibility = Visibility.Collapsed;
         SuccessPanel.Visibility = Visibility.Collapsed;
 
-        if (string.IsNullOrWhiteSpace(NameBox.Text))
+        var firstName = FirstNameBox.Text.Trim();
+        var lastName  = LastNameBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(firstName))
         {
-            ShowError("Введите полное имя.");
+            ShowError("Введите имя.");
             return;
         }
 
@@ -213,51 +241,43 @@ public partial class ProfilePage : UserControl
                 return;
             }
 
-            // Verify current password
             if (!BCrypt.Net.BCrypt.Verify(CurrentPasswordBox.Password, session.LocalPasswordHash))
             {
                 ShowError("Неверный текущий пароль.");
                 return;
             }
 
-            // Update user in local DB
+            var fullName = $"{firstName} {lastName}".Trim();
+
             if (_user is not null)
             {
                 var userEntity = await db.Users.FindAsync(_user.Id);
                 if (userEntity is not null)
                 {
-                    var parts = NameBox.Text.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                    userEntity.FirstName = parts.Length > 0 ? parts[0] : "";
-                    userEntity.LastName = parts.Length > 1 ? parts[1] : "";
-                    userEntity.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
-                    userEntity.IsSynced = false;
+                    userEntity.FirstName = firstName;
+                    userEntity.LastName  = lastName;
+                    userEntity.Name      = fullName;
+                    userEntity.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
+                    userEntity.IsSynced  = false;
                 }
             }
 
-            // Update password hash if changed
             if (!string.IsNullOrEmpty(newPass))
-            {
                 session.LocalPasswordHash = BCrypt.Net.BCrypt.HashPassword(newPass);
-            }
 
-            // Update display name in session
             if (_user is not null)
-            {
-                session.UserName = NameBox.Text.Trim();
-            }
+                session.UserName = fullName;
 
             await db.SaveChangesAsync();
 
-            // Refresh display
             if (_user is not null)
             {
-                var parts = NameBox.Text.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                _user.FirstName = parts.Length > 0 ? parts[0] : "";
-                _user.LastName = parts.Length > 1 ? parts[1] : "";
-                _user.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
+                _user.FirstName = firstName;
+                _user.LastName  = lastName;
+                _user.Name      = fullName;
+                _user.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
             }
 
-            // Log password change if it was changed
             if (!string.IsNullOrEmpty(newPass) && _user is not null)
             {
                 db.ActivityLogs.Add(new LocalActivityLog
@@ -278,11 +298,11 @@ public partial class ProfilePage : UserControl
 
             SuccessPanel.Visibility = Visibility.Visible;
 
-            // Update displayed name + avatar
-            NameText.Text = _user?.Name ?? "";
-            ViewName.Text = _user?.Name ?? "";
-            ViewEmail.Text = _user?.Email ?? "Не указан";
-            EmailText.Text = _user?.Email ?? "—";
+            NameText.Text      = _user?.Name ?? "";
+            ViewFirstName.Text = _user?.FirstName ?? "";
+            ViewLastName.Text  = _user?.LastName  ?? "";
+            ViewEmail.Text     = _user?.Email ?? "Не указан";
+            EmailText.Text     = _user?.Email ?? "—";
             AvatarInitials.Text = AvatarHelper.GetInitials(_user?.Name ?? "");
             ApplyAvatarDisplay(_user?.AvatarData, _user?.AvatarPath);
 
@@ -301,12 +321,6 @@ public partial class ProfilePage : UserControl
 
     // ── Avatar helpers ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Displays the best available avatar:
-    /// 1. AvatarData (bytes from DB) — custom photo or generated initials image
-    /// 2. AvatarPath (legacy file path)
-    /// 3. Pure initials text circle
-    /// </summary>
     private void ApplyAvatarDisplay(byte[]? avatarData, string? avatarPath)
     {
         var bmp = AvatarHelper.GetImageSource(avatarData, avatarPath, _user?.Name);
@@ -349,7 +363,6 @@ public partial class ProfilePage : UserControl
             Directory.CreateDirectory(AvatarDirectory);
             var avatarPath = Path.Combine(AvatarDirectory, $"{_user.Id}.png");
 
-            // Write PNG to disk and read bytes
             byte[] avatarBytes = await System.Threading.Tasks.Task.Run(() =>
             {
                 using var ms = new System.IO.MemoryStream();
@@ -374,7 +387,6 @@ public partial class ProfilePage : UserControl
                 entity.IsSynced   = false;
                 entity.LastModifiedLocally = DateTime.UtcNow;
 
-                // Log avatar change
                 db.ActivityLogs.Add(new LocalActivityLog
                 {
                     UserId      = _user.Id,
@@ -395,14 +407,11 @@ public partial class ProfilePage : UserControl
             _user.AvatarPath = avatarPath;
             _user.AvatarData = avatarBytes;
 
-            // Queue sync to server
             var sync = App.Services.GetRequiredService<ISyncService>();
             await sync.QueueOperationAsync("User", _user.Id, SyncOperation.Update, new UploadAvatarRequest(avatarBytes));
 
-            // Refresh the profile page avatar display
             ApplyAvatarDisplay(_user.AvatarData, _user.AvatarPath);
 
-            // Propagate to MainViewModel so the top-bar avatar updates
             var mainVm = App.Services.GetService(typeof(MPMS.ViewModels.MainViewModel))
                          as MPMS.ViewModels.MainViewModel;
             if (mainVm is not null)

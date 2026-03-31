@@ -140,7 +140,7 @@ public partial class TaskSummaryPanel : UserControl
         {
             var userRows = await db.Users
                 .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName })
+                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
             roles = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             var byId = userRows.ToDictionary(u => u.Id);
@@ -150,7 +150,9 @@ public partial class TaskSummaryPanel : UserControl
                     continue;
                 a.AvatarData = u.AvatarData;
                 a.AvatarPath = u.AvatarPath;
-                // В разметке только байты → подтянуть файл, если в БД есть путь, а PNG нет
+                a.RoleName   = u.RoleName;
+                a.SubRole               = u.SubRole;
+                a.AdditionalSubRolesJson = u.AdditionalSubRoles;
                 if ((a.AvatarData is null || a.AvatarData.Length == 0)
                     && !string.IsNullOrWhiteSpace(a.AvatarPath))
                 {

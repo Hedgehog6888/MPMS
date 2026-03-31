@@ -47,7 +47,37 @@ public partial class AdminUserInfoOverlay : UserControl
         UsernameText.Text   = $"@{_row.Username}";
         RoleBadgeText.Text  = _row.RoleDisplay;
         RoleBadge.Background   = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleColor));
-        RoleBadge.Child.SetValue(TextBlock.ForegroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleForeground)));
+        RoleBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleForeground));
+        var isWorker = _row.RoleName is "Worker" or "Работник";
+        RoleText.Text = isWorker ? "Работник" : _row.RoleDisplay;
+
+        BadgesRowWrap.Children.Clear();
+        BadgesRowWrap.Children.Add(RoleBadge);
+        if (isWorker)
+        {
+            var main = _row.SubRole?.Trim();
+            var extras = WorkerSpecialtiesJson.Deserialize(_row.AdditionalSubRoles)
+                .Where(s => !string.IsNullOrWhiteSpace(s) &&
+                            !string.Equals(s.Trim(), main, StringComparison.OrdinalIgnoreCase))
+                .Select(s => s.Trim())
+                .ToList();
+            void AddNamedBadge(string label)
+            {
+                var bg = WorkerSpecialtiesJson.BadgeBackgroundRgbForSpecName(label);
+                var fg = WorkerSpecialtiesJson.BadgeForegroundRgbForSpecName(label);
+                BadgesRowWrap.Children.Add(CreateSpecBadge(label,
+                    new SolidColorBrush(Color.FromRgb(bg.R, bg.G, bg.B)),
+                    new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B))));
+            }
+
+            if (!string.IsNullOrWhiteSpace(main))
+                AddNamedBadge(main);
+            else
+                AddNamedBadge("Работник");
+
+            foreach (var ex in extras)
+                AddNamedBadge(ex);
+        }
 
         // Status
         if (_row.IsBlocked)
@@ -71,7 +101,6 @@ public partial class AdminUserInfoOverlay : UserControl
 
         // Contact info
         EmailText.Text     = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
-        RoleText.Text      = _row.RoleDisplay;
         CreatedAtText.Text = _row.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
 
         HeaderSubtitle.Text = $"ID: {_row.Id.ToString()[..8]}…";
@@ -119,4 +148,20 @@ public partial class AdminUserInfoOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
         _adminVm.OpenDeleteUserConfirmCommand.Execute(_row);
     }
+
+    private static Border CreateSpecBadge(string text, Brush background, Brush foreground) =>
+        new()
+        {
+            Background     = background,
+            CornerRadius   = new CornerRadius(4),
+            Padding        = new Thickness(8, 3, 8, 3),
+            Margin         = new Thickness(0, 0, 6, 4),
+            Child = new TextBlock
+            {
+                Text         = text,
+                FontSize     = 11,
+                FontWeight   = FontWeights.SemiBold,
+                Foreground   = foreground,
+            },
+        };
 }
