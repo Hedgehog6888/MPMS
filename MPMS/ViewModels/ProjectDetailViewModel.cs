@@ -61,8 +61,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _completedTasksCount;
     [ObservableProperty] private int _inProgressTasksCount;
     [ObservableProperty] private int _overdueTasksCount;
+    [ObservableProperty] private int _totalStagesCount;
+    [ObservableProperty] private int _completedStagesCount;
+    [ObservableProperty] private int _inProgressStagesCount;
+    [ObservableProperty] private int _overdueStagesCount;
     [ObservableProperty] private int _projectProgressPercent;
     [ObservableProperty] private IList<DonutSegment> _taskStatsSegments = [];
+    [ObservableProperty] private IList<DonutSegment> _stageStatsSegments = [];
     [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredPlannedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredInProgressStages = [];
@@ -104,8 +109,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         CompletedTasksCount = 0;
         InProgressTasksCount = 0;
         OverdueTasksCount = 0;
+        TotalStagesCount = 0;
+        CompletedStagesCount = 0;
+        InProgressStagesCount = 0;
+        OverdueStagesCount = 0;
         ProjectProgressPercent = 0;
         TaskStatsSegments = [];
+        StageStatsSegments = [];
         _goBackAction?.Invoke();
     }
 
@@ -286,6 +296,21 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             new() { Label = "В процессе",   Value = InProgressTasksCount, Color = Color.FromRgb(0xEA, 0xB3, 0x08) },
             new() { Label = "Просрочено",   Value = OverdueTasksCount,    Color = Color.FromRgb(0xEF, 0x44, 0x44) },
             new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
+        };
+
+        var activeStages = stages.Where(s => !s.EffectiveMarkedForDeletion).ToList();
+        TotalStagesCount = activeStages.Count;
+        CompletedStagesCount = activeStages.Count(s => s.Status == StageStatus.Completed);
+        InProgressStagesCount = activeStages.Count(s => s.Status == StageStatus.InProgress);
+        OverdueStagesCount = activeStages.Count(s => s.IsOverdue);
+        int plannedStagesCount = activeStages.Count(s => s.Status == StageStatus.Planned && !s.IsOverdue);
+
+        StageStatsSegments = new List<DonutSegment>
+        {
+            new() { Label = "Завершено",    Value = CompletedStagesCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
+            new() { Label = "В процессе",   Value = InProgressStagesCount, Color = Color.FromRgb(0xEA, 0xB3, 0x08) },
+            new() { Label = "Просрочено",   Value = OverdueStagesCount,    Color = Color.FromRgb(0xEF, 0x44, 0x44) },
+            new() { Label = "Запланировано",Value = plannedStagesCount,     Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
         };
 
         // Populate TaskName and AssignedUserAvatarData for each stage

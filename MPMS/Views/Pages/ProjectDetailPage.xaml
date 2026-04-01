@@ -662,17 +662,37 @@
                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                                     Margin="0,0,0,16">
                                 <StackPanel>
-                                    <TextBlock Text="Статистика задач" FontSize="14" FontWeight="SemiBold"
+                                    <TextBlock Text="Статистика" FontSize="14" FontWeight="SemiBold"
                                                Foreground="#000000" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Распределение задач по статусам"
+                                    <TextBlock Text="Распределение по статусам"
                                                FontSize="12" Foreground="#6B778C" Margin="0,0,0,16"/>
 
-                                    <!-- Donut chart -->
-                                    <controls:DonutChart
-                                        Segments="{Binding TaskStatsSegments}"
-                                        Width="160" Height="160"
-                                        HorizontalAlignment="Center"
-                                        Margin="0,0,0,16"/>
+                                    <!-- Donut charts -->
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Задачи" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#000000" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                            <controls:DonutChart
+                                                Segments="{Binding TaskStatsSegments}"
+                                                Width="140" Height="140"
+                                                HorizontalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Этапы" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="#000000" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                            <controls:DonutChart
+                                                Segments="{Binding StageStatsSegments}"
+                                                Width="140" Height="140"
+                                                HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
 
                                     <!-- Legend -->
                                     <StackPanel>
@@ -690,28 +710,49 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <!-- Summary row -->
+                                    <!-- Summary blocks -->
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="16"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Background="#F8F9FA" CornerRadius="8" Padding="12,10">
-                                            <StackPanel HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding TotalTasks}" FontSize="28" FontWeight="Bold"
-                                                           Foreground="#000000" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Всего задач" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
-                                        <Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="12,10">
-                                            <StackPanel HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding CompletedTasksCount}" FontSize="28" FontWeight="Bold"
-                                                           Foreground="#22C55E" HorizontalAlignment="Center"/>
-                                                <TextBlock Text="Завершено" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Border>
+
+                                        <StackPanel Grid.Column="0">
+                                            <Border Background="#F8F9FA" CornerRadius="8" Padding="12,10">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding TotalTasks}" FontSize="28" FontWeight="Bold"
+                                                               Foreground="#000000" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Всего задачь" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#E8F5E9" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding CompletedTasksCount}" FontSize="28" FontWeight="Bold"
+                                                               Foreground="#22C55E" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Завершено задачь" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <Border Background="#F8F9FA" CornerRadius="8" Padding="12,10">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding TotalStagesCount}" FontSize="28" FontWeight="Bold"
+                                                               Foreground="#000000" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Всего этапов" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#E8F5E9" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding CompletedStagesCount}" FontSize="28" FontWeight="Bold"
+                                                               Foreground="#22C55E" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Завершено этапов" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
                                     </Grid>
+
                                 </StackPanel>
                             </Border>
 
