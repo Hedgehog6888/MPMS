@@ -280,7 +280,7 @@
                                     <ColumnDefinition Width="110"/>
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="*" MinWidth="130" MaxWidth="180"/>
                                     <ColumnDefinition Width="80"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="НАЗВАНИЕ ПРОЕКТА"   Style="{StaticResource ColHeader}"/>
@@ -332,7 +332,7 @@
                                                 <ColumnDefinition Width="110"/>
                                                 <ColumnDefinition Width="120"/>
                                                 <ColumnDefinition Width="150"/>
-                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="*" MinWidth="130" MaxWidth="180"/>
                                                 <ColumnDefinition Width="80"/>
                                             </Grid.ColumnDefinitions>
 
@@ -426,9 +426,13 @@
                                             </StackPanel>
 
                                             <!-- Manager: аватар из БД или инициалы — EllipseGeometry для идеального круга -->
-                                            <StackPanel Grid.Column="6" Orientation="Horizontal"
-                                                        VerticalAlignment="Center">
-                                                <Border Style="{StaticResource AvatarCircle28}"
+                                            <Grid Grid.Column="6" VerticalAlignment="Center"
+                                                  Margin="0,0,8,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Style="{StaticResource AvatarCircle28}"
                                                         Background="#E8E9EC" Margin="0,0,8,0">
                                                     <Grid>
                                                         <Image Style="{StaticResource AvatarImage}"
@@ -443,12 +447,11 @@
                                                                    Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                     </Grid>
                                                 </Border>
-                                                <TextBlock Text="{Binding ManagerName}"
+                                                <TextBlock Grid.Column="1" Text="{Binding ManagerName}"
                                                            FontSize="12" Foreground="#000000"
                                                            VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           MaxWidth="90"/>
-                                            </StackPanel>
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </Grid>
 
                                                             <!-- Actions (role-based) -->
                                                             <StackPanel Grid.Column="7" Orientation="Horizontal"

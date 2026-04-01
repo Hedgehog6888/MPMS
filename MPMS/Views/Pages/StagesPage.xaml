@@ -144,7 +144,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="130"/>
                                                     <ColumnDefinition Width="130"/>
-                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="*" MinWidth="120" MaxWidth="170"/>
                                                     <ColumnDefinition Width="90"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
@@ -199,7 +199,7 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="130"/>
                                                                 <ColumnDefinition Width="130"/>
-                                                                <ColumnDefinition Width="100"/>
+                                                                <ColumnDefinition Width="*" MinWidth="120" MaxWidth="170"/>
                                                                 <ColumnDefinition Width="90"/>
                                                             </Grid.ColumnDefinitions>
 
@@ -301,6 +301,7 @@
 
                                                             <!-- Assignee -->
                                                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
+                                                                        Margin="0,0,8,0"
                                                                         Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}">
                                                                 <Border Style="{StaticResource AvatarCircle26}"
                                                                         Background="{Binding Stage.AssignedUserInitials, Converter={StaticResource InitialsToBrush}}"
@@ -319,7 +320,7 @@
                                                                     </Grid>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding Stage.AssignedUserName}"
-                                                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                           FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"/>
                                                             </StackPanel>

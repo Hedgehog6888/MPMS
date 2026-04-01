@@ -137,8 +137,8 @@
                                                     BorderThickness="1.5" BorderBrush="Transparent">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="140"/>
+                                                        <ColumnDefinition Width="3*"/>
+                                                        <ColumnDefinition Width="2*" MinWidth="170"/>
                                                         <ColumnDefinition Width="95"/>
                                                         <ColumnDefinition Width="100"/>
                                                         <ColumnDefinition Width="120"/>
@@ -189,8 +189,8 @@
                                             </Border.Style>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="140"/>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="2*" MinWidth="170"/>
                                                     <ColumnDefinition Width="95"/>
                                                     <ColumnDefinition Width="100"/>
                                                     <ColumnDefinition Width="120"/>
@@ -245,8 +245,7 @@
                                                     <TextBlock Text="{Binding AssignedUserName}"
                                                                FontSize="12" Foreground="#000000"
                                                                VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="104"/>
+                                                               TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
 
                                                 <!-- Priority badge -->
