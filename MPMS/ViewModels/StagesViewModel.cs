@@ -248,14 +248,35 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 query = query.Where(s => s.Stage.Status == targetStatus.Value && !s.Stage.EffectiveMarkedForDeletion);
         }
 
-        FilteredStages = new ObservableCollection<StageItem>(query);
+        static int StageStatusOrder(StageStatus st) => st switch
+        {
+            StageStatus.Planned    => 0,
+            StageStatus.InProgress => 1,
+            StageStatus.Completed  => 2,
+            _                      => 9
+        };
 
-        var taskGroups = query
+        var ordered = query
+            .OrderBy(s => s.Stage.EffectiveMarkedForDeletion)
+            .ThenBy(s => StageStatusOrder(s.Stage.Status))
+            .ThenBy(s => s.Stage.DueDate ?? DateOnly.MaxValue)
+            .ThenByDescending(s => s.Stage.UpdatedAt)
+            .ThenBy(s => s.TaskName)
+            .ThenBy(s => s.Stage.Name)
+            .ToList();
+
+        FilteredStages = new ObservableCollection<StageItem>(ordered);
+
+        var taskGroups = ordered
             .GroupBy(s => new { s.TaskId, s.TaskName, s.ProjectId, s.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
             .ThenBy(g => g.Key.TaskName)
             .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName, g.Key.ProjectId, g.Key.ProjectName,
-                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion).ToList(), isFirstInProject: false))
+                g.OrderBy(s => s.Stage.EffectiveMarkedForDeletion)
+                    .ThenBy(s => StageStatusOrder(s.Stage.Status))
+                    .ThenBy(s => s.Stage.DueDate ?? DateOnly.MaxValue)
+                    .ThenByDescending(s => s.Stage.UpdatedAt)
+                    .ToList(), isFirstInProject: false))
             .ToList();
 
         var projectGroups = taskGroups

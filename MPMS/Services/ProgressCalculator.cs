@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using MPMS.Data;
 using MPMS.Models;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -179,5 +181,30 @@ public static class ProgressCalculator
     public static string FormatPercent(double value)
     {
         return value % 1 == 0 ? $"{(int)value}%" : $"{value:F1}%";
+    }
+
+    /// <summary>
+    /// Загружает активные этапы из БД и обновляет счётчики/прогресс задачи.
+    /// Нужно после <c>FindAsync</c>, иначе <see cref="LocalTask.ProgressPercent"/> и этапы остаются устаревшими или нулевыми.
+    /// </summary>
+    public static async System.Threading.Tasks.Task ApplyTaskMetricsForTaskAsync(
+        LocalDbContext db, LocalTask task, System.Threading.CancellationToken ct = default)
+    {
+        var projMarked = await db.Projects.AsNoTracking()
+            .Where(p => p.Id == task.ProjectId)
+            .Select(p => p.IsMarkedForDeletion)
+            .FirstOrDefaultAsync(ct);
+        task.ProjectIsMarkedForDeletion = projMarked;
+
+        var stages = await db.TaskStages
+            .Where(s => s.TaskId == task.Id && !s.IsArchived)
+            .ToListAsync(ct);
+        foreach (var s in stages)
+        {
+            s.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
+            s.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
+        }
+
+        ApplyTaskMetrics(task, stages);
     }
 }

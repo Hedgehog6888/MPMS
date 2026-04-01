@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
@@ -29,6 +30,9 @@ public partial class MainWindow : Window
 
     private enum OverlayPresentationMode { None, Drawer, Modal }
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
+
+    /// <summary>Центральное окно поверх открытого drawer (карточка пользователя и т.п.).</summary>
+    private bool _stackedModalActive;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -75,6 +79,7 @@ public partial class MainWindow : Window
 
     public void ShowDrawer(UIElement content, double width = 520)
     {
+        _stackedModalActive = false;
         // Detach previous content first to avoid "child must be detached from parent Visual" when the same or related element is reparented
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
@@ -110,6 +115,7 @@ public partial class MainWindow : Window
 
     public void ShowCenteredOverlay(UIElement content, double width = 920)
     {
+        _stackedModalActive = false;
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = content;
@@ -139,6 +145,59 @@ public partial class MainWindow : Window
         ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
     }
 
+    /// <summary>Центральная панель поверх уже открытого drawer (drawer не скрывается).</summary>
+    public void ShowStackedModalOverDrawer(UIElement content, double width = 520)
+    {
+        if (_overlayMode != OverlayPresentationMode.Drawer
+            || OverlayLayer.Visibility != Visibility.Visible
+            || DrawerPanel.Visibility != Visibility.Visible)
+        {
+            ShowCenteredOverlay(content, width);
+            return;
+        }
+
+        ModalOverlayContentPresenter.Content = null;
+        ModalOverlayContentPresenter.Content = content;
+        ModalOverlayPanel.Width = width;
+        _stackedModalActive = true;
+
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+
+        ModalOverlayPanel.Visibility = Visibility.Visible;
+        ModalOverlayPanel.Opacity = 0;
+        ModalOverlayTransform.Y = 16;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+        var slideIn = new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(220))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
+    }
+
+    /// <summary>Карточка участника: админ/менеджер — любой; прораб — только работник.</summary>
+    public void TryOpenUserPeek(Guid userId, Guid projectId)
+    {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        using var db = dbFactory.CreateDbContext();
+        if (!UserPeekAccess.CanViewerPeekTargetUser(auth, db, userId))
+            return;
+
+        var overlay = new UserPeekOverlay();
+        overlay.SetUser(userId, projectId);
+
+        if (_overlayMode == OverlayPresentationMode.Drawer
+            && OverlayLayer.Visibility == Visibility.Visible
+            && DrawerPanel.Visibility == Visibility.Visible)
+            ShowStackedModalOverDrawer(overlay, 480);
+        else
+            ShowCenteredOverlay(overlay, 480);
+    }
+
     /// <summary>Shows a dual-panel drawer: left panel (e.g. project context) + right panel (e.g. task detail).</summary>
     public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 1000)
     {
@@ -166,6 +225,12 @@ public partial class MainWindow : Window
 
     public void HideDrawer()
     {
+        if (_stackedModalActive)
+        {
+            HideStackedModalOnly();
+            return;
+        }
+
         void CompleteClose()
         {
             DrawerContentPresenter.Content = null;
@@ -174,6 +239,7 @@ public partial class MainWindow : Window
             ModalOverlayPanel.Visibility = Visibility.Collapsed;
             OverlayLayer.Visibility = Visibility.Collapsed;
             _overlayMode = OverlayPresentationMode.None;
+            _stackedModalActive = false;
             // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
             if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
                 _ = loadable.LoadAsync();
@@ -209,6 +275,49 @@ public partial class MainWindow : Window
 
         var drawerFadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, drawerFadeOut);
+    }
+
+    /// <summary>Принудительно закрывает все оверлеи (drawer + stacked modal) без анимации.</summary>
+    public void HideAllOverlays()
+    {
+        _stackedModalActive = false;
+        DrawerContentPresenter.Content = null;
+        ModalOverlayContentPresenter.Content = null;
+        DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+        OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+        DrawerPanel.Visibility = Visibility.Collapsed;
+        ModalOverlayPanel.Visibility = Visibility.Collapsed;
+        OverlayLayer.Visibility = Visibility.Collapsed;
+        _overlayMode = OverlayPresentationMode.None;
+        if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
+            _ = loadable.LoadAsync();
+    }
+
+    private void HideStackedModalOnly()
+    {
+        if (!_stackedModalActive)
+            return;
+
+        var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
+        fadeOut.Completed += (_, _) =>
+        {
+            ModalOverlayContentPresenter.Content = null;
+            ModalOverlayPanel.Visibility = Visibility.Collapsed;
+            ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+            ModalOverlayPanel.Opacity = 0;
+            ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+            ModalOverlayTransform.Y = 16;
+            _stackedModalActive = false;
+        };
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+
+        var slideOut = new DoubleAnimation(0, 16, TimeSpan.FromMilliseconds(180))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideOut);
     }
 
     private void ModalOverlayContentClip_SizeChanged(object sender, SizeChangedEventArgs e)

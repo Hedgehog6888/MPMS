@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
@@ -171,7 +172,10 @@ public partial class StagesPage : UserControl
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);
                 if (updatedTask != null)
+                {
+                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+                }
             });
         });
 

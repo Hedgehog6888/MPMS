@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
@@ -16,24 +17,39 @@ namespace MPMS.Views.Overlays;
 public partial class TaskSummaryPanel : UserControl
 {
     private int _avatarLoadVersion;
+    private int _metricsLoadVersion;
+    private int _currentProgressPercent;
+    private Guid _peekProjectId;
 
     public TaskSummaryPanel()
     {
         InitializeComponent();
+        ProgressTrack.SizeChanged += (_, _) => UpdateProgressWidth(_currentProgressPercent);
     }
 
     public void SetTask(LocalTask? task)
+    {
+        SetTaskInternal(task, refreshMetrics: true);
+    }
+
+    private void SetTaskInternal(LocalTask? task, bool refreshMetrics)
     {
         if (task is null)
         {
             Visibility = Visibility.Collapsed;
             return;
         }
+        _peekProjectId = task.ProjectId;
         Visibility = Visibility.Visible;
-        TaskNameText.Text = task.Name;
+        TaskNameText.Text = task.Name ?? "—";
         DueDateText.Text = task.DueDate?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? "—";
         var loadVersion = ++_avatarLoadVersion;
         _ = LoadAssigneesAsync(task, loadVersion);
+        if (refreshMetrics)
+        {
+            var metricsVersion = ++_metricsLoadVersion;
+            _ = RefreshTaskMetricsAsync(task.Id, metricsVersion);
+        }
 
         // Days left / overdue
         if (task.DueDate.HasValue)
@@ -59,23 +75,19 @@ public partial class TaskSummaryPanel : UserControl
         }
 
         // Progress
-        var pct = task.ProgressPercent;
-        ProgressText.Text = $"{pct}%";
+        var pct = Math.Clamp(task.ProgressPercent, 0, 100);
+        _currentProgressPercent = pct;
+        ProgressText.Text = $"{_currentProgressPercent}%";
         CompletedStagesText.Text = task.CompletedStages.ToString();
         TotalStagesText.Text = task.TotalStages.ToString();
-
-        _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-        {
-            ProgressFill.Loaded += (_, _) => UpdateProgressWidth(pct);
-            UpdateProgressWidth(pct);
-        });
+        UpdateProgressWidth(_currentProgressPercent);
 
         // Progress fill color by percent
-        ProgressFill.Background = pct >= 100
+        ProgressFill.Background = _currentProgressPercent >= 100
             ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
-            : pct >= 60
+            : _currentProgressPercent >= 60
                 ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF))
-                : pct >= 30
+                : _currentProgressPercent >= 30
                     ? new SolidColorBrush(Color.FromRgb(0xF9, 0x73, 0x16))
                     : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
 
@@ -114,8 +126,26 @@ public partial class TaskSummaryPanel : UserControl
         }
     }
 
+    private async Task RefreshTaskMetricsAsync(Guid taskId, int metricsVersion)
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var taskEntity = await db.Tasks.FindAsync(taskId);
+        if (taskEntity is null) return;
+
+        await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, taskEntity);
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            if (metricsVersion != _metricsLoadVersion)
+                return;
+            SetTaskInternal(taskEntity, refreshMetrics: false);
+        });
+    }
+
     private async Task LoadAssigneesAsync(LocalTask task, int loadVersion)
     {
+        var auth = App.Services.GetRequiredService<IAuthService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -163,6 +193,9 @@ public partial class TaskSummaryPanel : UserControl
             }
         }
 
+        foreach (var a in assignees)
+            a.IsUserPeekInteractive = UserPeekAccess.CanInteractPeekRow(auth, db, a.RoleName);
+
         static bool IsForemanRole(string? role) => role is "Foreman" or "Прораб";
 
         var foremen = assignees
@@ -186,11 +219,16 @@ public partial class TaskSummaryPanel : UserControl
         });
     }
 
+    private void AssigneePeek_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskAssignee ta) return;
+        MainWindow.Instance?.HideAllOverlays();
+        MainWindow.Instance?.TryOpenUserPeek(ta.UserId, _peekProjectId);
+    }
+
     private void UpdateProgressWidth(int pct)
     {
-        var parent = ProgressFill.Parent as Border;
-        if (parent is null) return;
-        var available = parent.ActualWidth;
+        var available = ProgressTrack.ActualWidth;
         if (available <= 0) available = 220;
         ProgressFill.Width = Math.Max(0, available * pct / 100.0);
     }

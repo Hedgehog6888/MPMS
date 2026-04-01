@@ -110,6 +110,13 @@ public partial class ProjectDetailPage : UserControl
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
 
+    private void ProjectMemberPeek_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.Project is null) return;
+        if (sender is not FrameworkElement fe || fe.DataContext is not LocalProjectMember m) return;
+        MainWindow.Instance?.TryOpenUserPeek(m.UserId, VM.Project.Id);
+    }
+
     private void Tab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not RadioButton rb || rb.Tag is not string tab) return;
@@ -303,7 +310,10 @@ public partial class ProjectDetailPage : UserControl
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);
                 if (updatedTask != null)
+                {
+                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+                }
             });
         });
         MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
@@ -334,7 +344,10 @@ public partial class ProjectDetailPage : UserControl
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);
                 if (updatedTask != null)
+                {
+                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+                }
             });
         });
         MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);

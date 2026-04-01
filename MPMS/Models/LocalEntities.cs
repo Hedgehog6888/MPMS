@@ -288,6 +288,9 @@ public class LocalProjectMember
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
+
+    /// <summary>Клик по строке открывает карточку участника (задаётся при загрузке состава).</summary>
+    [NotMapped] public bool IsUserPeekInteractive { get; set; }
 }
 
 /// <summary>Task assignee — supports multiple assignees per task.</summary>
@@ -326,6 +329,8 @@ public class LocalTaskAssignee
     [NotMapped]
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
+
+    [NotMapped] public bool IsUserPeekInteractive { get; set; }
 }
 
 /// <summary>Stage assignee — only users from parent task's assignees.</summary>

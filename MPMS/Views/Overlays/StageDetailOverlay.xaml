@@ -299,29 +299,60 @@
                             <ItemsControl x:Name="AssigneesList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <Border Style="{StaticResource AvatarCircle34}"
-                                                    Background="#000000" Margin="0,0,10,0">
-                                                <Grid>
-                                                    <Image Style="{StaticResource AvatarImage}"
-                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                           Width="34" Height="34"
-                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Text="{Binding Initials}" FontSize="11"
-                                                               FontWeight="Bold" Foreground="White"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                </Grid>
-                                            </Border>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding UserName}" FontSize="13"
-                                                           FontWeight="SemiBold" Foreground="#000000"/>
-                                                <TextBlock Text="{Binding SubRoleLabel}" FontSize="11" Margin="0,1,0,0"
-                                                           Foreground="{Binding SubRoleLabelBrush}"
-                                                           Visibility="{Binding SubRoleLabelVis}"/>
+                                        <Grid Margin="0,0,0,8">
+                                            <Button Style="{StaticResource PeekRowButton}"
+                                                    Margin="0"
+                                                    Visibility="{Binding IsUserPeekInteractive, Converter={StaticResource BoolToVis}}"
+                                                    Click="AssigneePeek_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Style="{StaticResource AvatarCircle34}"
+                                                            Background="#000000" Margin="0,0,10,0">
+                                                        <Grid>
+                                                            <Image Style="{StaticResource AvatarImage}"
+                                                                   Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                   Width="34" Height="34"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                            <TextBlock Text="{Binding Initials}" FontSize="11"
+                                                                       FontWeight="Bold" Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding UserName}" FontSize="13"
+                                                                   FontWeight="SemiBold" Foreground="#000000"/>
+                                                        <TextBlock Text="{Binding SubRoleLabel}" FontSize="11" Margin="0,1,0,0"
+                                                                   Foreground="{Binding SubRoleLabelBrush}"
+                                                                   Visibility="{Binding SubRoleLabelVis}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                            <StackPanel Orientation="Horizontal"
+                                                        Visibility="{Binding IsUserPeekInteractive, Converter={StaticResource BoolToVisInv}}">
+                                                <Border Style="{StaticResource AvatarCircle34}"
+                                                        Background="#000000" Margin="0,0,10,0">
+                                                    <Grid>
+                                                        <Image Style="{StaticResource AvatarImage}"
+                                                               Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                               Width="34" Height="34"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                        <TextBlock Text="{Binding Initials}" FontSize="11"
+                                                                   FontWeight="Bold" Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding UserName}" FontSize="13"
+                                                               FontWeight="SemiBold" Foreground="#000000"/>
+                                                    <TextBlock Text="{Binding SubRoleLabel}" FontSize="11" Margin="0,1,0,0"
+                                                               Foreground="{Binding SubRoleLabelBrush}"
+                                                               Visibility="{Binding SubRoleLabelVis}"/>
+                                                </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

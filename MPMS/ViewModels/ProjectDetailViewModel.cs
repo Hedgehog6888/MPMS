@@ -383,6 +383,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 m.AvatarData = data;
             }
         }
+
+        foreach (var m in members)
+            m.IsUserPeekInteractive = UserPeekAccess.CanInteractPeekRow(_auth, db, m.UserRole);
+
         Members = new ObservableCollection<LocalProjectMember>(members);
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
@@ -451,7 +455,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(t => t.Priority == priority.Value);
         }
 
-        // Tasks sorted: non-deleted first by status, then by progress desc, then priority, name
+        // Статус (план → в работе → пауза → завершена), пометка удаления в конце; затем дата срока и обновление
         var list = query
             .OrderBy(t => t.EffectiveTaskMarkedForDeletion)
             .ThenBy(t => t.Status switch
@@ -462,8 +466,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 TaskStatus.Completed  => 3,
                 _                     => 4
             })
-            .ThenBy(t => t.ProgressPercent)
-            .ThenByDescending(t => (int)t.Priority)
+            .ThenBy(t => t.DueDate ?? DateOnly.MaxValue)
+            .ThenByDescending(t => t.UpdatedAt)
             .ThenBy(t => t.Name)
             .ToList();
 
@@ -499,7 +503,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(s => s.Status == targetStatus.Value && !s.EffectiveMarkedForDeletion);
         }
 
-        var list = query.OrderBy(s => s.EffectiveMarkedForDeletion).ToList();
+        var list = query
+            .OrderBy(s => s.EffectiveMarkedForDeletion)
+            .ThenBy(s => s.Status switch
+            {
+                StageStatus.Planned    => 0,
+                StageStatus.InProgress => 1,
+                StageStatus.Completed  => 2,
+                _                      => 9
+            })
+            .ThenBy(s => s.DueDate ?? DateOnly.MaxValue)
+            .ThenByDescending(s => s.UpdatedAt)
+            .ThenBy(s => s.TaskName)
+            .ThenBy(s => s.Name)
+            .ToList();
         FilteredStages = new ObservableCollection<LocalTaskStage>(list);
 
         StageItem MakeStageItem(LocalTaskStage s) => new()

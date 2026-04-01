@@ -80,7 +80,21 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             }
         }
 
-        var projectList = await projectQuery.OrderBy(p => p.Name).ToListAsync();
+        var projectList = await projectQuery.ToListAsync();
+        projectList = projectList
+            .OrderBy(p => p.IsMarkedForDeletion ? 1 : 0)
+            .ThenBy(p => p.Status switch
+            {
+                ProjectStatus.Planning   => 0,
+                ProjectStatus.InProgress => 1,
+                ProjectStatus.Completed  => 2,
+                ProjectStatus.Cancelled  => 3,
+                _                        => 9
+            })
+            .ThenBy(p => p.EndDate ?? DateOnly.MaxValue)
+            .ThenByDescending(p => p.UpdatedAt)
+            .ThenBy(p => p.Name)
+            .ToList();
         Projects = new ObservableCollection<LocalProject>(projectList);
 
         var query = db.Tasks.Where(t => !t.IsArchived);
@@ -214,8 +228,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 TaskStatus.Completed  => 3,
                 _                     => 4
             })
-            .ThenBy(t => t.ProgressPercent)
-            .ThenByDescending(t => t.CreatedAt)
+            .ThenBy(t => t.DueDate ?? DateOnly.MaxValue)
+            .ThenByDescending(t => t.UpdatedAt)
+            .ThenBy(t => t.Name)
             .ToList();
         Tasks = new ObservableCollection<LocalTask>(list);
 
@@ -229,7 +244,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             .OrderBy(g => g.Key.ProjectName)
             .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—",
                 g.OrderBy(t => t.EffectiveTaskMarkedForDeletion).ThenBy(t => StatusOrder(t.Status))
-                    .ThenBy(t => t.ProgressPercent).ThenByDescending(t => t.CreatedAt).ToList()))
+                    .ThenBy(t => t.DueDate ?? DateOnly.MaxValue).ThenByDescending(t => t.UpdatedAt).ThenBy(t => t.Name).ToList()))
             .ToList();
         TaskGroups = new ObservableCollection<ProjectTaskGroup>(groups);
     }

@@ -150,6 +150,7 @@ public partial class StageDetailOverlay : UserControl
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
     {
         if (_stage is null) return;
+        var auth = App.Services.GetRequiredService<IAuthService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         var assignees = await db.StageAssignees
@@ -197,7 +198,8 @@ public partial class StageDetailOverlay : UserControl
                 roleByUser.TryGetValue(a.UserId, out var role);
                 subRoleByUser.TryGetValue(a.UserId, out var subRole);
                 addSpecByUser.TryGetValue(a.UserId, out var addSpec);
-                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec);
+                var peek = UserPeekAccess.CanInteractPeekRow(auth, db, role);
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec, peek);
             })
             .ToList();
 
@@ -240,6 +242,14 @@ public partial class StageDetailOverlay : UserControl
                 NoMaterialsState.Visibility = Visibility.Collapsed;
             }
         });
+    }
+
+    private void AssigneePeek_Click(object sender, RoutedEventArgs e)
+    {
+        if (_task is null) return;
+        if (sender is not FrameworkElement fe || fe.DataContext is not AssigneeDisplayItem item) return;
+        MainWindow.Instance?.HideAllOverlays();
+        MainWindow.Instance?.TryOpenUserPeek(item.UserId, _task.ProjectId);
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
@@ -403,7 +413,10 @@ public partial class StageDetailOverlay : UserControl
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);
                 if (updatedTask != null)
+                {
+                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
                     await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+                }
             });
         });
 

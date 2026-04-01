@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS;
 using MPMS.Data;
+using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
@@ -196,7 +197,10 @@ public partial class GanttPage : UserControl
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);
                 if (updatedTask is not null)
+                {
+                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
                     await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
+                }
             });
         });
 

@@ -116,6 +116,7 @@ public partial class TaskDetailOverlay : UserControl
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
     {
         if (_vm?.Task is null) return;
+        var auth = App.Services.GetRequiredService<IAuthService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -163,7 +164,8 @@ public partial class TaskDetailOverlay : UserControl
                 var role    = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
                 var subRole = subRoleMap.TryGetValue(a.UserId, out var sr) ? sr : null;
                 var addSpec = addSpecMap.TryGetValue(a.UserId, out var aj) ? aj : null;
-                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec);
+                var peek    = UserPeekAccess.CanInteractPeekRow(auth, db, role);
+                return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec, peek);
             })
             .ToList();
         var foremen = displayItems.Where(a => a.RoleDisplay == "Прораб").ToList();
@@ -193,6 +195,14 @@ public partial class TaskDetailOverlay : UserControl
         _vm.HasNoStages = _vm.Stages.Count == 0;
         _vm.HasNoMaterials = _vm.AllMaterials.Count == 0;
         _vm.HasNoFiles = _vm.Files.Count == 0;
+    }
+
+    private void AssigneePeek_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm?.Task is null) return;
+        if (sender is not FrameworkElement fe || fe.DataContext is not AssigneeDisplayItem item) return;
+        MainWindow.Instance?.HideAllOverlays();
+        MainWindow.Instance?.TryOpenUserPeek(item.UserId, _vm.Task.ProjectId);
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
@@ -432,10 +442,22 @@ public sealed class AssigneeDisplayItem
     public byte[]? AvatarData { get; }
     public string? AvatarPath { get; }
 
-    public AssigneeDisplayItem(Guid userId, string userName, string? roleName, byte[]? avatarData = null, string? avatarPath = null, string? subRole = null, string? additionalSubRolesJson = null)
+    /// <summary>Работнику не показываем клик; прорабу — только для строк работников.</summary>
+    public bool IsUserPeekInteractive { get; }
+
+    public AssigneeDisplayItem(
+        Guid userId,
+        string userName,
+        string? roleName,
+        byte[]? avatarData = null,
+        string? avatarPath = null,
+        string? subRole = null,
+        string? additionalSubRolesJson = null,
+        bool isUserPeekInteractive = false)
     {
         UserId = userId;
         UserName = userName;
+        IsUserPeekInteractive = isUserPeekInteractive;
         var label = ProjectDetailViewModel.RoleToRussian(roleName);
         RoleDisplay = label == "—" ? "Работник" : label;
         var isWorker = roleName is "Worker" or "Работник";
