@@ -159,7 +159,8 @@
                             Background="#111111" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Grid>
                             <Image x:Name="AvatarImage" Width="80" Height="80"
-                                   Stretch="UniformToFill" Visibility="Collapsed"/>
+                                   Stretch="UniformToFill" Visibility="Collapsed"
+                                   RenderOptions.BitmapScalingMode="Fant"/>
                             <TextBlock x:Name="AvatarInitialsText" FontSize="26" FontWeight="Bold"
                                        Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>

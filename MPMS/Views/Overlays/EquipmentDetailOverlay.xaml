@@ -145,7 +145,8 @@
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
                         <Image x:Name="EquipmentPhoto" Stretch="Uniform" MaxHeight="220"
-                               Visibility="Collapsed"/>
+                               Visibility="Collapsed"
+                               RenderOptions.BitmapScalingMode="Fant"/>
                         <Border x:Name="WrittenOffBanner"
                                 Background="#BF000000" Visibility="Collapsed"
                                 VerticalAlignment="Bottom" Padding="16,10">

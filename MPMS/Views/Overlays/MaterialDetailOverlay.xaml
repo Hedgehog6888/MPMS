@@ -151,7 +151,8 @@
                         </StackPanel>
                         <!-- Actual image (Uniform — whole image visible, no cropping) -->
                         <Image x:Name="MaterialPhoto" Stretch="Uniform"
-                               Visibility="Collapsed" MaxHeight="220"/>
+                               Visibility="Collapsed" MaxHeight="220"
+                               RenderOptions.BitmapScalingMode="Fant"/>
 
                         <!-- Written off overlay -->
                         <Border x:Name="WrittenOffBanner"

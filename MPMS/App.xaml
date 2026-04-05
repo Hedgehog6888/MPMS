@@ -998,7 +998,7 @@
                 </Setter>
             </Style>
             <Style x:Key="AvatarImage" TargetType="Image">
-                <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="Fant"/>
                 <Setter Property="Stretch" Value="UniformToFill"/>
             </Style>
 
