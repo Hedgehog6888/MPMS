@@ -91,7 +91,7 @@ public partial class EquipmentDetailOverlay : UserControl
             else
             {
                 HistoryList.Visibility = Visibility.Visible;
-                HistoryList.ItemsSource = history;
+                HistoryList.ItemsSource = history.Take(10).ToList();
             }
         }
         else

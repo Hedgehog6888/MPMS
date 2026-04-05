@@ -101,7 +101,7 @@ public partial class MaterialDetailOverlay : UserControl
             else
             {
                 HistoryList.Visibility = Visibility.Visible;
-                HistoryList.ItemsSource = history;
+                HistoryList.ItemsSource = history.Take(10).ToList();
             }
         }
         else

@@ -229,9 +229,10 @@
                     </WrapPanel>
 
                     <!-- History -->
-                    <Border x:Name="HistorySection" Margin="0,8,0,24">
+                    <Border x:Name="HistorySection" Margin="0,0,0,24">
                         <StackPanel>
-                            <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"/>
+                            <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"
+                                       Margin="0,6,0,8"/>
                             <TextBlock x:Name="HistoryLoading" Text="Загрузка..."
                                        FontSize="12" Foreground="#6B778C" Margin="0,0,0,8"
                                        Visibility="Collapsed"/>
@@ -240,9 +241,9 @@
                             <ItemsControl x:Name="HistoryList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,6"
+                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,5"
                                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                                Padding="12,10">
+                                                Padding="10,7">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -251,8 +252,8 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Event icon -->
-                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
-                                                        VerticalAlignment="Top" Margin="0,0,12,0">
+                                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                                        VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#E3F2FD"/>
@@ -270,7 +271,7 @@
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               FontSize="14">
+                                                               FontSize="12">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="→"/>
@@ -297,12 +298,12 @@
                                                 <!-- Info -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding EventTypeDisplay}"
-                                                               FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                                                               FontSize="12" FontWeight="SemiBold" Foreground="#000000"/>
                                                     <TextBlock Text="{Binding UserName, FallbackValue='—'}"
-                                                               FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                               FontSize="11" Foreground="#6B778C" Margin="0,1,0,0"/>
                                                     <TextBlock Text="{Binding Comment}" FontSize="11" Foreground="#6B778C"
                                                                Visibility="{Binding Comment, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                               TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                 </StackPanel>
 
                                                 <!-- Date -->
@@ -310,7 +311,7 @@
                                                     <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>
                                                     <TextBlock Text="{Binding NewStatus}" FontSize="11" Foreground="#6B778C"
-                                                               HorizontalAlignment="Right" Margin="0,2,0,0"
+                                                               HorizontalAlignment="Right" Margin="0,1,0,0"
                                                                Visibility="{Binding NewStatus, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
                                             </Grid>
