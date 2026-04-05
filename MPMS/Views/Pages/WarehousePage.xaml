@@ -188,11 +188,11 @@
                                                     <Setter Property="CornerRadius" Value="4"/>
                                                     <Setter Property="Padding" Value="8,3"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
-                                                            <Setter Property="Background" Value="#F4F5F7"/>
-                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding Quantity}" Value="0">
                                                             <Setter Property="Background" Value="#FFF4E5"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
+                                                            <Setter Property="Background" Value="#F4F5F7"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -203,13 +203,13 @@
                                                         <Setter Property="Text" Value="В наличии"/>
                                                         <Setter Property="Foreground" Value="#00875A"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
-                                                                <Setter Property="Text" Value="Списано"/>
-                                                                <Setter Property="Foreground" Value="#6B778C"/>
-                                                            </DataTrigger>
                                                             <DataTrigger Binding="{Binding Quantity}" Value="0">
                                                                 <Setter Property="Text" Value="Нет в наличии"/>
                                                                 <Setter Property="Foreground" Value="#FF8B00"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
+                                                                <Setter Property="Text" Value="Списано"/>
+                                                                <Setter Property="Foreground" Value="#6B778C"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -256,7 +256,6 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="140"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
@@ -277,21 +276,42 @@
                                                        Foreground="#000000"/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                            <TextBlock Text="Статус" FontSize="11"
-                                                       Foreground="#6B778C"/>
-                                            <TextBlock Text="{Binding StatusDisplay}" FontSize="13"
-                                                       Foreground="{Binding StatusColor}"/>
-                                        </StackPanel>
-
-                                        <Border Grid.Column="3" VerticalAlignment="Center" Margin="8,0"
-                                                Visibility="{Binding IsWrittenOff, Converter={StaticResource BoolToVis}}"
-                                                Background="#F4F5F7" CornerRadius="4" Padding="8,3">
-                                            <TextBlock Text="Списано" FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="#6B778C"/>
+                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#E3FCEF"/>
+                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                    <Setter Property="Padding" Value="8,3"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="InUse">
+                                                            <Setter Property="Background" Value="#FFF4E5"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Maintenance">
+                                                            <Setter Property="Background" Value="#DEEBFF"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
+                                                            <Setter Property="Background" Value="#F4F5F7"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock FontSize="11" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding StatusDisplay}"/>
+                                                        <Setter Property="Foreground" Value="{Binding StatusColor}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
+                                                                <Setter Property="Text" Value="Списано"/>
+                                                                <Setter Property="Foreground" Value="#6B778C"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
 
-                                        <TextBlock Grid.Column="4" Text="›" FontSize="18"
+                                        <TextBlock Grid.Column="3" Text="›" FontSize="18"
                                                    Foreground="#6B778C"
                                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </Grid>
