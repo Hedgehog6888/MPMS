@@ -10,11 +10,14 @@ namespace MPMS.Views.Pages;
 
 public partial class WarehousePage : UserControl
 {
+    private readonly ScrollViewer? _mainListScroll;
+
     private WarehouseViewModel? Vm => DataContext as WarehouseViewModel;
 
     public WarehousePage()
     {
         InitializeComponent();
+        _mainListScroll = FindName("MainListScroll") as ScrollViewer;
     }
 
     private void Tab_Click(object sender, RoutedEventArgs e)
@@ -71,10 +74,10 @@ public partial class WarehousePage : UserControl
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (MainListScroll is null) return;
-        var next = MainListScroll.VerticalOffset - e.Delta;
-        next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));
-        MainListScroll.ScrollToVerticalOffset(next);
+        if (_mainListScroll is null) return;
+        var next = _mainListScroll.VerticalOffset - e.Delta;
+        next = Math.Max(0, Math.Min(next, _mainListScroll.ScrollableHeight));
+        _mainListScroll.ScrollToVerticalOffset(next);
         e.Handled = true;
     }
 
