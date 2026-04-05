@@ -16,6 +16,12 @@ public class Material
 
     public decimal Quantity { get; set; }
 
+    /// <summary>Цена за единицу (учёт).</summary>
+    public decimal? Cost { get; set; }
+
+    [MaxLength(100)]
+    public string? InventoryNumber { get; set; }
+
     public Guid? CategoryId { get; set; }
     public MaterialCategory? Category { get; set; }
 

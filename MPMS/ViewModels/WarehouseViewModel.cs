@@ -143,7 +143,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             matList = matList.Where(m =>
                 SearchHelper.ContainsIgnoreCase(m.Name, search) ||
                 SearchHelper.ContainsIgnoreCase(m.Description, search) ||
-                SearchHelper.ContainsIgnoreCase(m.CategoryName, search)).ToList();
+                SearchHelper.ContainsIgnoreCase(m.CategoryName, search) ||
+                SearchHelper.ContainsIgnoreCase(m.InventoryNumber, search)).ToList();
 
         matList = LifecycleFilter switch
         {
@@ -318,7 +319,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     // ── Material operations ───────────────────────────────────────────────────
 
     public async Task SaveNewMaterialAsync(string name, string? unit, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, decimal initialQty, decimal? cost = null)
+        Guid? categoryId, string? categoryName, string? imagePath, decimal initialQty, decimal? cost = null,
+        string? inventoryNumber = null)
     {
         var localId = Guid.NewGuid();
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -330,6 +332,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             Description = description,
             Quantity = initialQty < 0 ? 0 : initialQty,
             Cost = cost,
+            InventoryNumber = string.IsNullOrWhiteSpace(inventoryNumber) ? null : inventoryNumber.Trim(),
             CategoryId = categoryId,
             CategoryName = categoryName,
             ImagePath = imagePath,
@@ -364,7 +367,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Id: localId,
                 InitialQuantity: initialQty < 0 ? 0 : initialQty,
                 CategoryId: categoryId,
-                ImagePath: imagePath));
+                ImagePath: imagePath,
+                Cost: cost,
+                InventoryNumber: material.InventoryNumber));
         await LoadAsync();
     }
 
@@ -406,7 +411,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task UpdateMaterialAsync(Guid id, string name, string? unit, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, decimal? cost = null)
+        Guid? categoryId, string? categoryName, string? imagePath, decimal? cost = null,
+        string? inventoryNumber = null)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var m = await db.Materials.FindAsync(id);
@@ -418,6 +424,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         m.CategoryName = categoryName;
         m.ImagePath = imagePath;
         m.Cost = cost;
+        m.InventoryNumber = string.IsNullOrWhiteSpace(inventoryNumber) ? null : inventoryNumber.Trim();
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         await db.SaveChangesAsync();
@@ -427,7 +434,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Unit: unit,
                 Description: description,
                 CategoryId: categoryId,
-                ImagePath: imagePath));
+                ImagePath: imagePath,
+                Cost: cost,
+                InventoryNumber: m.InventoryNumber));
         await LoadAsync();
     }
 

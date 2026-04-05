@@ -343,6 +343,7 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"MaterialStockMovements\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"EquipmentHistoryEntries\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Cost\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"InventoryNumber\" TEXT NULL;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

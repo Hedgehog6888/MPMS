@@ -29,7 +29,12 @@ public partial class MaterialDetailOverlay : UserControl
         var unitLabel = string.IsNullOrWhiteSpace(_material.Unit) ? string.Empty : $" {_material.Unit}";
         QuantityText.Text = $"{_material.Quantity:G}{unitLabel}";
         UnitText.Text = _material.Unit ?? "—";
-        CostText.Text = _material.Cost.HasValue ? $"{_material.Cost:G}" : "—";
+        CostText.Text = _material.Cost.HasValue
+            ? _material.Cost.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+            : "—";
+        InventoryNumberText.Text = string.IsNullOrWhiteSpace(_material.InventoryNumber)
+            ? "—"
+            : _material.InventoryNumber;
         CreatedAtText.Text = _material.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
 
         if (!string.IsNullOrWhiteSpace(_material.Description))

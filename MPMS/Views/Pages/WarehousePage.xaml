@@ -144,8 +144,9 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="110"/>
-                                            <ColumnDefinition Width="140"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
@@ -160,20 +161,27 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Инв. номер" FontSize="11"
+                                                       Foreground="#6B778C"/>
+                                            <TextBlock Text="{Binding InventoryNumber, FallbackValue='—'}" FontSize="13"
+                                                       Foreground="#000000"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                             <TextBlock Text="Ед. изм." FontSize="11"
                                                        Foreground="#6B778C"/>
                                             <TextBlock Text="{Binding Unit, FallbackValue='—'}" FontSize="13"
                                                        Foreground="#000000"/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="3" VerticalAlignment="Center">
                                             <TextBlock Text="Количество" FontSize="11"
                                                        Foreground="#6B778C"/>
                                             <TextBlock Text="{Binding Quantity}" FontSize="13"
                                                        Foreground="#000000"/>
                                         </StackPanel>
 
-                                        <Border Grid.Column="3" VerticalAlignment="Center" Margin="8,0">
+                                        <Border Grid.Column="4" VerticalAlignment="Center" Margin="8,0">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#E3FCEF"/>
@@ -209,7 +217,7 @@
                                             </TextBlock>
                                         </Border>
 
-                                        <TextBlock Grid.Column="4" Text="›" FontSize="18"
+                                        <TextBlock Grid.Column="5" Text="›" FontSize="18"
                                                    Foreground="#6B778C"
                                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </Grid>

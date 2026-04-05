@@ -258,6 +258,8 @@ public class SyncService : ISyncService
                     local.Unit = m.Unit;
                     local.Description = m.Description;
                     local.Quantity = m.Quantity;
+                    local.Cost = m.Cost;
+                    local.InventoryNumber = m.InventoryNumber;
                     local.CategoryId = m.CategoryId;
                     local.CategoryName = m.CategoryName;
                     local.ImagePath = m.ImagePath;
@@ -273,6 +275,8 @@ public class SyncService : ISyncService
                         Unit = m.Unit,
                         Description = m.Description,
                         Quantity = m.Quantity,
+                        Cost = m.Cost,
+                        InventoryNumber = m.InventoryNumber,
                         CategoryId = m.CategoryId,
                         CategoryName = m.CategoryName,
                         ImagePath = m.ImagePath,

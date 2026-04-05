@@ -128,6 +128,8 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             Unit = req.Unit,
             Description = req.Description,
             Quantity = req.InitialQuantity < 0 ? 0 : req.InitialQuantity,
+            Cost = req.Cost,
+            InventoryNumber = string.IsNullOrWhiteSpace(req.InventoryNumber) ? null : req.InventoryNumber.Trim(),
             CategoryId = req.CategoryId,
             ImagePath = req.ImagePath,
             IsSynced = false,
@@ -153,6 +155,8 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         material.Name = req.Name;
         material.Unit = req.Unit;
         material.Description = req.Description;
+        material.Cost = req.Cost;
+        material.InventoryNumber = string.IsNullOrWhiteSpace(req.InventoryNumber) ? null : req.InventoryNumber.Trim();
         material.CategoryId = req.CategoryId;
         material.ImagePath = req.ImagePath;
         material.UpdatedAt = DateTime.UtcNow;

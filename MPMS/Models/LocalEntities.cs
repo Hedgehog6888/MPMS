@@ -239,6 +239,7 @@ public class LocalMaterial : LocalEntity
     public string? Description { get; set; }
     public decimal Quantity { get; set; }
     public decimal? Cost { get; set; }
+    [MaxLength(100)] public string? InventoryNumber { get; set; }
     public Guid? CategoryId { get; set; }
     [MaxLength(100)] public string? CategoryName { get; set; }
     [MaxLength(500)] public string? ImagePath { get; set; }

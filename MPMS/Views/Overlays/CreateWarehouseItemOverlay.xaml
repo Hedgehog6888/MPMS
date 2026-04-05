@@ -94,7 +94,7 @@
                               SelectionChanged="UnitCombo_SelectionChanged"/>
                 </StackPanel>
 
-                <!-- Inventory number (equipment only) -->
+                <!-- Inventory number (materials + equipment) -->
                 <StackPanel x:Name="InvNumberPanel" Visibility="Collapsed">
                     <TextBlock Text="Инвентарный номер" Style="{StaticResource FormLabel}"/>
                     <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"

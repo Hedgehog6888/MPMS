@@ -172,6 +172,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
 
             entity.Property(e => e.Quantity).HasPrecision(18, 3);
+            entity.Property(e => e.Cost).HasPrecision(18, 2);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 

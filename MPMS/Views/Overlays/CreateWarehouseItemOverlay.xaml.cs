@@ -70,6 +70,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 .ToList();
             UnitCombo.ItemsSource = units;
             UnitCombo.DisplayMemberPath = "Display";
+            InvNumberPanel.Visibility = Visibility.Visible;
 
             if (_isEdit)
             {
@@ -81,6 +82,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
             {
                 NameBox.Text = editMaterial.Name;
                 DescriptionBox.Text = editMaterial.Description ?? string.Empty;
+                InvNumberBox.Text = editMaterial.InventoryNumber ?? string.Empty;
                 CategoryCombo.SelectedItem = materialCategories.FirstOrDefault(c => c.Id == editMaterial.CategoryId);
                 SetPhotoPath(editMaterial.ImagePath);
 
@@ -359,13 +361,15 @@ public partial class CreateWarehouseItemOverlay : UserControl
                     return;
                 }
 
+                var inv = string.IsNullOrWhiteSpace(InvNumberBox.Text) ? null : InvNumberBox.Text.Trim();
                 MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost);
+                _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost, inv);
             }
             else if (_editMaterial is not null)
             {
+                var inv = string.IsNullOrWhiteSpace(InvNumberBox.Text) ? null : InvNumberBox.Text.Trim();
                 MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost);
+                _ = _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost, inv);
             }
         }
     }
