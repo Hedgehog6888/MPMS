@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using MPMS.Models;
@@ -90,9 +92,101 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 }
 
                 if (editMaterial.Cost.HasValue)
-                    CostEditBox.Text = editMaterial.Cost.Value.ToString("G");
+                    CostEditBox.Text = FormatCostDisplay(editMaterial.Cost.Value);
             }
+
+            SetupMaterialNumericFields();
+            UpdateQuantityLabelForUnit();
         }
+    }
+
+    private void SetupMaterialNumericFields()
+    {
+        if (_mode == "Equipment") return;
+
+        QuantityBox.PreviewTextInput += DecimalField_PreviewTextInput;
+        DataObject.AddPastingHandler(QuantityBox, DecimalField_Pasting);
+        QuantityBox.LostFocus += (_, _) => FormatQuantityOnBlur();
+
+        CostBox.PreviewTextInput += DecimalField_PreviewTextInput;
+        DataObject.AddPastingHandler(CostBox, DecimalField_Pasting);
+        CostBox.LostFocus += (_, _) => FormatCostOnBlur(CostBox);
+
+        CostEditBox.PreviewTextInput += DecimalField_PreviewTextInput;
+        DataObject.AddPastingHandler(CostEditBox, DecimalField_Pasting);
+        CostEditBox.LostFocus += (_, _) => FormatCostOnBlur(CostEditBox);
+    }
+
+    private static string FormatCostDisplay(decimal value)
+        => value.ToString("0.00", CultureInfo.InvariantCulture);
+
+    private void UpdateQuantityLabelForUnit()
+    {
+        if (_mode == "Equipment" || _isEdit) return;
+        if (UnitCombo.SelectedItem is not UnitDisplayItem u) return;
+        QuantityLabel.Text = u.IsInteger
+            ? "Количество * (целое)"
+            : "Количество *";
+    }
+
+    private void FormatQuantityOnBlur()
+    {
+        var raw = QuantityBox.Text.Trim();
+        if (string.IsNullOrEmpty(raw)) return;
+        var unit = (UnitCombo.SelectedItem as UnitDisplayItem)?.Short;
+        if (!decimal.TryParse(raw.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+            return;
+        if (MaterialUnits.IsIntegerUnit(unit))
+            QuantityBox.Text = decimal.Truncate(d).ToString("0", CultureInfo.InvariantCulture);
+        else
+            QuantityBox.Text = d.ToString("0.00", CultureInfo.InvariantCulture);
+    }
+
+    private static void FormatCostOnBlur(TextBox tb)
+    {
+        var raw = tb.Text.Trim();
+        if (string.IsNullOrEmpty(raw)) return;
+        if (!decimal.TryParse(raw.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+            return;
+        tb.Text = d.ToString("0.00", CultureInfo.InvariantCulture);
+    }
+
+    private static void DecimalField_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is not TextBox tb) return;
+        var selStart = tb.SelectionStart;
+        var selLen = tb.SelectionLength;
+        var proposed = tb.Text[..selStart] + e.Text + tb.Text[(selStart + selLen)..];
+        if (!IsValidPartialDecimal(proposed))
+            e.Handled = true;
+    }
+
+    private static void DecimalField_Pasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (e.DataObject.GetDataPresent(typeof(string)) != true || sender is not TextBox tb) return;
+        var paste = (string)e.DataObject.GetData(typeof(string))!;
+        var selStart = tb.SelectionStart;
+        var selLen = tb.SelectionLength;
+        var proposed = tb.Text[..selStart] + paste + tb.Text[(selStart + selLen)..];
+        if (!IsValidPartialDecimal(proposed))
+            e.CancelCommand();
+    }
+
+    /// <summary>Допускает только цифры и один разделитель; пустая строка ок.</summary>
+    private static bool IsValidPartialDecimal(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return true;
+        s = s.Replace(',', '.');
+        var dot = s.IndexOf('.');
+        if (dot < 0)
+            return s.All(char.IsDigit);
+        if (s[(dot + 1)..].Contains('.')) return false;
+        foreach (var part in s.Split('.'))
+        {
+            if (string.IsNullOrEmpty(part)) continue;
+            if (!part.All(char.IsDigit)) return false;
+        }
+        return true;
     }
 
     private void SetPhotoPath(string? path)
@@ -132,12 +226,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
 
     private void UnitCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_isEdit && UnitCombo.SelectedItem is UnitDisplayItem u)
-        {
-            QuantityLabel.Text = u.IsInteger
-                ? "Начальное количество (целое)"
-                : "Начальное количество";
-        }
+        UpdateQuantityLabelForUnit();
     }
 
     private void BrowseImage_Click(object sender, RoutedEventArgs e)
@@ -227,32 +316,49 @@ public partial class CreateWarehouseItemOverlay : UserControl
         }
         else
         {
-            var selectedUnit = (UnitCombo.SelectedItem as UnitDisplayItem)?.Short;
-            decimal? cost = null;
-            var costText = _isEdit ? CostEditBox.Text : CostBox.Text;
-            if (!string.IsNullOrWhiteSpace(costText))
+            if (UnitCombo.SelectedItem is not UnitDisplayItem unitItem)
             {
-                if (!decimal.TryParse(costText.Replace(',', '.'), System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var c) || c < 0)
-                {
-                    ShowError("Некорректная стоимость");
-                    return;
-                }
-                cost = c;
+                ShowError("Выберите единицу измерения");
+                return;
             }
+
+            var selectedUnit = unitItem.Short;
+
+            var costText = (_isEdit ? CostEditBox.Text : CostBox.Text).Trim();
+            if (string.IsNullOrWhiteSpace(costText))
+            {
+                ShowError("Введите стоимость за единицу");
+                return;
+            }
+
+            if (!decimal.TryParse(costText.Replace(',', '.'), NumberStyles.Any,
+                    CultureInfo.InvariantCulture, out var costVal) || costVal < 0)
+            {
+                ShowError("Некорректная стоимость");
+                return;
+            }
+
+            var cost = costVal;
 
             if (!_isEdit)
             {
                 var qtyRaw = QuantityBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(qtyRaw))
+                {
+                    ShowError("Введите количество");
+                    return;
+                }
+
                 var qty = MaterialUnits.ParseQuantity(qtyRaw, selectedUnit);
                 if (qty is null || qty < 0)
                 {
                     var isInt = MaterialUnits.IsIntegerUnit(selectedUnit);
                     ShowError(isInt
                         ? "Введите целое неотрицательное число"
-                        : "Некорректное начальное количество");
+                        : "Некорректное количество");
                     return;
                 }
+
                 MainWindow.Instance?.HideAllOverlays();
                 _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost);
             }
