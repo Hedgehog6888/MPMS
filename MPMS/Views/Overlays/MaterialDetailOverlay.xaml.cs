@@ -166,7 +166,14 @@ public partial class MaterialDetailOverlay : UserControl
             fullWriteOffAction: comment => _vm.WriteOffMaterialAsync(_material.Id, comment),
             currentQuantity: _material.Quantity,
             unit: _material.Unit,
-            partialWriteOffAction: (amount, comment) => _vm.ConsumeMaterialAsync(_material.Id, amount, comment));
+            partialWriteOffAction: async (amount, comment) =>
+            {
+                await _vm.ConsumeMaterialAsync(_material.Id, amount, comment);
+                var m = _vm.Materials.FirstOrDefault(x => x.Id == _material.Id);
+                if (m is not null)
+                    _material = m;
+                await RefreshAsync();
+            });
         mw.ShowStackedModalOverDrawer(overlay, 540);
     }
 }

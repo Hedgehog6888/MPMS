@@ -291,7 +291,7 @@
                                                                     <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
-                                                                    <Setter Property="Background" Value="#FFF4E5"/>
+                                                                    <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -308,8 +308,8 @@
                                                                         <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
-                                                                        <Setter Property="Text" Value="−"/>
-                                                                        <Setter Property="Foreground" Value="#FF8B00"/>
+                                                                        <Setter Property="Text" Value="✕"/>
+                                                                        <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
