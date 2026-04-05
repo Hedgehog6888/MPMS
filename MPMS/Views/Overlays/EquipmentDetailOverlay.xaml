@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="560"
              Background="White">
@@ -135,9 +136,10 @@
                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="64" Height="64" CornerRadius="32"
                                     Background="#DFE1E6" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="28" Foreground="#6B778C"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image Width="28" Height="28" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Source="{svgc:SvgImage Source=/icons/picture.svg, AppName=MPMS}"/>
                             </Border>
                             <TextBlock Text="Фото не добавлено" FontSize="12" Foreground="#6B778C"
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
@@ -220,7 +222,7 @@
 
                     <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal" Margin="0,16,0,0">
-                        <Button Content="✎  Редактировать" Style="{StaticResource OutlineBtn}"
+                        <Button Content="Редактировать" Style="{StaticResource OutlineBtn}"
                                 Margin="0,0,8,8" Click="Edit_Click"/>
                         <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
                                 Margin="0,0,0,8" Click="WriteOff_Click"/>
