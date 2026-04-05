@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -9,7 +10,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class EquipmentDetailOverlay : UserControl
 {
-    private readonly LocalEquipment _equipment;
+    private LocalEquipment _equipment;
     private readonly WarehouseViewModel _vm;
 
     public EquipmentDetailOverlay(LocalEquipment equipment, WarehouseViewModel vm)
@@ -19,6 +20,20 @@ public partial class EquipmentDetailOverlay : UserControl
         _vm = vm;
 
         Loaded += async (_, _) => await RefreshAsync();
+    }
+
+    private async Task ReloadFromVmAsync()
+    {
+        await _vm.LoadAsync();
+        var eq = _vm.Equipments.FirstOrDefault(x => x.Id == _equipment.Id);
+        if (eq is null)
+        {
+            MainWindow.Instance?.HideDrawer();
+            return;
+        }
+
+        _equipment = eq;
+        await RefreshAsync();
     }
 
     private async Task RefreshAsync()
@@ -121,7 +136,8 @@ public partial class EquipmentDetailOverlay : UserControl
             "Equipment", _vm,
             _vm.MaterialCategories.ToList(),
             _vm.EquipmentCategories.ToList(),
-            editEquipment: _equipment);
+            editEquipment: _equipment,
+            afterStackedCloseSuccess: ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 560);
     }
 

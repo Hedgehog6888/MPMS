@@ -19,6 +19,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
     private readonly LocalEquipment? _editEquipment;
     /// <summary>Предпросмотр номера при создании; при сохранении передаётся в VM как предпочтительный.</summary>
     private string? _preferredInventoryForSave;
+    private readonly Func<Task>? _afterStackedCloseSuccess;
 
     // Display items for unit combo
     private record UnitDisplayItem(string Display, string Short, bool IsInteger);
@@ -29,12 +30,14 @@ public partial class CreateWarehouseItemOverlay : UserControl
         List<LocalMaterialCategory> materialCategories,
         List<LocalEquipmentCategory> equipmentCategories,
         LocalMaterial? editMaterial = null,
-        LocalEquipment? editEquipment = null)
+        LocalEquipment? editEquipment = null,
+        Func<Task>? afterStackedCloseSuccess = null)
     {
         InitializeComponent();
         Loaded += OnOverlayLoaded;
         _mode = mode;
         _vm = vm;
+        _afterStackedCloseSuccess = afterStackedCloseSuccess;
         _isEdit = editMaterial is not null || editEquipment is not null;
         _editMaterial = editMaterial;
         _editEquipment = editEquipment;
@@ -303,7 +306,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
     private void Cancel_Click(object sender, RoutedEventArgs e)
         => MainWindow.Instance?.HideDrawer();
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private async void Save_Click(object sender, RoutedEventArgs e)
     {
         ErrorPanel.Visibility = Visibility.Collapsed;
 
@@ -337,68 +340,84 @@ public partial class CreateWarehouseItemOverlay : UserControl
             categoryName = ec.Name;
         }
 
+        var mw = MainWindow.Instance;
+        var stacked = mw?.HasStackedModalOverDrawer == true;
+
         if (_mode == "Equipment")
         {
-            MainWindow.Instance?.HideAllOverlays();
             if (_isEdit && _editEquipment is not null)
-                _ = _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image);
+                await _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image);
             else
-                _ = _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, _preferredInventoryForSave);
+                await _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, _preferredInventoryForSave);
+
+            if (stacked)
+            {
+                mw!.HideDrawer();
+                if (_afterStackedCloseSuccess is not null)
+                    await _afterStackedCloseSuccess();
+            }
+            else
+                mw?.HideAllOverlays();
+
+            return;
+        }
+
+        if (UnitCombo.SelectedItem is not UnitDisplayItem unitItem)
+        {
+            ShowError("Выберите единицу измерения");
+            return;
+        }
+
+        var selectedUnit = unitItem.Short;
+
+        var costText = (_isEdit ? CostEditBox.Text : CostBox.Text).Trim();
+        if (string.IsNullOrWhiteSpace(costText))
+        {
+            ShowError("Введите стоимость за единицу");
+            return;
+        }
+
+        if (!decimal.TryParse(costText.Replace(',', '.'), NumberStyles.Any,
+                CultureInfo.InvariantCulture, out var costVal) || costVal < 0)
+        {
+            ShowError("Некорректная стоимость");
+            return;
+        }
+
+        var cost = costVal;
+
+        if (!_isEdit)
+        {
+            var qtyRaw = QuantityBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(qtyRaw))
+            {
+                ShowError("Введите количество");
+                return;
+            }
+
+            var qty = MaterialUnits.ParseQuantity(qtyRaw, selectedUnit);
+            if (qty is null || qty < 0)
+            {
+                var isInt = MaterialUnits.IsIntegerUnit(selectedUnit);
+                ShowError(isInt
+                    ? "Введите целое неотрицательное число"
+                    : "Некорректное количество");
+                return;
+            }
+
+            await _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost, _preferredInventoryForSave);
+        }
+        else if (_editMaterial is not null)
+            await _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost);
+
+        if (stacked)
+        {
+            mw!.HideDrawer();
+            if (_afterStackedCloseSuccess is not null)
+                await _afterStackedCloseSuccess();
         }
         else
-        {
-            if (UnitCombo.SelectedItem is not UnitDisplayItem unitItem)
-            {
-                ShowError("Выберите единицу измерения");
-                return;
-            }
-
-            var selectedUnit = unitItem.Short;
-
-            var costText = (_isEdit ? CostEditBox.Text : CostBox.Text).Trim();
-            if (string.IsNullOrWhiteSpace(costText))
-            {
-                ShowError("Введите стоимость за единицу");
-                return;
-            }
-
-            if (!decimal.TryParse(costText.Replace(',', '.'), NumberStyles.Any,
-                    CultureInfo.InvariantCulture, out var costVal) || costVal < 0)
-            {
-                ShowError("Некорректная стоимость");
-                return;
-            }
-
-            var cost = costVal;
-
-            if (!_isEdit)
-            {
-                var qtyRaw = QuantityBox.Text.Trim();
-                if (string.IsNullOrWhiteSpace(qtyRaw))
-                {
-                    ShowError("Введите количество");
-                    return;
-                }
-
-                var qty = MaterialUnits.ParseQuantity(qtyRaw, selectedUnit);
-                if (qty is null || qty < 0)
-                {
-                    var isInt = MaterialUnits.IsIntegerUnit(selectedUnit);
-                    ShowError(isInt
-                        ? "Введите целое неотрицательное число"
-                        : "Некорректное количество");
-                    return;
-                }
-
-                MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost, _preferredInventoryForSave);
-            }
-            else if (_editMaterial is not null)
-            {
-                MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost);
-            }
-        }
+            mw?.HideAllOverlays();
     }
 
     private void ShowError(string message)

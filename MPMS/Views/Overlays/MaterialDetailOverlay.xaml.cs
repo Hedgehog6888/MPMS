@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -9,7 +10,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class MaterialDetailOverlay : UserControl
 {
-    private readonly LocalMaterial _material;
+    private LocalMaterial _material;
     private readonly WarehouseViewModel _vm;
 
     public MaterialDetailOverlay(LocalMaterial material, WarehouseViewModel vm)
@@ -19,6 +20,20 @@ public partial class MaterialDetailOverlay : UserControl
         _vm = vm;
 
         Loaded += async (_, _) => await RefreshAsync();
+    }
+
+    private async Task ReloadFromVmAsync()
+    {
+        await _vm.LoadAsync();
+        var m = _vm.Materials.FirstOrDefault(x => x.Id == _material.Id);
+        if (m is null)
+        {
+            MainWindow.Instance?.HideDrawer();
+            return;
+        }
+
+        _material = m;
+        await RefreshAsync();
     }
 
     private async Task RefreshAsync()
@@ -127,7 +142,7 @@ public partial class MaterialDetailOverlay : UserControl
     private void AddQuantity_Click(object sender, RoutedEventArgs e)
     {
         if (MainWindow.Instance is not { } mw) return;
-        var overlay = new AddQuantityOverlay(_material, _vm);
+        var overlay = new AddQuantityOverlay(_material, _vm, ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 520);
     }
 
@@ -138,7 +153,8 @@ public partial class MaterialDetailOverlay : UserControl
             "Material", _vm,
             _vm.MaterialCategories.ToList(),
             _vm.EquipmentCategories.ToList(),
-            editMaterial: _material);
+            editMaterial: _material,
+            afterStackedCloseSuccess: ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 560);
     }
 
