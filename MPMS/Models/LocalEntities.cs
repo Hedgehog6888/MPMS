@@ -238,11 +238,15 @@ public class LocalMaterial : LocalEntity
     [MaxLength(50)]  public string? Unit { get; set; }
     public string? Description { get; set; }
     public decimal Quantity { get; set; }
+    public decimal? Cost { get; set; }
     public Guid? CategoryId { get; set; }
     [MaxLength(100)] public string? CategoryName { get; set; }
     [MaxLength(500)] public string? ImagePath { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool IsWrittenOff { get; set; } = false;
+    public DateTime? WrittenOffAt { get; set; }
+    [MaxLength(500)] public string? WrittenOffComment { get; set; }
 }
 
 /// <summary>История движения материала (приход/расход) — синхронизируется с сервера.</summary>
@@ -256,6 +260,7 @@ public class LocalMaterialStockMovement
     [MaxLength(30)] public string OperationType { get; set; } = string.Empty;
     [MaxLength(500)] public string? Comment { get; set; }
     public Guid? UserId { get; set; }
+    [MaxLength(100)] public string? UserName { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
 }
@@ -273,6 +278,27 @@ public class LocalEquipment : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public Guid? CheckedOutProjectId { get; set; }
     public Guid? CheckedOutTaskId { get; set; }
+    public bool IsWrittenOff { get; set; } = false;
+    public DateTime? WrittenOffAt { get; set; }
+    [MaxLength(500)] public string? WrittenOffComment { get; set; }
+
+    [NotMapped]
+    public string StatusDisplay => Status switch
+    {
+        "Available"   => "Доступно",
+        "InUse"       => "Используется",
+        "Maintenance" => "На обслуживании",
+        _             => Status
+    };
+
+    [NotMapped]
+    public string StatusColor => Status switch
+    {
+        "Available"   => "#00875A",
+        "InUse"       => "#FF8B00",
+        "Maintenance" => "#1B6EC2",
+        _             => "#6B778C"
+    };
 }
 
 /// <summary>История оборудования: выдача, возврат, смена статуса.</summary>
@@ -287,7 +313,18 @@ public class LocalEquipmentHistoryEntry
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
     public Guid? UserId { get; set; }
+    [MaxLength(100)] public string? UserName { get; set; }
     [MaxLength(500)] public string? Comment { get; set; }
+
+    [NotMapped]
+    public string EventTypeDisplay => EventType switch
+    {
+        "CheckedOut"   => "Выдано",
+        "Returned"     => "Возвращено",
+        "StatusChange" => "Смена статуса",
+        "WrittenOff"   => "Списано",
+        _              => EventType
+    };
 }
 
 public class LocalStageMaterial : LocalEntity

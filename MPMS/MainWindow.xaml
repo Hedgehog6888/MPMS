@@ -867,11 +867,11 @@
                     </StackPanel>
                 </RadioButton>
 
-                <!-- Материалы -->
-                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Materials, Mode=OneWay}"
+                <!-- Склад -->
+                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Warehouse, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
                              Command="{Binding NavigateCommand}"
-                             CommandParameter="Materials">
+                             CommandParameter="Warehouse">
                     <StackPanel Orientation="Horizontal">
                         <Image Width="20" Height="20"
                                Margin="12,0,8,0"
@@ -891,7 +891,7 @@
                                 </Style>
                             </Image.Style>
                         </Image>
-                        <TextBlock Text="Материалы"
+                        <TextBlock Text="Склад"
                                    FontSize="14"
                                    VerticalAlignment="Center"/>
                     </StackPanel>

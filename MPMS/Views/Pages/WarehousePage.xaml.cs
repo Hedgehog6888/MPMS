@@ -2,18 +2,25 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Microsoft.Extensions.DependencyInjection;
 using MPMS.Models;
 using MPMS.ViewModels;
-using MPMS.Views.Dialogs;
+using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
 
-public partial class MaterialsPage : UserControl
+public partial class WarehousePage : UserControl
 {
-    public MaterialsPage()
+    private WarehouseViewModel? Vm => DataContext as WarehouseViewModel;
+
+    public WarehousePage()
     {
         InitializeComponent();
+    }
+
+    private void Tab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb && rb.Tag is string tag && Vm is { } vm)
+            vm.ActiveTab = tag;
     }
 
     private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
@@ -33,6 +40,7 @@ public partial class MaterialsPage : UserControl
             if (current is Border b) return b;
             current = VisualTreeHelper.GetParent(current);
         }
+
         return null;
     }
 
@@ -58,7 +66,7 @@ public partial class MaterialsPage : UserControl
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)
     {
-        if (VM is not null) VM.SearchText = string.Empty;
+        if (Vm is { } vm) vm.SearchText = string.Empty;
     }
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -70,40 +78,37 @@ public partial class MaterialsPage : UserControl
         e.Handled = true;
     }
 
-    private MaterialsViewModel? VM => DataContext as MaterialsViewModel;
-
-    private async void CreateMaterial_Click(object sender, RoutedEventArgs e)
+    private void MaterialRow_Click(object sender, MouseButtonEventArgs e)
     {
-        var dialog = App.Services.GetRequiredService<CreateMaterialDialog>();
-        dialog.Owner = Window.GetWindow(this);
-
-        if (dialog.ShowDialog() == true && dialog.Result is not null && VM is not null)
+        if (Vm is not { } vm) return;
+        if (sender is Border { Tag: LocalMaterial material } && MainWindow.Instance is { } mw)
         {
-            var id = Guid.NewGuid();
-            await VM.SaveNewMaterialAsync(dialog.Result, id);
+            var overlay = new MaterialDetailOverlay(material, vm);
+            mw.ShowDrawer(overlay, 560);
         }
     }
 
-    private async void EditMaterial_Click(object sender, RoutedEventArgs e)
+    private void EquipmentRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalMaterial material || VM is null)
-            return;
-
-        var dialog = App.Services.GetRequiredService<CreateMaterialDialog>();
-        dialog.Owner = Window.GetWindow(this);
-        dialog.SetEditMode(material);
-
-        if (dialog.ShowDialog() == true && dialog.UpdateResult is not null)
-            await VM.SaveUpdatedMaterialAsync(material.Id, dialog.UpdateResult);
+        if (Vm is not { } vm) return;
+        if (sender is Border { Tag: LocalEquipment equipment } && MainWindow.Instance is { } mw)
+        {
+            var overlay = new EquipmentDetailOverlay(equipment, vm);
+            mw.ShowDrawer(overlay, 560);
+        }
     }
 
-    private async void DeleteMaterial_Click(object sender, RoutedEventArgs e)
+    private void AddItem_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not LocalMaterial material || VM is null)
-            return;
+        if (Vm is not { } vm) return;
+        if (MainWindow.Instance is not { } mw) return;
 
-        var owner = Window.GetWindow(this);
-        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Материал", material.Name))
-            await VM.DeleteMaterialCommand.ExecuteAsync(material);
+        var overlay = new CreateWarehouseItemOverlay(
+            vm.ActiveTab == "Equipment" ? "Equipment" : "Material",
+            vm,
+            vm.MaterialCategories.ToList(),
+            vm.EquipmentCategories.ToList());
+
+        mw.ShowCenteredOverlay(overlay, 560);
     }
 }

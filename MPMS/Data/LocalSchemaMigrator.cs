@@ -36,6 +36,7 @@ public static class LocalSchemaMigrator
         AddAdditionalSubRolesColumn(conn);
         AddBirthDateAndAddressColumns(conn);
         ApplyMaterialsInventorySchema(conn);
+        ApplyWarehouseSchema(conn);
     }
 
     private static void ApplyMaterialsInventorySchema(SqliteConnection conn)
@@ -327,6 +328,19 @@ public static class LocalSchemaMigrator
     {
         TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"BirthDate\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Users\" ADD COLUMN \"HomeAddress\" TEXT NULL;");
+    }
+
+    private static void ApplyWarehouseSchema(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"IsWrittenOff\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"WrittenOffAt\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"WrittenOffComment\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"IsWrittenOff\" INTEGER NOT NULL DEFAULT 0;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"WrittenOffAt\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"WrittenOffComment\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"MaterialStockMovements\" ADD COLUMN \"UserName\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"EquipmentHistoryEntries\" ADD COLUMN \"UserName\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Cost\" TEXT NULL;");
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

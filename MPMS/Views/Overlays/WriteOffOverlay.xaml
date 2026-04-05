@@ -1,0 +1,189 @@
+<UserControl x:Class="MPMS.Views.Overlays.WriteOffOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="ModeBtn" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="DangerBtn" TargetType="Button">
+            <Setter Property="Background"      Value="#DE350B"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="20,9"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#BF2600"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header (like ConfirmDeleteDialog) -->
+        <Border Grid.Row="0" Background="#FFF5F5" Padding="24,20,24,16">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="44" Height="44" CornerRadius="22" Background="#FFEBE6"
+                            Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="⚠" FontSize="20" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" Foreground="#DE350B"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="TitleLabel" FontSize="18" FontWeight="Bold" Foreground="#000000"/>
+                        <TextBlock Text="Это действие нельзя отменить"
+                                   FontSize="12" Foreground="#DE350B" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="Cancel_Click" Width="28" Height="28">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="Transparent" CornerRadius="14">
+                                <TextBlock Text="✕" FontSize="12" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,16,24,8">
+
+                <!-- Item info card -->
+                <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock x:Name="EntityTypeLabel" Text="Элемент"
+                                   FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="EntityNameText" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#000000" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="QuantityInfoText" FontSize="12" Foreground="#6B778C"
+                                   Margin="0,4,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Write-off mode selector (shown only for materials) -->
+                <StackPanel x:Name="ModePanel" Visibility="Collapsed" Margin="0,0,0,16">
+                    <TextBlock Text="Что списать?" Style="{StaticResource FormLabel}"/>
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Full -->
+                        <Border x:Name="ModeFull" Grid.Column="0"
+                                MouseLeftButtonDown="ModeFull_Click"
+                                Background="White" BorderBrush="#DFE1E6"
+                                CornerRadius="8" BorderThickness="2" Padding="14,12" Cursor="Hand">
+                            <StackPanel>
+                                <TextBlock Text="Всё количество" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#000000"/>
+                                <TextBlock x:Name="FullQtyHint" FontSize="11" Foreground="#6B778C"
+                                           Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Partial -->
+                        <Border x:Name="ModePartial" Grid.Column="2"
+                                MouseLeftButtonDown="ModePartial_Click"
+                                Background="White" BorderBrush="#DFE1E6"
+                                CornerRadius="8" BorderThickness="2" Padding="14,12" Cursor="Hand">
+                            <StackPanel>
+                                <TextBlock Text="Указать количество" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#000000"/>
+                                <TextBlock Text="Частичное списание" FontSize="11" Foreground="#6B778C"
+                                           Margin="0,3,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Quantity input (partial mode only) -->
+                <StackPanel x:Name="QuantityPanel" Visibility="Collapsed" Margin="0,0,0,16">
+                    <TextBlock x:Name="QuantityLabel" Text="Количество *" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Height="42">
+                        <TextBox x:Name="QuantityBox" BorderThickness="0" Background="Transparent"
+                                 Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
+                                 Padding="0" Text="1"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Comment -->
+                <TextBlock Text="Причина списания" Style="{StaticResource FormLabel}"/>
+                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                        CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
+                    <TextBox x:Name="CommentBox" BorderThickness="0" Background="Transparent"
+                             Foreground="#000000" FontSize="13"
+                             Height="72" TextWrapping="Wrap" AcceptsReturn="True"
+                             VerticalContentAlignment="Top" Padding="0"
+                             VerticalScrollBarVisibility="Auto"/>
+                </Border>
+
+                <!-- Error -->
+                <Border x:Name="ErrorPanel" Background="#FFF0F0"
+                        CornerRadius="8" Padding="14,10"
+                        Margin="0,0,0,8" Visibility="Collapsed"
+                        BorderBrush="#FCA5A5" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
+                                   Foreground="#DC2626" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#DC2626"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Padding="24,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button x:Name="ConfirmButton" Content="Списать"
+                        HorizontalAlignment="Right"
+                        Click="Confirm_Click" Style="{StaticResource DangerBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

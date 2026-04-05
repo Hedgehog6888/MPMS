@@ -13,26 +13,108 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
+    private bool _suppressCategoryFilterReload;
+    private bool _suppressUnitFilterReload;
 
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materials = [];
     [ObservableProperty] private string _searchText = string.Empty;
+    [ObservableProperty] private Guid? _categoryFilter;
+    [ObservableProperty] private ObservableCollection<MaterialCategoryFilterOption> _categoryFilterOptions = [];
+    [ObservableProperty] private string _unitFilter = "Все";
+    [ObservableProperty] private ObservableCollection<string> _unitFilterOptions = [];
+    [ObservableProperty] private string _stockFilter = "Все";
+
+    public IReadOnlyList<string> StockFilterOptions { get; } = ["Все", "Активные", "Списанные"];
 
     public MaterialsViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
     {
         _dbFactory = dbFactory;
         _sync = sync;
+        _unitFilterOptions.Add("Все");
     }
 
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
 
+    partial void OnCategoryFilterChanged(Guid? value)
+    {
+        if (_suppressCategoryFilterReload) return;
+        _ = LoadAsync();
+    }
+
+    partial void OnUnitFilterChanged(string value)
+    {
+        if (_suppressUnitFilterReload) return;
+        _ = LoadAsync();
+    }
+
+    partial void OnStockFilterChanged(string value) => _ = LoadAsync();
+
     public async Task LoadAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var categories = await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync();
+        var categoryOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
+        categoryOpts.AddRange(categories.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
+
+        _suppressCategoryFilterReload = true;
+        try
+        {
+            CategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(categoryOpts);
+            if (CategoryFilter is { } cid && categories.All(c => c.Id != cid))
+                CategoryFilter = null;
+        }
+        finally
+        {
+            _suppressCategoryFilterReload = false;
+        }
+
+        var distinctUnits = await db.Materials
+            .Where(m => m.Unit != null && m.Unit != "")
+            .Select(m => m.Unit!)
+            .Distinct()
+            .OrderBy(u => u)
+            .ToListAsync();
+
+        var prevUnit = UnitFilter;
+        var needRebuildUnits = UnitFilterOptions.Count != distinctUnits.Count + 1
+            || !UnitFilterOptions.Skip(1).SequenceEqual(distinctUnits);
+        if (needRebuildUnits)
+        {
+            _suppressUnitFilterReload = true;
+            try
+            {
+                UnitFilterOptions = new ObservableCollection<string> { "Все" };
+                foreach (var u in distinctUnits)
+                    UnitFilterOptions.Add(u);
+                UnitFilter = UnitFilterOptions.Contains(prevUnit) ? prevUnit : "Все";
+            }
+            finally
+            {
+                _suppressUnitFilterReload = false;
+            }
+        }
+
         var list = await db.Materials.OrderBy(m => m.Name).ToListAsync();
+
+        if (CategoryFilter is { } filterCat)
+            list = list.Where(m => m.CategoryId == filterCat).ToList();
+
+        if (UnitFilter is not null && UnitFilter != "Все")
+            list = list.Where(m => string.Equals(m.Unit, UnitFilter, StringComparison.Ordinal)).ToList();
+
+        list = StockFilter switch
+        {
+            "Активные" => list.Where(m => !m.IsWrittenOff).ToList(),
+            "Списанные" => list.Where(m => m.IsWrittenOff).ToList(),
+            _ => list
+        };
+
         var searchTerm = SearchHelper.Normalize(SearchText);
         if (searchTerm is not null)
             list = list.Where(m => SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
                 SearchHelper.ContainsIgnoreCase(m.Description, searchTerm)).ToList();
+
         Materials = new ObservableCollection<LocalMaterial>(list);
     }
 
@@ -95,5 +177,17 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Material", material.Id, SyncOperation.Delete, new { });
 
         await LoadAsync();
+    }
+}
+
+public sealed class MaterialCategoryFilterOption
+{
+    public Guid? Id { get; }
+    public string Name { get; }
+
+    public MaterialCategoryFilterOption(Guid? id, string name)
+    {
+        Id = id;
+        Name = name;
     }
 }

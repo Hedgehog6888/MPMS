@@ -1,0 +1,326 @@
+<UserControl x:Class="MPMS.Views.Overlays.EquipmentDetailOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="560"
+             Background="White">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+            <Setter Property="Margin"     Value="0,20,0,10"/>
+        </Style>
+        <Style x:Key="InfoLabel" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Margin"     Value="0,0,0,2"/>
+        </Style>
+        <Style x:Key="InfoValue" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="13"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="ActionBtn" TargetType="Button">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#111111"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="OutlineBtn" TargetType="Button">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerOutlineBtn" TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+            <Setter Property="Foreground" Value="#DE350B"/>
+            <Setter Property="BorderBrush" Value="#FFCDD2"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Оборудование" FontSize="20" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock Text="Информация и история использования"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Close_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <!-- Photo -->
+                <Border Height="220" Background="#F4F5F7"
+                        BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
+                        ClipToBounds="True">
+                    <Grid>
+                        <StackPanel x:Name="PhotoPlaceholder"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border Width="64" Height="64" CornerRadius="32"
+                                    Background="#DFE1E6" HorizontalAlignment="Center">
+                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets"
+                                           FontSize="28" Foreground="#6B778C"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Фото не добавлено" FontSize="12" Foreground="#6B778C"
+                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <Image x:Name="EquipmentPhoto" Stretch="Uniform" MaxHeight="220"
+                               Visibility="Collapsed"/>
+                        <Border x:Name="WrittenOffBanner"
+                                Background="#BF000000" Visibility="Collapsed"
+                                VerticalAlignment="Bottom" Padding="16,10">
+                            <TextBlock Text="СПИСАНО" FontSize="14" FontWeight="Bold"
+                                       Foreground="White" HorizontalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Info -->
+                <StackPanel Margin="24,16,24,0">
+
+                    <!-- Name + badge -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="NameText" Grid.Column="0"
+                                   FontSize="20" FontWeight="Bold" Foreground="#000000"
+                                   TextWrapping="Wrap"/>
+                        <Border x:Name="WrittenOffBadge" Grid.Column="1"
+                                Background="#F4F5F7" CornerRadius="4" Padding="10,4"
+                                VerticalAlignment="Top" Margin="8,2,0,0"
+                                Visibility="Collapsed">
+                            <TextBlock Text="Списано" FontSize="11" FontWeight="SemiBold" Foreground="#6B778C"/>
+                        </Border>
+                    </Grid>
+
+                    <TextBlock x:Name="CategoryText" FontSize="12" Foreground="#6B778C" Margin="0,0,0,16"/>
+
+                    <!-- Info grid -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Статус" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock x:Name="StatusText" Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Инв. номер" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock x:Name="InvNumberText" Style="{StaticResource InfoValue}" Text="—"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Добавлено" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock x:Name="CreatedAtText" Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Description -->
+                    <StackPanel x:Name="DescriptionPanel" Margin="0,14,0,0">
+                        <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionLabel}" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="DescriptionText"
+                                   FontSize="13" Foreground="#000000"
+                                   TextWrapping="Wrap" LineHeight="20"/>
+                    </StackPanel>
+
+                    <!-- Write-off info -->
+                    <Border x:Name="WriteOffInfoPanel" Margin="0,14,0,0" Visibility="Collapsed"
+                            Background="#FFF8F8" BorderBrush="#FFCDD2" BorderThickness="1"
+                            CornerRadius="6" Padding="12,10">
+                        <StackPanel>
+                            <TextBlock Text="ПРИЧИНА СПИСАНИЯ" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#6B778C" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="WriteOffCommentText"
+                                       FontSize="12" Foreground="#DE350B" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="WriteOffDateText"
+                                       FontSize="11" Foreground="#6B778C" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Action buttons (admin/manager only, not written off) -->
+                    <WrapPanel x:Name="ActionPanel" Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button Content="✎  Редактировать" Style="{StaticResource OutlineBtn}"
+                                Margin="0,0,8,8" Click="Edit_Click"/>
+                        <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
+                                Margin="0,0,0,8" Click="WriteOff_Click"/>
+                    </WrapPanel>
+
+                    <!-- History -->
+                    <Border x:Name="HistorySection" Margin="0,8,0,24">
+                        <StackPanel>
+                            <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"/>
+                            <TextBlock x:Name="HistoryLoading" Text="Загрузка..."
+                                       FontSize="12" Foreground="#6B778C" Margin="0,0,0,8"
+                                       Visibility="Collapsed"/>
+                            <TextBlock x:Name="HistoryEmpty" Text="История отсутствует"
+                                       FontSize="12" Foreground="#6B778C" Visibility="Collapsed"/>
+                            <ItemsControl x:Name="HistoryList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,6"
+                                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                                Padding="12,10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Event icon -->
+                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
+                                                        VerticalAlignment="Top" Margin="0,0,12,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
+                                                                    <Setter Property="Background" Value="#FFEBE6"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding EventType}" Value="Returned">
+                                                                    <Setter Property="Background" Value="#E3FCEF"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding EventType}" Value="Added">
+                                                                    <Setter Property="Background" Value="#E3FCEF"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               FontSize="14">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="→"/>
+                                                                <Setter Property="Foreground" Value="#1B6EC2"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
+                                                                        <Setter Property="Text" Value="✕"/>
+                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EventType}" Value="Returned">
+                                                                        <Setter Property="Text" Value="←"/>
+                                                                        <Setter Property="Foreground" Value="#00875A"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding EventType}" Value="Added">
+                                                                        <Setter Property="Text" Value="＋"/>
+                                                                        <Setter Property="Foreground" Value="#00875A"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+
+                                                <!-- Info -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding EventTypeDisplay}"
+                                                               FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                                                    <TextBlock Text="{Binding UserName, FallbackValue='—'}"
+                                                               FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding Comment}" FontSize="11" Foreground="#6B778C"
+                                                               Visibility="{Binding Comment, Converter={StaticResource StringToVis}}"
+                                                               TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Date -->
+                                                <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
+                                                               FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding NewStatus}" FontSize="11" Foreground="#6B778C"
+                                                               HorizontalAlignment="Right" Margin="0,2,0,0"
+                                                               Visibility="{Binding NewStatus, Converter={StaticResource StringToVis}}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
