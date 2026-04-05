@@ -121,6 +121,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
     public async Task SaveNewMaterialAsync(CreateMaterialRequest req, Guid localId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var inv = await InventoryNumbers.NextMaterialAsync(db, req.InventoryNumber);
         var material = new LocalMaterial
         {
             Id = localId,
@@ -129,7 +130,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             Description = req.Description,
             Quantity = req.InitialQuantity < 0 ? 0 : req.InitialQuantity,
             Cost = req.Cost,
-            InventoryNumber = string.IsNullOrWhiteSpace(req.InventoryNumber) ? null : req.InventoryNumber.Trim(),
+            InventoryNumber = inv,
             CategoryId = req.CategoryId,
             ImagePath = req.ImagePath,
             IsSynced = false,
@@ -141,7 +142,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Material", localId, SyncOperation.Create,
-            req with { Id = localId });
+            req with { Id = localId, InventoryNumber = material.InventoryNumber });
 
         await LoadAsync();
     }
@@ -156,14 +157,20 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         material.Unit = req.Unit;
         material.Description = req.Description;
         material.Cost = req.Cost;
-        material.InventoryNumber = string.IsNullOrWhiteSpace(req.InventoryNumber) ? null : req.InventoryNumber.Trim();
         material.CategoryId = req.CategoryId;
         material.ImagePath = req.ImagePath;
         material.UpdatedAt = DateTime.UtcNow;
         material.IsSynced = false;
 
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Material", id, SyncOperation.Update, req);
+        await _sync.QueueOperationAsync("Material", id, SyncOperation.Update,
+            req with
+            {
+                InventoryNumber = material.InventoryNumber,
+                CategoryId = material.CategoryId,
+                ImagePath = material.ImagePath,
+                Cost = material.Cost
+            });
         await LoadAsync();
     }
 

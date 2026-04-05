@@ -17,6 +17,8 @@ public partial class CreateWarehouseItemOverlay : UserControl
     private readonly WarehouseViewModel _vm;
     private readonly LocalMaterial? _editMaterial;
     private readonly LocalEquipment? _editEquipment;
+    /// <summary>Предпросмотр номера при создании; при сохранении передаётся в VM как предпочтительный.</summary>
+    private string? _preferredInventoryForSave;
 
     // Display items for unit combo
     private record UnitDisplayItem(string Display, string Short, bool IsInteger);
@@ -30,6 +32,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
         LocalEquipment? editEquipment = null)
     {
         InitializeComponent();
+        Loaded += OnOverlayLoaded;
         _mode = mode;
         _vm = vm;
         _isEdit = editMaterial is not null || editEquipment is not null;
@@ -46,15 +49,20 @@ public partial class CreateWarehouseItemOverlay : UserControl
             UnitPanel.Visibility = Visibility.Collapsed;
             QuantityCostPanel.Visibility = Visibility.Collapsed;
             CostOnlyPanel.Visibility = Visibility.Collapsed;
-            InvNumberPanel.Visibility = Visibility.Visible;
 
             if (editEquipment is not null)
             {
                 NameBox.Text = editEquipment.Name;
                 DescriptionBox.Text = editEquipment.Description ?? string.Empty;
-                InvNumberBox.Text = editEquipment.InventoryNumber ?? string.Empty;
                 CategoryCombo.SelectedItem = equipmentCategories.FirstOrDefault(c => c.Id == editEquipment.CategoryId);
                 SetPhotoPath(editEquipment.ImagePath);
+                HeaderInventoryLine.Visibility = Visibility.Visible;
+                HeaderInventoryLine.Text = $"Инв. № {editEquipment.InventoryNumber ?? "—"}";
+            }
+            else
+            {
+                HeaderInventoryLine.Visibility = Visibility.Visible;
+                HeaderInventoryLine.Text = "Инв. № …";
             }
         }
         else
@@ -70,7 +78,6 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 .ToList();
             UnitCombo.ItemsSource = units;
             UnitCombo.DisplayMemberPath = "Display";
-            InvNumberPanel.Visibility = Visibility.Visible;
 
             if (_isEdit)
             {
@@ -82,9 +89,10 @@ public partial class CreateWarehouseItemOverlay : UserControl
             {
                 NameBox.Text = editMaterial.Name;
                 DescriptionBox.Text = editMaterial.Description ?? string.Empty;
-                InvNumberBox.Text = editMaterial.InventoryNumber ?? string.Empty;
                 CategoryCombo.SelectedItem = materialCategories.FirstOrDefault(c => c.Id == editMaterial.CategoryId);
                 SetPhotoPath(editMaterial.ImagePath);
+                HeaderInventoryLine.Visibility = Visibility.Visible;
+                HeaderInventoryLine.Text = $"Инв. № {editMaterial.InventoryNumber ?? "—"}";
 
                 // Select matching unit
                 if (!string.IsNullOrWhiteSpace(editMaterial.Unit))
@@ -96,9 +104,31 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 if (editMaterial.Cost.HasValue)
                     CostEditBox.Text = FormatCostDisplay(editMaterial.Cost.Value);
             }
+            else
+            {
+                HeaderInventoryLine.Visibility = Visibility.Visible;
+                HeaderInventoryLine.Text = "Инв. № …";
+            }
 
             SetupMaterialNumericFields();
             UpdateQuantityLabelForUnit();
+        }
+    }
+
+    private async void OnOverlayLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_isEdit) return;
+        try
+        {
+            var n = _mode == "Equipment"
+                ? await _vm.PeekNextEquipmentInventoryNumberAsync()
+                : await _vm.PeekNextMaterialInventoryNumberAsync();
+            HeaderInventoryLine.Text = $"Инв. № {n}";
+            _preferredInventoryForSave = n;
+        }
+        catch
+        {
+            HeaderInventoryLine.Text = "Инв. № —";
         }
     }
 
@@ -309,12 +339,11 @@ public partial class CreateWarehouseItemOverlay : UserControl
 
         if (_mode == "Equipment")
         {
-            var invNumber = string.IsNullOrWhiteSpace(InvNumberBox.Text) ? null : InvNumberBox.Text.Trim();
             MainWindow.Instance?.HideAllOverlays();
             if (_isEdit && _editEquipment is not null)
-                _ = _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image, invNumber);
+                _ = _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image);
             else
-                _ = _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, invNumber);
+                _ = _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, _preferredInventoryForSave);
         }
         else
         {
@@ -361,15 +390,13 @@ public partial class CreateWarehouseItemOverlay : UserControl
                     return;
                 }
 
-                var inv = string.IsNullOrWhiteSpace(InvNumberBox.Text) ? null : InvNumberBox.Text.Trim();
                 MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost, inv);
+                _ = _vm.SaveNewMaterialAsync(name, selectedUnit, description, categoryId, categoryName, image, qty.Value, cost, _preferredInventoryForSave);
             }
             else if (_editMaterial is not null)
             {
-                var inv = string.IsNullOrWhiteSpace(InvNumberBox.Text) ? null : InvNumberBox.Text.Trim();
                 MainWindow.Instance?.HideAllOverlays();
-                _ = _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost, inv);
+                _ = _vm.UpdateMaterialAsync(_editMaterial.Id, name, selectedUnit, description, categoryId, categoryName, image, cost);
             }
         }
     }

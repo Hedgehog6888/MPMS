@@ -318,12 +318,27 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
     // ── Material operations ───────────────────────────────────────────────────
 
+    /// <summary>Следующий инв. номер для отображения в форме (без резервирования).</summary>
+    public async Task<string> PeekNextMaterialInventoryNumberAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await InventoryNumbers.NextMaterialAsync(db);
+    }
+
+    /// <summary>Следующий инв. номер для оборудования (без резервирования).</summary>
+    public async Task<string> PeekNextEquipmentInventoryNumberAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await InventoryNumbers.NextEquipmentAsync(db);
+    }
+
     public async Task SaveNewMaterialAsync(string name, string? unit, string? description,
         Guid? categoryId, string? categoryName, string? imagePath, decimal initialQty, decimal? cost = null,
-        string? inventoryNumber = null)
+        string? preferredInventoryNumber = null)
     {
         var localId = Guid.NewGuid();
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var inv = await InventoryNumbers.NextMaterialAsync(db, preferredInventoryNumber);
         var material = new LocalMaterial
         {
             Id = localId,
@@ -332,7 +347,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             Description = description,
             Quantity = initialQty < 0 ? 0 : initialQty,
             Cost = cost,
-            InventoryNumber = string.IsNullOrWhiteSpace(inventoryNumber) ? null : inventoryNumber.Trim(),
+            InventoryNumber = inv,
             CategoryId = categoryId,
             CategoryName = categoryName,
             ImagePath = imagePath,
@@ -374,10 +389,11 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task SaveNewEquipmentAsync(string name, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, string? inventoryNumber)
+        Guid? categoryId, string? categoryName, string? imagePath, string? preferredInventoryNumber = null)
     {
         var localId = Guid.NewGuid();
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var inv = await InventoryNumbers.NextEquipmentAsync(db, preferredInventoryNumber);
         var equipment = new LocalEquipment
         {
             Id = localId,
@@ -386,7 +402,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             CategoryId = categoryId,
             CategoryName = categoryName,
             ImagePath = imagePath,
-            InventoryNumber = inventoryNumber,
+            InventoryNumber = inv,
             Status = "Available",
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
@@ -411,8 +427,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task UpdateMaterialAsync(Guid id, string name, string? unit, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, decimal? cost = null,
-        string? inventoryNumber = null)
+        Guid? categoryId, string? categoryName, string? imagePath, decimal? cost = null)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var m = await db.Materials.FindAsync(id);
@@ -424,7 +439,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         m.CategoryName = categoryName;
         m.ImagePath = imagePath;
         m.Cost = cost;
-        m.InventoryNumber = string.IsNullOrWhiteSpace(inventoryNumber) ? null : inventoryNumber.Trim();
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         await db.SaveChangesAsync();
@@ -441,7 +455,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task UpdateEquipmentAsync(Guid id, string name, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, string? inventoryNumber)
+        Guid? categoryId, string? categoryName, string? imagePath)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(id);
@@ -451,7 +465,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.CategoryId = categoryId;
         e.CategoryName = categoryName;
         e.ImagePath = imagePath;
-        e.InventoryNumber = inventoryNumber;
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();

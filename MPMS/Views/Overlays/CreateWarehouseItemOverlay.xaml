@@ -24,6 +24,14 @@
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="HeaderInventoryLine" Grid.Row="0"
+                           FontSize="11" Foreground="#A8B0BC"
+                           Margin="0,0,0,8" Visibility="Collapsed"/>
+                <Grid Grid.Row="1">
                 <StackPanel>
                     <TextBlock x:Name="TitleLabel" Text="Добавить материал"
                                FontSize="20" FontWeight="Bold" Foreground="#000000"/>
@@ -46,6 +54,7 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
+                </Grid>
             </Grid>
         </Border>
 
@@ -92,17 +101,6 @@
                               Height="42" Margin="0,0,0,12"
                               DisplayMemberPath="Display"
                               SelectionChanged="UnitCombo_SelectionChanged"/>
-                </StackPanel>
-
-                <!-- Inventory number (materials + equipment) -->
-                <StackPanel x:Name="InvNumberPanel" Visibility="Collapsed">
-                    <TextBlock Text="Инвентарный номер" Style="{StaticResource FormLabel}"/>
-                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
-                        <TextBox x:Name="InvNumberBox" BorderThickness="0" Background="Transparent"
-                                 Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
-                                 Padding="0"/>
-                    </Border>
                 </StackPanel>
 
                 <!-- Initial quantity + cost (materials create mode only) -->
