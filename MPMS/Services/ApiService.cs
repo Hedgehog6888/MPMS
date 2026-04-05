@@ -156,6 +156,21 @@ public class ApiService : IApiService
     public async Task<bool> DeleteMaterialAsync(Guid id)
         => await DeleteAsync($"materials/{id}");
 
+    public Task<List<MaterialCategoryResponse>?> GetMaterialCategoriesAsync()
+        => GetAsync<List<MaterialCategoryResponse>>("material-categories");
+
+    public Task<List<EquipmentCategoryResponse>?> GetEquipmentCategoriesAsync()
+        => GetAsync<List<EquipmentCategoryResponse>>("equipment-categories");
+
+    public Task<List<MaterialStockMovementResponse>?> GetAllMaterialStockMovementsAsync()
+        => GetAsync<List<MaterialStockMovementResponse>>("inventory/material-stock-movements");
+
+    public Task<List<EquipmentResponse>?> GetAllEquipmentAsync()
+        => GetAsync<List<EquipmentResponse>>("inventory/equipment");
+
+    public Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync()
+        => GetAsync<List<EquipmentHistoryEntryResponse>>("inventory/equipment-history");
+
     // ── Files ─────────────────────────────────────────────────────────────────
     public async Task<List<FileDto>?> GetFilesAsync(
         Guid? projectId = null, Guid? taskId = null, Guid? stageId = null)

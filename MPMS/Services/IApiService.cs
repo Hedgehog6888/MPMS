@@ -36,11 +36,17 @@ public interface IApiService
     Task<StageMaterialResponse?> AddStageMaterialAsync(Guid stageId, AddStageMaterialRequest request);
     Task<bool> RemoveStageMaterialAsync(Guid stageId, Guid stageMaterialId);
 
-    // Materials
+    // Materials & inventory
     Task<List<MaterialResponse>?> GetMaterialsAsync(string? search = null);
     Task<MaterialResponse?> CreateMaterialAsync(CreateMaterialRequest request);
     Task<MaterialResponse?> UpdateMaterialAsync(Guid id, UpdateMaterialRequest request);
     Task<bool> DeleteMaterialAsync(Guid id);
+
+    Task<List<MaterialCategoryResponse>?> GetMaterialCategoriesAsync();
+    Task<List<EquipmentCategoryResponse>?> GetEquipmentCategoriesAsync();
+    Task<List<MaterialStockMovementResponse>?> GetAllMaterialStockMovementsAsync();
+    Task<List<EquipmentResponse>?> GetAllEquipmentAsync();
+    Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync();
 
     // Files
     Task<List<FileDto>?> GetFilesAsync(Guid? projectId = null, Guid? taskId = null, Guid? stageId = null);

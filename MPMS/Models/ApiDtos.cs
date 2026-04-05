@@ -64,11 +64,75 @@ public record StageResponse(Guid Id, Guid TaskId, string Name, string? Descripti
     List<StageMaterialResponse> Materials, List<FileDto> Files,
     DateTime CreatedAt, DateTime UpdatedAt);
 
-// ── Materials ─────────────────────────────────────────────────────────────────
-public record CreateMaterialRequest(string Name, string? Unit, string? Description, Guid? Id = null);
-public record UpdateMaterialRequest(string Name, string? Unit, string? Description);
-public record MaterialResponse(Guid Id, string Name, string? Unit,
-    string? Description, DateTime CreatedAt);
+// ── Materials & inventory ────────────────────────────────────────────────────
+public record MaterialCategoryResponse(Guid Id, string Name);
+public record EquipmentCategoryResponse(Guid Id, string Name);
+
+public record CreateMaterialRequest(
+    string Name,
+    string? Unit,
+    string? Description,
+    Guid? Id = null,
+    decimal InitialQuantity = 0,
+    Guid? CategoryId = null,
+    string? ImagePath = null);
+
+public record UpdateMaterialRequest(
+    string Name,
+    string? Unit,
+    string? Description,
+    Guid? CategoryId = null,
+    string? ImagePath = null);
+
+public record MaterialResponse(
+    Guid Id,
+    string Name,
+    string? Unit,
+    string? Description,
+    decimal Quantity,
+    Guid? CategoryId,
+    string? CategoryName,
+    string? ImagePath,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
+
+public record MaterialStockMovementResponse(
+    Guid Id,
+    Guid MaterialId,
+    DateTime OccurredAt,
+    decimal Delta,
+    decimal QuantityAfter,
+    string OperationType,
+    string? Comment,
+    Guid? UserId,
+    Guid? ProjectId,
+    Guid? TaskId);
+
+public record EquipmentResponse(
+    Guid Id,
+    string Name,
+    string? Description,
+    Guid? CategoryId,
+    string? CategoryName,
+    string? ImagePath,
+    string Status,
+    string? InventoryNumber,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    Guid? CheckedOutProjectId,
+    Guid? CheckedOutTaskId);
+
+public record EquipmentHistoryEntryResponse(
+    Guid Id,
+    Guid EquipmentId,
+    DateTime OccurredAt,
+    string EventType,
+    string? PreviousStatus,
+    string? NewStatus,
+    Guid? ProjectId,
+    Guid? TaskId,
+    Guid? UserId,
+    string? Comment);
 
 public record StageMaterialResponse(Guid Id, Guid MaterialId, string MaterialName,
     string? Unit, decimal Quantity);

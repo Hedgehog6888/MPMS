@@ -220,12 +220,74 @@ public class LocalTaskStage : LocalEntity
         && Status != StageStatus.Completed;
 }
 
+public class LocalMaterialCategory
+{
+    public Guid Id { get; set; }
+    [MaxLength(100)] public string Name { get; set; } = string.Empty;
+}
+
+public class LocalEquipmentCategory
+{
+    public Guid Id { get; set; }
+    [MaxLength(100)] public string Name { get; set; } = string.Empty;
+}
+
 public class LocalMaterial : LocalEntity
 {
     [MaxLength(200)] public string Name { get; set; } = string.Empty;
     [MaxLength(50)]  public string? Unit { get; set; }
     public string? Description { get; set; }
+    public decimal Quantity { get; set; }
+    public Guid? CategoryId { get; set; }
+    [MaxLength(100)] public string? CategoryName { get; set; }
+    [MaxLength(500)] public string? ImagePath { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>История движения материала (приход/расход) — синхронизируется с сервера.</summary>
+public class LocalMaterialStockMovement
+{
+    public Guid Id { get; set; }
+    public Guid MaterialId { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public decimal Delta { get; set; }
+    public decimal QuantityAfter { get; set; }
+    [MaxLength(30)] public string OperationType { get; set; } = string.Empty;
+    [MaxLength(500)] public string? Comment { get; set; }
+    public Guid? UserId { get; set; }
+    public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
+}
+
+public class LocalEquipment : LocalEntity
+{
+    [MaxLength(200)] public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public Guid? CategoryId { get; set; }
+    [MaxLength(100)] public string? CategoryName { get; set; }
+    [MaxLength(500)] public string? ImagePath { get; set; }
+    [MaxLength(30)] public string Status { get; set; } = "Available";
+    [MaxLength(100)] public string? InventoryNumber { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public Guid? CheckedOutProjectId { get; set; }
+    public Guid? CheckedOutTaskId { get; set; }
+}
+
+/// <summary>История оборудования: выдача, возврат, смена статуса.</summary>
+public class LocalEquipmentHistoryEntry
+{
+    public Guid Id { get; set; }
+    public Guid EquipmentId { get; set; }
+    public DateTime OccurredAt { get; set; }
+    [MaxLength(30)] public string EventType { get; set; } = string.Empty;
+    [MaxLength(30)] public string? PreviousStatus { get; set; }
+    [MaxLength(30)] public string? NewStatus { get; set; }
+    public Guid? ProjectId { get; set; }
+    public Guid? TaskId { get; set; }
+    public Guid? UserId { get; set; }
+    [MaxLength(500)] public string? Comment { get; set; }
 }
 
 public class LocalStageMaterial : LocalEntity

@@ -217,6 +217,34 @@ public class SyncService : ISyncService
             }
         }
 
+        // Material categories
+        var matCats = await _api.GetMaterialCategoriesAsync();
+        if (matCats is not null)
+        {
+            foreach (var c in matCats)
+            {
+                var ex = await db.MaterialCategories.FindAsync(c.Id);
+                if (ex is null)
+                    db.MaterialCategories.Add(new LocalMaterialCategory { Id = c.Id, Name = c.Name });
+                else
+                    ex.Name = c.Name;
+            }
+        }
+
+        // Equipment categories
+        var eqCats = await _api.GetEquipmentCategoriesAsync();
+        if (eqCats is not null)
+        {
+            foreach (var c in eqCats)
+            {
+                var ex = await db.EquipmentCategories.FindAsync(c.Id);
+                if (ex is null)
+                    db.EquipmentCategories.Add(new LocalEquipmentCategory { Id = c.Id, Name = c.Name });
+                else
+                    ex.Name = c.Name;
+            }
+        }
+
         // Materials
         var materials = await _api.GetMaterialsAsync();
         if (materials is not null)
@@ -226,17 +254,122 @@ public class SyncService : ISyncService
             {
                 if (existingMats.TryGetValue(m.Id, out var local))
                 {
-                    local.Name = m.Name; local.Unit = m.Unit;
-                    local.Description = m.Description; local.IsSynced = true;
+                    local.Name = m.Name;
+                    local.Unit = m.Unit;
+                    local.Description = m.Description;
+                    local.Quantity = m.Quantity;
+                    local.CategoryId = m.CategoryId;
+                    local.CategoryName = m.CategoryName;
+                    local.ImagePath = m.ImagePath;
+                    local.UpdatedAt = m.UpdatedAt;
+                    local.IsSynced = true;
                 }
                 else
                 {
                     db.Materials.Add(new LocalMaterial
                     {
-                        Id = m.Id, Name = m.Name, Unit = m.Unit,
-                        Description = m.Description, CreatedAt = m.CreatedAt, IsSynced = true
+                        Id = m.Id,
+                        Name = m.Name,
+                        Unit = m.Unit,
+                        Description = m.Description,
+                        Quantity = m.Quantity,
+                        CategoryId = m.CategoryId,
+                        CategoryName = m.CategoryName,
+                        ImagePath = m.ImagePath,
+                        CreatedAt = m.CreatedAt,
+                        UpdatedAt = m.UpdatedAt,
+                        IsSynced = true
                     });
                 }
+            }
+        }
+
+        // Material stock movements (полная замена снимка с сервера)
+        var stockMoves = await _api.GetAllMaterialStockMovementsAsync();
+        if (stockMoves is not null && _api.IsOnline)
+        {
+            await db.MaterialStockMovements.ExecuteDeleteAsync();
+            foreach (var x in stockMoves)
+            {
+                db.MaterialStockMovements.Add(new LocalMaterialStockMovement
+                {
+                    Id = x.Id,
+                    MaterialId = x.MaterialId,
+                    OccurredAt = x.OccurredAt,
+                    Delta = x.Delta,
+                    QuantityAfter = x.QuantityAfter,
+                    OperationType = x.OperationType,
+                    Comment = x.Comment,
+                    UserId = x.UserId,
+                    ProjectId = x.ProjectId,
+                    TaskId = x.TaskId
+                });
+            }
+        }
+
+        // Equipment
+        var equips = await _api.GetAllEquipmentAsync();
+        if (equips is not null && _api.IsOnline)
+        {
+            foreach (var eq in equips)
+            {
+                var existingEq = await db.Equipments.FindAsync(eq.Id);
+                if (existingEq is null)
+                {
+                    db.Equipments.Add(new LocalEquipment
+                    {
+                        Id = eq.Id,
+                        Name = eq.Name,
+                        Description = eq.Description,
+                        CategoryId = eq.CategoryId,
+                        CategoryName = eq.CategoryName,
+                        ImagePath = eq.ImagePath,
+                        Status = eq.Status,
+                        InventoryNumber = eq.InventoryNumber,
+                        CreatedAt = eq.CreatedAt,
+                        UpdatedAt = eq.UpdatedAt,
+                        CheckedOutProjectId = eq.CheckedOutProjectId,
+                        CheckedOutTaskId = eq.CheckedOutTaskId,
+                        IsSynced = true
+                    });
+                }
+                else
+                {
+                    existingEq.Name = eq.Name;
+                    existingEq.Description = eq.Description;
+                    existingEq.CategoryId = eq.CategoryId;
+                    existingEq.CategoryName = eq.CategoryName;
+                    existingEq.ImagePath = eq.ImagePath;
+                    existingEq.Status = eq.Status;
+                    existingEq.InventoryNumber = eq.InventoryNumber;
+                    existingEq.UpdatedAt = eq.UpdatedAt;
+                    existingEq.CheckedOutProjectId = eq.CheckedOutProjectId;
+                    existingEq.CheckedOutTaskId = eq.CheckedOutTaskId;
+                    existingEq.IsSynced = true;
+                }
+            }
+        }
+
+        // История оборудования
+        var eqHistory = await _api.GetAllEquipmentHistoryAsync();
+        if (eqHistory is not null && _api.IsOnline)
+        {
+            await db.EquipmentHistoryEntries.ExecuteDeleteAsync();
+            foreach (var h in eqHistory)
+            {
+                db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+                {
+                    Id = h.Id,
+                    EquipmentId = h.EquipmentId,
+                    OccurredAt = h.OccurredAt,
+                    EventType = h.EventType,
+                    PreviousStatus = h.PreviousStatus,
+                    NewStatus = h.NewStatus,
+                    ProjectId = h.ProjectId,
+                    TaskId = h.TaskId,
+                    UserId = h.UserId,
+                    Comment = h.Comment
+                });
             }
         }
 

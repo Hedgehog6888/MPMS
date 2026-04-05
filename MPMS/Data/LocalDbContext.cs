@@ -24,7 +24,12 @@ public class LocalDbContext : DbContext
     public DbSet<LocalProject>       Projects         => Set<LocalProject>();
     public DbSet<LocalTask>          Tasks            => Set<LocalTask>();
     public DbSet<LocalTaskStage>     TaskStages       => Set<LocalTaskStage>();
+    public DbSet<LocalMaterialCategory> MaterialCategories => Set<LocalMaterialCategory>();
+    public DbSet<LocalEquipmentCategory> EquipmentCategories => Set<LocalEquipmentCategory>();
     public DbSet<LocalMaterial>      Materials        => Set<LocalMaterial>();
+    public DbSet<LocalMaterialStockMovement> MaterialStockMovements => Set<LocalMaterialStockMovement>();
+    public DbSet<LocalEquipment>     Equipments       => Set<LocalEquipment>();
+    public DbSet<LocalEquipmentHistoryEntry> EquipmentHistoryEntries => Set<LocalEquipmentHistoryEntry>();
     public DbSet<LocalStageMaterial> StageMaterials   => Set<LocalStageMaterial>();
     public DbSet<LocalFile>          Files            => Set<LocalFile>();
     public DbSet<LocalActivityLog>   ActivityLogs     => Set<LocalActivityLog>();
@@ -62,6 +67,13 @@ public class LocalDbContext : DbContext
         modelBuilder.Entity<AuthSession>()
             .Property(e => e.UserName)
             .HasColumnName("UserDisplayName");
+
+        modelBuilder.Entity<LocalMaterial>()
+            .Property(e => e.Quantity).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalMaterialStockMovement>()
+            .Property(e => e.Delta).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalMaterialStockMovement>()
+            .Property(e => e.QuantityAfter).HasPrecision(18, 3);
     }
 }
 

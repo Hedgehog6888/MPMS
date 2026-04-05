@@ -45,8 +45,12 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             Name = req.Name,
             Unit = req.Unit,
             Description = req.Description,
+            Quantity = req.InitialQuantity < 0 ? 0 : req.InitialQuantity,
+            CategoryId = req.CategoryId,
+            ImagePath = req.ImagePath,
             IsSynced = false,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         db.Materials.Add(material);
@@ -67,6 +71,9 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         material.Name = req.Name;
         material.Unit = req.Unit;
         material.Description = req.Description;
+        material.CategoryId = req.CategoryId;
+        material.ImagePath = req.ImagePath;
+        material.UpdatedAt = DateTime.UtcNow;
         material.IsSynced = false;
 
         await db.SaveChangesAsync();

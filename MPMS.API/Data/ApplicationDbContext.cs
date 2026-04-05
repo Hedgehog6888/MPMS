@@ -16,7 +16,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
     public DbSet<TaskStage> TaskStages => Set<TaskStage>();
+    public DbSet<MaterialCategory> MaterialCategories => Set<MaterialCategory>();
+    public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
     public DbSet<Material> Materials => Set<Material>();
+    public DbSet<MaterialStockMovement> MaterialStockMovements => Set<MaterialStockMovement>();
+    public DbSet<Equipment> Equipments => Set<Equipment>();
+    public DbSet<EquipmentHistoryEntry> EquipmentHistoryEntries => Set<EquipmentHistoryEntry>();
     public DbSet<StageMaterial> StageMaterials => Set<StageMaterial>();
     public DbSet<FileAttachment> Files => Set<FileAttachment>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
@@ -144,13 +149,133 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
+        // ── MaterialCategory ──────────────────────────────────────────────
+        modelBuilder.Entity<MaterialCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        // ── EquipmentCategory ─────────────────────────────────────────────
+        modelBuilder.Entity<EquipmentCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
         // ── Material ──────────────────────────────────────────────────────
         modelBuilder.Entity<Material>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
 
+            entity.Property(e => e.Quantity).HasPrecision(18, 3);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Category)
+                  .WithMany(c => c.Materials)
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── MaterialStockMovement ─────────────────────────────────────────
+        modelBuilder.Entity<MaterialStockMovement>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.Delta).HasPrecision(18, 3);
+            entity.Property(e => e.QuantityAfter).HasPrecision(18, 3);
+            entity.Property(e => e.OperationType)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
+            entity.Property(e => e.OccurredAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Material)
+                  .WithMany(m => m.StockMovements)
+                  .HasForeignKey(e => e.MaterialId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Project)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProjectId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.Task)
+                  .WithMany()
+                  .HasForeignKey(e => e.TaskId)
+                  .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── Equipment ─────────────────────────────────────────────────────
+        modelBuilder.Entity<Equipment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.Status)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Category)
+                  .WithMany(c => c.EquipmentItems)
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.CheckedOutProject)
+                  .WithMany()
+                  .HasForeignKey(e => e.CheckedOutProjectId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.CheckedOutTask)
+                  .WithMany()
+                  .HasForeignKey(e => e.CheckedOutTaskId)
+                  .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── EquipmentHistoryEntry ─────────────────────────────────────────
+        modelBuilder.Entity<EquipmentHistoryEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.EventType)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
+            entity.Property(e => e.PreviousStatus)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
+            entity.Property(e => e.NewStatus)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
+            entity.Property(e => e.OccurredAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Equipment)
+                  .WithMany(eq => eq.History)
+                  .HasForeignKey(e => e.EquipmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Project)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProjectId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.Task)
+                  .WithMany()
+                  .HasForeignKey(e => e.TaskId)
+                  .OnDelete(DeleteBehavior.NoAction);
         });
 
         // ── StageMaterial ─────────────────────────────────────────────────

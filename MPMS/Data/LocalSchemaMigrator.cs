@@ -35,6 +35,83 @@ public static class LocalSchemaMigrator
         AddSubRoleColumn(conn);
         AddAdditionalSubRolesColumn(conn);
         AddBirthDateAndAddressColumns(conn);
+        ApplyMaterialsInventorySchema(conn);
+    }
+
+    private static void ApplyMaterialsInventorySchema(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "MaterialCategories" (
+                "Id"   TEXT NOT NULL CONSTRAINT "PK_MaterialCategories" PRIMARY KEY,
+                "Name" TEXT NOT NULL DEFAULT ''
+            );
+            """);
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "EquipmentCategories" (
+                "Id"   TEXT NOT NULL CONSTRAINT "PK_EquipmentCategories" PRIMARY KEY,
+                "Name" TEXT NOT NULL DEFAULT ''
+            );
+            """);
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Quantity\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"CategoryId\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"CategoryName\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"ImagePath\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"UpdatedAt\" TEXT NOT NULL DEFAULT '0001-01-01 00:00:00';");
+        try
+        {
+            Execute(conn, """
+                UPDATE "Materials" SET "UpdatedAt" = "CreatedAt"
+                WHERE "UpdatedAt" IS NULL OR "UpdatedAt" = '' OR "UpdatedAt" = '0001-01-01 00:00:00'
+                """);
+        }
+        catch (SqliteException) { /* ignore */ }
+
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "MaterialStockMovements" (
+                "Id"            TEXT NOT NULL CONSTRAINT "PK_MaterialStockMovements" PRIMARY KEY,
+                "MaterialId"    TEXT NOT NULL,
+                "OccurredAt"    TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "Delta"         TEXT NOT NULL DEFAULT '0',
+                "QuantityAfter" TEXT NOT NULL DEFAULT '0',
+                "OperationType" TEXT NOT NULL DEFAULT '',
+                "Comment"       TEXT NULL,
+                "UserId"        TEXT NULL,
+                "ProjectId"     TEXT NULL,
+                "TaskId"        TEXT NULL
+            );
+            """);
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "Equipments" (
+                "Id"                   TEXT NOT NULL CONSTRAINT "PK_Equipments" PRIMARY KEY,
+                "Name"                 TEXT NOT NULL DEFAULT '',
+                "Description"          TEXT NULL,
+                "CategoryId"           TEXT NULL,
+                "CategoryName"         TEXT NULL,
+                "ImagePath"            TEXT NULL,
+                "Status"               TEXT NOT NULL DEFAULT 'Available',
+                "InventoryNumber"      TEXT NULL,
+                "CreatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "UpdatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "CheckedOutProjectId"  TEXT NULL,
+                "CheckedOutTaskId"     TEXT NULL,
+                "IsSynced"             INTEGER NOT NULL DEFAULT 1,
+                "LastModifiedLocally"  TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "EquipmentHistoryEntries" (
+                "Id"             TEXT NOT NULL CONSTRAINT "PK_EquipmentHistoryEntries" PRIMARY KEY,
+                "EquipmentId"    TEXT NOT NULL,
+                "OccurredAt"     TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "EventType"      TEXT NOT NULL DEFAULT '',
+                "PreviousStatus" TEXT NULL,
+                "NewStatus"      TEXT NULL,
+                "ProjectId"      TEXT NULL,
+                "TaskId"         TEXT NULL,
+                "UserId"         TEXT NULL,
+                "Comment"        TEXT NULL
+            );
+            """);
     }
 
     private static void CreateAppFlagsTable(SqliteConnection conn)

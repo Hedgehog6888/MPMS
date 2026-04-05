@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,10 @@ public class MaterialsController : ControllerBase
         _db = db;
     }
 
+    private static MaterialResponse ToDto(Material m) => new(
+        m.Id, m.Name, m.Unit, m.Description, m.Quantity,
+        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt);
+
     /// <summary>Get all materials (with optional search)</summary>
     [HttpGet]
     public async Task<ActionResult<List<MaterialResponse>>> GetAll([FromQuery] string? search)
@@ -30,7 +35,17 @@ public class MaterialsController : ControllerBase
 
         var materials = await query
             .OrderBy(m => m.Name)
-            .Select(m => new MaterialResponse(m.Id, m.Name, m.Unit, m.Description, m.CreatedAt))
+            .Select(m => new MaterialResponse(
+                m.Id,
+                m.Name,
+                m.Unit,
+                m.Description,
+                m.Quantity,
+                m.CategoryId,
+                m.Category != null ? m.Category.Name : null,
+                m.ImagePath,
+                m.CreatedAt,
+                m.UpdatedAt))
             .ToListAsync();
 
         return Ok(materials);
@@ -40,30 +55,55 @@ public class MaterialsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<MaterialResponse>> GetById(Guid id)
     {
-        var m = await _db.Materials.FindAsync(id);
+        var m = await _db.Materials.Include(x => x.Category).FirstOrDefaultAsync(x => x.Id == id);
         if (m is null) return NotFound();
-        return Ok(new MaterialResponse(m.Id, m.Name, m.Unit, m.Description, m.CreatedAt));
+        return Ok(ToDto(m));
     }
 
     /// <summary>Create material</summary>
     [HttpPost]
     public async Task<ActionResult<MaterialResponse>> Create([FromBody] CreateMaterialRequest request)
     {
+        if (request.CategoryId.HasValue)
+        {
+            var catOk = await _db.MaterialCategories.AnyAsync(c => c.Id == request.CategoryId.Value);
+            if (!catOk) return BadRequest(new { message = "Категория материала не найдена" });
+        }
+
+        var now = DateTime.UtcNow;
         var material = new Material
         {
             Id = request.Id ?? Guid.NewGuid(),
             Name = request.Name,
             Unit = request.Unit,
             Description = request.Description,
-            CreatedAt = DateTime.UtcNow
+            Quantity = request.InitialQuantity < 0 ? 0 : request.InitialQuantity,
+            CategoryId = request.CategoryId,
+            ImagePath = request.ImagePath,
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         _db.Materials.Add(material);
+
+        if (material.Quantity != 0)
+        {
+            _db.MaterialStockMovements.Add(new MaterialStockMovement
+            {
+                MaterialId = material.Id,
+                OccurredAt = now,
+                Delta = material.Quantity,
+                QuantityAfter = material.Quantity,
+                OperationType = MaterialStockOperationType.Purchase,
+                Comment = "Начальный остаток",
+                UserId = CurrentUserId()
+            });
+        }
+
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = material.Id },
-            new MaterialResponse(material.Id, material.Name, material.Unit,
-                material.Description, material.CreatedAt));
+        await _db.Entry(material).Reference(x => x.Category).LoadAsync();
+        return CreatedAtAction(nameof(GetById), new { id = material.Id }, ToDto(material));
     }
 
     /// <summary>Update material</summary>
@@ -73,14 +113,22 @@ public class MaterialsController : ControllerBase
         var material = await _db.Materials.FindAsync(id);
         if (material is null) return NotFound();
 
+        if (request.CategoryId.HasValue)
+        {
+            var catOk = await _db.MaterialCategories.AnyAsync(c => c.Id == request.CategoryId.Value);
+            if (!catOk) return BadRequest(new { message = "Категория материала не найдена" });
+        }
+
         material.Name = request.Name;
         material.Unit = request.Unit;
         material.Description = request.Description;
+        material.CategoryId = request.CategoryId;
+        material.ImagePath = request.ImagePath;
+        material.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-
-        return Ok(new MaterialResponse(material.Id, material.Name, material.Unit,
-            material.Description, material.CreatedAt));
+        await _db.Entry(material).Reference(x => x.Category).LoadAsync();
+        return Ok(ToDto(material));
     }
 
     /// <summary>Delete material</summary>
@@ -98,4 +146,7 @@ public class MaterialsController : ControllerBase
         await _db.SaveChangesAsync();
         return NoContent();
     }
+
+    private Guid CurrentUserId() =>
+        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
