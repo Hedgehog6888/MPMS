@@ -20,7 +20,10 @@ public record UpdateMaterialRequest(
     Guid? CategoryId = null,
     string? ImagePath = null,
     decimal? Cost = null,
-    [MaxLength(100)] string? InventoryNumber = null);
+    [MaxLength(100)] string? InventoryNumber = null,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    [MaxLength(500)] string? WrittenOffComment = null);
 
 public record MaterialResponse(
     Guid Id,
@@ -34,4 +37,7 @@ public record MaterialResponse(
     string? CategoryName,
     string? ImagePath,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    string? WrittenOffComment = null);

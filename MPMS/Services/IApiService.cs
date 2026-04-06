@@ -65,4 +65,12 @@ public interface IApiService
     Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request);
     Task<bool> DeleteUserAsync(Guid id);
     Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData);
+
+    // Sync: обсуждения, активность, соисполнители
+    Task<List<DiscussionMessageResponse>?> GetDiscussionMessagesAsync(DateTime? since = null);
+    Task<DiscussionMessageResponse?> PostDiscussionMessageAsync(CreateDiscussionMessageRequest request);
+    Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null);
+    Task<SyncedActivityLogResponse?> PostSyncedActivityLogAsync(CreateSyncedActivityLogRequest request);
+    Task<bool> ReplaceTaskAssigneesAsync(Guid taskId, ReplaceTaskAssigneesRequest request);
+    Task<bool> ReplaceStageAssigneesAsync(Guid stageId, ReplaceStageAssigneesRequest request);
 }

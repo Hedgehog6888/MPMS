@@ -23,7 +23,8 @@ public class MaterialsController : ControllerBase
     private static MaterialResponse ToDto(Material m) => new(
         m.Id, m.Name, m.Unit, m.Description, m.Quantity,
         m.Cost, m.InventoryNumber,
-        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt);
+        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt,
+        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment);
 
     /// <summary>Get all materials (with optional search)</summary>
     [HttpGet]
@@ -53,7 +54,10 @@ public class MaterialsController : ControllerBase
                 m.Category != null ? m.Category.Name : null,
                 m.ImagePath,
                 m.CreatedAt,
-                m.UpdatedAt))
+                m.UpdatedAt,
+                m.IsWrittenOff,
+                m.WrittenOffAt,
+                m.WrittenOffComment))
             .ToListAsync();
 
         return Ok(materials);
@@ -136,6 +140,9 @@ public class MaterialsController : ControllerBase
         material.InventoryNumber = request.InventoryNumber;
         material.CategoryId = request.CategoryId;
         material.ImagePath = request.ImagePath;
+        material.IsWrittenOff = request.IsWrittenOff;
+        material.WrittenOffAt = request.WrittenOffAt;
+        material.WrittenOffComment = request.WrittenOffComment;
         material.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

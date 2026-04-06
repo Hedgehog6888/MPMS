@@ -33,5 +33,12 @@ public class Equipment
     public Guid? CheckedOutTaskId { get; set; }
     public ProjectTask? CheckedOutTask { get; set; }
 
+    public bool IsWrittenOff { get; set; }
+
+    public DateTime? WrittenOffAt { get; set; }
+
+    [MaxLength(500)]
+    public string? WrittenOffComment { get; set; }
+
     public ICollection<EquipmentHistoryEntry> History { get; set; } = new List<EquipmentHistoryEntry>();
 }

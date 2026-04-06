@@ -463,7 +463,8 @@ public partial class CreateProjectOverlay : UserControl
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
                     ClientBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim(),
-                    startDate, endDate, _editProject!.Status, managerId);
+                    startDate, endDate, _editProject!.Status, managerId,
+                    _editProject.IsMarkedForDeletion, _editProject.IsArchived);
                 await _vm!.SaveUpdatedProjectAsync(_editProject.Id, req);
                 if (_onSaved is not null) await _onSaved();
                 projectId = _editProject.Id;

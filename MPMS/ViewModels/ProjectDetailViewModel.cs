@@ -556,6 +556,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         // Status is auto-calculated, do not override from request
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
+        project.IsMarkedForDeletion = req.IsMarkedForDeletion;
+        project.IsArchived = req.IsArchived;
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
@@ -590,6 +592,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id, actionType);
@@ -607,6 +610,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", entity.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
         await LogActivityAsync(db, $"Этап «{stage.Name}» перемещён в архив", "Stage", stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
@@ -616,7 +620,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         var (stage, newStatus) = args;
         if (stage.EffectiveMarkedForDeletion) return;
-        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus, stage.DueDate);
+        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus, stage.DueDate,
+            stage.IsMarkedForDeletion, stage.IsArchived);
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
@@ -625,7 +630,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, req);
+        var syncReq = req with { IsMarkedForDeletion = entity.IsMarkedForDeletion, IsArchived = entity.IsArchived };
+        await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, syncReq);
         await LogActivityAsync(db, $"Обновлён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Updated);
         await RecalcProjectStatusAsync(db);
         await LoadAsync();
@@ -703,7 +709,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await RecalcProjectStatusAsync(db);
-        await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
+        var syncTaskReq = req with { IsMarkedForDeletion = task.IsMarkedForDeletion, IsArchived = task.IsArchived };
+        await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, syncTaskReq);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
         await LoadAsync();
     }
@@ -731,6 +738,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await RecalcProjectStatusAsync(db);
+        await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
+        foreach (var s in stages)
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await LogActivityAsync(db, $"Задача «{task.Name}» перемещена в архив", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
@@ -762,6 +772,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         }
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
 
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
@@ -804,6 +815,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         }
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Update, SyncPayloads.Project(project));
+        foreach (var t in tasks)
+            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
 
         Project.IsMarkedForDeletion = project.IsMarkedForDeletion;
         var action = project.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
@@ -824,6 +838,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         var msg = new LocalMessage
         {
+            Id = Guid.NewGuid(),
             ProjectId = Project.Id,
             UserId = _auth.UserId ?? Guid.Empty,
             UserName = userName,
@@ -849,6 +864,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("DiscussionMessage", msg.Id, SyncOperation.Create,
+            new CreateDiscussionMessageRequest(msg.Id, msg.TaskId, msg.ProjectId, msg.Text, msg.CreatedAt));
 
         await LogActivityAsync(db, $"Сообщение в обсуждении проекта «{Project.Name}»", "Message", msg.Id, ActivityActionKind.Message);
         Messages.Add(msg);
@@ -865,7 +882,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ? $"{parts[0][0]}{parts[1][0]}"
             : userName.Length > 0 ? $"{userName[0]}" : "?";
 
-        db.ActivityLogs.Add(new LocalActivityLog
+        var log = new LocalActivityLog
         {
             Id = Guid.NewGuid(),
             UserId = userId,
@@ -878,8 +895,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        db.ActivityLogs.Add(log);
         await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 
     /// <summary>Persists task status/stages and recalculates project status.</summary>

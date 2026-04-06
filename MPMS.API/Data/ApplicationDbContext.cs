@@ -26,6 +26,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<FileAttachment> Files => Set<FileAttachment>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+    public DbSet<TaskAssignee> TaskAssignees => Set<TaskAssignee>();
+    public DbSet<StageAssignee> StageAssignees => Set<StageAssignee>();
+    public DbSet<DiscussionMessage> DiscussionMessages => Set<DiscussionMessage>();
+    public DbSet<SyncedActivityLog> SyncedActivityLogs => Set<SyncedActivityLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -373,6 +377,78 @@ public class ApplicationDbContext : DbContext
                   .WithMany(u => u.ActivityLogs)
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── TaskAssignee ──────────────────────────────────────────────────
+        modelBuilder.Entity<TaskAssignee>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => new { e.TaskId, e.UserId }).IsUnique();
+
+            entity.HasOne(e => e.Task)
+                  .WithMany(t => t.TaskAssignees)
+                  .HasForeignKey(e => e.TaskId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── StageAssignee ─────────────────────────────────────────────────
+        modelBuilder.Entity<StageAssignee>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => new { e.StageId, e.UserId }).IsUnique();
+
+            entity.HasOne(e => e.Stage)
+                  .WithMany(s => s.StageAssignees)
+                  .HasForeignKey(e => e.StageId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── DiscussionMessage ─────────────────────────────────────────────
+        modelBuilder.Entity<DiscussionMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.Task)
+                  .WithMany()
+                  .HasForeignKey(e => e.TaskId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.Project)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProjectId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── SyncedActivityLog ─────────────────────────────────────────────
+        modelBuilder.Entity<SyncedActivityLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         // ── Seed: Roles ───────────────────────────────────────────────────

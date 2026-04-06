@@ -331,6 +331,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", entity.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
 
         var action = entity.IsMarkedForDeletion ? "Помечен к удалению" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
@@ -350,12 +351,13 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", entity.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
 
         await LogActivityAsync(db, $"Удалён этап «{item.Stage.Name}»", "Stage", item.Stage.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
-    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -366,7 +368,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             ? $"{parts[0][0]}{parts[1][0]}"
             : userName.Length > 0 ? $"{userName[0]}" : "?";
 
-        db.ActivityLogs.Add(new LocalActivityLog
+        var log = new LocalActivityLog
         {
             Id = Guid.NewGuid(),
             UserId = userId,
@@ -379,8 +381,10 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        db.ActivityLogs.Add(log);
         await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 
     [RelayCommand]
@@ -393,7 +397,8 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         if (task is null) return;
         vm.SetTask(task);
         var req = new UpdateStageRequest(item.Stage.Name, item.Stage.Description,
-            item.Stage.AssignedUserId, newStatus, item.Stage.DueDate);
+            item.Stage.AssignedUserId, newStatus, item.Stage.DueDate,
+            item.Stage.IsMarkedForDeletion, item.Stage.IsArchived);
         await vm.SaveUpdatedStageAsync(item.Stage.Id, req);
         await LoadAsync();
     }

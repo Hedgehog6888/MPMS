@@ -17,7 +17,9 @@ public record UpdateStageRequest(
     string? Description,
     Guid? AssignedUserId,
     StageStatus Status,
-    DateOnly? DueDate = null
+    DateOnly? DueDate = null,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false
 );
 
 public record TaskStageResponse(
@@ -32,7 +34,10 @@ public record TaskStageResponse(
     List<StageMaterialResponse> Materials,
     List<FileResponse> Files,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false,
+    List<Guid>? AssigneeUserIds = null
 );
 
 public record AddStageMaterialRequest(

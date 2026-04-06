@@ -33,6 +33,10 @@ public class AuthController : ControllerBase
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный логин или пароль" });
 
+        if (user.IsBlocked)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { message = "Учётная запись заблокирована" });
+
         return Ok(BuildAuthResponse(user));
     }
 
@@ -79,7 +83,8 @@ public class AuthController : ControllerBase
         if (user is null) return NotFound();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName, user.Username,
-            user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress));
+            user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
+            user.IsBlocked, user.BlockedAt, user.BlockedReason));
     }
 
     /// <summary>Change password</summary>

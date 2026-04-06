@@ -95,6 +95,8 @@ public class TaskStagesController : ControllerBase
         stage.AssignedUserId = request.AssignedUserId;
         stage.Status = request.Status;
         stage.DueDate = request.DueDate;
+        stage.IsMarkedForDeletion = request.IsMarkedForDeletion;
+        stage.IsArchived = request.IsArchived;
         stage.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -173,9 +175,43 @@ public class TaskStagesController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Полная замена соисполнителей этапа.</summary>
+    [HttpPut("{id:guid}/assignees")]
+    public async Task<IActionResult> ReplaceAssignees(Guid id, [FromBody] ReplaceStageAssigneesRequest request)
+    {
+        var stage = await _db.TaskStages.FindAsync(id);
+        if (stage is null) return NotFound();
+
+        var items = request.Assignees ?? [];
+        foreach (var uid in items.Select(a => a.UserId).Distinct())
+        {
+            if (!await _db.Users.AnyAsync(u => u.Id == uid))
+                return BadRequest(new { message = "Пользователь не найден" });
+        }
+
+        var existing = await _db.StageAssignees.Where(x => x.StageId == id).ToListAsync();
+        _db.StageAssignees.RemoveRange(existing);
+
+        foreach (var a in items)
+        {
+            _db.StageAssignees.Add(new StageAssignee
+            {
+                Id = a.Id == Guid.Empty ? Guid.NewGuid() : a.Id,
+                StageId = id,
+                UserId = a.UserId
+            });
+        }
+
+        stage.AssignedUserId = items.Count > 0 ? items[0].UserId : null;
+        stage.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
     private async Task<TaskStage?> LoadStage(Guid id) =>
         await _db.TaskStages
             .Include(s => s.AssignedUser)
+            .Include(s => s.StageAssignees)
             .Include(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
             .Include(s => s.Files)
@@ -193,7 +229,9 @@ public class TaskStagesController : ControllerBase
                 f.Id, f.FileName, f.FileType ?? "", f.FileSize,
                 f.UploadedById, f.UploadedBy.Name,
                 f.ProjectId, f.TaskId, f.StageId, f.CreatedAt)).ToList(),
-            s.CreatedAt, s.UpdatedAt);
+            s.CreatedAt, s.UpdatedAt,
+            s.IsMarkedForDeletion, s.IsArchived,
+            s.StageAssignees.Select(x => x.UserId).ToList());
 
     private Guid CurrentUserId() =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -350,7 +351,8 @@ public partial class CreateTaskOverlay : UserControl
                 var req = new UpdateTaskRequest(
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId, priority, dueDate, status);
+                    primaryAssigneeId, priority, dueDate, status,
+                    _editTask.IsMarkedForDeletion, _editTask.IsArchived);
                 await taskDetailVm.EditTaskAsync(_editTask.Id, req);
                 if (_onSaved is not null) await _onSaved();
                 taskId = _editTask.Id;
@@ -397,6 +399,11 @@ public partial class CreateTaskOverlay : UserControl
             });
         }
         await db.SaveChangesAsync();
+
+        var sync = App.Services.GetRequiredService<ISyncService>();
+        var rows = await db.TaskAssignees.Where(a => a.TaskId == taskId).ToListAsync();
+        await sync.QueueOperationAsync("TaskAssignees", taskId, SyncOperation.Update,
+            new ReplaceTaskAssigneesRequest(rows.Select(a => new AssigneeSyncItemDto(a.Id, a.UserId)).ToList()));
     }
 
     private void PriorityLow_Click(object sender, RoutedEventArgs e)

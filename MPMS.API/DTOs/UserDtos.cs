@@ -13,7 +13,10 @@ public record UserResponse(
     string? SubRole = null,
     string? AdditionalSubRoles = null,
     DateOnly? BirthDate = null,
-    string? HomeAddress = null
+    string? HomeAddress = null,
+    bool IsBlocked = false,
+    DateTime? BlockedAt = null,
+    string? BlockedReason = null
 );
 
 public record UploadAvatarRequest(byte[] AvatarData);
@@ -43,7 +46,9 @@ public record UpdateUserRequest(
     string? SubRole = null,
     string? AdditionalSubRoles = null,
     DateOnly? BirthDate = null,
-    string? HomeAddress = null
+    string? HomeAddress = null,
+    bool? IsBlocked = null,
+    string? BlockedReason = null
 );
 
 public record ActivityLogResponse(

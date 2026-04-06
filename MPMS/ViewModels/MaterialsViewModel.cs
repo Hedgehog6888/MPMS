@@ -169,7 +169,10 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
                 InventoryNumber = material.InventoryNumber,
                 CategoryId = material.CategoryId,
                 ImagePath = material.ImagePath,
-                Cost = material.Cost
+                Cost = material.Cost,
+                IsWrittenOff = material.IsWrittenOff,
+                WrittenOffAt = material.WrittenOffAt,
+                WrittenOffComment = material.WrittenOffComment
             });
         await LoadAsync();
     }

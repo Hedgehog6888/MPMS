@@ -32,6 +32,13 @@ public class Material
 
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsWrittenOff { get; set; }
+
+    public DateTime? WrittenOffAt { get; set; }
+
+    [MaxLength(500)]
+    public string? WrittenOffComment { get; set; }
+
     public ICollection<StageMaterial> StageMaterials { get; set; } = new List<StageMaterial>();
 
     public ICollection<MaterialStockMovement> StockMovements { get; set; } = new List<MaterialStockMovement>();

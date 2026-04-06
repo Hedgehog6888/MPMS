@@ -642,6 +642,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Comment: comment,
                 ProjectId: null,
                 TaskId: null));
+        var m2 = await db.Materials.FindAsync(materialId);
+        if (m2 is not null)
+            await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Update, SyncPayloads.Material(m2));
         await LoadAsync();
     }
 
@@ -672,11 +675,14 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("EquipmentHistory", equipmentId, SyncOperation.Create,
             new RecordEquipmentEventRequest(
-                EventType: EquipmentHistoryEventType.StatusChanged,
+                EventType: EquipmentHistoryEventType.WrittenOff,
                 NewStatus: EquipmentStatus.Retired,
                 ProjectId: null,
                 TaskId: null,
                 Comment: comment));
+        var e2 = await db.Equipments.FindAsync(equipmentId);
+        if (e2 is not null)
+            await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Update, SyncPayloads.Equipment(e2));
         await LoadAsync();
     }
 

@@ -24,6 +24,12 @@ public class TaskStage
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsMarkedForDeletion { get; set; }
+
+    public bool IsArchived { get; set; }
+
     public ICollection<StageMaterial> StageMaterials { get; set; } = new List<StageMaterial>();
     public ICollection<FileAttachment> Files { get; set; } = new List<FileAttachment>();
+
+    public ICollection<StageAssignee> StageAssignees { get; set; } = new List<StageAssignee>();
 }

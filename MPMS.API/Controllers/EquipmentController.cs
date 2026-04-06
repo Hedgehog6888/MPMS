@@ -39,7 +39,8 @@ public class EquipmentController : ControllerBase
     private static EquipmentResponse ToDto(Equipment e) => new(
         e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
         e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
-        e.CheckedOutProjectId, e.CheckedOutTaskId);
+        e.CheckedOutProjectId, e.CheckedOutTaskId,
+        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment);
 
     private static EquipmentHistoryEntryResponse HistoryToDto(EquipmentHistoryEntry x) => new(
         x.Id, x.EquipmentId, x.OccurredAt, x.EventType.ToString(),
@@ -117,6 +118,9 @@ public class EquipmentController : ControllerBase
             entity.CheckedOutProjectId = null;
             entity.CheckedOutTaskId = null;
         }
+        entity.IsWrittenOff = request.IsWrittenOff;
+        entity.WrittenOffAt = request.WrittenOffAt;
+        entity.WrittenOffComment = request.WrittenOffComment;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -199,6 +203,15 @@ public class EquipmentController : ControllerBase
                 break;
 
             case EquipmentHistoryEventType.Note:
+                break;
+
+            case EquipmentHistoryEventType.WrittenOff:
+                eq.Status = EquipmentStatus.Retired;
+                eq.CheckedOutProjectId = null;
+                eq.CheckedOutTaskId = null;
+                eq.IsWrittenOff = true;
+                eq.WrittenOffAt = now;
+                eq.WrittenOffComment = request.Comment;
                 break;
 
             default:

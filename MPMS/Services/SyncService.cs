@@ -13,6 +13,8 @@ public interface ISyncService
     Task SyncAsync();
     Task QueueOperationAsync(string entityType, Guid entityId,
         SyncOperation operation, object payload);
+
+    Task QueueLocalActivityLogAsync(LocalActivityLog log);
 }
 
 public class SyncService : ISyncService
@@ -95,6 +97,15 @@ public class SyncService : ISyncService
         _ = SyncAsync();
     }
 
+    public Task QueueLocalActivityLogAsync(LocalActivityLog log)
+    {
+        var dto = new CreateSyncedActivityLogRequest(
+            log.Id, log.UserId, log.ActorRole,
+            log.UserName, log.UserInitials, log.UserColor,
+            log.ActionType, log.ActionText, log.EntityType, log.EntityId, log.CreatedAt);
+        return QueueOperationAsync("SyncedActivityLog", log.Id, SyncOperation.Create, dto);
+    }
+
     // ── Pull latest data from server into local DB ────────────────────────────
     private async Task PullFromServerAsync()
     {
@@ -144,6 +155,9 @@ public class SyncService : ISyncService
                         local.HomeAddress = u.HomeAddress;
                         if (u.AvatarData is { Length: > 0 })
                             local.AvatarData = u.AvatarData;
+                        local.IsBlocked = u.IsBlocked;
+                        local.BlockedAt = u.BlockedAt;
+                        local.BlockedReason = u.BlockedReason;
                         local.IsSynced = true;
                     }
                     else
@@ -153,6 +167,9 @@ public class SyncService : ISyncService
                         local.RoleId = u.RoleId;
                         local.SubRole = u.SubRole;
                         local.AdditionalSubRoles = u.AdditionalSubRoles;
+                        local.IsBlocked = u.IsBlocked;
+                        local.BlockedAt = u.BlockedAt;
+                        local.BlockedReason = u.BlockedReason;
                     }
                 }
                 else
@@ -168,7 +185,10 @@ public class SyncService : ISyncService
                         BirthDate = u.BirthDate,
                         HomeAddress = u.HomeAddress,
                         AvatarData = u.AvatarData,
-                        IsSynced = true, CreatedAt = u.CreatedAt
+                        IsSynced = true, CreatedAt = u.CreatedAt,
+                        IsBlocked = u.IsBlocked,
+                        BlockedAt = u.BlockedAt,
+                        BlockedReason = u.BlockedReason
                     });
                 }
             }
@@ -183,19 +203,42 @@ public class SyncService : ISyncService
             {
                 if (existingProjects.TryGetValue(p.Id, out var local))
                 {
-                    local.Name = p.Name; local.Client = p.Client;
-                    local.StartDate = p.StartDate; local.EndDate = p.EndDate;
-                    local.Status = Enum.Parse<ProjectStatus>(p.Status);
-                    local.ManagerName = p.ManagerName; local.IsSynced = true;
+                    if (local.IsSynced)
+                    {
+                        local.Name = p.Name;
+                        local.Description = p.Description;
+                        local.Client = p.Client;
+                        local.Address = p.Address;
+                        local.StartDate = p.StartDate;
+                        local.EndDate = p.EndDate;
+                        local.Status = Enum.Parse<ProjectStatus>(p.Status);
+                        local.ManagerId = p.ManagerId;
+                        local.ManagerName = p.ManagerName;
+                        local.CreatedAt = p.CreatedAt;
+                        local.UpdatedAt = p.UpdatedAt;
+                        local.IsMarkedForDeletion = p.IsMarkedForDeletion;
+                        local.IsArchived = p.IsArchived;
+                        local.IsSynced = true;
+                    }
                 }
                 else
                 {
                     db.Projects.Add(new LocalProject
                     {
-                        Id = p.Id, Name = p.Name, Client = p.Client,
-                        StartDate = p.StartDate, EndDate = p.EndDate,
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Client = p.Client,
+                        Address = p.Address,
+                        StartDate = p.StartDate,
+                        EndDate = p.EndDate,
                         Status = Enum.Parse<ProjectStatus>(p.Status),
+                        ManagerId = p.ManagerId,
                         ManagerName = p.ManagerName,
+                        CreatedAt = p.CreatedAt,
+                        UpdatedAt = p.UpdatedAt,
+                        IsMarkedForDeletion = p.IsMarkedForDeletion,
+                        IsArchived = p.IsArchived,
                         IsSynced = true
                     });
                 }
@@ -211,12 +254,21 @@ public class SyncService : ISyncService
             {
                 if (existingTasks.TryGetValue(t.Id, out var local))
                 {
-                    local.Name = t.Name; local.Status = Enum.Parse<Models.TaskStatus>(t.Status);
-                    local.Priority = Enum.Parse<TaskPriority>(t.Priority);
-                    local.AssignedUserName = t.AssignedUserName;
-                    local.TotalStages = t.TotalStages;
-                    local.CompletedStages = t.CompletedStages;
-                    local.DueDate = t.DueDate; local.IsSynced = true;
+                    if (local.IsSynced)
+                    {
+                        local.Name = t.Name;
+                        local.Status = Enum.Parse<Models.TaskStatus>(t.Status);
+                        local.Priority = Enum.Parse<TaskPriority>(t.Priority);
+                        local.AssignedUserId = t.AssignedUserId;
+                        local.AssignedUserName = t.AssignedUserName;
+                        local.TotalStages = t.TotalStages;
+                        local.CompletedStages = t.CompletedStages;
+                        local.DueDate = t.DueDate;
+                        local.IsMarkedForDeletion = t.IsMarkedForDeletion;
+                        local.IsArchived = t.IsArchived;
+                        local.ProjectName = t.ProjectName;
+                        local.IsSynced = true;
+                    }
                 }
                 else
                 {
@@ -224,11 +276,14 @@ public class SyncService : ISyncService
                     {
                         Id = t.Id, ProjectId = t.ProjectId, ProjectName = t.ProjectName,
                         Name = t.Name,
+                        AssignedUserId = t.AssignedUserId,
                         AssignedUserName = t.AssignedUserName,
                         Priority = Enum.Parse<TaskPriority>(t.Priority),
                         DueDate = t.DueDate,
                         Status = Enum.Parse<Models.TaskStatus>(t.Status),
                         TotalStages = t.TotalStages, CompletedStages = t.CompletedStages,
+                        IsMarkedForDeletion = t.IsMarkedForDeletion,
+                        IsArchived = t.IsArchived,
                         IsSynced = true
                     });
                 }
@@ -272,17 +327,23 @@ public class SyncService : ISyncService
             {
                 if (existingMats.TryGetValue(m.Id, out var local))
                 {
-                    local.Name = m.Name;
-                    local.Unit = m.Unit;
-                    local.Description = m.Description;
-                    local.Quantity = m.Quantity;
-                    local.Cost = m.Cost;
-                    local.InventoryNumber = m.InventoryNumber;
-                    local.CategoryId = m.CategoryId;
-                    local.CategoryName = m.CategoryName;
-                    local.ImagePath = m.ImagePath;
-                    local.UpdatedAt = m.UpdatedAt;
-                    local.IsSynced = true;
+                    if (local.IsSynced)
+                    {
+                        local.Name = m.Name;
+                        local.Unit = m.Unit;
+                        local.Description = m.Description;
+                        local.Quantity = m.Quantity;
+                        local.Cost = m.Cost;
+                        local.InventoryNumber = m.InventoryNumber;
+                        local.CategoryId = m.CategoryId;
+                        local.CategoryName = m.CategoryName;
+                        local.ImagePath = m.ImagePath;
+                        local.UpdatedAt = m.UpdatedAt;
+                        local.IsWrittenOff = m.IsWrittenOff;
+                        local.WrittenOffAt = m.WrittenOffAt;
+                        local.WrittenOffComment = m.WrittenOffComment;
+                        local.IsSynced = true;
+                    }
                 }
                 else
                 {
@@ -300,6 +361,9 @@ public class SyncService : ISyncService
                         ImagePath = m.ImagePath,
                         CreatedAt = m.CreatedAt,
                         UpdatedAt = m.UpdatedAt,
+                        IsWrittenOff = m.IsWrittenOff,
+                        WrittenOffAt = m.WrittenOffAt,
+                        WrittenOffComment = m.WrittenOffComment,
                         IsSynced = true
                     });
                 }
@@ -353,6 +417,9 @@ public class SyncService : ISyncService
                         UpdatedAt = eq.UpdatedAt,
                         CheckedOutProjectId = eq.CheckedOutProjectId,
                         CheckedOutTaskId = eq.CheckedOutTaskId,
+                        IsWrittenOff = eq.IsWrittenOff,
+                        WrittenOffAt = eq.WrittenOffAt,
+                        WrittenOffComment = eq.WrittenOffComment,
                         IsSynced = true
                     });
                 }
@@ -371,6 +438,9 @@ public class SyncService : ISyncService
                         existingEq.UpdatedAt = eq.UpdatedAt;
                         existingEq.CheckedOutProjectId = eq.CheckedOutProjectId;
                         existingEq.CheckedOutTaskId = eq.CheckedOutTaskId;
+                        existingEq.IsWrittenOff = eq.IsWrittenOff;
+                        existingEq.WrittenOffAt = eq.WrittenOffAt;
+                        existingEq.WrittenOffComment = eq.WrittenOffComment;
                         existingEq.IsSynced = true;
                     }
                 }
@@ -400,24 +470,60 @@ public class SyncService : ISyncService
             }
         }
 
-        // Task Stages (pulled per task for all synced tasks)
+        // Task Stages + соисполнители (полный снимок по каждой задаче)
         var taskIds = await db.Tasks.Where(t => t.IsSynced).Select(t => t.Id).ToListAsync();
         var existingStages = await db.TaskStages.ToDictionaryAsync(s => s.Id);
         foreach (var taskId in taskIds)
         {
-            var task = await _api.GetTaskAsync(taskId);
-            if (task?.Stages is null) continue;
-            foreach (var s in task.Stages)
+            var taskApi = await _api.GetTaskAsync(taskId);
+            if (taskApi?.Stages is null) continue;
+
+            var localTaskRow = await db.Tasks.FindAsync(taskId);
+            if (localTaskRow?.IsSynced == true)
+            {
+                localTaskRow.Description = taskApi.Description;
+                localTaskRow.AssignedUserId = taskApi.AssignedUserId;
+                localTaskRow.AssignedUserName = taskApi.AssignedUserName;
+                localTaskRow.CreatedAt = taskApi.CreatedAt;
+                localTaskRow.UpdatedAt = taskApi.UpdatedAt;
+                localTaskRow.IsMarkedForDeletion = taskApi.IsMarkedForDeletion;
+                localTaskRow.IsArchived = taskApi.IsArchived;
+            }
+
+            await db.TaskAssignees.Where(a => a.TaskId == taskId).ExecuteDeleteAsync();
+            if (taskApi.AssigneeUserIds is { Count: > 0 })
+            {
+                foreach (var uid in taskApi.AssigneeUserIds)
+                {
+                    var uname = await db.Users.Where(u => u.Id == uid).Select(u => u.Name)
+                        .FirstOrDefaultAsync() ?? "";
+                    db.TaskAssignees.Add(new LocalTaskAssignee
+                    {
+                        Id = Guid.NewGuid(),
+                        TaskId = taskId,
+                        UserId = uid,
+                        UserName = uname
+                    });
+                }
+            }
+
+            foreach (var s in taskApi.Stages)
             {
                 if (existingStages.TryGetValue(s.Id, out var localStage))
                 {
-                    localStage.Name = s.Name; localStage.Description = s.Description;
-                    localStage.AssignedUserName = s.AssignedUserName;
-                    localStage.AssignedUserId = s.AssignedUserId;
-                    localStage.DueDate = s.DueDate;
-                    localStage.Status = Enum.Parse<StageStatus>(s.Status);
-                    localStage.UpdatedAt = s.UpdatedAt;
-                    localStage.IsSynced = true;
+                    if (localStage.IsSynced)
+                    {
+                        localStage.Name = s.Name;
+                        localStage.Description = s.Description;
+                        localStage.AssignedUserName = s.AssignedUserName;
+                        localStage.AssignedUserId = s.AssignedUserId;
+                        localStage.DueDate = s.DueDate;
+                        localStage.Status = Enum.Parse<StageStatus>(s.Status);
+                        localStage.UpdatedAt = s.UpdatedAt;
+                        localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
+                        localStage.IsArchived = s.IsArchived;
+                        localStage.IsSynced = true;
+                    }
                 }
                 else
                 {
@@ -428,13 +534,31 @@ public class SyncService : ISyncService
                         AssignedUserId = s.AssignedUserId,
                         DueDate = s.DueDate,
                         Status = Enum.Parse<StageStatus>(s.Status),
+                        IsMarkedForDeletion = s.IsMarkedForDeletion,
+                        IsArchived = s.IsArchived,
                         IsSynced = true,
                         CreatedAt = s.CreatedAt,
                         UpdatedAt = s.UpdatedAt
                     });
                 }
 
-                // Sync stage materials
+                await db.StageAssignees.Where(a => a.StageId == s.Id).ExecuteDeleteAsync();
+                if (s.AssigneeUserIds is { Count: > 0 })
+                {
+                    foreach (var uid in s.AssigneeUserIds)
+                    {
+                        var uname = await db.Users.Where(u => u.Id == uid).Select(u => u.Name)
+                            .FirstOrDefaultAsync() ?? "";
+                        db.StageAssignees.Add(new LocalStageAssignee
+                        {
+                            Id = Guid.NewGuid(),
+                            StageId = s.Id,
+                            UserId = uid,
+                            UserName = uname
+                        });
+                    }
+                }
+
                 foreach (var sm in s.Materials)
                 {
                     var existingMat = await db.StageMaterials
@@ -454,6 +578,59 @@ public class SyncService : ISyncService
                         existingMat.IsSynced = true;
                     }
                 }
+            }
+        }
+
+        // Сообщения обсуждений (инкрементально по времени)
+        DateTime? msgSince = null;
+        if (await db.Messages.AnyAsync())
+            msgSince = await db.Messages.MaxAsync(m => m.CreatedAt);
+        var remoteMsgs = await _api.GetDiscussionMessagesAsync(since: msgSince);
+        if (remoteMsgs is not null)
+        {
+            foreach (var m in remoteMsgs)
+            {
+                if (await db.Messages.AnyAsync(x => x.Id == m.Id)) continue;
+                db.Messages.Add(new LocalMessage
+                {
+                    Id = m.Id,
+                    TaskId = m.TaskId,
+                    ProjectId = m.ProjectId,
+                    UserId = m.UserId,
+                    UserName = m.UserName,
+                    UserInitials = m.UserInitials,
+                    UserColor = m.UserColor,
+                    UserRole = m.UserRole,
+                    Text = m.Text,
+                    CreatedAt = m.CreatedAt
+                });
+            }
+        }
+
+        // Синхронизированная лента активности
+        DateTime? actSince = null;
+        if (await db.ActivityLogs.AnyAsync())
+            actSince = await db.ActivityLogs.MaxAsync(a => a.CreatedAt);
+        var remoteActs = await _api.GetSyncedActivityLogsAsync(since: actSince);
+        if (remoteActs is not null)
+        {
+            foreach (var a in remoteActs)
+            {
+                if (await db.ActivityLogs.AnyAsync(x => x.Id == a.Id)) continue;
+                db.ActivityLogs.Add(new LocalActivityLog
+                {
+                    Id = a.Id,
+                    UserId = a.UserId,
+                    ActorRole = a.ActorRole,
+                    UserName = a.UserName,
+                    UserInitials = a.UserInitials,
+                    UserColor = a.UserColor,
+                    ActionType = a.ActionType,
+                    ActionText = a.ActionText,
+                    EntityType = a.EntityType,
+                    EntityId = a.EntityId,
+                    CreatedAt = a.CreatedAt
+                });
             }
         }
 
@@ -686,6 +863,10 @@ public class SyncService : ISyncService
                 "EquipmentHistory" => await SyncEquipmentHistoryAsync(op),
                 "User"        => await SyncUserAvatarAsync(op),
                 "UserProfile" => await SyncUserProfileAsync(op),
+                "SyncedActivityLog" => await SyncSyncedActivityLogAsync(op),
+                "DiscussionMessage" => await SyncDiscussionMessageAsync(op),
+                "TaskAssignees" => await SyncTaskAssigneesAsync(op),
+                "StageAssignees" => await SyncStageAssigneesAsync(op),
                 _             => true
             };
         }
@@ -863,6 +1044,36 @@ public class SyncService : ISyncService
         var req = JsonSerializer.Deserialize<RecordEquipmentEventRequest>(op.Payload);
         if (req is null) return false;
         return await _api.RecordEquipmentEventAsync(op.EntityId, req) is not null;
+    }
+
+    private async Task<bool> SyncSyncedActivityLogAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<CreateSyncedActivityLogRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.PostSyncedActivityLogAsync(req) is not null;
+    }
+
+    private async Task<bool> SyncDiscussionMessageAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<CreateDiscussionMessageRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.PostDiscussionMessageAsync(req) is not null;
+    }
+
+    private async Task<bool> SyncTaskAssigneesAsync(PendingOperation op)
+    {
+        var req = JsonSerializer.Deserialize<ReplaceTaskAssigneesRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.ReplaceTaskAssigneesAsync(op.EntityId, req);
+    }
+
+    private async Task<bool> SyncStageAssigneesAsync(PendingOperation op)
+    {
+        var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.ReplaceStageAssigneesAsync(op.EntityId, req);
     }
 
     private async Task RunPeriodicSyncAsync()

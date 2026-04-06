@@ -39,7 +39,8 @@ public class UsersController : ControllerBase
         var users = await query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.RoleId, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles, u.BirthDate, u.HomeAddress))
+            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.RoleId, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles, u.BirthDate, u.HomeAddress,
+                u.IsBlocked, u.BlockedAt, u.BlockedReason))
             .ToListAsync();
 
         return Ok(users);
@@ -84,7 +85,8 @@ public class UsersController : ControllerBase
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress));
+            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
+            user.IsBlocked, user.BlockedAt, user.BlockedReason));
     }
 
     /// <summary>Update user (admin only)</summary>
@@ -124,11 +126,22 @@ public class UsersController : ControllerBase
         if (!string.IsNullOrEmpty(request.NewPassword))
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
+        if (request.IsBlocked.HasValue && isAdmin)
+        {
+            user.IsBlocked = request.IsBlocked.Value;
+            user.BlockedAt = request.IsBlocked.Value ? DateTime.UtcNow : null;
+            if (!request.IsBlocked.Value)
+                user.BlockedReason = null;
+            else if (!string.IsNullOrWhiteSpace(request.BlockedReason))
+                user.BlockedReason = request.BlockedReason.Trim();
+        }
+
         await _db.SaveChangesAsync();
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
         return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress));
+            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
+            user.IsBlocked, user.BlockedAt, user.BlockedReason));
     }
 
     /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>

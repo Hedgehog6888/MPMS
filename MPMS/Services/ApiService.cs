@@ -53,6 +53,14 @@ public class ApiService : IApiService
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 return LoginResult.WrongCredentials();
 
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                var msg = await TryReadErrorMessageAsync(response);
+                return LoginResult.Blocked(string.IsNullOrWhiteSpace(msg)
+                    ? "Учётная запись заблокирована"
+                    : msg);
+            }
+
             if (!response.IsSuccessStatusCode)
                 return LoginResult.Fail($"Ошибка сервера: {(int)response.StatusCode}");
 
@@ -220,6 +228,56 @@ public class ApiService : IApiService
 
     public async Task<bool> DeleteUserAsync(Guid id) => await DeleteAsync($"users/{id}");
 
+    public Task<List<DiscussionMessageResponse>?> GetDiscussionMessagesAsync(DateTime? since = null)
+    {
+        var q = since.HasValue
+            ? $"?since={Uri.EscapeDataString(since.Value.ToUniversalTime().ToString("O"))}"
+            : "";
+        return GetAsync<List<DiscussionMessageResponse>>($"discussion-messages{q}");
+    }
+
+    public async Task<DiscussionMessageResponse?> PostDiscussionMessageAsync(CreateDiscussionMessageRequest request)
+    {
+        try
+        {
+            AttachToken();
+            var response = await _http.PostAsJsonAsync("discussion-messages", request, JsonOpts);
+            IsOnline = true;
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<DiscussionMessageResponse>(JsonOpts);
+        }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
+    }
+
+    public Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null)
+    {
+        var q = since.HasValue
+            ? $"?since={Uri.EscapeDataString(since.Value.ToUniversalTime().ToString("O"))}"
+            : "";
+        return GetAsync<List<SyncedActivityLogResponse>>($"synced-activity-logs{q}");
+    }
+
+    public async Task<SyncedActivityLogResponse?> PostSyncedActivityLogAsync(CreateSyncedActivityLogRequest request)
+    {
+        try
+        {
+            AttachToken();
+            var response = await _http.PostAsJsonAsync("synced-activity-logs", request, JsonOpts);
+            IsOnline = true;
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<SyncedActivityLogResponse>(JsonOpts);
+        }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
+    }
+
+    public async Task<bool> ReplaceTaskAssigneesAsync(Guid taskId, ReplaceTaskAssigneesRequest request)
+        => await PutNoContentAsync($"tasks/{taskId}/assignees", request);
+
+    public async Task<bool> ReplaceStageAssigneesAsync(Guid stageId, ReplaceStageAssigneesRequest request)
+        => await PutNoContentAsync($"taskstages/{stageId}/assignees", request);
+
     public async Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData)
     {
         try
@@ -227,6 +285,31 @@ public class ApiService : IApiService
             AttachToken();
             var request = new UploadAvatarRequest(avatarData);
             var response = await _http.PutAsJsonAsync($"users/{userId}/avatar", request, JsonOpts);
+            IsOnline = true;
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException) { IsOnline = false; return false; }
+        catch (OperationCanceledException) { IsOnline = false; return false; }
+    }
+
+    private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var doc = await response.Content.ReadFromJsonAsync<JsonElement>(JsonOpts);
+            if (doc.ValueKind == JsonValueKind.Object && doc.TryGetProperty("message", out var m))
+                return m.GetString();
+        }
+        catch { /* ignore */ }
+        return null;
+    }
+
+    private async Task<bool> PutNoContentAsync(string url, object body)
+    {
+        try
+        {
+            AttachToken();
+            var response = await _http.PutAsJsonAsync(url, body, JsonOpts);
             IsOnline = true;
             return response.IsSuccessStatusCode;
         }

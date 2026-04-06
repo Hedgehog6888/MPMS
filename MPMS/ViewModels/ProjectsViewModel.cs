@@ -263,6 +263,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         // Status is auto-calculated from tasks, do not override from request
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
+        project.IsMarkedForDeletion = req.IsMarkedForDeletion;
+        project.IsArchived = req.IsArchived;
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
@@ -298,6 +300,11 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         }
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
+        foreach (var t in tasks)
+            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+        foreach (var s in stages)
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await LogActivityAsync(db, $"Проект «{project.Name}» перемещён в архив", "Project", project.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
@@ -336,6 +343,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         }
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
+        foreach (var t in tasks)
+            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
 
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
@@ -355,7 +365,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             ? $"{parts[0][0]}{parts[1][0]}"
             : userName.Length > 0 ? $"{userName[0]}" : "?";
 
-        db.ActivityLogs.Add(new LocalActivityLog
+        var log = new LocalActivityLog
         {
             Id = Guid.NewGuid(),
             UserId = userId,
@@ -368,7 +378,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        db.ActivityLogs.Add(log);
         await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 }

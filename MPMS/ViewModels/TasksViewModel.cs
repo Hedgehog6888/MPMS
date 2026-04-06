@@ -417,7 +417,12 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         task.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, req);
+        var syncReq = req with
+        {
+            IsMarkedForDeletion = task.IsMarkedForDeletion,
+            IsArchived = task.IsArchived
+        };
+        await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, syncReq);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
         await LoadAsync();
     }
@@ -444,6 +449,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
 
+        await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
+        foreach (var s in stages)
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }
@@ -477,13 +485,14 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         }
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id, actionType);
         await LoadAsync();
     }
 
-    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
         var session = await db.AuthSessions.FindAsync(1);
         var userName = session?.UserName ?? "Система";
@@ -494,7 +503,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             ? $"{parts[0][0]}{parts[1][0]}"
             : userName.Length > 0 ? $"{userName[0]}" : "?";
 
-        db.ActivityLogs.Add(new LocalActivityLog
+        var log = new LocalActivityLog
         {
             Id = Guid.NewGuid(),
             UserId = userId,
@@ -507,8 +516,10 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        db.ActivityLogs.Add(log);
         await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 }
 

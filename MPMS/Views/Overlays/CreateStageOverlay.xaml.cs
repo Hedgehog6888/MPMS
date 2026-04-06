@@ -559,7 +559,8 @@ public partial class CreateStageOverlay : UserControl
                 var req = new UpdateStageRequest(
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId, _editStage.Status, dueDate);
+                    primaryAssigneeId, _editStage.Status, dueDate,
+                    _editStage.IsMarkedForDeletion, _editStage.IsArchived);
                 await vm.SaveUpdatedStageAsync(_editStage.Id, req);
                 stageId = _editStage.Id;
             }
@@ -607,6 +608,11 @@ public partial class CreateStageOverlay : UserControl
             });
         }
         await db.SaveChangesAsync();
+
+        var sync = App.Services.GetRequiredService<ISyncService>();
+        var rows = await db.StageAssignees.Where(a => a.StageId == stageId).ToListAsync();
+        await sync.QueueOperationAsync("StageAssignees", stageId, SyncOperation.Update,
+            new ReplaceStageAssigneesRequest(rows.Select(a => new AssigneeSyncItemDto(a.Id, a.UserId)).ToList()));
     }
 
     private void ShowError(string message)

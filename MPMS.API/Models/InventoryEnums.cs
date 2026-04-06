@@ -29,5 +29,6 @@ public enum EquipmentHistoryEventType
     CheckedOut = 0,
     Returned = 1,
     StatusChanged = 2,
-    Note = 3
+    Note = 3,
+    WrittenOff = 4
 }

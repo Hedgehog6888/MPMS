@@ -46,7 +46,10 @@ public record EquipmentResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     Guid? CheckedOutProjectId,
-    Guid? CheckedOutTaskId);
+    Guid? CheckedOutTaskId,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    string? WrittenOffComment = null);
 
 public record CreateEquipmentRequest(
     [Required, MaxLength(200)] string Name,
@@ -64,7 +67,10 @@ public record UpdateEquipmentRequest(
     string? ImagePath,
     string? InventoryNumber,
     EquipmentCondition Condition = EquipmentCondition.Good,
-    EquipmentStatus? Status = null);
+    EquipmentStatus? Status = null,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    [MaxLength(500)] string? WrittenOffComment = null);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,

@@ -19,7 +19,9 @@ public record UpdateTaskRequest(
     Guid? AssignedUserId,
     TaskPriority Priority,
     DateOnly? DueDate,
-    Models.TaskStatus Status
+    Models.TaskStatus Status,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false
 );
 
 public record TaskResponse(
@@ -39,7 +41,10 @@ public record TaskResponse(
     bool IsOverdue,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    List<TaskStageResponse>? Stages
+    List<TaskStageResponse>? Stages,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false,
+    List<Guid>? AssigneeUserIds = null
 );
 
 public record TaskListResponse(
@@ -54,7 +59,10 @@ public record TaskListResponse(
     int TotalStages,
     int CompletedStages,
     int ProgressPercent,
-    bool IsOverdue
+    bool IsOverdue,
+    Guid? AssignedUserId = null,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false
 );
 
 public record AddTaskDependencyRequest(
