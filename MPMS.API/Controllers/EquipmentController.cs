@@ -22,7 +22,7 @@ public class EquipmentController : ControllerBase
 
     private static EquipmentResponse ToDto(Equipment e) => new(
         e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
-        e.Status.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
+        e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
         e.CheckedOutProjectId, e.CheckedOutTaskId);
 
     private static EquipmentHistoryEntryResponse HistoryToDto(EquipmentHistoryEntry x) => new(
@@ -65,6 +65,7 @@ public class EquipmentController : ControllerBase
             ImagePath = request.ImagePath,
             InventoryNumber = request.InventoryNumber,
             Status = EquipmentStatus.Available,
+            Condition = request.Condition,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -89,6 +90,7 @@ public class EquipmentController : ControllerBase
         entity.CategoryId = request.CategoryId;
         entity.ImagePath = request.ImagePath;
         entity.InventoryNumber = request.InventoryNumber;
+        entity.Condition = request.Condition;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -142,13 +144,13 @@ public class EquipmentController : ControllerBase
                 if (request.TaskId.HasValue &&
                     !await _db.Tasks.AnyAsync(t => t.Id == request.TaskId.Value))
                     return BadRequest(new { message = "Задача не найдена" });
-                eq.Status = EquipmentStatus.CheckedOut;
+                eq.Status = EquipmentStatus.InUse;
                 eq.CheckedOutProjectId = request.ProjectId;
                 eq.CheckedOutTaskId = request.TaskId;
                 break;
 
             case EquipmentHistoryEventType.Returned:
-                if (eq.Status != EquipmentStatus.CheckedOut)
+                if (eq.Status != EquipmentStatus.InUse)
                     return BadRequest(new { message = "Возврат только для выданного оборудования" });
                 histProject = eq.CheckedOutProjectId;
                 histTask = eq.CheckedOutTaskId;
@@ -161,7 +163,7 @@ public class EquipmentController : ControllerBase
                 if (request.NewStatus is null)
                     return BadRequest(new { message = "Укажите новый статус" });
                 eq.Status = request.NewStatus.Value;
-                if (eq.Status != EquipmentStatus.CheckedOut)
+                if (eq.Status != EquipmentStatus.InUse)
                 {
                     eq.CheckedOutProjectId = null;
                     eq.CheckedOutTaskId = null;

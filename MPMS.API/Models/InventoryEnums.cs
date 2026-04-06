@@ -12,9 +12,15 @@ public enum MaterialStockOperationType
 public enum EquipmentStatus
 {
     Available = 0,
-    CheckedOut = 1,
-    InMaintenance = 2,
-    Retired = 3
+    InUse = 1,
+    Retired = 2
+}
+
+public enum EquipmentCondition
+{
+    Good = 0,
+    NeedsMaintenance = 1,
+    Faulty = 2
 }
 
 public enum EquipmentHistoryEventType

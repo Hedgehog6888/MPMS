@@ -23,6 +23,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
 
     // Display items for unit combo
     private record UnitDisplayItem(string Display, string Short, bool IsInteger);
+    private record EquipmentConditionItem(string Display, EquipmentCondition Value);
 
     public CreateWarehouseItemOverlay(
         string mode,
@@ -50,8 +51,17 @@ public partial class CreateWarehouseItemOverlay : UserControl
             CategoryLabel.Text = "Категория оборудования";
             CategoryCombo.ItemsSource = equipmentCategories;
             UnitPanel.Visibility = Visibility.Collapsed;
+            EquipmentConditionPanel.Visibility = Visibility.Visible;
             QuantityCostPanel.Visibility = Visibility.Collapsed;
             CostOnlyPanel.Visibility = Visibility.Collapsed;
+
+            var conditions = new List<EquipmentConditionItem>
+            {
+                new("Исправно", EquipmentCondition.Good),
+                new("Требует обслуживания", EquipmentCondition.NeedsMaintenance),
+                new("Неисправно", EquipmentCondition.Faulty)
+            };
+            EquipmentConditionCombo.ItemsSource = conditions;
 
             if (editEquipment is not null)
             {
@@ -59,11 +69,16 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 DescriptionBox.Text = editEquipment.Description ?? string.Empty;
                 CategoryCombo.SelectedItem = equipmentCategories.FirstOrDefault(c => c.Id == editEquipment.CategoryId);
                 SetPhotoPath(editEquipment.ImagePath);
+                var parsed = Enum.TryParse<EquipmentCondition>(editEquipment.Condition, out var parsedCondition)
+                    ? parsedCondition
+                    : EquipmentCondition.Good;
+                EquipmentConditionCombo.SelectedItem = conditions.FirstOrDefault(c => c.Value == parsed);
                 HeaderInventoryLine.Visibility = Visibility.Visible;
                 HeaderInventoryLine.Text = $"Инв. № {editEquipment.InventoryNumber ?? "—"}";
             }
             else
             {
+                EquipmentConditionCombo.SelectedItem = conditions.First(c => c.Value == EquipmentCondition.Good);
                 HeaderInventoryLine.Visibility = Visibility.Visible;
                 HeaderInventoryLine.Text = "Инв. № …";
             }
@@ -345,10 +360,16 @@ public partial class CreateWarehouseItemOverlay : UserControl
 
         if (_mode == "Equipment")
         {
+            if (EquipmentConditionCombo.SelectedItem is not EquipmentConditionItem conditionItem)
+            {
+                ShowError("Выберите состояние оборудования");
+                return;
+            }
+
             if (_isEdit && _editEquipment is not null)
-                await _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image);
+                await _vm.UpdateEquipmentAsync(_editEquipment.Id, name, description, categoryId, categoryName, image, conditionItem.Value);
             else
-                await _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, _preferredInventoryForSave);
+                await _vm.SaveNewEquipmentAsync(name, description, categoryId, categoryName, image, conditionItem.Value, _preferredInventoryForSave);
 
             if (stacked)
             {

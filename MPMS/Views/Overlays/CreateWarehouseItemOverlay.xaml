@@ -103,6 +103,13 @@
                               SelectionChanged="UnitCombo_SelectionChanged"/>
                 </StackPanel>
 
+                <StackPanel x:Name="EquipmentConditionPanel" Visibility="Collapsed">
+                    <TextBlock Text="Состояние *" Style="{StaticResource FormLabel}"/>
+                    <ComboBox x:Name="EquipmentConditionCombo" Style="{StaticResource FormCombo}"
+                              Height="42" Margin="0,0,0,12"
+                              DisplayMemberPath="Display"/>
+                </StackPanel>
+
                 <!-- Initial quantity + cost (materials create mode only) -->
                 <StackPanel x:Name="QuantityCostPanel">
                     <Grid Margin="0,0,0,12">

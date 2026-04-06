@@ -92,6 +92,7 @@ public static class LocalSchemaMigrator
                 "CategoryName"         TEXT NULL,
                 "ImagePath"            TEXT NULL,
                 "Status"               TEXT NOT NULL DEFAULT 'Available',
+                "Condition"            TEXT NOT NULL DEFAULT 'Good',
                 "InventoryNumber"      TEXT NULL,
                 "CreatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
                 "UpdatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
@@ -344,6 +345,19 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"EquipmentHistoryEntries\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Cost\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"InventoryNumber\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"Condition\" TEXT NOT NULL DEFAULT 'Good';");
+        try
+        {
+            Execute(conn, """
+                UPDATE "Equipments"
+                SET "Status" = CASE
+                    WHEN "Status" = 'CheckedOut' THEN 'InUse'
+                    WHEN "Status" = 'InMaintenance' THEN 'Available'
+                    ELSE "Status"
+                END
+                """);
+        }
+        catch (SqliteException) { /* ignore */ }
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

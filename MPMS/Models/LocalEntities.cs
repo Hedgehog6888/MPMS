@@ -274,6 +274,7 @@ public class LocalEquipment : LocalEntity
     [MaxLength(100)] public string? CategoryName { get; set; }
     [MaxLength(500)] public string? ImagePath { get; set; }
     [MaxLength(30)] public string Status { get; set; } = "Available";
+    [MaxLength(30)] public string Condition { get; set; } = "Good";
     [MaxLength(100)] public string? InventoryNumber { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -288,7 +289,8 @@ public class LocalEquipment : LocalEntity
     {
         "Available"   => "Доступно",
         "InUse"       => "Используется",
-        "Maintenance" => "На обслуживании",
+        "CheckedOut"  => "Используется",
+        "Retired"     => "Списано",
         _             => Status
     };
 
@@ -297,8 +299,19 @@ public class LocalEquipment : LocalEntity
     {
         "Available"   => "#00875A",
         "InUse"       => "#FF8B00",
-        "Maintenance" => "#1B6EC2",
+        "CheckedOut"  => "#FF8B00",
+        "Retired"     => "#6B778C",
+        "WrittenOff"  => "#6B778C",
         _             => "#6B778C"
+    };
+
+    [NotMapped]
+    public string ConditionDisplay => Condition switch
+    {
+        "Good"              => "Исправно",
+        "NeedsMaintenance"  => "Требует обслуживания",
+        "Faulty"            => "Неисправно",
+        _                   => Condition
     };
 }
 

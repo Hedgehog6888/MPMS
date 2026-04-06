@@ -140,6 +140,7 @@ public record EquipmentResponse(
     string? CategoryName,
     string? ImagePath,
     string Status,
+    string Condition,
     string? InventoryNumber,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -161,9 +162,15 @@ public record EquipmentHistoryEntryResponse(
 public enum EquipmentStatus
 {
     Available = 0,
-    CheckedOut = 1,
-    InMaintenance = 2,
-    Retired = 3
+    InUse = 1,
+    Retired = 2
+}
+
+public enum EquipmentCondition
+{
+    Good = 0,
+    NeedsMaintenance = 1,
+    Faulty = 2
 }
 
 public enum EquipmentHistoryEventType
@@ -180,6 +187,7 @@ public record CreateEquipmentRequest(
     Guid? CategoryId,
     string? ImagePath,
     string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good,
     Guid? Id = null);
 
 public record UpdateEquipmentRequest(
@@ -187,7 +195,8 @@ public record UpdateEquipmentRequest(
     string? Description,
     Guid? CategoryId,
     string? ImagePath,
-    string? InventoryNumber);
+    string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good);
 
 public record RecordEquipmentEventRequest(
     EquipmentHistoryEventType EventType,

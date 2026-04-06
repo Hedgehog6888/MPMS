@@ -286,8 +286,8 @@
                                                         <DataTrigger Binding="{Binding Status}" Value="InUse">
                                                             <Setter Property="Background" Value="#FFF4E5"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding Status}" Value="Maintenance">
-                                                            <Setter Property="Background" Value="#DEEBFF"/>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Retired">
+                                                            <Setter Property="Background" Value="#F4F5F7"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
                                                             <Setter Property="Background" Value="#F4F5F7"/>

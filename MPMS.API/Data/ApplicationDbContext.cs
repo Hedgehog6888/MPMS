@@ -223,6 +223,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Status)
                   .HasConversion<string>()
                   .HasMaxLength(30);
+            entity.Property(e => e.Condition)
+                  .HasConversion<string>()
+                  .HasMaxLength(30);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
 

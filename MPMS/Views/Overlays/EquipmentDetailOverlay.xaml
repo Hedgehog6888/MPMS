@@ -86,6 +86,34 @@
             <Setter Property="Foreground" Value="#DE350B"/>
             <Setter Property="BorderBrush" Value="#FFCDD2"/>
         </Style>
+
+        <Style x:Key="StatusSegmentedBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="White">
@@ -188,6 +216,8 @@
                         <StackPanel Grid.Column="0" Margin="0,0,12,0">
                             <TextBlock Text="Статус" Style="{StaticResource InfoLabel}"/>
                             <TextBlock x:Name="StatusText" Style="{StaticResource InfoValue}"/>
+                            <TextBlock Text="Состояние" Style="{StaticResource InfoLabel}" Margin="0,8,0,2"/>
+                            <TextBlock x:Name="ConditionText" Style="{StaticResource InfoValue}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="0,0,12,0">
                             <TextBlock Text="Инв. номер" Style="{StaticResource InfoLabel}"/>
@@ -228,6 +258,36 @@
                         <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
                                 Margin="0,0,0,8" Click="WriteOff_Click"/>
                     </WrapPanel>
+
+                    <Border x:Name="ConditionPanel" Background="White" CornerRadius="8" Padding="0"
+                            Margin="0,0,0,8" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="СМЕНА СОСТОЯНИЯ"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#8993A4" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="BtnConditionGood" Grid.Column="0" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionGood_Click">
+                                    <TextBlock Text="Исправно"/>
+                                </Button>
+                                <Button x:Name="BtnConditionMaintenance" Grid.Column="2" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionMaintenance_Click">
+                                    <TextBlock Text="Обслуживание"/>
+                                </Button>
+                                <Button x:Name="BtnConditionFaulty" Grid.Column="4" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionFaulty_Click">
+                                    <TextBlock Text="Неисправно"/>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
 
                     <!-- History -->
                     <Border x:Name="HistorySection" Margin="0,0,0,24">

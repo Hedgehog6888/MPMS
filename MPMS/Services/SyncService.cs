@@ -329,6 +329,7 @@ public class SyncService : ISyncService
                         CategoryName = eq.CategoryName,
                         ImagePath = eq.ImagePath,
                         Status = eq.Status,
+                        Condition = eq.Condition,
                         InventoryNumber = eq.InventoryNumber,
                         CreatedAt = eq.CreatedAt,
                         UpdatedAt = eq.UpdatedAt,
@@ -345,6 +346,7 @@ public class SyncService : ISyncService
                     existingEq.CategoryName = eq.CategoryName;
                     existingEq.ImagePath = eq.ImagePath;
                     existingEq.Status = eq.Status;
+                    existingEq.Condition = eq.Condition;
                     existingEq.InventoryNumber = eq.InventoryNumber;
                     existingEq.UpdatedAt = eq.UpdatedAt;
                     existingEq.CheckedOutProjectId = eq.CheckedOutProjectId;

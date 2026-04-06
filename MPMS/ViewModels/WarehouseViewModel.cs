@@ -36,7 +36,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         ["Все", "Есть остаток", "Нет в наличии"];
 
     public IReadOnlyList<string> EquipmentStatusFilterOptions { get; } =
-        ["Все", "Доступно", "Используется", "На обслуживании"];
+        ["Все", "Доступно", "Используется", "Списано"];
 
     public bool CanManage =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
@@ -196,7 +196,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         {
             "Доступно" => eqList.Where(e => e.Status == "Available").ToList(),
             "Используется" => eqList.Where(e => e.Status == "InUse").ToList(),
-            "На обслуживании" => eqList.Where(e => e.Status == "Maintenance").ToList(),
+            "Списано" => eqList.Where(e => e.Status == "Retired" || e.IsWrittenOff).ToList(),
             _ => eqList
         };
 
@@ -397,7 +397,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task SaveNewEquipmentAsync(string name, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath, string? preferredInventoryNumber = null)
+        Guid? categoryId, string? categoryName, string? imagePath, EquipmentCondition condition,
+        string? preferredInventoryNumber = null)
     {
         var localId = Guid.NewGuid();
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -412,6 +413,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             ImagePath = imagePath,
             InventoryNumber = inv,
             Status = "Available",
+            Condition = condition.ToString(),
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -438,6 +440,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 CategoryId: categoryId,
                 ImagePath: imagePath,
                 InventoryNumber: equipment.InventoryNumber,
+                Condition: condition,
                 Id: localId));
         await _sync.QueueOperationAsync("EquipmentHistory", localId, SyncOperation.Create,
             new RecordEquipmentEventRequest(
@@ -478,7 +481,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     }
 
     public async Task UpdateEquipmentAsync(Guid id, string name, string? description,
-        Guid? categoryId, string? categoryName, string? imagePath)
+        Guid? categoryId, string? categoryName, string? imagePath, EquipmentCondition condition)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(id);
@@ -488,6 +491,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.CategoryId = categoryId;
         e.CategoryName = categoryName;
         e.ImagePath = imagePath;
+        e.Condition = condition.ToString();
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
@@ -497,7 +501,43 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Description: description,
                 CategoryId: categoryId,
                 ImagePath: imagePath,
-                InventoryNumber: e.InventoryNumber));
+                InventoryNumber: e.InventoryNumber,
+                Condition: condition));
+        await LoadAsync();
+    }
+
+    public async Task UpdateEquipmentConditionAsync(Guid id, EquipmentCondition condition, string? comment = null)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var e = await db.Equipments.FindAsync(id);
+        if (e is null) return;
+        if (string.Equals(e.Condition, condition.ToString(), StringComparison.Ordinal))
+            return;
+
+        e.Condition = condition.ToString();
+        e.UpdatedAt = DateTime.UtcNow;
+        e.IsSynced = false;
+        await db.SaveChangesAsync();
+
+        await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update,
+            new UpdateEquipmentRequest(
+                Name: e.Name,
+                Description: e.Description,
+                CategoryId: e.CategoryId,
+                ImagePath: e.ImagePath,
+                InventoryNumber: e.InventoryNumber,
+                Condition: condition));
+
+        await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
+            new RecordEquipmentEventRequest(
+                EventType: EquipmentHistoryEventType.Note,
+                NewStatus: null,
+                ProjectId: null,
+                TaskId: null,
+                Comment: string.IsNullOrWhiteSpace(comment)
+                    ? $"Состояние изменено: {e.ConditionDisplay}"
+                    : comment));
+
         await LoadAsync();
     }
 
@@ -572,6 +612,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(equipmentId);
         if (e is null) return;
+        var previousStatus = e.Status;
         e.IsWrittenOff = true;
         e.WrittenOffAt = DateTime.UtcNow;
         e.WrittenOffComment = comment;
@@ -584,8 +625,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             EquipmentId = equipmentId,
             OccurredAt = DateTime.UtcNow,
             EventType = "WrittenOff",
-            PreviousStatus = e.Status,
-            NewStatus = "WrittenOff",
+            PreviousStatus = previousStatus,
+            NewStatus = "Retired",
             UserId = _auth.UserId,
             UserName = _auth.UserName,
             Comment = comment

@@ -41,6 +41,7 @@ public record EquipmentResponse(
     string? CategoryName,
     string? ImagePath,
     string Status,
+    string Condition,
     string? InventoryNumber,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -53,6 +54,7 @@ public record CreateEquipmentRequest(
     Guid? CategoryId,
     string? ImagePath,
     string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good,
     Guid? Id = null);
 
 public record UpdateEquipmentRequest(
@@ -60,7 +62,8 @@ public record UpdateEquipmentRequest(
     string? Description,
     Guid? CategoryId,
     string? ImagePath,
-    string? InventoryNumber);
+    string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,

@@ -18,6 +18,7 @@ public class Equipment
     public string? ImagePath { get; set; }
 
     public EquipmentStatus Status { get; set; } = EquipmentStatus.Available;
+    public EquipmentCondition Condition { get; set; } = EquipmentCondition.Good;
 
     [MaxLength(100)]
     public string? InventoryNumber { get; set; }
