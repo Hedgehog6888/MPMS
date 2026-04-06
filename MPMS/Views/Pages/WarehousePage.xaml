@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:infra="clr-namespace:MPMS.Infrastructure"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d"
              Background="#F4F5F7"
@@ -12,6 +13,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <infra:EqualityToVisibilityConverter x:Key="EqToVis"/>
 
         <Style x:Key="WarehouseRow" TargetType="Border">
             <Setter Property="Background" Value="White"/>
@@ -400,43 +402,23 @@
                         </Grid>
                     </Border>
 
-                    <!-- Категория: материалы -->
+                    <!-- Категория: материалы (тот же FormCombo, что и у остальных фильтров) -->
                     <ComboBox Grid.Column="1"
                               ItemsSource="{Binding MaterialCategoryFilterOptions}"
                               DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectedValue="{Binding SelectedCategoryId}">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource FormCombo}">
-                                <Setter Property="Width" Value="160"/>
-                                <Setter Property="Margin" Value="0,0,10,0"/>
-                                <Setter Property="Visibility" Value="Visible"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                    </ComboBox>
+                              SelectedValue="{Binding SelectedCategoryId}"
+                              Style="{StaticResource FormCombo}"
+                              Width="160" Margin="0,0,10,0"
+                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
 
                     <!-- Категория: оборудование -->
                     <ComboBox Grid.Column="1"
                               ItemsSource="{Binding EquipmentCategoryFilterOptions}"
                               DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectedValue="{Binding SelectedCategoryId}">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource FormCombo}">
-                                <Setter Property="Width" Value="160"/>
-                                <Setter Property="Margin" Value="0,0,10,0"/>
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                    </ComboBox>
+                              SelectedValue="{Binding SelectedCategoryId}"
+                              Style="{StaticResource FormCombo}"
+                              Width="160" Margin="0,0,10,0"
+                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
 
                     <!-- «Статус» / жизненный цикл — как первый фильтр после поиска у задач -->
                     <ComboBox Grid.Column="2"
@@ -448,35 +430,17 @@
                     <!-- Материалы: остаток | Оборудование: статус -->
                     <ComboBox Grid.Column="3"
                               ItemsSource="{Binding MaterialStockFilterOptions}"
-                              SelectedItem="{Binding MaterialStockFilter}">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource FormCombo}">
-                                <Setter Property="Width" Value="180"/>
-                                <Setter Property="Visibility" Value="Visible"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                    </ComboBox>
+                              SelectedItem="{Binding MaterialStockFilter}"
+                              Style="{StaticResource FormCombo}"
+                              Width="180"
+                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
 
                     <ComboBox Grid.Column="3"
                               ItemsSource="{Binding EquipmentStatusFilterOptions}"
-                              SelectedItem="{Binding EquipmentStatusFilter}">
-                        <ComboBox.Style>
-                            <Style TargetType="ComboBox" BasedOn="{StaticResource FormCombo}">
-                                <Setter Property="Width" Value="180"/>
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.Style>
-                    </ComboBox>
+                              SelectedItem="{Binding EquipmentStatusFilter}"
+                              Style="{StaticResource FormCombo}"
+                              Width="180"
+                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
                 </Grid>
             </Border>
         </Grid>

@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
@@ -74,6 +75,8 @@ public partial class WarehousePage : UserControl
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        if (FormComboHelpers.IsMouseWheelOverOpenComboBox(e))
+            return;
         if (_mainListScroll is null) return;
         var next = _mainListScroll.VerticalOffset - e.Delta;
         next = Math.Max(0, Math.Min(next, _mainListScroll.ScrollableHeight));

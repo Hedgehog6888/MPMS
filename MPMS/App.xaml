@@ -313,6 +313,8 @@
                 <Setter Property="SelectionTextBrush" Value="#000000"/>
             </Style>
 
+            <infra:FormComboItemTextConverter x:Key="FormComboItemText"/>
+
             <!-- ComboBox with rounded corners, custom dropdown popup -->
             <Style x:Key="FormCombo" TargetType="ComboBox">
                 <Setter Property="Background"      Value="White"/>
@@ -322,6 +324,29 @@
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Height"          Value="38"/>
                 <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock TextWrapping="Wrap"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}, Path=Foreground}"
+                                       FontSize="{Binding RelativeSource={RelativeSource AncestorType=ComboBox}, Path=FontSize}">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource FormComboItemText}">
+                                        <Binding Path="."/>
+                                        <Binding RelativeSource="{RelativeSource AncestorType=ComboBox}" Path="."/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel ScrollUnit="Pixel"/>
+                        </ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="ItemContainerStyle">
                     <Setter.Value>
                         <Style TargetType="ComboBoxItem">
@@ -329,12 +354,15 @@
                             <Setter Property="Foreground" Value="#000000"/>
                             <Setter Property="Padding"    Value="10,8"/>
                             <Setter Property="Cursor"     Value="Hand"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ComboBoxItem">
                                         <Border x:Name="Bg" Background="Transparent"
-                                                Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter/>
+                                                Padding="{TemplateBinding Padding}"
+                                                HorizontalAlignment="Stretch">
+                                            <ContentPresenter HorizontalAlignment="Stretch"
+                                                              VerticalAlignment="Center"/>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsHighlighted" Value="True">
@@ -394,24 +422,28 @@
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
-                                <!-- Dropdown popup -->
+                                <!-- Popup: прозрачный слой — без AllowsTransparency=False (даёт системную тёмную рамку) -->
                                 <Popup x:Name="PART_Popup"
                                        AllowsTransparency="True"
                                        IsOpen="{TemplateBinding IsDropDownOpen}"
                                        Placement="Bottom"
                                        StaysOpen="False"
                                        Focusable="False">
-                                    <Border MinWidth="{Binding ActualWidth,
+                                    <Border Width="{Binding ActualWidth,
+                                                RelativeSource={RelativeSource TemplatedParent}}"
+                                            MaxWidth="{Binding ActualWidth,
                                                 RelativeSource={RelativeSource TemplatedParent}}"
                                             Background="White"
-                                            BorderBrush="#DFE1E6" BorderThickness="1"
-                                            CornerRadius="6" MaxHeight="220"
+                                            BorderBrush="#DFE1E6"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            MaxHeight="220"
                                             Margin="0,2,0,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="10" Opacity="0.12"
-                                                              ShadowDepth="2" Direction="270"/>
-                                        </Border.Effect>
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      CanContentScroll="False"
+                                                      Focusable="False"
+                                                      infra:FormComboHelpers.PopupScroll="True">
                                             <ItemsPresenter/>
                                         </ScrollViewer>
                                     </Border>

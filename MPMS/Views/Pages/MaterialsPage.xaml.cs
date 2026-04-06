@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.ViewModels;
 using MPMS.Views.Dialogs;
@@ -63,6 +64,8 @@ public partial class MaterialsPage : UserControl
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        if (FormComboHelpers.IsMouseWheelOverOpenComboBox(e))
+            return;
         if (MainListScroll is null) return;
         var next = MainListScroll.VerticalOffset - e.Delta;
         next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));

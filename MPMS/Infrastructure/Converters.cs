@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MPMS.Models;
@@ -874,4 +877,87 @@ public class InitialsToBrushConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
+}
+
+/// <summary>Текст строки выпадающего списка FormCombo: DisplayMemberPath родительского ComboBox или строка/ToString().</summary>
+public sealed class FormComboItemTextConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values is not { Length: >= 2 }) return "";
+        var item = values[0];
+        if (item is null) return "";
+
+        if (values[1] is ComboBox cb && !string.IsNullOrEmpty(cb.DisplayMemberPath))
+        {
+            var prop = item.GetType().GetProperty(
+                cb.DisplayMemberPath,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (prop != null)
+                return prop.GetValue(item)?.ToString() ?? "";
+        }
+
+        return item switch
+        {
+            string s => s,
+            _ => item.ToString() ?? ""
+        };
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Вспомогательные штуки для шаблона FormCombo: прокрутка попапа, проверка для полосы фильтров.</summary>
+public static class FormComboHelpers
+{
+    public static readonly DependencyProperty PopupScrollProperty =
+        DependencyProperty.RegisterAttached(
+            "PopupScroll",
+            typeof(bool),
+            typeof(FormComboHelpers),
+            new PropertyMetadata(false, OnPopupScrollChanged));
+
+    public static void SetPopupScroll(DependencyObject element, bool value)
+        => element.SetValue(PopupScrollProperty, value);
+
+    public static bool GetPopupScroll(DependencyObject element)
+        => (bool)element.GetValue(PopupScrollProperty);
+
+    private static readonly MouseWheelEventHandler FormComboDropWheelHandler = OnFormComboDropWheel;
+
+    private static void OnPopupScrollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ScrollViewer sv) return;
+        if ((bool)e.NewValue)
+            sv.AddHandler(UIElement.PreviewMouseWheelEvent, FormComboDropWheelHandler, handledEventsToo: true);
+        else
+            sv.RemoveHandler(UIElement.PreviewMouseWheelEvent, FormComboDropWheelHandler);
+    }
+
+    private static void OnFormComboDropWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer sv) return;
+        var max = Math.Max(0, sv.ExtentHeight - sv.ViewportHeight);
+        if (max <= 0) return;
+
+        var step = -e.Delta / 8.0;
+        var next = Math.Clamp(sv.VerticalOffset + step, 0, max);
+        sv.ScrollToVerticalOffset(next);
+        e.Handled = true;
+    }
+
+    /// <summary>Не перехватывать колесо на полосе фильтра, если открыт ComboBox под курсором.</summary>
+    public static bool IsMouseWheelOverOpenComboBox(MouseWheelEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject;
+             d != null;
+             d = VisualTreeHelper.GetParent(d))
+        {
+            if (d is ComboBox { IsDropDownOpen: true })
+                return true;
+        }
+
+        return false;
+    }
 }

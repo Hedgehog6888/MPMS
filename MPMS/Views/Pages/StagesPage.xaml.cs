@@ -6,6 +6,7 @@ using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -145,6 +146,8 @@ public partial class StagesPage : UserControl
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        if (FormComboHelpers.IsMouseWheelOverOpenComboBox(e))
+            return;
         if (MainListScroll is null) return;
         var next = MainListScroll.VerticalOffset - e.Delta;
         next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));
