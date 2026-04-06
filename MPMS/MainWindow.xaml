@@ -166,6 +166,8 @@
                                          BorderThickness="0" Background="Transparent"
                                          VerticalAlignment="Center" FontSize="13"
                                          Foreground="{StaticResource TextPrimaryBrush}"
+                                         SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                         SelectionTextBrush="{StaticResource TextPrimaryBrush}"
                                          GotFocus="GlobalSearch_GotFocus"
                                          LostFocus="GlobalSearch_LostFocus"
                                          KeyDown="GlobalSearch_KeyDown"
