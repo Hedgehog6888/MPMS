@@ -67,6 +67,8 @@ public record StageResponse(Guid Id, Guid TaskId, string Name, string? Descripti
 // ── Materials & inventory ────────────────────────────────────────────────────
 public record MaterialCategoryResponse(Guid Id, string Name);
 public record EquipmentCategoryResponse(Guid Id, string Name);
+public record CreateMaterialCategoryRequest(string Name, Guid? Id = null);
+public record CreateEquipmentCategoryRequest(string Name, Guid? Id = null);
 
 public record CreateMaterialRequest(
     string Name,
@@ -114,6 +116,22 @@ public record MaterialStockMovementResponse(
     Guid? ProjectId,
     Guid? TaskId);
 
+public enum MaterialStockOperationType
+{
+    Purchase = 0,
+    Consumption = 1,
+    Adjustment = 2,
+    WriteOff = 3,
+    ReturnToStock = 4
+}
+
+public record RecordMaterialStockRequest(
+    decimal Delta,
+    MaterialStockOperationType OperationType,
+    string? Comment,
+    Guid? ProjectId,
+    Guid? TaskId);
+
 public record EquipmentResponse(
     Guid Id,
     string Name,
@@ -138,6 +156,44 @@ public record EquipmentHistoryEntryResponse(
     Guid? ProjectId,
     Guid? TaskId,
     Guid? UserId,
+    string? Comment);
+
+public enum EquipmentStatus
+{
+    Available = 0,
+    CheckedOut = 1,
+    InMaintenance = 2,
+    Retired = 3
+}
+
+public enum EquipmentHistoryEventType
+{
+    CheckedOut = 0,
+    Returned = 1,
+    StatusChanged = 2,
+    Note = 3
+}
+
+public record CreateEquipmentRequest(
+    string Name,
+    string? Description,
+    Guid? CategoryId,
+    string? ImagePath,
+    string? InventoryNumber,
+    Guid? Id = null);
+
+public record UpdateEquipmentRequest(
+    string Name,
+    string? Description,
+    Guid? CategoryId,
+    string? ImagePath,
+    string? InventoryNumber);
+
+public record RecordEquipmentEventRequest(
+    EquipmentHistoryEventType EventType,
+    EquipmentStatus? NewStatus,
+    Guid? ProjectId,
+    Guid? TaskId,
     string? Comment);
 
 public record StageMaterialResponse(Guid Id, Guid MaterialId, string MaterialName,

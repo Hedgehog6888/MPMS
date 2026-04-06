@@ -44,8 +44,15 @@ public interface IApiService
 
     Task<List<MaterialCategoryResponse>?> GetMaterialCategoriesAsync();
     Task<List<EquipmentCategoryResponse>?> GetEquipmentCategoriesAsync();
+    Task<MaterialCategoryResponse?> CreateMaterialCategoryAsync(CreateMaterialCategoryRequest request);
+    Task<EquipmentCategoryResponse?> CreateEquipmentCategoryAsync(CreateEquipmentCategoryRequest request);
     Task<List<MaterialStockMovementResponse>?> GetAllMaterialStockMovementsAsync();
+    Task<MaterialStockMovementResponse?> RecordMaterialStockMovementAsync(Guid materialId, RecordMaterialStockRequest request);
     Task<List<EquipmentResponse>?> GetAllEquipmentAsync();
+    Task<EquipmentResponse?> CreateEquipmentAsync(CreateEquipmentRequest request);
+    Task<EquipmentResponse?> UpdateEquipmentAsync(Guid id, UpdateEquipmentRequest request);
+    Task<bool> DeleteEquipmentAsync(Guid id);
+    Task<EquipmentHistoryEntryResponse?> RecordEquipmentEventAsync(Guid equipmentId, RecordEquipmentEventRequest request);
     Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync();
 
     // Files

@@ -94,10 +94,18 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var cats = await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync();
+        var cats = (await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync())
+            .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(x => x.Name).First())
+            .OrderBy(c => c.Name)
+            .ToList();
         MaterialCategories = new ObservableCollection<LocalMaterialCategory>(cats);
 
-        var eqCats = await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync();
+        var eqCats = (await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync())
+            .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(x => x.Name).First())
+            .OrderBy(c => c.Name)
+            .ToList();
         EquipmentCategories = new ObservableCollection<LocalEquipmentCategory>(eqCats);
 
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
@@ -423,6 +431,21 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         });
 
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Equipment", localId, SyncOperation.Create,
+            new CreateEquipmentRequest(
+                Name: name,
+                Description: description,
+                CategoryId: categoryId,
+                ImagePath: imagePath,
+                InventoryNumber: equipment.InventoryNumber,
+                Id: localId));
+        await _sync.QueueOperationAsync("EquipmentHistory", localId, SyncOperation.Create,
+            new RecordEquipmentEventRequest(
+                EventType: EquipmentHistoryEventType.Note,
+                NewStatus: null,
+                ProjectId: null,
+                TaskId: null,
+                Comment: "Добавлено на склад"));
         await LoadAsync();
     }
 
@@ -468,6 +491,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update,
+            new UpdateEquipmentRequest(
+                Name: name,
+                Description: description,
+                CategoryId: categoryId,
+                ImagePath: imagePath,
+                InventoryNumber: e.InventoryNumber));
         await LoadAsync();
     }
 
@@ -493,6 +523,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             UserName = _auth.UserName
         });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("MaterialStockMovement", materialId, SyncOperation.Create,
+            new RecordMaterialStockRequest(
+                Delta: amount,
+                OperationType: MaterialStockOperationType.Purchase,
+                Comment: comment,
+                ProjectId: null,
+                TaskId: null));
         await LoadAsync();
     }
 
@@ -506,12 +543,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         m.WrittenOffComment = comment;
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
+        var writeOffDelta = -m.Quantity;
         db.MaterialStockMovements.Add(new LocalMaterialStockMovement
         {
             Id = Guid.NewGuid(),
             MaterialId = materialId,
             OccurredAt = DateTime.UtcNow,
-            Delta = -m.Quantity,
+            Delta = writeOffDelta,
             QuantityAfter = 0,
             OperationType = "WriteOff",
             Comment = comment,
@@ -519,6 +557,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             UserName = _auth.UserName
         });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("MaterialStockMovement", materialId, SyncOperation.Create,
+            new RecordMaterialStockRequest(
+                Delta: writeOffDelta,
+                OperationType: MaterialStockOperationType.WriteOff,
+                Comment: comment,
+                ProjectId: null,
+                TaskId: null));
         await LoadAsync();
     }
 
@@ -530,6 +575,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.IsWrittenOff = true;
         e.WrittenOffAt = DateTime.UtcNow;
         e.WrittenOffComment = comment;
+        e.Status = "Retired";
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
@@ -545,6 +591,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             Comment = comment
         });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("EquipmentHistory", equipmentId, SyncOperation.Create,
+            new RecordEquipmentEventRequest(
+                EventType: EquipmentHistoryEventType.StatusChanged,
+                NewStatus: EquipmentStatus.Retired,
+                ProjectId: null,
+                TaskId: null,
+                Comment: comment));
         await LoadAsync();
     }
 
@@ -565,8 +618,11 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(equipmentId);
         if (e is null) return;
+        var wasSynced = e.IsSynced;
         db.Equipments.Remove(e);
         await db.SaveChangesAsync();
+        if (wasSynced)
+            await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Delete, new { });
         await LoadAsync();
     }
 
@@ -593,6 +649,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             UserName = _auth.UserName
         });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("MaterialStockMovement", materialId, SyncOperation.Create,
+            new RecordMaterialStockRequest(
+                Delta: -amount,
+                OperationType: MaterialStockOperationType.Consumption,
+                Comment: comment,
+                ProjectId: null,
+                TaskId: null));
         await LoadAsync();
     }
 
@@ -600,8 +663,20 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     {
         if (string.IsNullOrWhiteSpace(name)) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
-        db.MaterialCategories.Add(new LocalMaterialCategory { Id = Guid.NewGuid(), Name = name.Trim() });
+        var normalized = name.Trim();
+        var existing = await db.MaterialCategories
+            .FirstOrDefaultAsync(c => c.Name.ToLower() == normalized.ToLower());
+        if (existing is not null)
+        {
+            await LoadAsync();
+            return;
+        }
+
+        var categoryId = Guid.NewGuid();
+        db.MaterialCategories.Add(new LocalMaterialCategory { Id = categoryId, Name = normalized });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("MaterialCategory", categoryId, SyncOperation.Create,
+            new CreateMaterialCategoryRequest(normalized, categoryId));
         var cats = await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync();
         MaterialCategories = new ObservableCollection<LocalMaterialCategory>(cats);
     }
@@ -610,8 +685,20 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     {
         if (string.IsNullOrWhiteSpace(name)) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
-        db.EquipmentCategories.Add(new LocalEquipmentCategory { Id = Guid.NewGuid(), Name = name.Trim() });
+        var normalized = name.Trim();
+        var existing = await db.EquipmentCategories
+            .FirstOrDefaultAsync(c => c.Name.ToLower() == normalized.ToLower());
+        if (existing is not null)
+        {
+            await LoadAsync();
+            return;
+        }
+
+        var categoryId = Guid.NewGuid();
+        db.EquipmentCategories.Add(new LocalEquipmentCategory { Id = categoryId, Name = normalized });
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("EquipmentCategory", categoryId, SyncOperation.Create,
+            new CreateEquipmentCategoryRequest(normalized, categoryId));
         var cats = await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync();
         EquipmentCategories = new ObservableCollection<LocalEquipmentCategory>(cats);
     }

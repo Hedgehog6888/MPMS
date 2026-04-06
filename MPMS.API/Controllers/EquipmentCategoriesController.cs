@@ -34,7 +34,7 @@ public class EquipmentCategoriesController : ControllerBase
     {
         var entity = new EquipmentCategory
         {
-            Id = Guid.NewGuid(),
+            Id = request.Id ?? Guid.NewGuid(),
             Name = request.Name.Trim()
         };
         try

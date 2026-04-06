@@ -6,11 +6,11 @@ namespace MPMS.API.DTOs;
 // ── Categories ───────────────────────────────────────────────────────────────
 public record MaterialCategoryResponse(Guid Id, string Name);
 
-public record CreateMaterialCategoryRequest([Required, MaxLength(100)] string Name);
+public record CreateMaterialCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
 
 public record EquipmentCategoryResponse(Guid Id, string Name);
 
-public record CreateEquipmentCategoryRequest([Required, MaxLength(100)] string Name);
+public record CreateEquipmentCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
 
 // ── Material stock ───────────────────────────────────────────────────────────
 public record MaterialStockMovementResponse(

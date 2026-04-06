@@ -34,7 +34,7 @@ public class MaterialCategoriesController : ControllerBase
     {
         var entity = new MaterialCategory
         {
-            Id = Guid.NewGuid(),
+            Id = request.Id ?? Guid.NewGuid(),
             Name = request.Name.Trim()
         };
         try

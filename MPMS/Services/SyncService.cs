@@ -443,6 +443,9 @@ public class SyncService : ISyncService
         if (!_api.IsOnline) return;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
+        await EnsureWarehouseCategoriesReadyAsync(db);
+        await RecoverWarehouseFailedOperationsAsync(db);
+
         var pending = await db.PendingOperations
             .Where(p => !p.IsFailed)
             .OrderBy(p => p.CreatedAt)
@@ -463,6 +466,186 @@ public class SyncService : ISyncService
         await db.SaveChangesAsync();
     }
 
+    private static async Task RecoverWarehouseFailedOperationsAsync(LocalDbContext db)
+    {
+        var recoverableTypes = new[]
+        {
+            "Material", "Equipment",
+            "MaterialCategory", "EquipmentCategory",
+            "MaterialStockMovement", "EquipmentHistory"
+        };
+
+        var failed = await db.PendingOperations
+            .Where(p => p.IsFailed && recoverableTypes.Contains(p.EntityType))
+            .ToListAsync();
+
+        foreach (var op in failed)
+        {
+            op.IsFailed = false;
+            op.RetryCount = 0;
+            op.ErrorMessage = null;
+        }
+
+        if (failed.Count > 0)
+            await db.SaveChangesAsync();
+    }
+
+    private async Task EnsureWarehouseCategoriesReadyAsync(LocalDbContext db)
+    {
+        var apiMatCats = await _api.GetMaterialCategoriesAsync() ?? [];
+        var apiEqCats = await _api.GetEquipmentCategoriesAsync() ?? [];
+
+        var localMatCats = await db.MaterialCategories.ToListAsync();
+        foreach (var local in localMatCats)
+        {
+            if (apiMatCats.Any(c => c.Id == local.Id))
+                continue;
+
+            var byName = apiMatCats.FirstOrDefault(c =>
+                string.Equals(c.Name, local.Name, StringComparison.OrdinalIgnoreCase));
+            if (byName is not null)
+            {
+                await RemapMaterialCategoryAsync(db, local.Id, byName.Id, byName.Name);
+                continue;
+            }
+
+            var queued = await db.PendingOperations.AnyAsync(p =>
+                !p.IsFailed &&
+                p.EntityType == "MaterialCategory" &&
+                p.OperationType == SyncOperation.Create &&
+                p.EntityId == local.Id);
+            if (!queued)
+            {
+                db.PendingOperations.Add(new PendingOperation
+                {
+                    EntityType = "MaterialCategory",
+                    EntityId = local.Id,
+                    OperationType = SyncOperation.Create,
+                    Payload = JsonSerializer.Serialize(new CreateMaterialCategoryRequest(local.Name, local.Id)),
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        var localEqCats = await db.EquipmentCategories.ToListAsync();
+        foreach (var local in localEqCats)
+        {
+            if (apiEqCats.Any(c => c.Id == local.Id))
+                continue;
+
+            var byName = apiEqCats.FirstOrDefault(c =>
+                string.Equals(c.Name, local.Name, StringComparison.OrdinalIgnoreCase));
+            if (byName is not null)
+            {
+                await RemapEquipmentCategoryAsync(db, local.Id, byName.Id, byName.Name);
+                continue;
+            }
+
+            var queued = await db.PendingOperations.AnyAsync(p =>
+                !p.IsFailed &&
+                p.EntityType == "EquipmentCategory" &&
+                p.OperationType == SyncOperation.Create &&
+                p.EntityId == local.Id);
+            if (!queued)
+            {
+                db.PendingOperations.Add(new PendingOperation
+                {
+                    EntityType = "EquipmentCategory",
+                    EntityId = local.Id,
+                    OperationType = SyncOperation.Create,
+                    Payload = JsonSerializer.Serialize(new CreateEquipmentCategoryRequest(local.Name, local.Id)),
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private async Task RemapMaterialCategoryAsync(LocalDbContext db, Guid oldId, Guid newId, string newName)
+    {
+        if (oldId == newId) return;
+
+        var targetCat = await db.MaterialCategories.FindAsync(newId);
+        if (targetCat is null)
+            db.MaterialCategories.Add(new LocalMaterialCategory { Id = newId, Name = newName });
+        else
+            targetCat.Name = newName;
+
+        var mats = await db.Materials.Where(m => m.CategoryId == oldId).ToListAsync();
+        foreach (var m in mats)
+        {
+            m.CategoryId = newId;
+            m.CategoryName = newName;
+            m.IsSynced = false;
+        }
+
+        var matOps = await db.PendingOperations
+            .Where(p => !p.IsFailed && p.EntityType == "Material")
+            .ToListAsync();
+        foreach (var op in matOps)
+        {
+            if (op.OperationType == SyncOperation.Create)
+            {
+                var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload);
+                if (req?.CategoryId == oldId)
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+            }
+            else if (op.OperationType == SyncOperation.Update)
+            {
+                var req = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload);
+                if (req?.CategoryId == oldId)
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+            }
+        }
+
+        var oldCat = await db.MaterialCategories.FindAsync(oldId);
+        if (oldCat is not null)
+            db.MaterialCategories.Remove(oldCat);
+    }
+
+    private async Task RemapEquipmentCategoryAsync(LocalDbContext db, Guid oldId, Guid newId, string newName)
+    {
+        if (oldId == newId) return;
+
+        var targetCat = await db.EquipmentCategories.FindAsync(newId);
+        if (targetCat is null)
+            db.EquipmentCategories.Add(new LocalEquipmentCategory { Id = newId, Name = newName });
+        else
+            targetCat.Name = newName;
+
+        var equips = await db.Equipments.Where(e => e.CategoryId == oldId).ToListAsync();
+        foreach (var e in equips)
+        {
+            e.CategoryId = newId;
+            e.CategoryName = newName;
+            e.IsSynced = false;
+        }
+
+        var eqOps = await db.PendingOperations
+            .Where(p => !p.IsFailed && p.EntityType == "Equipment")
+            .ToListAsync();
+        foreach (var op in eqOps)
+        {
+            if (op.OperationType == SyncOperation.Create)
+            {
+                var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload);
+                if (req?.CategoryId == oldId)
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+            }
+            else if (op.OperationType == SyncOperation.Update)
+            {
+                var req = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload);
+                if (req?.CategoryId == oldId)
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+            }
+        }
+
+        var oldCat = await db.EquipmentCategories.FindAsync(oldId);
+        if (oldCat is not null)
+            db.EquipmentCategories.Remove(oldCat);
+    }
+
     private async Task<bool> ProcessOperationAsync(PendingOperation op)
     {
         try
@@ -473,6 +656,11 @@ public class SyncService : ISyncService
                 "Task"        => await SyncTaskAsync(op),
                 "Stage"       => await SyncStageAsync(op),
                 "Material"    => await SyncMaterialAsync(op),
+                "MaterialCategory" => await SyncMaterialCategoryAsync(op),
+                "EquipmentCategory" => await SyncEquipmentCategoryAsync(op),
+                "MaterialStockMovement" => await SyncMaterialStockMovementAsync(op),
+                "Equipment" => await SyncEquipmentAsync(op),
+                "EquipmentHistory" => await SyncEquipmentHistoryAsync(op),
                 "User"        => await SyncUserAvatarAsync(op),
                 "UserProfile" => await SyncUserProfileAsync(op),
                 _             => true
@@ -582,6 +770,57 @@ public class SyncService : ISyncService
 
         var updateReq = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload);
         return updateReq is not null && await _api.UpdateMaterialAsync(op.EntityId, updateReq) is not null;
+    }
+
+    private async Task<bool> SyncMaterialCategoryAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<CreateMaterialCategoryRequest>(op.Payload);
+        if (req is null) return false;
+        req = req with { Id = op.EntityId };
+        return await _api.CreateMaterialCategoryAsync(req) is not null;
+    }
+
+    private async Task<bool> SyncEquipmentCategoryAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<CreateEquipmentCategoryRequest>(op.Payload);
+        if (req is null) return false;
+        req = req with { Id = op.EntityId };
+        return await _api.CreateEquipmentCategoryAsync(req) is not null;
+    }
+
+    private async Task<bool> SyncMaterialStockMovementAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<RecordMaterialStockRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.RecordMaterialStockMovementAsync(op.EntityId, req) is not null;
+    }
+
+    private async Task<bool> SyncEquipmentAsync(PendingOperation op)
+    {
+        if (op.OperationType == SyncOperation.Delete)
+            return await _api.DeleteEquipmentAsync(op.EntityId);
+
+        if (op.OperationType == SyncOperation.Create)
+        {
+            var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload);
+            if (req is null) return false;
+            req = req with { Id = op.EntityId };
+            return await _api.CreateEquipmentAsync(req) is not null;
+        }
+
+        var updateReq = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload);
+        return updateReq is not null && await _api.UpdateEquipmentAsync(op.EntityId, updateReq) is not null;
+    }
+
+    private async Task<bool> SyncEquipmentHistoryAsync(PendingOperation op)
+    {
+        if (op.OperationType != SyncOperation.Create) return true;
+        var req = JsonSerializer.Deserialize<RecordEquipmentEventRequest>(op.Payload);
+        if (req is null) return false;
+        return await _api.RecordEquipmentEventAsync(op.EntityId, req) is not null;
     }
 
     private async Task RunPeriodicSyncAsync()

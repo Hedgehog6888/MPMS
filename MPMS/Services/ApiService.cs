@@ -162,11 +162,32 @@ public class ApiService : IApiService
     public Task<List<EquipmentCategoryResponse>?> GetEquipmentCategoriesAsync()
         => GetAsync<List<EquipmentCategoryResponse>>("equipment-categories");
 
+    public Task<MaterialCategoryResponse?> CreateMaterialCategoryAsync(CreateMaterialCategoryRequest request)
+        => PostAsync<MaterialCategoryResponse>("material-categories", request);
+
+    public Task<EquipmentCategoryResponse?> CreateEquipmentCategoryAsync(CreateEquipmentCategoryRequest request)
+        => PostAsync<EquipmentCategoryResponse>("equipment-categories", request);
+
     public Task<List<MaterialStockMovementResponse>?> GetAllMaterialStockMovementsAsync()
         => GetAsync<List<MaterialStockMovementResponse>>("inventory/material-stock-movements");
 
+    public Task<MaterialStockMovementResponse?> RecordMaterialStockMovementAsync(Guid materialId, RecordMaterialStockRequest request)
+        => PostAsync<MaterialStockMovementResponse>($"materials/{materialId}/stock-movements", request);
+
     public Task<List<EquipmentResponse>?> GetAllEquipmentAsync()
         => GetAsync<List<EquipmentResponse>>("inventory/equipment");
+
+    public Task<EquipmentResponse?> CreateEquipmentAsync(CreateEquipmentRequest request)
+        => PostAsync<EquipmentResponse>("equipment", request);
+
+    public Task<EquipmentResponse?> UpdateEquipmentAsync(Guid id, UpdateEquipmentRequest request)
+        => PutAsync<EquipmentResponse>($"equipment/{id}", request);
+
+    public Task<bool> DeleteEquipmentAsync(Guid id)
+        => DeleteAsync($"equipment/{id}");
+
+    public Task<EquipmentHistoryEntryResponse?> RecordEquipmentEventAsync(Guid equipmentId, RecordEquipmentEventRequest request)
+        => PostAsync<EquipmentHistoryEntryResponse>($"equipment/{equipmentId}/history", request);
 
     public Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync()
         => GetAsync<List<EquipmentHistoryEntryResponse>>("inventory/equipment-history");
