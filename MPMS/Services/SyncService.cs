@@ -37,6 +37,24 @@ public class SyncService : ISyncService
         _ = RunPeriodicSyncAsync();
     }
 
+    private static string NormalizeEquipmentStatus(string? status) => status switch
+    {
+        "3" => "Unavailable",
+        _ => status ?? "Available"
+    };
+
+    private static bool IsUnavailableCondition(string? condition) =>
+        condition is "NeedsMaintenance" or "Faulty";
+
+    private static string ResolvePulledEquipmentStatus(string? status, string? condition)
+    {
+        var normalizedStatus = NormalizeEquipmentStatus(status);
+        if (normalizedStatus is "InUse" or "CheckedOut" or "Retired")
+            return normalizedStatus;
+
+        return IsUnavailableCondition(condition) ? "Unavailable" : "Available";
+    }
+
     public async Task SyncAsync()
     {
         if (_isSyncing || !_auth.IsAuthenticated) return;
@@ -328,7 +346,7 @@ public class SyncService : ISyncService
                         CategoryId = eq.CategoryId,
                         CategoryName = eq.CategoryName,
                         ImagePath = eq.ImagePath,
-                        Status = eq.Status,
+                        Status = ResolvePulledEquipmentStatus(eq.Status, eq.Condition),
                         Condition = eq.Condition,
                         InventoryNumber = eq.InventoryNumber,
                         CreatedAt = eq.CreatedAt,
@@ -340,18 +358,21 @@ public class SyncService : ISyncService
                 }
                 else
                 {
-                    existingEq.Name = eq.Name;
-                    existingEq.Description = eq.Description;
-                    existingEq.CategoryId = eq.CategoryId;
-                    existingEq.CategoryName = eq.CategoryName;
-                    existingEq.ImagePath = eq.ImagePath;
-                    existingEq.Status = eq.Status;
-                    existingEq.Condition = eq.Condition;
-                    existingEq.InventoryNumber = eq.InventoryNumber;
-                    existingEq.UpdatedAt = eq.UpdatedAt;
-                    existingEq.CheckedOutProjectId = eq.CheckedOutProjectId;
-                    existingEq.CheckedOutTaskId = eq.CheckedOutTaskId;
-                    existingEq.IsSynced = true;
+                    if (existingEq.IsSynced)
+                    {
+                        existingEq.Name = eq.Name;
+                        existingEq.Description = eq.Description;
+                        existingEq.CategoryId = eq.CategoryId;
+                        existingEq.CategoryName = eq.CategoryName;
+                        existingEq.ImagePath = eq.ImagePath;
+                        existingEq.Status = ResolvePulledEquipmentStatus(eq.Status, eq.Condition);
+                        existingEq.Condition = eq.Condition;
+                        existingEq.InventoryNumber = eq.InventoryNumber;
+                        existingEq.UpdatedAt = eq.UpdatedAt;
+                        existingEq.CheckedOutProjectId = eq.CheckedOutProjectId;
+                        existingEq.CheckedOutTaskId = eq.CheckedOutTaskId;
+                        existingEq.IsSynced = true;
+                    }
                 }
             }
         }
@@ -810,11 +831,30 @@ public class SyncService : ISyncService
             var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
-            return await _api.CreateEquipmentAsync(req) is not null;
+            var created = await _api.CreateEquipmentAsync(req);
+            if (created is null) return false;
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var local = await db.Equipments.FindAsync(op.EntityId);
+            if (local is not null)
+            {
+                local.IsSynced = true;
+                await db.SaveChangesAsync();
+            }
+            return true;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload);
-        return updateReq is not null && await _api.UpdateEquipmentAsync(op.EntityId, updateReq) is not null;
+        if (updateReq is null) return false;
+        var updated = await _api.UpdateEquipmentAsync(op.EntityId, updateReq);
+        if (updated is null) return false;
+        await using var db2 = await _dbFactory.CreateDbContextAsync();
+        var local2 = await db2.Equipments.FindAsync(op.EntityId);
+        if (local2 is not null)
+        {
+            local2.IsSynced = true;
+            await db2.SaveChangesAsync();
+        }
+        return true;
     }
 
     private async Task<bool> SyncEquipmentHistoryAsync(PendingOperation op)

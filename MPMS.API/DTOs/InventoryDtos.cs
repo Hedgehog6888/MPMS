@@ -63,7 +63,8 @@ public record UpdateEquipmentRequest(
     Guid? CategoryId,
     string? ImagePath,
     string? InventoryNumber,
-    EquipmentCondition Condition = EquipmentCondition.Good);
+    EquipmentCondition Condition = EquipmentCondition.Good,
+    EquipmentStatus? Status = null);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,

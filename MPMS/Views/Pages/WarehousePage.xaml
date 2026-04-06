@@ -283,7 +283,16 @@
                                                     <Setter Property="CornerRadius" Value="4"/>
                                                     <Setter Property="Padding" Value="8,3"/>
                                                     <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Unavailable">
+                                                            <Setter Property="Background" Value="#FFEBE6"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="3">
+                                                            <Setter Property="Background" Value="#FFEBE6"/>
+                                                        </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="InUse">
+                                                            <Setter Property="Background" Value="#FFF4E5"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="CheckedOut">
                                                             <Setter Property="Background" Value="#FFF4E5"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="Retired">

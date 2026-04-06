@@ -163,7 +163,8 @@ public enum EquipmentStatus
 {
     Available = 0,
     InUse = 1,
-    Retired = 2
+    Retired = 2,
+    Unavailable = 3
 }
 
 public enum EquipmentCondition
@@ -196,7 +197,8 @@ public record UpdateEquipmentRequest(
     Guid? CategoryId,
     string? ImagePath,
     string? InventoryNumber,
-    EquipmentCondition Condition = EquipmentCondition.Good);
+    EquipmentCondition Condition = EquipmentCondition.Good,
+    EquipmentStatus? Status = null);
 
 public record RecordEquipmentEventRequest(
     EquipmentHistoryEventType EventType,

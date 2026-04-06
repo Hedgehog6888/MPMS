@@ -288,6 +288,8 @@ public class LocalEquipment : LocalEntity
     public string StatusDisplay => Status switch
     {
         "Available"   => "Доступно",
+        "Unavailable" => "Недоступно",
+        "3"           => "Недоступно",
         "InUse"       => "Используется",
         "CheckedOut"  => "Используется",
         "Retired"     => "Списано",
@@ -298,6 +300,8 @@ public class LocalEquipment : LocalEntity
     public string StatusColor => Status switch
     {
         "Available"   => "#00875A",
+        "Unavailable" => "#DE350B",
+        "3"           => "#DE350B",
         "InUse"       => "#FF8B00",
         "CheckedOut"  => "#FF8B00",
         "Retired"     => "#6B778C",

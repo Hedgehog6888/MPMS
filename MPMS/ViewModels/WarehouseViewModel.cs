@@ -36,7 +36,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         ["Все", "Есть остаток", "Нет в наличии"];
 
     public IReadOnlyList<string> EquipmentStatusFilterOptions { get; } =
-        ["Все", "Доступно", "Используется", "Списано"];
+        ["Все", "Доступно", "Недоступно", "Используется", "Списано"];
 
     public bool CanManage =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
@@ -50,6 +50,28 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _sync = sync;
         _auth = auth;
     }
+
+    private static bool ShouldBeUnavailable(EquipmentCondition condition) =>
+        condition is EquipmentCondition.NeedsMaintenance or EquipmentCondition.Faulty;
+
+    private static string ResolveStatusAfterConditionChange(LocalEquipment e, EquipmentCondition newCondition)
+    {
+        if (e.IsWrittenOff) return "Retired";
+        if (ShouldBeUnavailable(newCondition)) return "Unavailable";
+        if (e.Status is "Unavailable" or "3") return "Available";
+        return e.Status;
+    }
+
+    private static EquipmentStatus? ToEquipmentStatusEnum(string status) => status switch
+    {
+        "Available" => EquipmentStatus.Available,
+        "InUse" => EquipmentStatus.InUse,
+        "CheckedOut" => EquipmentStatus.InUse,
+        "Retired" => EquipmentStatus.Retired,
+        "Unavailable" => EquipmentStatus.Unavailable,
+        "3" => EquipmentStatus.Unavailable,
+        _ => null
+    };
 
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
 
@@ -195,7 +217,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         eqList = EquipmentStatusFilter switch
         {
             "Доступно" => eqList.Where(e => e.Status == "Available").ToList(),
-            "Используется" => eqList.Where(e => e.Status == "InUse").ToList(),
+            "Недоступно" => eqList.Where(e => e.Status is "Unavailable" or "3").ToList(),
+            "Используется" => eqList.Where(e => e.Status is "InUse" or "CheckedOut").ToList(),
             "Списано" => eqList.Where(e => e.Status == "Retired" || e.IsWrittenOff).ToList(),
             _ => eqList
         };
@@ -412,7 +435,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             CategoryName = categoryName,
             ImagePath = imagePath,
             InventoryNumber = inv,
-            Status = "Available",
+            Status = ShouldBeUnavailable(condition) ? "Unavailable" : "Available",
             Condition = condition.ToString(),
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
@@ -426,7 +449,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             EquipmentId = localId,
             OccurredAt = DateTime.UtcNow,
             EventType = "Added",
-            NewStatus = "Available",
+            NewStatus = ShouldBeUnavailable(condition) ? "Unavailable" : "Available",
             UserId = _auth.UserId,
             UserName = _auth.UserName,
             Comment = "Добавлено на склад"
@@ -486,12 +509,14 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(id);
         if (e is null) return;
+        var previousStatus = e.Status;
         e.Name = name;
         e.Description = description;
         e.CategoryId = categoryId;
         e.CategoryName = categoryName;
         e.ImagePath = imagePath;
         e.Condition = condition.ToString();
+        e.Status = ResolveStatusAfterConditionChange(e, condition);
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
@@ -502,7 +527,22 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 CategoryId: categoryId,
                 ImagePath: imagePath,
                 InventoryNumber: e.InventoryNumber,
-                Condition: condition));
+                Condition: condition,
+                Status: ToEquipmentStatusEnum(e.Status)));
+        if (!string.Equals(previousStatus, e.Status, StringComparison.Ordinal))
+        {
+            var newStatus = ToEquipmentStatusEnum(e.Status);
+            if (newStatus.HasValue)
+            {
+                await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
+                    new RecordEquipmentEventRequest(
+                        EventType: EquipmentHistoryEventType.StatusChanged,
+                        NewStatus: newStatus.Value,
+                        ProjectId: null,
+                        TaskId: null,
+                        Comment: $"Статус автоматически изменен: {e.StatusDisplay} (по состоянию оборудования)"));
+            }
+        }
         await LoadAsync();
     }
 
@@ -514,7 +554,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         if (string.Equals(e.Condition, condition.ToString(), StringComparison.Ordinal))
             return;
 
+        var previousStatus = e.Status;
         e.Condition = condition.ToString();
+        e.Status = ResolveStatusAfterConditionChange(e, condition);
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
@@ -526,17 +568,33 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 CategoryId: e.CategoryId,
                 ImagePath: e.ImagePath,
                 InventoryNumber: e.InventoryNumber,
-                Condition: condition));
+                Condition: condition,
+                Status: ToEquipmentStatusEnum(e.Status)));
 
+        var conditionComment = string.IsNullOrWhiteSpace(comment)
+            ? $"Состояние изменено: {e.ConditionDisplay}"
+            : comment;
         await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
             new RecordEquipmentEventRequest(
                 EventType: EquipmentHistoryEventType.Note,
                 NewStatus: null,
                 ProjectId: null,
                 TaskId: null,
-                Comment: string.IsNullOrWhiteSpace(comment)
-                    ? $"Состояние изменено: {e.ConditionDisplay}"
-                    : comment));
+                Comment: conditionComment));
+        if (!string.Equals(previousStatus, e.Status, StringComparison.Ordinal))
+        {
+            var newStatus = ToEquipmentStatusEnum(e.Status);
+            if (newStatus.HasValue)
+            {
+                await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
+                    new RecordEquipmentEventRequest(
+                        EventType: EquipmentHistoryEventType.StatusChanged,
+                        NewStatus: newStatus.Value,
+                        ProjectId: null,
+                        TaskId: null,
+                        Comment: $"Статус автоматически изменен: {e.StatusDisplay} (по состоянию оборудования)"));
+            }
+        }
 
         await LoadAsync();
     }
