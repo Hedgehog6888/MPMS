@@ -42,7 +42,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
     public bool CanViewHistory =>
-        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman"
+        || string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
     public WarehouseViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
@@ -253,9 +254,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         if (_auth.UserRole is "Foreman")
             return await FilterHistoryForForemanAsync(db, entries);
-        if (_auth.UserRole is "Project Manager" or "ProjectManager" or "Manager")
-            return await FilterHistoryForManagerAsync(db, entries);
+        if (string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_auth.UserId is not { } wUid) return [];
+            return entries.Where(e => e.UserId == wUid).ToList();
+        }
 
+        // Админ и менеджер проекта — полная история по материалу
         return entries;
     }
 
@@ -281,9 +286,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         if (_auth.UserRole is "Foreman")
             return await FilterEquipmentHistoryForForemanAsync(db, entries);
-        if (_auth.UserRole is "Project Manager" or "ProjectManager" or "Manager")
-            return await FilterEquipmentHistoryForManagerAsync(db, entries);
+        if (string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_auth.UserId is not { } wUid) return [];
+            return entries.Where(e => e.UserId == wUid).ToList();
+        }
 
+        // Админ и менеджер проекта — полная история по оборудованию
         return entries;
     }
 
@@ -303,21 +312,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         return entries.Where(e => e.UserId.HasValue && allowedUsers.Contains(e.UserId.Value)).ToList();
     }
 
-    private async Task<List<LocalMaterialStockMovement>> FilterHistoryForManagerAsync(
-        LocalDbContext db, List<LocalMaterialStockMovement> entries)
-    {
-        if (_auth.UserId is not { } uid) return entries;
-        // Менеджер видит историю исполнителей своих проектов
-        var myProjects = await db.Projects
-            .Where(p => p.ManagerId == uid)
-            .Select(p => p.Id).Distinct().ToListAsync();
-        var allowedUsers = await db.ProjectMembers
-            .Where(m => myProjects.Contains(m.ProjectId))
-            .Select(m => m.UserId).Distinct().ToListAsync();
-        allowedUsers.Add(uid);
-        return entries.Where(e => !e.UserId.HasValue || allowedUsers.Contains(e.UserId.Value)).ToList();
-    }
-
     private async Task<List<LocalEquipmentHistoryEntry>> FilterEquipmentHistoryForForemanAsync(
         LocalDbContext db, List<LocalEquipmentHistoryEntry> entries)
     {
@@ -331,20 +325,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             .Select(m => m.UserId).Distinct().ToListAsync();
         allowedUsers.Add(uid);
         return entries.Where(e => e.UserId.HasValue && allowedUsers.Contains(e.UserId.Value)).ToList();
-    }
-
-    private async Task<List<LocalEquipmentHistoryEntry>> FilterEquipmentHistoryForManagerAsync(
-        LocalDbContext db, List<LocalEquipmentHistoryEntry> entries)
-    {
-        if (_auth.UserId is not { } uid) return entries;
-        var myProjects = await db.Projects
-            .Where(p => p.ManagerId == uid)
-            .Select(p => p.Id).Distinct().ToListAsync();
-        var allowedUsers = await db.ProjectMembers
-            .Where(m => myProjects.Contains(m.ProjectId))
-            .Select(m => m.UserId).Distinct().ToListAsync();
-        allowedUsers.Add(uid);
-        return entries.Where(e => !e.UserId.HasValue || allowedUsers.Contains(e.UserId.Value)).ToList();
     }
 
     // ── Material operations ───────────────────────────────────────────────────

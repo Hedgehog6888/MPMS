@@ -83,7 +83,6 @@ public partial class WarehousePage : UserControl
         _mainListScroll.ScrollToVerticalOffset(next);
         e.Handled = true;
     }
-
     private void MaterialRow_Click(object sender, MouseButtonEventArgs e)
     {
         if (Vm is not { } vm) return;
