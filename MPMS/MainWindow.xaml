@@ -929,37 +929,6 @@
                     </StackPanel>
                 </RadioButton>
 
-                <!-- Журнал (виден всем, кроме администратора) -->
-                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Journal, Mode=OneWay}"
-                             Style="{StaticResource NavButton}"
-                             Command="{Binding NavigateCommand}"
-                             CommandParameter="Journal"
-                             Visibility="{Binding IsAdminPanelVisible, Converter={StaticResource BoolToVisInv}}">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Width="20" Height="20"
-                               Margin="12,0,8,0"
-                               VerticalAlignment="Center"
-                               Source="{svgc:SvgImage Source=/icons/journal.svg, AppName=MPMS}">
-                            <Image.Style>
-                                <Style TargetType="Image">
-                                    <Setter Property="Opacity" Value="0.7"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Image.Style>
-                        </Image>
-                        <TextBlock Text="Журнал"
-                                   FontSize="14"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </RadioButton>
-
                 <!-- Администрирование (только для Administrator) -->
                 <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Admin, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
