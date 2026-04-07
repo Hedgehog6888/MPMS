@@ -492,6 +492,7 @@ public partial class CreateTaskOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 }
 

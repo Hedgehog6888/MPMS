@@ -565,6 +565,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 
     private record WorkerChipInfo(Guid UserId, string Name, string Initials);

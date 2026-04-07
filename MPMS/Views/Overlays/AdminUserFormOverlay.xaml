@@ -42,6 +42,7 @@
     <Grid Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -77,9 +78,22 @@
             </Grid>
         </Border>
 
+        <Border x:Name="ErrorBorder" Grid.Row="1" Background="#FFF0F0"
+                CornerRadius="8" Padding="14,10"
+                Margin="24,12,24,0" Visibility="Collapsed"
+                BorderBrush="#FCA5A5" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
+                           Foreground="#DC2626" VerticalAlignment="Center"/>
+                <TextBlock x:Name="ErrorText"
+                           Foreground="#DC2626" FontSize="12" TextWrapping="Wrap"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
         <!-- ═══ Form Body ════════════════════════════════════════════════ -->
-        <ScrollViewer x:Name="FormMainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24,0,24,8">
+        <ScrollViewer x:Name="FormMainScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,8,24,8">
 
                 <!-- PERSONAL INFO -->
                 <TextBlock Text="ЛИЧНЫЕ ДАННЫЕ" Style="{StaticResource SectionHeader}"/>
@@ -208,25 +222,11 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Error message -->
-                <Border x:Name="ErrorBorder"
-                        Background="#FFF0F0" CornerRadius="8" Padding="14,10"
-                        Margin="0,0,0,8" Visibility="Collapsed"
-                        BorderBrush="#FCA5A5" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
-                                   Foreground="#DC2626" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="ErrorText"
-                                   Foreground="#DC2626" FontSize="12" TextWrapping="Wrap"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-
             </StackPanel>
         </ScrollViewer>
 
         <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
-        <Border Grid.Row="2" Padding="24,14"
+        <Border Grid.Row="3" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
             <Grid>
                 <Button Content="Отмена" HorizontalAlignment="Left"

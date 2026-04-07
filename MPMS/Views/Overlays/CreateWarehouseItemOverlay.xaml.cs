@@ -445,5 +445,6 @@ public partial class CreateWarehouseItemOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 }

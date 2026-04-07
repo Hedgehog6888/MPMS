@@ -474,6 +474,7 @@ public partial class AdminUserFormOverlay : UserControl
     {
         ErrorText.Text     = message;
         ErrorBorder.Visibility = Visibility.Visible;
+        FormMainScrollViewer.ScrollToVerticalOffset(0);
     }
 
     private void HideError() => ErrorBorder.Visibility = Visibility.Collapsed;

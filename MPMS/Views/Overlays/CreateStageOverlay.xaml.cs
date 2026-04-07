@@ -619,6 +619,7 @@ public partial class CreateStageOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 
     private async System.Threading.Tasks.Task<LocalTask?> GetTaskByIdAsync(Guid taskId)
