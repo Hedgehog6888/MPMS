@@ -146,7 +146,7 @@
                                        Margin="0,0,8,0"
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
                             <Grid Grid.Column="1">
-                                <TextBlock Text="Поиск проектов, задач, этапов..."
+                                <TextBlock Text="Поиск проектов, задач, этапов, материалов, оборудования..."
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            FontSize="13" VerticalAlignment="Center"
                                            IsHitTestVisible="False">
@@ -307,6 +307,76 @@
                                                                        Foreground="#000000" FontWeight="SemiBold"
                                                                        VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding TaskName}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchStagesDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Materials section -->
+                                    <StackPanel x:Name="SearchMaterialsSection" Margin="0,0,0,8">
+                                        <TextBlock Text="МАТЕРИАЛЫ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchMaterialsList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding InventoryNumber}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchMaterialsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Equipment section -->
+                                    <StackPanel x:Name="SearchEquipmentSection">
+                                        <TextBlock Text="ОБОРУДОВАНИЕ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchEquipmentList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding InventoryNumber}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"/>
                                                         </StackPanel>

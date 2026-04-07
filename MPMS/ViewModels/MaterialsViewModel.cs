@@ -143,6 +143,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
 
         await _sync.QueueOperationAsync("Material", localId, SyncOperation.Create,
             req with { Id = localId, InventoryNumber = material.InventoryNumber });
+        await LogActivityAsync(db, $"Создан материал «{material.Name}»", "Material", localId, ActivityActionKind.Created);
 
         await LoadAsync();
     }
@@ -191,6 +192,37 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Material", material.Id, SyncOperation.Delete, new { });
 
         await LoadAsync();
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var userId = session?.UserId;
+        var actorRole = session?.UserRole;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        var log = new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionType = actionType,
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ActivityLogs.Add(log);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 }
 

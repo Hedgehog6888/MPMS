@@ -131,8 +131,11 @@ public class TaskStagesController : ControllerBase
     public async Task<ActionResult<StageMaterialResponse>> AddMaterial(
         Guid id, [FromBody] AddStageMaterialRequest request)
     {
-        var stageExists = await _db.TaskStages.AnyAsync(s => s.Id == id);
-        if (!stageExists) return NotFound(new { message = "Этап не найден" });
+        var stage = await _db.TaskStages
+            .Where(s => s.Id == id)
+            .Select(s => new { s.Id, s.Name })
+            .FirstOrDefaultAsync();
+        if (stage is null) return NotFound(new { message = "Этап не найден" });
 
         var material = await _db.Materials.FindAsync(request.MaterialId);
         if (material is null) return BadRequest(new { message = "Материал не найден" });
@@ -156,6 +159,13 @@ public class TaskStagesController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+
+        await _log.LogAsync(
+            CurrentUserId(),
+            ActivityActionType.Updated,
+            ActivityEntityType.TaskStage,
+            stage.Id,
+            $"В этап «{stage.Name}» добавлен материал «{material.Name}» в количестве {request.Quantity:g} {(material.Unit ?? "").Trim()}".Trim());
 
         return Ok(new StageMaterialResponse(
             existing.Id, material.Id, material.Name, material.Unit, existing.Quantity));

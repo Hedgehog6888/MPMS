@@ -479,6 +479,24 @@ public partial class MainWindow : Window
                         SearchHelper.ContainsIgnoreCase(s.Description, searchTerm))
                     .Take(5).ToList();
 
+            var materials = searchTerm is null
+                ? new List<LocalMaterial>()
+                : (await db.Materials.ToListAsync(ct))
+                    .Where(m => SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.Description, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.CategoryName, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.InventoryNumber, searchTerm))
+                    .Take(5).ToList();
+
+            var equipment = searchTerm is null
+                ? new List<LocalEquipment>()
+                : (await db.Equipments.ToListAsync(ct))
+                    .Where(eq => SearchHelper.ContainsIgnoreCase(eq.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.Description, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.CategoryName, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.InventoryNumber, searchTerm))
+                    .Take(5).ToList();
+
             // Populate TaskName for stages
             var taskIds = stages.Select(s => s.TaskId).Distinct().ToList();
             var taskNames = await db.Tasks.Where(t => taskIds.Contains(t.Id))
@@ -493,18 +511,26 @@ public partial class MainWindow : Window
                 bool hasProjects = projects.Count > 0;
                 bool hasTasks = tasks.Count > 0;
                 bool hasStages = stages.Count > 0;
-                bool hasAny = hasProjects || hasTasks || hasStages;
+                bool hasMaterials = materials.Count > 0;
+                bool hasEquipment = equipment.Count > 0;
+                bool hasAny = hasProjects || hasTasks || hasStages || hasMaterials || hasEquipment;
 
                 SearchProjectsSection.Visibility = hasProjects ? Visibility.Visible : Visibility.Collapsed;
                 SearchProjectsDivider.Visibility = hasProjects && (hasTasks || hasStages) ? Visibility.Visible : Visibility.Collapsed;
                 SearchTasksSection.Visibility = hasTasks ? Visibility.Visible : Visibility.Collapsed;
-                SearchTasksDivider.Visibility = hasTasks && hasStages ? Visibility.Visible : Visibility.Collapsed;
+                SearchTasksDivider.Visibility = hasTasks && (hasStages || hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
                 SearchStagesSection.Visibility = hasStages ? Visibility.Visible : Visibility.Collapsed;
+                SearchStagesDivider.Visibility = hasStages && (hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
+                SearchMaterialsSection.Visibility = hasMaterials ? Visibility.Visible : Visibility.Collapsed;
+                SearchMaterialsDivider.Visibility = hasMaterials && hasEquipment ? Visibility.Visible : Visibility.Collapsed;
+                SearchEquipmentSection.Visibility = hasEquipment ? Visibility.Visible : Visibility.Collapsed;
                 NoSearchResultsText.Visibility = hasAny ? Visibility.Collapsed : Visibility.Visible;
 
                 SearchProjectsList.ItemsSource = projects;
                 SearchTasksList.ItemsSource = tasks;
                 SearchStagesList.ItemsSource = stages;
+                SearchMaterialsList.ItemsSource = materials;
+                SearchEquipmentList.ItemsSource = equipment;
 
                 SearchResultsPopup.IsOpen = true;
             });
@@ -530,6 +556,14 @@ public partial class MainWindow : Window
             else if (fe.Tag is LocalTaskStage stage)
             {
                 await OpenStageFromSearchAsync(stage);
+            }
+            else if (fe.Tag is LocalMaterial material)
+            {
+                await OpenMaterialFromSearchAsync(material);
+            }
+            else if (fe.Tag is LocalEquipment equipment)
+            {
+                await OpenEquipmentFromSearchAsync(equipment);
             }
         }
 
@@ -621,6 +655,38 @@ public partial class MainWindow : Window
         }, task);
 
         ShowDrawer(taskPanel, overlay, TaskOrStageDetailWithLeftTotalWidth);
+    }
+
+    private async Task OpenMaterialFromSearchAsync(LocalMaterial material)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.NavigateCommand.Execute("Warehouse");
+
+        var warehouseVm = App.Services.GetRequiredService<WarehouseViewModel>();
+        warehouseVm.ActiveTab = "Materials";
+        await warehouseVm.LoadAsync();
+
+        var selected = warehouseVm.Materials.FirstOrDefault(m => m.Id == material.Id);
+        if (selected is null) return;
+
+        var overlay = new MaterialDetailOverlay(selected, warehouseVm);
+        ShowDrawer(overlay, 560);
+    }
+
+    private async Task OpenEquipmentFromSearchAsync(LocalEquipment equipment)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.NavigateCommand.Execute("Warehouse");
+
+        var warehouseVm = App.Services.GetRequiredService<WarehouseViewModel>();
+        warehouseVm.ActiveTab = "Equipment";
+        await warehouseVm.LoadAsync();
+
+        var selected = warehouseVm.Equipments.FirstOrDefault(eq => eq.Id == equipment.Id);
+        if (selected is null) return;
+
+        var overlay = new EquipmentDetailOverlay(selected, warehouseVm);
+        ShowDrawer(overlay, 560);
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

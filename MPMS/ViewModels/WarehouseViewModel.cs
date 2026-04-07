@@ -396,6 +396,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 ImagePath: imagePath,
                 Cost: cost,
                 InventoryNumber: material.InventoryNumber));
+        await LogActivityAsync(db, $"Создан материал «{name}»", "Material", localId, ActivityActionKind.Created);
         await LoadAsync();
     }
 
@@ -452,6 +453,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 ProjectId: null,
                 TaskId: null,
                 Comment: "Добавлено на склад"));
+        await LogActivityAsync(db, $"Создано оборудование «{name}»", "Equipment", localId, ActivityActionKind.Created);
         await LoadAsync();
     }
 
@@ -608,6 +610,12 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Comment: comment,
                 ProjectId: null,
                 TaskId: null));
+        await LogActivityAsync(
+            db,
+            $"Пополнен материал «{m.Name}» на {FormatQuantity(amount, m.Unit)}",
+            "Material",
+            materialId,
+            ActivityActionKind.Updated);
         await LoadAsync();
     }
 
@@ -645,6 +653,12 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         var m2 = await db.Materials.FindAsync(materialId);
         if (m2 is not null)
             await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Update, SyncPayloads.Material(m2));
+        await LogActivityAsync(
+            db,
+            $"Списан материал «{m.Name}» ({FormatQuantity(Math.Abs(writeOffDelta), m.Unit)})",
+            "Material",
+            materialId,
+            ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -683,6 +697,12 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         var e2 = await db.Equipments.FindAsync(equipmentId);
         if (e2 is not null)
             await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Update, SyncPayloads.Equipment(e2));
+        await LogActivityAsync(
+            db,
+            $"Списано оборудование «{e.Name}»",
+            "Equipment",
+            equipmentId,
+            ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -741,6 +761,12 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Comment: comment,
                 ProjectId: null,
                 TaskId: null));
+        await LogActivityAsync(
+            db,
+            $"Списана часть материала «{m.Name}» ({FormatQuantity(amount, m.Unit)})",
+            "Material",
+            materialId,
+            ActivityActionKind.Updated);
         await LoadAsync();
     }
 
@@ -786,5 +812,44 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             new CreateEquipmentCategoryRequest(normalized, categoryId));
         var cats = await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync();
         EquipmentCategories = new ObservableCollection<LocalEquipmentCategory>(cats);
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var userId = session?.UserId;
+        var actorRole = session?.UserRole;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        var log = new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionType = actionType,
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ActivityLogs.Add(log);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+    }
+
+    private static string FormatQuantity(decimal amount, string? unit)
+    {
+        var number = MaterialUnits.IsIntegerUnit(unit)
+            ? decimal.Truncate(amount).ToString("0")
+            : amount.ToString("0.##");
+        return string.IsNullOrWhiteSpace(unit) ? number : $"{number} {unit}";
     }
 }
