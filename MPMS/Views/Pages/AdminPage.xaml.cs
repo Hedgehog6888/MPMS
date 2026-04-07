@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MPMS;
 using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
@@ -34,14 +35,14 @@ public partial class AdminPage : UserControl
     {
         var overlay = new AdminUserFormOverlay();
         overlay.SetCreateMode(_vm!);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void OnOpenEditForm(AdminUserRow row)
     {
         var overlay = new AdminUserFormOverlay();
         overlay.SetEditMode(_vm!, row);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void OnOpenUserInfo(AdminUserRow row)

@@ -65,6 +65,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         _vm = vm;
         TitleLabel.Text = "Создать проект";
+        SubtitleLabel.Text = "Заполните информацию о монтажном проекте";
         SaveButton.Content = "Создать проект";
         _ = LoadUsersAsync();
     }
@@ -77,6 +78,7 @@ public partial class CreateProjectOverlay : UserControl
         _onSaved = onSaved;
         _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать проект";
+        SubtitleLabel.Text = "Измените данные проекта, команду и сроки";
         SaveButton.Content = "Сохранить изменения";
 
         NameBox.Text = project.Name;

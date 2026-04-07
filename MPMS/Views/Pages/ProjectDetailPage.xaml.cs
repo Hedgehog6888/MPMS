@@ -178,7 +178,7 @@ public partial class ProjectDetailPage : UserControl
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void EditProject_Click(object sender, RoutedEventArgs e)
@@ -196,7 +196,7 @@ public partial class ProjectDetailPage : UserControl
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
     }
 
     private void OpenQuickTeamOverlay_Click(object sender, RoutedEventArgs e)
@@ -225,7 +225,7 @@ public partial class ProjectDetailPage : UserControl
                 _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
             },
             onAfterSave: () => OpenTaskDetail(currentTask));
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void DeleteTask_Click(object sender, RoutedEventArgs e)
@@ -470,7 +470,7 @@ public partial class ProjectDetailPage : UserControl
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)
@@ -518,7 +518,7 @@ public partial class ProjectDetailPage : UserControl
         var vm = VM;
         overlay.SetCreateModeForProject(vm.Project.Id,
             onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)

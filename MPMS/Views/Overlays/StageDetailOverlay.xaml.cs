@@ -271,7 +271,7 @@ public partial class StageDetailOverlay : UserControl
                 return System.Threading.Tasks.Task.CompletedTask;
             },
             onAfterSave: () => _ = ReopenStageDetailAsync());
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void SetStatusPlanned_Click(object sender, RoutedEventArgs e)

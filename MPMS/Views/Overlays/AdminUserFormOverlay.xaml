@@ -5,7 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d"
-             d:DesignHeight="700" d:DesignWidth="520">
+             d:DesignHeight="700" d:DesignWidth="520"
+             Background="White">
 
     <UserControl.Resources>
         <Style x:Key="SectionHeader" TargetType="TextBlock">
@@ -13,12 +14,6 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#8993A4"/>
             <Setter Property="Margin"     Value="0,20,0,10"/>
-        </Style>
-        <Style x:Key="FormLabel" TargetType="TextBlock">
-            <Setter Property="FontSize"   Value="12"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#344563"/>
-            <Setter Property="Margin"     Value="0,0,0,6"/>
         </Style>
         <Style x:Key="FormField" TargetType="Border">
             <Setter Property="Background"      Value="White"/>
@@ -215,10 +210,16 @@
 
                 <!-- Error message -->
                 <Border x:Name="ErrorBorder"
-                        Background="#FEE2E2" CornerRadius="6" Padding="12,8"
-                        Margin="0,0,0,12" Visibility="Collapsed">
-                    <TextBlock x:Name="ErrorText"
-                               Foreground="#991B1B" FontSize="12" TextWrapping="Wrap"/>
+                        Background="#FFF0F0" CornerRadius="8" Padding="14,10"
+                        Margin="0,0,0,8" Visibility="Collapsed"
+                        BorderBrush="#FCA5A5" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
+                                   Foreground="#DC2626" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ErrorText"
+                                   Foreground="#DC2626" FontSize="12" TextWrapping="Wrap"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Border>
 
             </StackPanel>
@@ -227,13 +228,15 @@
         <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Отмена" Style="{StaticResource OutlineBtn}"
-                        Click="Cancel_Click" Margin="0,0,10,0"/>
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Style="{StaticResource OutlineBtn}"
+                        Click="Cancel_Click"/>
                 <Button x:Name="SaveButton" Content="Сохранить"
+                        HorizontalAlignment="Right"
                         Style="{StaticResource BlackBtn}"
                         Click="Save_Click"/>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

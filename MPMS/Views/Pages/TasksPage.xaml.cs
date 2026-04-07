@@ -91,7 +91,7 @@ public partial class TasksPage : UserControl
         if (VM is null) return;
         var overlay = new CreateTaskOverlay();
         overlay.SetCreateMode(VM);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void EditTask_Click(object sender, RoutedEventArgs e)
@@ -99,7 +99,7 @@ public partial class TasksPage : UserControl
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         var overlay = new CreateTaskOverlay();
         overlay.SetEditMode(task, async () => await VM.LoadAsync());
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void DeleteTask_Click(object sender, RoutedEventArgs e)

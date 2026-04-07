@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -83,7 +84,7 @@ public partial class ProjectsPage : UserControl
         if (VM is null) return;
         var overlay = new CreateProjectOverlay();
         overlay.SetCreateMode(VM);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
     }
 
     private void EditProject_Click(object sender, RoutedEventArgs e)
@@ -91,7 +92,7 @@ public partial class ProjectsPage : UserControl
         if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
         var overlay = new CreateProjectOverlay();
         overlay.SetEditMode(VM, project);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
     }
 
     private async void DeleteProject_Click(object sender, RoutedEventArgs e)

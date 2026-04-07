@@ -247,7 +247,7 @@ public partial class TaskDetailOverlay : UserControl
 
         // При редактировании скрываем текущую пару оверлеев
         // и показываем только окно редактирования.
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async System.Threading.Tasks.Task ReopenTaskDetailDualAsync()
@@ -334,7 +334,7 @@ public partial class TaskDetailOverlay : UserControl
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        MainWindow.Instance?.ShowDrawer(overlay, 500);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void UploadFiles_Click(object sender, RoutedEventArgs e)
@@ -424,7 +424,7 @@ public partial class TaskDetailOverlay : UserControl
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
         // Только форма этапа; после закрытия — снова деталь задачи в том же режиме drawer.
-        MainWindow.Instance?.ShowDrawer(overlay, 500);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 }
 

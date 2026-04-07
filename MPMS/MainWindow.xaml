@@ -1071,6 +1071,7 @@
                     VerticalAlignment="Center"
                     Width="840"
                     MaxWidth="900"
+                    MaxHeight="720"
                     Margin="24"
                     Visibility="Collapsed"
                     Opacity="0"

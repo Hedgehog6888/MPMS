@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
@@ -41,7 +42,7 @@ public partial class StagesPage : UserControl
         {
             if (vm is not null) await vm.LoadAsync();
         });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
@@ -96,7 +97,7 @@ public partial class StagesPage : UserControl
         if (task is null) return;
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(item.Stage, task, async () => { if (VM is not null) await VM.LoadAsync(); });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private static readonly SolidColorBrush _focusBrush = new(Colors.Black);

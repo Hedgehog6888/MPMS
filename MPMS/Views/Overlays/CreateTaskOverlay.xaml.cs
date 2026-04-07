@@ -45,6 +45,7 @@ public partial class CreateTaskOverlay : UserControl
         _fixedProjectId = projectId;
         _onSaved = onSaved;
         TitleLabel.Text = "Создать задачу";
+        SubtitleLabel.Text = "Добавьте задачу для отслеживания выполнения";
         SaveButton.Content = "Создать задачу";
         _ = LoadDataAsync(null, null);
     }
@@ -55,6 +56,7 @@ public partial class CreateTaskOverlay : UserControl
         _onSaved = onSaved;
         _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать задачу";
+        SubtitleLabel.Text = "Измените название, описание, приоритет и исполнителей";
         SaveButton.Content = "Сохранить изменения";
         StatusRow.Visibility = Visibility.Collapsed; // Status is auto from stages
 

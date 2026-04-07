@@ -29,6 +29,12 @@ public partial class MainWindow : Window
     /// <summary>Сводка слева (300) + карточка задачи/этапа (700).</summary>
     public const double TaskOrStageDetailWithLeftTotalWidth = 1000;
 
+    /// <summary>Центрированные формы создания/редактирования (как материал/оборудование).</summary>
+    public const double CenteredFormOverlayWidth = 560;
+
+    /// <summary>Форма проекта с блоком команды — чуть шире.</summary>
+    public const double CenteredProjectFormOverlayWidth = 640;
+
     private enum OverlayPresentationMode { None, Drawer, Modal }
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
 
