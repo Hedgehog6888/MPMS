@@ -45,6 +45,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman"
         || string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
+    public bool CanDeletePermanently =>
+        _auth.UserRole is "Administrator" or "Admin";
+
     public WarehouseViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
         _dbFactory = dbFactory;
@@ -169,7 +172,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         var search = SearchHelper.Normalize(SearchText);
 
-        var matQuery = db.Materials.AsQueryable();
+        var matQuery = db.Materials.Where(m => !m.IsArchived).AsQueryable();
         if (SelectedCategoryId.HasValue)
             matQuery = matQuery.Where(m => m.CategoryId == SelectedCategoryId);
         var matList = await matQuery.ToListAsync();
@@ -200,7 +203,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             .ToList();
         Materials = new ObservableCollection<LocalMaterial>(matList);
 
-        var eqQuery = db.Equipments.AsQueryable();
+        var eqQuery = db.Equipments.Where(e => !e.IsArchived).AsQueryable();
         if (SelectedCategoryId.HasValue)
             eqQuery = eqQuery.Where(e => e.CategoryId == SelectedCategoryId);
         var eqList = await eqQuery.ToListAsync();
@@ -595,6 +598,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         var m = await db.Materials.FindAsync(materialId);
         if (m is null) return;
         m.Quantity += amount;
+        // Пополнение списанного материала автоматически возвращает его в доступное состояние.
+        if (m.IsWrittenOff)
+        {
+            m.IsWrittenOff = false;
+            m.WrittenOffAt = null;
+            m.WrittenOffComment = null;
+        }
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         db.MaterialStockMovements.Add(new LocalMaterialStockMovement
@@ -617,6 +627,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 Comment: comment,
                 ProjectId: null,
                 TaskId: null));
+        var m2 = await db.Materials.FindAsync(materialId);
+        if (m2 is not null)
+            await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Update, SyncPayloads.Material(m2));
         await LogActivityAsync(
             db,
             $"Пополнен материал «{m.Name}» на {FormatQuantity(amount, m.Unit)}",
@@ -631,12 +644,14 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var m = await db.Materials.FindAsync(materialId);
         if (m is null) return;
+        var currentQuantity = m.Quantity;
         m.IsWrittenOff = true;
         m.WrittenOffAt = DateTime.UtcNow;
         m.WrittenOffComment = comment;
+        m.Quantity = 0;
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
-        var writeOffDelta = -m.Quantity;
+        var writeOffDelta = -currentQuantity;
         db.MaterialStockMovements.Add(new LocalMaterialStockMovement
         {
             Id = Guid.NewGuid(),
@@ -717,26 +732,43 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
     public async Task DeleteMaterialAsync(Guid materialId)
     {
+        if (!CanDeletePermanently)
+            throw new InvalidOperationException("Полное удаление доступно только администратору.");
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var m = await db.Materials.FindAsync(materialId);
         if (m is null) return;
-        db.Materials.Remove(m);
+        m.IsArchived = true;
+        m.UpdatedAt = DateTime.UtcNow;
+        m.IsSynced = false;
         await db.SaveChangesAsync();
-        if (m.IsSynced)
-            await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Delete, new { });
+        await LogActivityAsync(
+            db,
+            $"Материал «{m.Name}» перемещён в архив",
+            "Material",
+            materialId,
+            ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
     public async Task DeleteEquipmentAsync(Guid equipmentId)
     {
+        if (!CanDeletePermanently)
+            throw new InvalidOperationException("Полное удаление доступно только администратору.");
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(equipmentId);
         if (e is null) return;
-        var wasSynced = e.IsSynced;
-        db.Equipments.Remove(e);
+        e.IsArchived = true;
+        e.UpdatedAt = DateTime.UtcNow;
+        e.IsSynced = false;
         await db.SaveChangesAsync();
-        if (wasSynced)
-            await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Delete, new { });
+        await LogActivityAsync(
+            db,
+            $"Оборудование «{e.Name}» перемещено в архив",
+            "Equipment",
+            equipmentId,
+            ActivityActionKind.Deleted);
         await LoadAsync();
     }
 
@@ -747,7 +779,15 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var m = await db.Materials.FindAsync(materialId);
         if (m is null) return;
-        m.Quantity = Math.Max(0, m.Quantity - amount);
+        var nextQuantity = Math.Max(0, m.Quantity - amount);
+        var isFullWriteOffByConsumption = nextQuantity == 0;
+        m.Quantity = nextQuantity;
+        if (isFullWriteOffByConsumption)
+        {
+            m.IsWrittenOff = true;
+            m.WrittenOffAt = DateTime.UtcNow;
+            m.WrittenOffComment = comment;
+        }
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         db.MaterialStockMovements.Add(new LocalMaterialStockMovement
@@ -757,7 +797,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             OccurredAt = DateTime.UtcNow,
             Delta = -amount,
             QuantityAfter = m.Quantity,
-            OperationType = "Consumption",
+            OperationType = isFullWriteOffByConsumption ? "WriteOff" : "Consumption",
             Comment = comment,
             UserId = _auth.UserId,
             UserName = _auth.UserName
@@ -766,16 +806,78 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("MaterialStockMovement", materialId, SyncOperation.Create,
             new RecordMaterialStockRequest(
                 Delta: -amount,
-                OperationType: MaterialStockOperationType.Consumption,
+                OperationType: isFullWriteOffByConsumption
+                    ? MaterialStockOperationType.WriteOff
+                    : MaterialStockOperationType.Consumption,
                 Comment: comment,
                 ProjectId: null,
                 TaskId: null));
+        var m2 = await db.Materials.FindAsync(materialId);
+        if (m2 is not null)
+            await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Update, SyncPayloads.Material(m2));
         await LogActivityAsync(
             db,
-            $"Списана часть материала «{m.Name}» ({FormatQuantity(amount, m.Unit)})",
+            isFullWriteOffByConsumption
+                ? $"Полностью списан материал «{m.Name}» ({FormatQuantity(amount, m.Unit)})"
+                : $"Списана часть материала «{m.Name}» ({FormatQuantity(amount, m.Unit)})",
             "Material",
             materialId,
-            ActivityActionKind.Updated);
+            isFullWriteOffByConsumption ? ActivityActionKind.Deleted : ActivityActionKind.Updated);
+        await LoadAsync();
+    }
+
+    public async Task RestoreEquipmentAsync(Guid equipmentId, string? comment = null)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var e = await db.Equipments.FindAsync(equipmentId);
+        if (e is null || !e.IsWrittenOff) return;
+
+        var previousStatus = e.Status;
+        e.IsWrittenOff = false;
+        e.WrittenOffAt = null;
+        e.WrittenOffComment = null;
+        e.Status = ShouldBeUnavailable(Enum.TryParse<EquipmentCondition>(e.Condition, out var condition)
+            ? condition
+            : EquipmentCondition.Good)
+            ? "Unavailable"
+            : "Available";
+        e.UpdatedAt = DateTime.UtcNow;
+        e.IsSynced = false;
+
+        db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+        {
+            Id = Guid.NewGuid(),
+            EquipmentId = equipmentId,
+            OccurredAt = DateTime.UtcNow,
+            EventType = "StatusChanged",
+            PreviousStatus = previousStatus,
+            NewStatus = e.Status,
+            UserId = _auth.UserId,
+            UserName = _auth.UserName,
+            Comment = string.IsNullOrWhiteSpace(comment) ? "Восстановлено после списания" : comment
+        });
+
+        await db.SaveChangesAsync();
+
+        await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Update, SyncPayloads.Equipment(e));
+        var newStatus = ToEquipmentStatusEnum(e.Status);
+        if (newStatus.HasValue)
+        {
+            await _sync.QueueOperationAsync("EquipmentHistory", equipmentId, SyncOperation.Create,
+                new RecordEquipmentEventRequest(
+                    EventType: EquipmentHistoryEventType.StatusChanged,
+                    NewStatus: newStatus.Value,
+                    ProjectId: null,
+                    TaskId: null,
+                    Comment: string.IsNullOrWhiteSpace(comment) ? "Восстановлено после списания" : comment));
+        }
+
+        await LogActivityAsync(
+            db,
+            $"Восстановлено оборудование «{e.Name}» после списания",
+            "Equipment",
+            equipmentId,
+            ActivityActionKind.Restored);
         await LoadAsync();
     }
 

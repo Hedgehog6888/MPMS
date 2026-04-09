@@ -73,7 +73,10 @@ public partial class EquipmentDetailOverlay : UserControl
             WriteOffDateText.Text = _equipment.WrittenOffAt.HasValue
                 ? $"Дата списания: {_equipment.WrittenOffAt.Value.ToLocalTime():dd.MM.yyyy HH:mm}"
                 : string.Empty;
-            ActionPanel.Visibility = Visibility.Collapsed;
+            ActionPanel.Visibility = _vm.CanDeletePermanently ? Visibility.Visible : Visibility.Collapsed;
+            EditBtn.Visibility = Visibility.Collapsed;
+            WriteOffBtn.Visibility = Visibility.Collapsed;
+            RestoreBtn.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
             ConditionPanel.Visibility = Visibility.Collapsed;
         }
         else
@@ -81,9 +84,15 @@ public partial class EquipmentDetailOverlay : UserControl
             WrittenOffBadge.Visibility = Visibility.Collapsed;
             WrittenOffBanner.Visibility = Visibility.Collapsed;
             WriteOffInfoPanel.Visibility = Visibility.Collapsed;
-            ActionPanel.Visibility = _vm.CanManage && !isLockedByStage ? Visibility.Visible : Visibility.Collapsed;
+            var canManageUnlocked = _vm.CanManage && !isLockedByStage;
+            var canDeleteWhenLocked = _vm.CanDeletePermanently && isLockedByStage;
+            ActionPanel.Visibility = (canManageUnlocked || canDeleteWhenLocked) ? Visibility.Visible : Visibility.Collapsed;
+            EditBtn.Visibility = canManageUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            WriteOffBtn.Visibility = canManageUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            RestoreBtn.Visibility = Visibility.Collapsed;
             ConditionPanel.Visibility = _vm.CanManage && !isLockedByStage ? Visibility.Visible : Visibility.Collapsed;
         }
+        DeletePermanentlyBtn.Visibility = _vm.CanDeletePermanently ? Visibility.Visible : Visibility.Collapsed;
 
         ApplyConditionButtons();
 
@@ -211,6 +220,13 @@ public partial class EquipmentDetailOverlay : UserControl
     private async void SetConditionFaulty_Click(object sender, RoutedEventArgs e)
         => await ChangeConditionAsync(EquipmentCondition.Faulty);
 
+    private async void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_vm.CanManage || !_equipment.IsWrittenOff) return;
+        await _vm.RestoreEquipmentAsync(_equipment.Id);
+        await ReloadFromVmAsync();
+    }
+
     private async Task ChangeConditionAsync(EquipmentCondition condition)
     {
         if (!_vm.CanManage || _equipment.IsWrittenOff) return;
@@ -252,5 +268,16 @@ public partial class EquipmentDetailOverlay : UserControl
         button.Background = new SolidColorBrush(selected ? selectedBg : Colors.White);
         button.Foreground = new SolidColorBrush(selected ? accent : neutralFg);
         button.FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal;
+    }
+
+    private async void DeletePermanently_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_vm.CanDeletePermanently) return;
+        var owner = Window.GetWindow(this);
+        if (!MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Оборудование", _equipment.Name))
+            return;
+
+        await _vm.DeleteEquipmentAsync(_equipment.Id);
+        MainWindow.Instance?.HideDrawer();
     }
 }

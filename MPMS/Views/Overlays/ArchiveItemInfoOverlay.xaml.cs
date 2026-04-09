@@ -51,6 +51,14 @@ public partial class ArchiveItemInfoOverlay : UserControl
                 new SolidColorBrush(Color.FromRgb(0xED, 0xE9, 0xFE)),
                 "Этап",
                 (Brush)new SolidColorBrush(Color.FromRgb(0x5B, 0x21, 0xB6))),
+            "Material" => (
+                new SolidColorBrush(Color.FromRgb(0xFE, 0xF3, 0xC7)),
+                "Материал",
+                (Brush)new SolidColorBrush(Color.FromRgb(0x92, 0x40, 0x0E))),
+            "Equipment" => (
+                new SolidColorBrush(Color.FromRgb(0xF3, 0xE8, 0xFF)),
+                "Оборудование",
+                (Brush)new SolidColorBrush(Color.FromRgb(0x6B, 0x21, 0xA8))),
             _ => (
                 new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5)),
                 _row.EntityType,
@@ -75,6 +83,16 @@ public partial class ArchiveItemInfoOverlay : UserControl
                 RelatedTasksList.Visibility  = Visibility.Collapsed;
                 RelatedStagesList.Visibility = Visibility.Visible;
                 RelatedSectionTitle.Text = "СВЯЗАННЫЕ ЭТАПЫ";
+                break;
+            case "Material":
+                ParentLabel.Text = "Категория";
+                RestoreInfoText.Text = "Материал в архиве недоступен для восстановления. Можно удалить его навсегда.";
+                RestoreButton.Visibility = Visibility.Collapsed;
+                break;
+            case "Equipment":
+                ParentLabel.Text = "Категория";
+                RestoreInfoText.Text = "Оборудование в архиве недоступно для восстановления. Можно удалить его навсегда.";
+                RestoreButton.Visibility = Visibility.Collapsed;
                 break;
             default:
                 RestoreInfoText.Text = "Этап будет восстановлен без связанных элементов.";
@@ -233,6 +251,8 @@ public partial class ArchiveItemInfoOverlay : UserControl
         "Project" => "Проект",
         "Task"    => "Задача",
         "Stage"   => "Этап",
+        "Material" => "Материал",
+        "Equipment" => "Оборудование",
         _         => entityType
     };
 }

@@ -244,12 +244,15 @@
                     <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal"
                                Margin="0,16,0,0">
-                        <Button Content="Добавить" Style="{StaticResource ActionBtn}"
+                        <Button x:Name="AddQuantityBtn" Content="Добавить" Style="{StaticResource ActionBtn}"
                                 Margin="0,0,8,8" Click="AddQuantity_Click"/>
-                        <Button Content="Редактировать" Style="{StaticResource OutlineBtn}"
+                        <Button x:Name="EditBtn" Content="Редактировать" Style="{StaticResource OutlineBtn}"
                                 Margin="0,0,8,8" Click="Edit_Click"/>
-                        <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
-                                Margin="0,0,0,8" Click="WriteOff_Click"/>
+                        <Button x:Name="WriteOffBtn" Content="Списать" Style="{StaticResource DangerOutlineBtn}"
+                                Margin="0,0,8,8" Click="WriteOff_Click"/>
+                        <Button x:Name="DeletePermanentlyBtn" Content="Удалить" Style="{StaticResource DangerOutlineBtn}"
+                                Margin="0,0,0,8" Click="DeletePermanently_Click"
+                                Visibility="Collapsed"/>
                     </WrapPanel>
 
                     <!-- History section (role-filtered) -->

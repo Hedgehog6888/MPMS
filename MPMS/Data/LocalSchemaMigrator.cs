@@ -350,9 +350,11 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"IsWrittenOff\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"WrittenOffAt\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"WrittenOffComment\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"IsWrittenOff\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"WrittenOffAt\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"WrittenOffComment\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"IsArchived\" INTEGER NOT NULL DEFAULT 0;");
         TryAlterTable(conn, "ALTER TABLE \"MaterialStockMovements\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"EquipmentHistoryEntries\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Cost\" TEXT NULL;");

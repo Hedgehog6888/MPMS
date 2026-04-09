@@ -277,6 +277,7 @@ public class LocalMaterial : LocalEntity
     public bool IsWrittenOff { get; set; } = false;
     public DateTime? WrittenOffAt { get; set; }
     [MaxLength(500)] public string? WrittenOffComment { get; set; }
+    public bool IsArchived { get; set; } = false;
 }
 
 /// <summary>История движения материала (приход/расход) — синхронизируется с сервера.</summary>
@@ -312,6 +313,7 @@ public class LocalEquipment : LocalEntity
     public bool IsWrittenOff { get; set; } = false;
     public DateTime? WrittenOffAt { get; set; }
     [MaxLength(500)] public string? WrittenOffComment { get; set; }
+    public bool IsArchived { get; set; } = false;
 
     [NotMapped]
     public string StatusDisplay => Status switch

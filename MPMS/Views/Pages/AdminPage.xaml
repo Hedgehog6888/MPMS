@@ -465,6 +465,26 @@
                                     </Border>
                                 </StackPanel>
                             </RadioButton>
+                            <RadioButton x:Name="ArchTabMaterials" GroupName="ArchiveSub"
+                                         Style="{StaticResource TabButton}" IsChecked="False"
+                                         Click="ArchiveTab_Click" Tag="Materials">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Материалы" VerticalAlignment="Center"/>
+                                    <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                                        <TextBlock Text="{Binding ArchiveMaterialCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                                    </Border>
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton x:Name="ArchTabEquipment" GroupName="ArchiveSub"
+                                         Style="{StaticResource TabButton}" IsChecked="False"
+                                         Click="ArchiveTab_Click" Tag="Equipment">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Оборудование" VerticalAlignment="Center"/>
+                                    <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                                        <TextBlock Text="{Binding ArchiveEquipmentCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                                    </Border>
+                                </StackPanel>
+                            </RadioButton>
                         </StackPanel>
                     </Border>
 
@@ -679,6 +699,144 @@
                                                             </Button>
                                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
                                                                     Command="{Binding DataContext.OpenPermanentDeleteStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <!-- Materials -->
+                        <Border x:Name="ArchMaterialPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                                BorderBrush="#DFE1E6" BorderThickness="1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                                        BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="90"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Материал"     Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="1" Text="Категория"    Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding FilteredArchivedMaterials}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                                <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                                        Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#FAFBFC"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="160"/>
+                                                            <ColumnDefinition Width="120"/>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="90"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                                    Command="{Binding DataContext.OpenPermanentDeleteMaterialConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <!-- Equipment -->
+                        <Border x:Name="ArchEquipmentPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                                BorderBrush="#DFE1E6" BorderThickness="1">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                                        BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="160"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="90"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Оборудование" Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="1" Text="Категория"    Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                                        <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding FilteredArchivedEquipment}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                                <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                                        Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#FAFBFC"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="160"/>
+                                                            <ColumnDefinition Width="120"/>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="90"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                            <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                                    Command="{Binding DataContext.OpenPermanentDeleteEquipmentConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     CommandParameter="{Binding}">
                                                                 <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                             </Button>

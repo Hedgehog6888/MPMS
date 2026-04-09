@@ -74,7 +74,10 @@ public partial class MaterialDetailOverlay : UserControl
             WriteOffDateText.Text = _material.WrittenOffAt.HasValue
                 ? $"Дата списания: {_material.WrittenOffAt.Value.ToLocalTime():dd.MM.yyyy HH:mm}"
                 : string.Empty;
-            ActionPanel.Visibility = Visibility.Collapsed;
+            ActionPanel.Visibility = (_vm.CanManage || _vm.CanDeletePermanently) ? Visibility.Visible : Visibility.Collapsed;
+            AddQuantityBtn.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
+            EditBtn.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
+            WriteOffBtn.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -82,7 +85,11 @@ public partial class MaterialDetailOverlay : UserControl
             WrittenOffBanner.Visibility = Visibility.Collapsed;
             WriteOffInfoPanel.Visibility = Visibility.Collapsed;
             ActionPanel.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
+            AddQuantityBtn.Visibility = Visibility.Visible;
+            EditBtn.Visibility = Visibility.Visible;
+            WriteOffBtn.Visibility = Visibility.Visible;
         }
+        DeletePermanentlyBtn.Visibility = _vm.CanDeletePermanently ? Visibility.Visible : Visibility.Collapsed;
 
         if (_vm.CanViewHistory)
         {
@@ -175,5 +182,16 @@ public partial class MaterialDetailOverlay : UserControl
                 await RefreshAsync();
             });
         mw.ShowStackedModalOverDrawer(overlay, 540);
+    }
+
+    private async void DeletePermanently_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_vm.CanDeletePermanently) return;
+        var owner = Window.GetWindow(this);
+        if (!MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Материал", _material.Name))
+            return;
+
+        await _vm.DeleteMaterialAsync(_material.Id);
+        MainWindow.Instance?.HideDrawer();
     }
 }
