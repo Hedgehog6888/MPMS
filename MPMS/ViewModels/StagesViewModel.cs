@@ -51,6 +51,12 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         _auth = auth;
     }
 
+    private bool CanMarkStageDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+
+    private bool CanDeleteStage() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
+
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnStatusFilterChanged(string value) => ApplyFilter();
     partial void OnProjectFilterChanged(Guid? value)
@@ -317,6 +323,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(StageItem item)
     {
+        if (!CanMarkStageDeletion()) return;
         if (!item.Stage.CanToggleStageDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(item.Stage.Id);
@@ -342,6 +349,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task DeleteStageAsync(StageItem item)
     {
+        if (!CanDeleteStage()) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(item.Stage.Id);
         if (entity is null) return;

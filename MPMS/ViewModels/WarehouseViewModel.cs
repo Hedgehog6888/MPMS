@@ -74,6 +74,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _ => null
     };
 
+    private static bool IsLockedByStage(LocalEquipment equipment) =>
+        equipment.CheckedOutTaskId.HasValue && !equipment.IsWrittenOff;
+
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
 
     partial void OnSelectedCategoryIdChanged(Guid? value)
@@ -491,6 +494,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(id);
         if (e is null) return;
+        if (IsLockedByStage(e))
+            throw new InvalidOperationException("Оборудование закреплено за этапом. Изменения недоступны до освобождения.");
         var previousStatus = e.Status;
         e.Name = name;
         e.Description = description;
@@ -533,6 +538,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(id);
         if (e is null) return;
+        if (IsLockedByStage(e))
+            throw new InvalidOperationException("Оборудование закреплено за этапом. Смена состояния недоступна до освобождения.");
         if (string.Equals(e.Condition, condition.ToString(), StringComparison.Ordinal))
             return;
 
@@ -667,6 +674,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var e = await db.Equipments.FindAsync(equipmentId);
         if (e is null) return;
+        if (IsLockedByStage(e))
+            throw new InvalidOperationException("Оборудование закреплено за этапом. Списание недоступно до освобождения.");
         var previousStatus = e.Status;
         e.IsWrittenOff = true;
         e.WrittenOffAt = DateTime.UtcNow;

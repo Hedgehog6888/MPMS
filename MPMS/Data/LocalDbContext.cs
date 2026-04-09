@@ -34,6 +34,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalEquipmentHistoryEntry> EquipmentHistoryEntries => Set<LocalEquipmentHistoryEntry>();
     public DbSet<LocalStageMaterial> StageMaterials   => Set<LocalStageMaterial>();
     public DbSet<LocalStageService> StageServices   => Set<LocalStageService>();
+    public DbSet<LocalStageEquipment> StageEquipments => Set<LocalStageEquipment>();
     public DbSet<LocalFile>          Files            => Set<LocalFile>();
     public DbSet<LocalActivityLog>   ActivityLogs     => Set<LocalActivityLog>();
     public DbSet<LocalProjectMember> ProjectMembers    => Set<LocalProjectMember>();

@@ -269,13 +269,6 @@ public partial class ProjectDetailPage : UserControl
         await VM.ChangeStageStatusCommand.ExecuteAsync((stage, StageStatus.Planned));
     }
 
-    private async void ReopenStageFromProject_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
-        e.Handled = true;
-        await VM.ChangeStageStatusCommand.ExecuteAsync((stage, StageStatus.InProgress));
-    }
-
     private async void DeleteStageFromProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
@@ -457,6 +450,7 @@ public partial class ProjectDetailPage : UserControl
     private void EditStageFromProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        if (stage.Status == StageStatus.Completed) return;
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();

@@ -294,6 +294,9 @@
                                                                 <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
                                                                     <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
+                                                                <DataTrigger Binding="{Binding OperationType}" Value="StageConsumption">
+                                                                    <Setter Property="Background" Value="#FFEBE6"/>
+                                                                </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
@@ -310,6 +313,10 @@
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
                                                                         <Setter Property="Text" Value="✕"/>
+                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding OperationType}" Value="StageConsumption">
+                                                                        <Setter Property="Text" Value="−"/>
                                                                         <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -330,6 +337,12 @@
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
                                                                         <Setter Property="Text" Value="{Binding Delta, StringFormat='{}{0:G}'}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding OperationType}" Value="StageConsumption">
+                                                                        <Setter Property="Text" Value="{Binding Delta, StringFormat='{}{0:G}'}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding OperationType}" Value="StageReturn">
+                                                                        <Setter Property="Text" Value="{Binding Delta, StringFormat='＋{0:G}'}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>

@@ -8,6 +8,8 @@ using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
+using MaterialStockOperationType = MPMS.Models.MaterialStockOperationType;
+using EquipmentHistoryEventType = MPMS.Models.EquipmentHistoryEventType;
 
 namespace MPMS.ViewModels;
 
@@ -15,6 +17,7 @@ public partial class TaskDetailViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
+    private readonly IAuthService _auth;
 
     [ObservableProperty] private LocalTask? _task;
     [ObservableProperty] private ObservableCollection<LocalTaskStage> _stages = [];
@@ -29,11 +32,18 @@ public partial class TaskDetailViewModel : ViewModelBase
     [ObservableProperty] private bool _hasNoFiles = true;
     [ObservableProperty] private string _stagesTabLabel = "Этапы";
 
-    public TaskDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync)
+    public TaskDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _sync = sync;
+        _auth = auth;
     }
+
+    private bool CanMarkStageDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+
+    private bool CanDeleteStage() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
     public void SetTask(LocalTask task) => Task = task;
 
@@ -257,6 +267,8 @@ public partial class TaskDetailViewModel : ViewModelBase
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(id);
         if (stage is null) return;
+        if (stage.Status == StageStatus.Completed) return;
+        var wasReservedByStage = ShouldReserveStageEquipment(stage);
 
         stage.Name = req.Name;
         stage.Description = req.Description;
@@ -272,6 +284,19 @@ public partial class TaskDetailViewModel : ViewModelBase
 
         if (req.ServiceItems is not null)
             await ReplaceLocalStageServicesAsync(db, id, req.ServiceItems);
+
+        var isReservedByStage = ShouldReserveStageEquipment(stage);
+        if (wasReservedByStage != isReservedByStage)
+        {
+            var eqIds = await db.StageEquipments
+                .Where(x => x.StageId == id)
+                .Select(x => x.EquipmentId)
+                .Distinct()
+                .ToListAsync();
+            var task = await db.Tasks.FindAsync(stage.TaskId);
+            var projectId = task?.ProjectId;
+            await SetStageEquipmentStateAsync(db, stage, eqIds, reserve: isReservedByStage, projectId);
+        }
 
         await db.SaveChangesAsync();
         var syncStageReq = req with
@@ -337,7 +362,71 @@ public partial class TaskDetailViewModel : ViewModelBase
     public async Task ReplaceStageMaterialsAsync(Guid stageId, IReadOnlyList<LocalStageMaterial> materials)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var stage = await db.TaskStages.FindAsync(stageId);
+        if (stage is null) return;
+        var task = await db.Tasks.FindAsync(stage.TaskId);
         var existing = await db.StageMaterials.Where(m => m.StageId == stageId).ToListAsync();
+
+        var existingByMaterial = existing
+            .GroupBy(m => m.MaterialId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+        var incomingByMaterial = materials
+            .GroupBy(m => m.MaterialId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+
+        // Синхронизация склада при редактировании этапа:
+        // увеличение в этапе -> расход со склада, уменьшение -> возврат на склад.
+        var materialIds = existingByMaterial.Keys
+            .Union(incomingByMaterial.Keys)
+            .Distinct()
+            .ToList();
+        foreach (var materialId in materialIds)
+        {
+            var newQty = incomingByMaterial.GetValueOrDefault(materialId, 0m);
+            var oldQty = existingByMaterial.GetValueOrDefault(materialId, 0m);
+            var delta = newQty - oldQty;
+            if (delta == 0m) continue;
+
+            var mat = await db.Materials.FindAsync(materialId);
+            if (mat is null) continue;
+            var isConsumption = delta > 0m;
+            var stockDelta = isConsumption ? -delta : Math.Abs(delta);
+            var qtyAbs = Math.Abs(delta);
+            var unitSuffix = string.IsNullOrWhiteSpace(mat.Unit) ? string.Empty : $" {mat.Unit}";
+            mat.Quantity = Math.Max(0m, mat.Quantity + stockDelta);
+            mat.UpdatedAt = DateTime.UtcNow;
+            mat.IsSynced = false;
+
+            db.MaterialStockMovements.Add(new LocalMaterialStockMovement
+            {
+                Id = Guid.NewGuid(),
+                MaterialId = materialId,
+                OccurredAt = DateTime.UtcNow,
+                Delta = stockDelta,
+                QuantityAfter = mat.Quantity,
+                OperationType = isConsumption ? "StageConsumption" : "StageReturn",
+                Comment = isConsumption
+                    ? $"Списание из этапа: {stage.Name} ({qtyAbs:G}{unitSuffix})"
+                    : $"Добавление из этапа: {stage.Name} ({qtyAbs:G}{unitSuffix})",
+                UserId = _auth.UserId,
+                UserName = _auth.UserName,
+                ProjectId = task?.ProjectId,
+                TaskId = stage.TaskId
+            });
+
+            await _sync.QueueOperationAsync("MaterialStockMovement", materialId, SyncOperation.Create,
+                new RecordMaterialStockRequest(
+                    Delta: stockDelta,
+                    OperationType: isConsumption
+                        ? MaterialStockOperationType.Consumption
+                        : MaterialStockOperationType.ReturnToStock,
+                    Comment: isConsumption
+                        ? $"Списание из этапа: {stage.Name} ({qtyAbs:G}{unitSuffix})"
+                        : $"Добавление из этапа: {stage.Name} ({qtyAbs:G}{unitSuffix})",
+                    ProjectId: task?.ProjectId,
+                    TaskId: stage.TaskId));
+        }
+
         db.StageMaterials.RemoveRange(existing);
         foreach (var m in materials)
         {
@@ -348,6 +437,146 @@ public partial class TaskDetailViewModel : ViewModelBase
         }
         await db.SaveChangesAsync();
     }
+
+    public async Task ReplaceStageEquipmentsAsync(Guid stageId, IReadOnlyList<LocalStageEquipment> equipments)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var stage = await db.TaskStages.FindAsync(stageId);
+        if (stage is null) return;
+        var task = await db.Tasks.FindAsync(stage.TaskId);
+        var projectId = task?.ProjectId;
+
+        var existing = await db.StageEquipments.Where(x => x.StageId == stageId).ToListAsync();
+        var existingIds = existing.Select(x => x.EquipmentId).ToHashSet();
+        var incomingIds = equipments.Select(x => x.EquipmentId).ToHashSet();
+        var removedIds = existingIds.Except(incomingIds).ToList();
+        var addedIds = incomingIds.Except(existingIds).ToList();
+
+        db.StageEquipments.RemoveRange(existing.Where(x => removedIds.Contains(x.EquipmentId)));
+        foreach (var eq in equipments.Where(x => addedIds.Contains(x.EquipmentId)))
+        {
+            eq.StageId = stageId;
+            eq.IsSynced = false;
+            eq.LastModifiedLocally = DateTime.UtcNow;
+            db.StageEquipments.Add(eq);
+        }
+
+        if (addedIds.Count > 0)
+            await SetStageEquipmentStateAsync(db, stage, addedIds, reserve: ShouldReserveStageEquipment(stage), projectId);
+        if (removedIds.Count > 0)
+            await SetStageEquipmentStateAsync(db, stage, removedIds, reserve: false, projectId);
+
+        await db.SaveChangesAsync();
+    }
+
+    private async Task SetStageEquipmentStateAsync(
+        LocalDbContext db,
+        LocalTaskStage stage,
+        IReadOnlyList<Guid> equipmentIds,
+        bool reserve,
+        Guid? projectId)
+    {
+        if (equipmentIds.Count == 0) return;
+
+        foreach (var eqId in equipmentIds)
+        {
+            var eq = await db.Equipments.FindAsync(eqId);
+            if (eq is null || eq.IsWrittenOff) continue;
+
+            if (reserve)
+            {
+                // Не перехватываем оборудование, если оно уже закреплено за другой задачей.
+                if (eq.CheckedOutTaskId.HasValue && eq.CheckedOutTaskId != stage.TaskId)
+                    continue;
+
+                if ((eq.Status == "InUse" || eq.Status == "Unavailable") && eq.CheckedOutTaskId == stage.TaskId)
+                    continue;
+
+                var prevStatus = eq.Status;
+                eq.Status = "Unavailable";
+                eq.CheckedOutTaskId = stage.TaskId;
+                eq.CheckedOutProjectId = projectId;
+                eq.UpdatedAt = DateTime.UtcNow;
+                eq.IsSynced = false;
+
+                db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+                {
+                    Id = Guid.NewGuid(),
+                    EquipmentId = eq.Id,
+                    OccurredAt = DateTime.UtcNow,
+                    EventType = "CheckedOut",
+                    PreviousStatus = prevStatus,
+                    NewStatus = "Unavailable",
+                    ProjectId = projectId,
+                    TaskId = stage.TaskId,
+                    UserId = _auth.UserId,
+                    UserName = _auth.UserName,
+                    Comment = $"Выдано на этап: {stage.Name}"
+                });
+
+                await _sync.QueueOperationAsync("EquipmentHistory", eq.Id, SyncOperation.Create,
+                    new RecordEquipmentEventRequest(
+                        EventType: EquipmentHistoryEventType.CheckedOut,
+                        NewStatus: EquipmentStatus.Unavailable,
+                        ProjectId: projectId,
+                        TaskId: stage.TaskId,
+                        Comment: $"Выдано на этап: {stage.Name}"));
+            }
+            else
+            {
+                var stillUsed = await db.StageEquipments
+                    .Where(x => x.EquipmentId == eqId && x.StageId != stage.Id)
+                    .Join(db.TaskStages, se => se.StageId, st => st.Id, (se, st) => new
+                    {
+                        st.TaskId,
+                        st.Status,
+                        st.IsMarkedForDeletion,
+                        st.IsArchived
+                    })
+                    .AnyAsync(x => x.TaskId == stage.TaskId
+                                   && x.Status != StageStatus.Completed
+                                   && !x.IsMarkedForDeletion
+                                   && !x.IsArchived);
+                if (stillUsed) continue;
+                if (eq.CheckedOutTaskId != stage.TaskId) continue;
+
+                var prevStatus = eq.Status;
+                eq.Status = "Available";
+                eq.CheckedOutTaskId = null;
+                eq.CheckedOutProjectId = null;
+                eq.UpdatedAt = DateTime.UtcNow;
+                eq.IsSynced = false;
+
+                db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+                {
+                    Id = Guid.NewGuid(),
+                    EquipmentId = eq.Id,
+                    OccurredAt = DateTime.UtcNow,
+                    EventType = "Returned",
+                    PreviousStatus = prevStatus,
+                    NewStatus = "Available",
+                    ProjectId = projectId,
+                    TaskId = stage.TaskId,
+                    UserId = _auth.UserId,
+                    UserName = _auth.UserName,
+                    Comment = $"Возвращено с этапа: {stage.Name}"
+                });
+
+                await _sync.QueueOperationAsync("EquipmentHistory", eq.Id, SyncOperation.Create,
+                    new RecordEquipmentEventRequest(
+                        EventType: EquipmentHistoryEventType.Returned,
+                        NewStatus: EquipmentStatus.Available,
+                        ProjectId: projectId,
+                        TaskId: stage.TaskId,
+                        Comment: $"Возвращено с этапа: {stage.Name}"));
+            }
+        }
+    }
+
+    private static bool ShouldReserveStageEquipment(LocalTaskStage stage) =>
+        !stage.IsMarkedForDeletion
+        && !stage.IsArchived
+        && stage.Status != StageStatus.Completed;
 
     public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)
     {
@@ -403,6 +632,7 @@ public partial class TaskDetailViewModel : ViewModelBase
     {
         var (stage, newStatus) = args;
         if (stage.EffectiveMarkedForDeletion) return;
+        if (stage.Status == StageStatus.Completed && newStatus != StageStatus.Completed) return;
         var req = new UpdateStageRequest(stage.Name, stage.Description,
             stage.AssignedUserId, newStatus, stage.DueDate, stage.IsMarkedForDeletion, stage.IsArchived);
         await SaveUpdatedStageAsync(stage.Id, req);
@@ -447,6 +677,7 @@ public partial class TaskDetailViewModel : ViewModelBase
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
     {
+        if (!CanMarkStageDeletion()) return;
         if (!stage.CanToggleStageDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
@@ -460,6 +691,12 @@ public partial class TaskDetailViewModel : ViewModelBase
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
         entity.LastModifiedLocally = DateTime.UtcNow;
+        var eqIds = await db.StageEquipments
+            .Where(x => x.StageId == stage.Id)
+            .Select(x => x.EquipmentId)
+            .Distinct()
+            .ToListAsync();
+        await SetStageEquipmentStateAsync(db, entity, eqIds, reserve: ShouldReserveStageEquipment(entity), task?.ProjectId);
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
 
@@ -473,9 +710,17 @@ public partial class TaskDetailViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteStageAsync(LocalTaskStage stage)
     {
+        if (!CanDeleteStage()) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
+        var task = await db.Tasks.FindAsync(entity.TaskId);
+        var eqIds = await db.StageEquipments
+            .Where(x => x.StageId == stage.Id)
+            .Select(x => x.EquipmentId)
+            .Distinct()
+            .ToListAsync();
+        await SetStageEquipmentStateAsync(db, entity, eqIds, reserve: false, task?.ProjectId);
 
         db.TaskStages.Remove(entity);
         await db.SaveChangesAsync();

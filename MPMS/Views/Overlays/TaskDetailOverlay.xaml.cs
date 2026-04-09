@@ -348,6 +348,7 @@ public partial class TaskDetailOverlay : UserControl
     private async void StartStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
+        if (stage.Status == Models.StageStatus.Completed) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
         _onClosed?.Invoke(); // Sync project page
     }
@@ -356,20 +357,6 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
-        _onClosed?.Invoke(); // Sync project page
-    }
-
-    private async void RevertStage_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
-        await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Planned));
-        _onClosed?.Invoke(); // Sync project page
-    }
-
-    private async void ReopenStage_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
-        await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
         _onClosed?.Invoke(); // Sync project page
     }
 
@@ -411,6 +398,7 @@ public partial class TaskDetailOverlay : UserControl
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
+        if (stage.Status == Models.StageStatus.Completed) return;
 
         MainWindow.Instance?.HideDrawer();
         var main = App.Services.GetRequiredService<MainViewModel>();

@@ -117,6 +117,17 @@ public static class LocalSchemaMigrator
                 "Comment"        TEXT NULL
             );
             """);
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "StageEquipments" (
+                "Id"                  TEXT NOT NULL CONSTRAINT "PK_StageEquipments" PRIMARY KEY,
+                "StageId"             TEXT NOT NULL,
+                "EquipmentId"         TEXT NOT NULL,
+                "EquipmentName"       TEXT NOT NULL DEFAULT '',
+                "InventoryNumber"     TEXT NULL,
+                "IsSynced"            INTEGER NOT NULL DEFAULT 0,
+                "LastModifiedLocally" TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
     }
 
     private static void CreateAppFlagsTable(SqliteConnection conn)

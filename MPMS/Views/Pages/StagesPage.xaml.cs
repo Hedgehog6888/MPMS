@@ -84,24 +84,15 @@ public partial class StagesPage : UserControl
         await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.Completed));
     }
 
-    private async void RevertStage_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
-        e.Handled = true;
-        await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.Planned));
-    }
-
-    private async void ReopenStage_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
-        e.Handled = true;
-        await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.InProgress));
-    }
+    // Оставлено как заглушка из-за кэшированной ссылки XAML; кнопка "Переоткрыть" в UI удалена.
+    private void ReopenStage_Click(object sender, RoutedEventArgs e) => e.Handled = true;
 
     private async void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
+        if (item.Stage.Status == StageStatus.Completed)
+            return;
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();
@@ -172,6 +163,8 @@ public partial class StagesPage : UserControl
     private async void Stage_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.DataContext is not StageItem item || VM is null) return;
+        var vm = VM;
+        if (vm is null) return;
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
 
@@ -184,7 +177,8 @@ public partial class StagesPage : UserControl
         {
             _ = Dispatcher.InvokeAsync(async () =>
             {
-                await VM.LoadAsync();
+                if (vm is null) return;
+                await vm.LoadAsync();
                 var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
                 await using var db = await dbFactory.CreateDbContextAsync();
                 var updatedTask = await db.Tasks.FindAsync(taskId);

@@ -3,6 +3,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MPMS.Controls;
 using MPMS.Data;
 using MPMS.Infrastructure;
@@ -80,6 +81,12 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         _sync = sync;
         _auth = auth;
     }
+
+    private bool CanMarkStageDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+
+    private bool CanDeleteStage() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
     // ─── Filter change handlers ────────────────────────────────────────────────
     partial void OnTaskSearchTextChanged(string value) => ApplyTaskFilter();
@@ -580,6 +587,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(LocalTaskStage stage)
     {
+        if (!CanMarkStageDeletion()) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
@@ -602,6 +610,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task DeleteStageAsync(LocalTaskStage stage)
     {
+        if (!CanDeleteStage()) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(stage.Id);
         if (entity is null) return;
@@ -620,19 +629,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         var (stage, newStatus) = args;
         if (stage.EffectiveMarkedForDeletion) return;
-        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus, stage.DueDate,
-            stage.IsMarkedForDeletion, stage.IsArchived);
+        var req = new UpdateStageRequest(stage.Name, stage.Description, stage.AssignedUserId, newStatus, stage.DueDate, stage.IsMarkedForDeletion, stage.IsArchived);
+        var taskVm = App.Services.GetRequiredService<TaskDetailViewModel>();
+        var task = Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
+        if (task is null) return;
+        taskVm.SetTask(task);
+        await taskVm.SaveUpdatedStageAsync(stage.Id, req);
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var entity = await db.TaskStages.FindAsync(stage.Id);
-        if (entity is null) return;
-        entity.Status = newStatus;
-        entity.IsSynced = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        entity.LastModifiedLocally = DateTime.UtcNow;
-        await db.SaveChangesAsync();
-        var syncReq = req with { IsMarkedForDeletion = entity.IsMarkedForDeletion, IsArchived = entity.IsArchived };
-        await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, syncReq);
-        await LogActivityAsync(db, $"Обновлён этап «{stage.Name}»", "Stage", stage.Id, ActivityActionKind.Updated);
         await RecalcProjectStatusAsync(db);
         await LoadAsync();
     }

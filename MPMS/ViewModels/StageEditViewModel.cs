@@ -365,10 +365,27 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         foreach (var line in MaterialLines)
         {
             if (stocks.TryGetValue(line.MaterialId, out var stock))
-                line.StockAvailable = stock;
+                line.StockAvailable = stock + line.Quantity;
+        }
+
+        var stageEquipments = await db.StageEquipments
+            .Where(x => x.StageId == stageId)
+            .OrderBy(x => x.EquipmentName)
+            .ToListAsync();
+        foreach (var se in stageEquipments)
+        {
+            var line = new StageEquipmentLineVm
+            {
+                EquipmentId = se.EquipmentId,
+                EquipmentName = se.EquipmentName,
+                InventoryNumber = se.InventoryNumber,
+                Quantity = 1
+            };
+            EquipmentLines.Add(line);
         }
         ApplyServiceFilters();
         ApplyMaterialFilters();
+        ApplyEquipmentFilters();
     }
 
     private async Task LoadServiceCatalogAsync()
@@ -1011,6 +1028,18 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         var serviceItems = SelectedServices
             .Select(s => new StageServiceItemRequest(s.TemplateId, s.Quantity, s.PricePerUnit))
             .ToList();
+        var equipmentEntities = EquipmentLines
+            .Select(e => new LocalStageEquipment
+            {
+                Id = Guid.NewGuid(),
+                StageId = Guid.Empty,
+                EquipmentId = e.EquipmentId,
+                EquipmentName = e.EquipmentName,
+                InventoryNumber = e.InventoryNumber,
+                IsSynced = false,
+                LastModifiedLocally = DateTime.UtcNow
+            })
+            .ToList();
 
         IsBusy = true;
         try
@@ -1073,6 +1102,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
                 LastModifiedLocally = DateTime.UtcNow
             }).ToList();
             await taskVm.ReplaceStageMaterialsAsync(stageId, matEntities);
+            await taskVm.ReplaceStageEquipmentsAsync(stageId, equipmentEntities);
 
             if (_onSavedAsync is not null)
                 await _onSavedAsync();

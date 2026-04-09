@@ -249,22 +249,6 @@
                                                                                        Foreground="{StaticResource TextPrimaryBrush}"/>
                                                                         </StackPanel>
                                                                     </Button>
-                                                                    <Button Tag="{Binding}"
-                                                                            Click="RevertStage_Click" Margin="0,0,4,0"
-                                                                            Style="{StaticResource IconButton}" FontSize="12"
-                                                                            ToolTip="Вернуть в запланированные"
-                                                                            Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
-                                                                        <TextBlock Text="Отменить" VerticalAlignment="Center"
-                                                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                                    </Button>
-                                                                    <Button Tag="{Binding}"
-                                                                            Click="ReopenStage_Click" Margin="0,0,4,0"
-                                                                            Style="{StaticResource IconButton}" FontSize="12"
-                                                                            ToolTip="Открыть снова"
-                                                                            Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Completed}">
-                                                                        <TextBlock Text="Переоткрыть" VerticalAlignment="Center"
-                                                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                                    </Button>
                                                             </StackPanel>
 
                                                             <!-- Task name -->
@@ -339,6 +323,9 @@
                                                                                 <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                                 </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding Stage.Status}" Value="Completed">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
                                                                             </Style.Triggers>
                                                                         </Style>
                                                                     </Button.Style>
@@ -351,7 +338,7 @@
                                                                         Margin="0,0,4,0">
                                                                     <Button.Style>
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Worker,Foreman,Project Manager,Administrator'}"/>
+                                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
                                                                             <Style.Triggers>
                                                                                 <DataTrigger Binding="{Binding Stage.CanToggleStageDeletionMark}" Value="False">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -407,7 +394,7 @@
                                                                 <Button ToolTip="Удалить этап" Tag="{Binding}"
                                                                         Click="DeleteStage_Click"
                                                                         Style="{StaticResource DangerIconButton}"
-                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}">
+                                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
                                                                            Width="14" Height="14"
                                                                            VerticalAlignment="Center"/>

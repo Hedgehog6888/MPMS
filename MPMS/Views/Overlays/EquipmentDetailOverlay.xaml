@@ -205,6 +205,14 @@
                     </Grid>
 
                     <TextBlock x:Name="CategoryText" FontSize="12" Foreground="#6B778C" Margin="0,0,0,16"/>
+                    <Border x:Name="StageLinkPanel"
+                            Background="#F4F5F7" CornerRadius="6" Padding="10,8" Margin="0,0,0,12"
+                            Visibility="Collapsed">
+                        <TextBlock x:Name="StageLinkText"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#1B6EC2"
+                                   TextWrapping="Wrap"/>
+                    </Border>
 
                     <!-- Info grid -->
                     <Grid>
@@ -319,6 +327,9 @@
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#E3FCEF"/>
                                                             <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding EventType}" Value="CheckedOut">
+                                                                    <Setter Property="Background" Value="#FFEBE6"/>
+                                                                </DataTrigger>
                                                                 <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
                                                                     <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
@@ -338,6 +349,10 @@
                                                                 <Setter Property="Text" Value="＋"/>
                                                                 <Setter Property="Foreground" Value="#00875A"/>
                                                                 <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding EventType}" Value="CheckedOut">
+                                                                        <Setter Property="Text" Value="－"/>
+                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                    </DataTrigger>
                                                                     <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
                                                                         <Setter Property="Text" Value="✕"/>
                                                                         <Setter Property="Foreground" Value="#DE350B"/>
@@ -371,9 +386,6 @@
                                                 <StackPanel Grid.Column="2" HorizontalAlignment="Right">
                                                     <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>
-                                                    <TextBlock Text="{Binding NewStatus}" FontSize="11" Foreground="#6B778C"
-                                                               HorizontalAlignment="Right" Margin="0,1,0,0"
-                                                               Visibility="{Binding NewStatus, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>

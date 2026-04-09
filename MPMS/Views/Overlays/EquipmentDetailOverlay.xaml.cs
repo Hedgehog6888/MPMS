@@ -4,6 +4,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.ViewModels;
 
@@ -56,8 +59,10 @@ public partial class EquipmentDetailOverlay : UserControl
             DescriptionPanel.Visibility = Visibility.Collapsed;
         }
 
+        await PopulateTaskStageBadgeAsync();
         LoadPhoto();
 
+        var isLockedByStage = IsLockedByStage();
         if (_equipment.IsWrittenOff)
         {
             WrittenOffBadge.Visibility = Visibility.Visible;
@@ -76,8 +81,8 @@ public partial class EquipmentDetailOverlay : UserControl
             WrittenOffBadge.Visibility = Visibility.Collapsed;
             WrittenOffBanner.Visibility = Visibility.Collapsed;
             WriteOffInfoPanel.Visibility = Visibility.Collapsed;
-            ActionPanel.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
-            ConditionPanel.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
+            ActionPanel.Visibility = _vm.CanManage && !isLockedByStage ? Visibility.Visible : Visibility.Collapsed;
+            ConditionPanel.Visibility = _vm.CanManage && !isLockedByStage ? Visibility.Visible : Visibility.Collapsed;
         }
 
         ApplyConditionButtons();
@@ -104,6 +109,30 @@ public partial class EquipmentDetailOverlay : UserControl
         {
             HistorySection.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private async Task PopulateTaskStageBadgeAsync()
+    {
+        StageLinkPanel.Visibility = Visibility.Collapsed;
+        StageLinkText.Text = string.Empty;
+        if (!_equipment.CheckedOutTaskId.HasValue) return;
+
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var task = await db.Tasks.FindAsync(_equipment.CheckedOutTaskId.Value);
+        if (task is null) return;
+
+        var stage = await db.StageEquipments
+            .Where(se => se.EquipmentId == _equipment.Id)
+            .Join(db.TaskStages, se => se.StageId, st => st.Id, (se, st) => st)
+            .Where(st => st.TaskId == task.Id)
+            .OrderByDescending(st => st.Status == StageStatus.InProgress)
+            .ThenByDescending(st => st.UpdatedAt)
+            .FirstOrDefaultAsync();
+
+        var stageName = stage?.Name ?? "—";
+        StageLinkText.Text = $"На задаче: {task.Name} | Этап: {stageName}";
+        StageLinkPanel.Visibility = Visibility.Visible;
     }
 
     private void LoadPhoto()
@@ -137,6 +166,15 @@ public partial class EquipmentDetailOverlay : UserControl
 
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
+        if (IsLockedByStage())
+        {
+            MessageBox.Show(
+                "Оборудование закреплено за этапом. Редактирование недоступно до освобождения.",
+                "Редактирование недоступно",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
         if (MainWindow.Instance is not { } mw) return;
         var overlay = new CreateWarehouseItemOverlay(
             "Equipment", _vm,
@@ -149,6 +187,15 @@ public partial class EquipmentDetailOverlay : UserControl
 
     private void WriteOff_Click(object sender, RoutedEventArgs e)
     {
+        if (IsLockedByStage())
+        {
+            MessageBox.Show(
+                "Оборудование закреплено за этапом. Списание недоступно до освобождения.",
+                "Списание недоступно",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
         if (MainWindow.Instance is not { } mw) return;
         var overlay = new WriteOffOverlay("оборудование", _equipment.Name,
             comment => _vm.WriteOffEquipmentAsync(_equipment.Id, comment));
@@ -167,9 +214,21 @@ public partial class EquipmentDetailOverlay : UserControl
     private async Task ChangeConditionAsync(EquipmentCondition condition)
     {
         if (!_vm.CanManage || _equipment.IsWrittenOff) return;
+        if (IsLockedByStage())
+        {
+            MessageBox.Show(
+                "Оборудование закреплено за этапом. Смена состояния недоступна до освобождения.",
+                "Смена состояния недоступна",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
         await _vm.UpdateEquipmentConditionAsync(_equipment.Id, condition);
         await ReloadFromVmAsync();
     }
+
+    private bool IsLockedByStage() =>
+        _equipment.CheckedOutTaskId.HasValue && !_equipment.IsWrittenOff;
 
     private void ApplyConditionButtons()
     {

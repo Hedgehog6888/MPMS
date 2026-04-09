@@ -551,7 +551,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && s.IsArchived).ToListAsync();
         foreach (var t in tasks) { t.IsArchived = false; t.UpdatedAt = DateTime.UtcNow; }
-        foreach (var s in stages) { s.IsArchived = false; s.UpdatedAt = DateTime.UtcNow; }
+        foreach (var s in stages)
+        {
+            s.IsArchived = false;
+            s.UpdatedAt = DateTime.UtcNow;
+            await TryReserveRestoredStageEquipmentAsync(db, s, p.Id);
+        }
         AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
         await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Проект «{p.Name}» восстановлен");
     }
@@ -586,7 +591,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
         t.IsArchived = false; t.UpdatedAt = DateTime.UtcNow;
         var stages = await db.TaskStages.Where(s => s.TaskId == t.Id && s.IsArchived).ToListAsync();
-        foreach (var s in stages) { s.IsArchived = false; s.UpdatedAt = DateTime.UtcNow; }
+        foreach (var s in stages)
+        {
+            s.IsArchived = false;
+            s.UpdatedAt = DateTime.UtcNow;
+            await TryReserveRestoredStageEquipmentAsync(db, s, t.ProjectId);
+        }
         AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
         await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Задача «{t.Name}» восстановлена");
     }
@@ -619,9 +629,73 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var s = await db.TaskStages.FindAsync(row.Id); if (s is null) return;
-        s.IsArchived = false; s.UpdatedAt = DateTime.UtcNow;
+        s.IsArchived = false;
+        s.UpdatedAt = DateTime.UtcNow;
+        var task = await db.Tasks.FindAsync(s.TaskId);
+        await TryReserveRestoredStageEquipmentAsync(db, s, task?.ProjectId);
         AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил этап «{s.Name}» из архива", "Stage", s.Id);
         await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Этап «{s.Name}» восстановлен");
+    }
+
+    private static bool ShouldReserveStageEquipment(LocalTaskStage stage) =>
+        !stage.IsArchived &&
+        !stage.IsMarkedForDeletion &&
+        stage.Status != StageStatus.Completed;
+
+    private async Task TryReserveRestoredStageEquipmentAsync(LocalDbContext db, LocalTaskStage stage, Guid? projectId)
+    {
+        if (!ShouldReserveStageEquipment(stage))
+            return;
+
+        var eqIds = await db.StageEquipments
+            .Where(x => x.StageId == stage.Id)
+            .Select(x => x.EquipmentId)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var eqId in eqIds)
+        {
+            var eq = await db.Equipments.FindAsync(eqId);
+            if (eq is null || eq.IsWrittenOff)
+                continue;
+
+            // Не перехватываем оборудование, если оно уже закреплено за другой задачей.
+            if (eq.CheckedOutTaskId.HasValue && eq.CheckedOutTaskId != stage.TaskId)
+                continue;
+
+            if ((eq.Status == "InUse" || eq.Status == "Unavailable") && eq.CheckedOutTaskId == stage.TaskId)
+                continue;
+
+            var prevStatus = eq.Status;
+            eq.Status = "Unavailable";
+            eq.CheckedOutTaskId = stage.TaskId;
+            eq.CheckedOutProjectId = projectId;
+            eq.UpdatedAt = DateTime.UtcNow;
+            eq.IsSynced = false;
+
+            db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+            {
+                Id = Guid.NewGuid(),
+                EquipmentId = eq.Id,
+                OccurredAt = DateTime.UtcNow,
+                EventType = "CheckedOut",
+                PreviousStatus = prevStatus,
+                NewStatus = "Unavailable",
+                ProjectId = projectId,
+                TaskId = stage.TaskId,
+                UserId = _auth.UserId,
+                UserName = _auth.UserName,
+                Comment = $"Выдано на этап: {stage.Name}"
+            });
+
+            await _sync.QueueOperationAsync("EquipmentHistory", eq.Id, SyncOperation.Create,
+                new RecordEquipmentEventRequest(
+                    EventType: EquipmentHistoryEventType.CheckedOut,
+                    NewStatus: EquipmentStatus.Unavailable,
+                    ProjectId: projectId,
+                    TaskId: stage.TaskId,
+                    Comment: $"Выдано на этап: {stage.Name}"));
+        }
     }
 
     [RelayCommand]

@@ -366,9 +366,12 @@ public class LocalEquipmentHistoryEntry
     [NotMapped]
     public string EventTypeDisplay => EventType switch
     {
+        "Added"        => "Добавлено",
         "CheckedOut"   => "Выдано",
         "Returned"     => "Возвращено",
+        "StatusChanged" => "Смена статуса",
         "StatusChange" => "Смена статуса",
+        "Note"         => "Заметка",
         "WrittenOff"   => "Списано",
         _              => EventType
     };
@@ -394,6 +397,14 @@ public class LocalStageService : LocalEntity
     [MaxLength(50)] public string? Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
+}
+
+public class LocalStageEquipment : LocalEntity
+{
+    public Guid StageId { get; set; }
+    public Guid EquipmentId { get; set; }
+    [MaxLength(200)] public string EquipmentName { get; set; } = string.Empty;
+    [MaxLength(100)] public string? InventoryNumber { get; set; }
 }
 
 public class LocalFile : LocalEntity

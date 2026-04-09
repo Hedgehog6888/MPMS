@@ -134,16 +134,19 @@ public partial class StageDetailOverlay : UserControl
     private void ApplyDeletionUi()
     {
         if (_stage is null) return;
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        var canMarkDeletion = auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
         bool eff = _stage.EffectiveMarkedForDeletion;
         DeletionWarningBorder.Visibility = eff ? Visibility.Visible : Visibility.Collapsed;
         var hint = _stage.StageInheritedDeletionHint ?? "";
         DeletionHintText.Text = hint;
         DeletionHintText.Visibility = string.IsNullOrEmpty(hint) ? Visibility.Collapsed : Visibility.Visible;
-        MarkDeletionBtn.Visibility = _stage.CanToggleStageDeletionMark ? Visibility.Visible : Visibility.Collapsed;
+        MarkDeletionBtn.Visibility = (_stage.CanToggleStageDeletionMark && canMarkDeletion) ? Visibility.Visible : Visibility.Collapsed;
         MarkDeletionBtnText.Text = _stage.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
-        EditButton.Visibility = eff ? Visibility.Collapsed : Visibility.Visible;
-        BtnPlanned.IsEnabled = !eff;
-        BtnInProgress.IsEnabled = !eff;
+        EditButton.Visibility = (eff || _stage.Status == StageStatus.Completed) ? Visibility.Collapsed : Visibility.Visible;
+        var isCompletedLocked = _stage.Status == StageStatus.Completed;
+        BtnPlanned.IsEnabled = !eff && !isCompletedLocked;
+        BtnInProgress.IsEnabled = !eff && !isCompletedLocked;
         BtnCompleted.IsEnabled = !eff;
     }
 
@@ -261,6 +264,7 @@ public partial class StageDetailOverlay : UserControl
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
         if (_stage is null || _task is null) return;
+        if (_stage.Status == StageStatus.Completed) return;
         MainWindow.Instance?.HideDrawer();
         var main = App.Services.GetRequiredService<MainViewModel>();
         var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
@@ -288,19 +292,19 @@ public partial class StageDetailOverlay : UserControl
     private async System.Threading.Tasks.Task ChangeStatusAsync(StageStatus newStatus)
     {
         if (_stage is null || _stage.EffectiveMarkedForDeletion) return;
-        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-        await using var db = await dbFactory.CreateDbContextAsync();
-        var entity = await db.TaskStages.FindAsync(_stage.Id);
-        if (entity is null) return;
-
-        entity.Status = newStatus;
-        entity.IsSynced = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        entity.LastModifiedLocally = DateTime.UtcNow;
-        await db.SaveChangesAsync();
-
-        // Recalculate task progress and project status
-        await RecalcTaskProgressAsync(db, entity.TaskId);
+        if (_stage.Status == StageStatus.Completed && newStatus != StageStatus.Completed) return;
+        if (_task is null) return;
+        var vm = App.Services.GetRequiredService<TaskDetailViewModel>();
+        vm.SetTask(_task);
+        var req = new UpdateStageRequest(
+            _stage.Name,
+            _stage.Description,
+            _stage.AssignedUserId,
+            newStatus,
+            _stage.DueDate,
+            _stage.IsMarkedForDeletion,
+            _stage.IsArchived);
+        await vm.SaveUpdatedStageAsync(_stage.Id, req);
 
         _stage.Status = newStatus;
         ApplyStatus(newStatus);
@@ -360,6 +364,9 @@ public partial class StageDetailOverlay : UserControl
     private async void MarkDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (_stage is null || _task is null || !_stage.CanToggleStageDeletionMark) return;
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        var canMarkDeletion = auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+        if (!canMarkDeletion) return;
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         var entity = await db.TaskStages.FindAsync(_stage.Id);

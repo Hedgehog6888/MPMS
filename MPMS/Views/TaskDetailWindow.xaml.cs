@@ -55,6 +55,7 @@ public partial class TaskDetailWindow : Window
     private async void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage) return;
+        if (stage.Status == StageStatus.Completed) return;
 
         var dialog = App.Services.GetRequiredService<CreateStageDialog>();
         dialog.Owner = this;
