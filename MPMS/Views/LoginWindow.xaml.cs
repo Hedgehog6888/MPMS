@@ -11,8 +11,8 @@ public partial class LoginWindow : Window
 {
     private readonly LoginViewModel _vm;
 
-    private static readonly SolidColorBrush FocusBrush  = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
-    private static readonly SolidColorBrush NormalBrush = new(Color.FromRgb(0xE2, 0xE5, 0xED));
+    private static readonly SolidColorBrush FocusBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+    private static readonly SolidColorBrush NormalBrush = new(Color.FromRgb(0xDF, 0xE1, 0xE6));
 
     public LoginWindow(LoginViewModel vm)
     {
