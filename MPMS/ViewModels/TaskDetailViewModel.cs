@@ -45,6 +45,9 @@ public partial class TaskDetailViewModel : ViewModelBase
     private bool CanDeleteStage() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
+    private bool CanMarkTaskDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
+
     public void SetTask(LocalTask task) => Task = task;
 
     public async Task LoadAsync()
@@ -641,6 +644,7 @@ public partial class TaskDetailViewModel : ViewModelBase
     [RelayCommand]
     private async Task MarkTaskForDeletionAsync()
     {
+        if (!CanMarkTaskDeletion()) return;
         if (Task is null || !Task.CanToggleTaskDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.Tasks.FindAsync(Task.Id);

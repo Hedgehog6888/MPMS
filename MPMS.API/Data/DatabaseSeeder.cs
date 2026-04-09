@@ -304,7 +304,7 @@ public static class DatabaseSeeder
         {
             foreach (var s in originals)
             {
-                if (data.Count >= 220) break;
+                if (data.Count >= 320) break;
                 data.Add(new SeedServiceItem(
                     $"SRV-{data.Count + 1:0000}",
                     $"{s.Name} (доп.)",

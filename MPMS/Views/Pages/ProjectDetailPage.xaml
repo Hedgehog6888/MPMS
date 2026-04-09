@@ -1178,12 +1178,12 @@
                                                                Width="14" Height="14"
                                                                VerticalAlignment="Center"/>
                                                     </Button>
-                                                    <!-- Mark for deletion / unmark (Foreman, Manager) — скрыто при пометке проекта -->
+                                                    <!-- Mark for deletion / unmark (Manager+) — скрыто при пометке проекта -->
                                                     <Button Tag="{Binding}" Click="MarkTaskForDeletion_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding CanToggleTaskDeletionMark}" Value="False">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>

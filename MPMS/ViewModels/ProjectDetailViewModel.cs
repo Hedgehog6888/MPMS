@@ -88,6 +88,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private bool CanDeleteStage() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
+    private bool CanMarkTaskDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
+
     // ─── Filter change handlers ────────────────────────────────────────────────
     partial void OnTaskSearchTextChanged(string value) => ApplyTaskFilter();
     partial void OnTaskStatusFilterChanged(string value) => ApplyTaskFilter();
@@ -751,6 +754,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkTaskForDeletionAsync(LocalTask task)
     {
+        if (!CanMarkTaskDeletion()) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.Tasks.FindAsync(task.Id);
         if (entity is null) return;

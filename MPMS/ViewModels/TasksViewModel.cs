@@ -40,6 +40,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         _auth = auth;
     }
 
+    private bool CanMarkTaskDeletion() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
+
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
     partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
     partial void OnPriorityFilterChanged(string value) => _ = LoadAsync();
@@ -459,6 +462,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task MarkTaskForDeletionAsync(LocalTask task)
     {
+        if (!CanMarkTaskDeletion()) return;
         if (!task.CanToggleTaskDeletionMark) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var entity = await db.Tasks.FindAsync(task.Id);

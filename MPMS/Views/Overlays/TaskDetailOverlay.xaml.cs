@@ -61,7 +61,11 @@ public partial class TaskDetailOverlay : UserControl
             AddStageBtn.Visibility    = Visibility.Collapsed;
             MarkDeletionBtn.Visibility = Visibility.Collapsed;
         }
-        else if (!isForeman && !isManager && !isAdmin)
+        else if (isForeman)
+        {
+            MarkDeletionBtn.Visibility = Visibility.Collapsed;
+        }
+        else if (!isManager && !isAdmin)
         {
             MarkDeletionBtn.Visibility = Visibility.Collapsed;
         }

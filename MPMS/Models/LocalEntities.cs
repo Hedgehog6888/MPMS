@@ -600,7 +600,7 @@ public class DeletedUserId
 /// <summary>Stores the JWT token and current user info between sessions</summary>
 public class AuthSession
 {
-    public int Id { get; set; } = 1;
+    public int Id { get; set; }
     public string Token { get; set; } = string.Empty;
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
@@ -614,7 +614,7 @@ public class AuthSession
 
     /// <summary>
     /// True while the user is actively logged in.
-    /// Set to false on logout (record is kept so offline re-login to the same account works).
+    /// Set to false on logout (records are kept so any cached account can re-login offline).
     /// </summary>
     public bool IsActiveSession { get; set; } = true;
 }

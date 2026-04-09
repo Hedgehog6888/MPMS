@@ -340,12 +340,12 @@
                                                         <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                Width="14" Height="14" VerticalAlignment="Center"/>
                                                     </Button>
-                                                    <!-- Mark for deletion (Foreman+) -->
+                                                    <!-- Mark for deletion (Manager+) -->
                                                     <Button Tag="{Binding}" Click="MarkTask_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"/>
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding CanToggleTaskDeletionMark}" Value="False">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>

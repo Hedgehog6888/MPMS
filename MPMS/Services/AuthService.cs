@@ -39,14 +39,18 @@ public class AuthService : IAuthService
 
     public void Logout()
     {
+        var currentUserId = _current?.UserId;
         _current = null;
-        _ = ClearSessionAsync();
+        _ = ClearSessionAsync(currentUserId);
     }
 
     public async Task<bool> TryRestoreSessionAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var session = await db.AuthSessions.FirstOrDefaultAsync();
+        var session = await db.AuthSessions
+            .Where(s => s.IsActiveSession)
+            .OrderByDescending(s => s.ExpiresAt)
+            .FirstOrDefaultAsync();
 
         // Only auto-restore if the user was actively logged in (didn't explicitly log out).
         if (session is null || !session.IsActiveSession) return false;
@@ -94,10 +98,12 @@ public class AuthService : IAuthService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Primary check: active session (user has previously logged in online)
-        var session = await db.AuthSessions.FirstOrDefaultAsync();
+        // Primary check: any cached session for this username (user has previously logged in online)
+        var session = (await db.AuthSessions
+                .OrderByDescending(s => s.ExpiresAt)
+                .ToListAsync())
+            .FirstOrDefault(s => string.Equals(s.Username, username, StringComparison.OrdinalIgnoreCase));
         if (session is not null
-            && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
             && !string.IsNullOrEmpty(session.LocalPasswordHash)
             && BCrypt.Net.BCrypt.Verify(plainPassword, session.LocalPasswordHash))
         {
@@ -132,10 +138,11 @@ public class AuthService : IAuthService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var session = await db.AuthSessions.FirstOrDefaultAsync();
-        if (session is not null
-            && string.Equals(session.Username, username, StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrEmpty(session.LocalPasswordHash))
+        var session = (await db.AuthSessions
+                .OrderByDescending(s => s.ExpiresAt)
+                .ToListAsync())
+            .FirstOrDefault(s => string.Equals(s.Username, username, StringComparison.OrdinalIgnoreCase));
+        if (session is not null && !string.IsNullOrEmpty(session.LocalPasswordHash))
             return true;
 
         var localUser = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
@@ -155,14 +162,20 @@ public class AuthService : IAuthService
     private async Task PersistSessionAsync(AuthResponse r, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var existing = await db.AuthSessions.FirstOrDefaultAsync();
+        var existing = (await db.AuthSessions
+                .OrderByDescending(s => s.ExpiresAt)
+                .ToListAsync())
+            .FirstOrDefault(s => string.Equals(s.Username, r.Username, StringComparison.OrdinalIgnoreCase));
         var pwdHash  = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+        var allSessions = await db.AuthSessions.ToListAsync();
+        foreach (var session in allSessions)
+            session.IsActiveSession = false;
 
         if (existing is null)
         {
             db.AuthSessions.Add(new AuthSession
             {
-                Id = 1, Token = r.Token, UserId = r.UserId,
+                Token = r.Token, UserId = r.UserId,
                 UserName = r.Name, Username = r.Username,
                 UserRole = r.Role, ExpiresAt = r.ExpiresAt,
                 LocalPasswordHash = pwdHash,
@@ -184,11 +197,16 @@ public class AuthService : IAuthService
         await db.SaveChangesAsync();
     }
 
-    private async Task ClearSessionAsync()
+    private async Task ClearSessionAsync(Guid? userId)
     {
+        if (userId is null) return;
+
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var session = await db.AuthSessions.FirstOrDefaultAsync();
-        if (session is not null)
+        var session = await db.AuthSessions
+            .Where(s => s.UserId == userId.Value)
+            .OrderByDescending(s => s.ExpiresAt)
+            .FirstOrDefaultAsync();
+        if (session is not null && session.IsActiveSession)
         {
             // Mark as logged-out but keep the record so the same account
             // can log back in offline using the cached password hash.
