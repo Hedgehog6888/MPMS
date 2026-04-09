@@ -23,7 +23,15 @@ public sealed partial class StageServiceLineVm : ObservableObject
         _pricePerUnit = basePrice;
     }
 
-    partial void OnQuantityChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
+    partial void OnQuantityChanged(decimal value)
+    {
+        if (value < 1m)
+        {
+            Quantity = 1m;
+            return;
+        }
+        OnPropertyChanged(nameof(LineTotal));
+    }
     partial void OnPricePerUnitChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
 }
 
@@ -37,6 +45,7 @@ public sealed partial class StageMaterialLineVm : ObservableObject
     [ObservableProperty] private string? _unit;
     [ObservableProperty] private decimal _quantity = 1m;
     [ObservableProperty] private decimal _pricePerUnit;
+    [ObservableProperty] private decimal _stockAvailable;
 
     public decimal LineTotal => Quantity * PricePerUnit;
 
@@ -56,9 +65,44 @@ public sealed partial class StageMaterialLineVm : ObservableObject
         MaterialName = m.Name;
         Unit = m.Unit;
         PricePerUnit = m.Cost ?? 0m;
+        StockAvailable = Math.Max(0m, m.Quantity);
         OnPropertyChanged(nameof(LineTotal));
     }
 
-    partial void OnQuantityChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
+    partial void OnQuantityChanged(decimal value)
+    {
+        if (value < 1m)
+        {
+            Quantity = 1m;
+            return;
+        }
+        if (StockAvailable > 0m && value > StockAvailable)
+        {
+            Quantity = StockAvailable;
+            return;
+        }
+        OnPropertyChanged(nameof(LineTotal));
+    }
+    partial void OnStockAvailableChanged(decimal value)
+    {
+        if (value > 0m && Quantity > value)
+            Quantity = value;
+    }
     partial void OnPricePerUnitChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
+}
+
+/// <summary>Оборудование в этапе (пока без стоимости в итогах этапа).</summary>
+public sealed partial class StageEquipmentLineVm : ObservableObject
+{
+    [ObservableProperty] private Guid _equipmentId;
+    [ObservableProperty] private string _equipmentName = "";
+    [ObservableProperty] private string? _inventoryNumber;
+    [ObservableProperty] private decimal _quantity = 1m;
+
+    public void ApplyFrom(LocalEquipment e)
+    {
+        EquipmentId = e.Id;
+        EquipmentName = e.Name;
+        InventoryNumber = e.InventoryNumber;
+    }
 }

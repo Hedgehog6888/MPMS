@@ -26,6 +26,15 @@ public partial class StagesPage : UserControl
 
     private async void CreateStage_Click(object sender, RoutedEventArgs e)
     {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        if (string.Equals(auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(
+                "Работники не могут создавать этапы.",
+                "Недостаточно прав", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
         if (!await db.Tasks.AnyAsync())

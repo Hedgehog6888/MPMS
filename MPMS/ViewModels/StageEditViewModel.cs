@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -28,6 +29,8 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     private Func<Task>? _onSavedAsync;
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private List<AssigneePickerItem> _workerAssigneeItems = [];
+    private CancellationTokenSource? _errorMessageCts;
+    private Guid? _peekProjectId;
 
     [ObservableProperty] private string _pageTitle = "Добавить этап";
     [ObservableProperty] private string _saveButtonText = "Добавить этап";
@@ -56,11 +59,25 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<LocalServiceTemplate> _serviceCatalogFiltered = [];
     private List<LocalServiceTemplate> _allServiceTemplates = [];
 
+    [ObservableProperty] private string _materialSearchText = "";
+    [ObservableProperty] private string _materialCategoryFilter = "Все категории";
+    [ObservableProperty] private ObservableCollection<string> _materialCategoryOptions = [];
+    [ObservableProperty] private string _equipmentSearchText = "";
+    [ObservableProperty] private string _equipmentCategoryFilter = "Все категории";
+    [ObservableProperty] private ObservableCollection<string> _equipmentCategoryOptions = [];
     [ObservableProperty] private ObservableCollection<StageServiceLineVm> _selectedServices = [];
     [ObservableProperty] private ObservableCollection<StageMaterialLineVm> _materialLines = [];
+    [ObservableProperty] private ObservableCollection<StageEquipmentLineVm> _equipmentLines = [];
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materialCatalog = [];
+    [ObservableProperty] private ObservableCollection<LocalMaterial> _materialCatalogFiltered = [];
+    private List<LocalMaterial> _allMaterialTemplates = [];
+    [ObservableProperty] private ObservableCollection<LocalEquipment> _equipmentCatalogFiltered = [];
+    private List<LocalEquipment> _allEquipmentTemplates = [];
 
     [ObservableProperty] private ObservableCollection<AssigneePickerItem> _workerPickerItems = [];
+    [ObservableProperty] private string _workerSearchText = "";
+    [ObservableProperty] private string _workerSpecialtyFilter = "Все специальности";
+    [ObservableProperty] private ObservableCollection<string> _workerSpecialtyOptions = [];
 
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isBusy;
@@ -68,6 +85,22 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private decimal _summaryServicesTotal;
     [ObservableProperty] private decimal _summaryMaterialsTotal;
     [ObservableProperty] private decimal _summaryGrandTotal;
+    [ObservableProperty] private decimal _serviceAdjustmentPercent;
+    [ObservableProperty] private decimal _materialAdjustmentPercent;
+    [ObservableProperty] private ObservableCollection<ReceiptRowVm> _serviceReceiptRows = [];
+    [ObservableProperty] private ObservableCollection<ReceiptRowVm> _materialReceiptRows = [];
+    public decimal AdjustedServicesTotal => SummaryServicesTotal * (1m + ServiceAdjustmentPercent / 100m);
+    public decimal AdjustedMaterialsTotal => SummaryMaterialsTotal * (1m + MaterialAdjustmentPercent / 100m);
+    public decimal AdjustedGrandTotal => AdjustedServicesTotal + AdjustedMaterialsTotal;
+    public int ServicesCount => SelectedServices.Count;
+    public int MaterialsCount => MaterialLines.Count;
+    public decimal ServicesQuantityTotal => SelectedServices.Sum(s => s.Quantity);
+    public decimal MaterialsQuantityTotal => MaterialLines.Sum(m => m.Quantity);
+    public decimal AverageServicePrice => ServicesQuantityTotal > 0 ? SummaryServicesTotal / ServicesQuantityTotal : 0;
+    public decimal AverageMaterialPrice => MaterialsQuantityTotal > 0 ? SummaryMaterialsTotal / MaterialsQuantityTotal : 0;
+    public int SelectedWorkersCount => _selectedAssigneeIds.Count;
+    public int AvailableWorkersCount => WorkerPickerItems.Count;
+    public Guid? PeekProjectId => _peekProjectId;
 
     public StageEditViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
@@ -80,6 +113,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
         SelectedServices.CollectionChanged += OnTotalsCollectionChanged;
         MaterialLines.CollectionChanged += OnTotalsCollectionChanged;
+        EquipmentLines.CollectionChanged += (_, _) => ApplyEquipmentFilters();
     }
 
     private void OnTotalsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -101,6 +135,10 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
             }
         }
         RecalculateTotals();
+        if (ReferenceEquals(sender, SelectedServices))
+            ApplyServiceFilters();
+        else if (ReferenceEquals(sender, MaterialLines))
+            ApplyMaterialFilters();
     }
 
     private void OnLinePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -114,6 +152,39 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         SummaryServicesTotal = SelectedServices.Sum(s => s.LineTotal);
         SummaryMaterialsTotal = MaterialLines.Sum(m => m.LineTotal);
         SummaryGrandTotal = SummaryServicesTotal + SummaryMaterialsTotal;
+        BuildReceiptRows();
+        OnPropertyChanged(nameof(ServicesCount));
+        OnPropertyChanged(nameof(MaterialsCount));
+        OnPropertyChanged(nameof(ServicesQuantityTotal));
+        OnPropertyChanged(nameof(MaterialsQuantityTotal));
+        OnPropertyChanged(nameof(AverageServicePrice));
+        OnPropertyChanged(nameof(AverageMaterialPrice));
+        OnPropertyChanged(nameof(AdjustedServicesTotal));
+        OnPropertyChanged(nameof(AdjustedMaterialsTotal));
+        OnPropertyChanged(nameof(AdjustedGrandTotal));
+    }
+
+    private void BuildReceiptRows()
+    {
+        var serviceK = 1m + ServiceAdjustmentPercent / 100m;
+        ServiceReceiptRows = new ObservableCollection<ReceiptRowVm>(
+            SelectedServices.Select(s => new ReceiptRowVm(
+                s.Name,
+                s.Quantity,
+                s.PricePerUnit,
+                s.LineTotal,
+                s.LineTotal * serviceK,
+                ServiceAdjustmentPercent)));
+
+        var materialK = 1m + MaterialAdjustmentPercent / 100m;
+        MaterialReceiptRows = new ObservableCollection<ReceiptRowVm>(
+            MaterialLines.Select(m => new ReceiptRowVm(
+                m.MaterialName,
+                m.Quantity,
+                m.PricePerUnit,
+                m.LineTotal,
+                m.LineTotal * materialK,
+                MaterialAdjustmentPercent)));
     }
 
     public void SetCreateForTask(LocalTask task, Action goBack, Func<Task>? onSavedAsync = null)
@@ -123,6 +194,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         _editStage = null;
         _goBack = goBack;
         _onSavedAsync = onSavedAsync;
+        _peekProjectId = task.ProjectId;
         PageTitle = "Добавить этап";
         SaveButtonText = "Добавить этап";
         ContextSubtitle = $"Задача: {task.Name}";
@@ -141,6 +213,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         Reset();
         _goBack = goBack;
         _onSavedAsync = onSavedAsync;
+        _peekProjectId = projectId;
         PageTitle = "Добавить этап";
         SaveButtonText = "Добавить этап";
         ContextSubtitle = "Выберите задачу";
@@ -158,6 +231,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         Reset();
         _goBack = goBack;
         _onSavedAsync = onSavedAsync;
+        _peekProjectId = null;
         PageTitle = "Добавить этап";
         SaveButtonText = "Добавить этап";
         ContextSubtitle = "Выберите проект и задачу";
@@ -176,6 +250,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         _task = task;
         _goBack = goBack;
         _onSavedAsync = onSavedAsync;
+        _peekProjectId = task.ProjectId;
         PageTitle = "Редактировать этап";
         SaveButtonText = "Сохранить";
         ContextSubtitle = $"Задача: {task.Name}";
@@ -198,6 +273,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         _editStage = null;
         _goBack = null;
         _onSavedAsync = null;
+        _peekProjectId = null;
         _selectedAssigneeIds.Clear();
         _workerAssigneeItems = [];
         WorkerPickerItems = [];
@@ -209,12 +285,23 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         ServiceCategoryFilter = "Все категории";
         SelectedServices.Clear();
         MaterialLines.Clear();
+        EquipmentLines.Clear();
         ErrorMessage = null;
         SelectedProjectId = null;
         SelectedTaskId = null;
+        MaterialSearchText = "";
+        MaterialCategoryFilter = "Все категории";
+        EquipmentSearchText = "";
+        EquipmentCategoryFilter = "Все категории";
+        WorkerSearchText = "";
+        WorkerSpecialtyFilter = "Все специальности";
+        WorkerSpecialtyOptions = new ObservableCollection<string>(["Все специальности"]);
+        ServiceAdjustmentPercent = 0;
+        MaterialAdjustmentPercent = 0;
         ProjectRows = [];
         TaskRows = [];
         ShowProjectPickerList = true;
+        NotifyWorkerCounters();
     }
 
     private async Task LoadProjectNameAsync(Guid projectId)
@@ -238,6 +325,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     {
         await LoadServiceCatalogAsync();
         await LoadMaterialCatalogAsync();
+        await LoadEquipmentCatalogAsync();
         RecalculateTotals();
     }
 
@@ -269,6 +357,18 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
             };
             MaterialLines.Add(line);
         }
+        var matIds = mats.Select(m => m.MaterialId).Distinct().ToList();
+        var stocks = await db.Materials
+            .Where(x => matIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Quantity })
+            .ToDictionaryAsync(x => x.Id, x => Math.Max(0m, x.Quantity));
+        foreach (var line in MaterialLines)
+        {
+            if (stocks.TryGetValue(line.MaterialId, out var stock))
+                line.StockAvailable = stock;
+        }
+        ApplyServiceFilters();
+        ApplyMaterialFilters();
     }
 
     private async Task LoadServiceCatalogAsync()
@@ -286,12 +386,58 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
     partial void OnServiceSearchTextChanged(string value) => ApplyServiceFilters();
     partial void OnServiceCategoryFilterChanged(string value) => ApplyServiceFilters();
+    partial void OnMaterialSearchTextChanged(string value) => ApplyMaterialFilters();
+    partial void OnMaterialCategoryFilterChanged(string value) => ApplyMaterialFilters();
+    partial void OnEquipmentSearchTextChanged(string value) => ApplyEquipmentFilters();
+    partial void OnEquipmentCategoryFilterChanged(string value) => ApplyEquipmentFilters();
+    partial void OnWorkerSearchTextChanged(string value) => ApplyWorkerFilters();
+    partial void OnWorkerSpecialtyFilterChanged(string value) => ApplyWorkerFilters();
+    partial void OnServiceAdjustmentPercentChanged(decimal value)
+    {
+        if (value > 999m)
+        {
+            ServiceAdjustmentPercent = 999m;
+            return;
+        }
+        if (value < -999m)
+        {
+            ServiceAdjustmentPercent = -999m;
+            return;
+        }
+        RecalculateTotals();
+    }
+    partial void OnMaterialAdjustmentPercentChanged(decimal value)
+    {
+        if (value > 999m)
+        {
+            MaterialAdjustmentPercent = 999m;
+            return;
+        }
+        if (value < -999m)
+        {
+            MaterialAdjustmentPercent = -999m;
+            return;
+        }
+        RecalculateTotals();
+    }
+    partial void OnErrorMessageChanged(string? value)
+    {
+        _errorMessageCts?.Cancel();
+        _errorMessageCts?.Dispose();
+        _errorMessageCts = null;
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+        var cts = new CancellationTokenSource();
+        _errorMessageCts = cts;
+        _ = ClearErrorDelayedAsync(cts.Token);
+    }
 
     partial void OnSelectedProjectIdChanged(Guid? value)
     {
         if (value is { } pid)
         {
             RefreshPickerSelection(ProjectRows, pid);
+            _peekProjectId = pid;
             _ = LoadTasksForProjectAsync(pid);
         }
     }
@@ -307,7 +453,9 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
     private void ApplyServiceFilters()
     {
+        var selectedServiceIds = SelectedServices.Select(s => s.TemplateId).ToHashSet();
         IEnumerable<LocalServiceTemplate> q = _allServiceTemplates;
+        q = q.Where(t => !selectedServiceIds.Contains(t.Id));
         if (!string.IsNullOrWhiteSpace(ServiceCategoryFilter) && ServiceCategoryFilter != "Все категории")
             q = q.Where(t => t.CategoryName == ServiceCategoryFilter);
         var s = ServiceSearchText.Trim();
@@ -325,7 +473,113 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
             .Where(m => !m.IsWrittenOff)
             .OrderBy(m => m.Name)
             .ToListAsync();
+        _allMaterialTemplates = mats;
+        var materialCats = mats
+            .Select(m => m.CategoryName)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c)
+            .Cast<string>()
+            .ToList();
+        MaterialCategoryOptions = new ObservableCollection<string>(["Все категории", .. materialCats]);
         MaterialCatalog = new ObservableCollection<LocalMaterial>(mats);
+        ApplyMaterialFilters();
+    }
+
+    private void ApplyMaterialFilters()
+    {
+        var search = MaterialSearchText.Trim();
+        var selectedMaterialIds = MaterialLines.Select(m => m.MaterialId).Where(id => id != Guid.Empty).ToHashSet();
+        IEnumerable<LocalMaterial> q = _allMaterialTemplates;
+        q = q.Where(m => !selectedMaterialIds.Contains(m.Id));
+        if (!string.IsNullOrWhiteSpace(MaterialCategoryFilter) && MaterialCategoryFilter != "Все категории")
+            q = q.Where(m => string.Equals(m.CategoryName, MaterialCategoryFilter, StringComparison.OrdinalIgnoreCase));
+        if (search.Length > 0)
+            q = q.Where(m => m.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (m.InventoryNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                             || (m.CategoryName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        MaterialCatalogFiltered = new ObservableCollection<LocalMaterial>(q.ToList());
+    }
+
+    private async Task LoadEquipmentCatalogAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        _allEquipmentTemplates = await db.Equipments
+            .Where(e => !e.IsWrittenOff && e.Status == "Available")
+            .OrderBy(e => e.Name)
+            .ToListAsync();
+        var equipmentCats = _allEquipmentTemplates
+            .Select(e => e.CategoryName)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c)
+            .Cast<string>()
+            .ToList();
+        EquipmentCategoryOptions = new ObservableCollection<string>(["Все категории", .. equipmentCats]);
+        ApplyEquipmentFilters();
+    }
+
+    private void ApplyEquipmentFilters()
+    {
+        var search = EquipmentSearchText.Trim();
+        var selectedEquipmentIds = EquipmentLines.Select(x => x.EquipmentId).ToHashSet();
+        IEnumerable<LocalEquipment> q = _allEquipmentTemplates;
+        q = q.Where(e => !selectedEquipmentIds.Contains(e.Id));
+        if (!string.IsNullOrWhiteSpace(EquipmentCategoryFilter) && EquipmentCategoryFilter != "Все категории")
+            q = q.Where(e => string.Equals(e.CategoryName, EquipmentCategoryFilter, StringComparison.OrdinalIgnoreCase));
+        if (search.Length > 0)
+            q = q.Where(e => e.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (e.InventoryNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                             || (e.CategoryName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        EquipmentCatalogFiltered = new ObservableCollection<LocalEquipment>(q.ToList());
+    }
+
+    private async Task ClearErrorDelayedAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(10), token);
+            if (!token.IsCancellationRequested)
+                ErrorMessage = null;
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private static string GetWorkerPrimarySpecialty(AssigneePickerItem item)
+    {
+        var subtitle = item.RoleSubtitle?.Trim();
+        if (string.IsNullOrWhiteSpace(subtitle))
+            return "Без специальности";
+        var cut = subtitle.IndexOf('·');
+        if (cut >= 0)
+            subtitle = subtitle[..cut].Trim();
+        return string.IsNullOrWhiteSpace(subtitle) ? "Без специальности" : subtitle;
+    }
+
+    private void RebuildWorkerSpecialtyOptions()
+    {
+        var options = _workerAssigneeItems
+            .Select(GetWorkerPrimarySpecialty)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        WorkerSpecialtyOptions = new ObservableCollection<string>(["Все специальности", .. options]);
+        if (!WorkerSpecialtyOptions.Contains(WorkerSpecialtyFilter))
+            WorkerSpecialtyFilter = "Все специальности";
+    }
+
+    private void ApplyWorkerFilters()
+    {
+        var search = WorkerSearchText.Trim();
+        IEnumerable<AssigneePickerItem> q = _workerAssigneeItems;
+        if (!string.IsNullOrWhiteSpace(WorkerSpecialtyFilter) && WorkerSpecialtyFilter != "Все специальности")
+            q = q.Where(i => string.Equals(GetWorkerPrimarySpecialty(i), WorkerSpecialtyFilter, StringComparison.OrdinalIgnoreCase));
+        if (search.Length > 0)
+            q = q.Where(i => i.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (i.RoleSubtitle?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        WorkerPickerItems = new ObservableCollection<AssigneePickerItem>(q);
+        NotifyWorkerCounters();
     }
 
     private async Task LoadProjectsForPickerAsync()
@@ -452,7 +706,8 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             foreach (var i in _workerAssigneeItems)
                 i.RefreshSelected(_selectedAssigneeIds);
-            WorkerPickerItems = new ObservableCollection<AssigneePickerItem>(_workerAssigneeItems);
+            RebuildWorkerSpecialtyOptions();
+            ApplyWorkerFilters();
         });
     }
 
@@ -479,17 +734,24 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         }
         foreach (var i in _workerAssigneeItems)
             i.RefreshSelected(_selectedAssigneeIds);
+        NotifyWorkerCounters();
     }
 
     [RelayCommand]
     private void AddServiceTemplate(LocalServiceTemplate? tpl)
     {
         if (tpl is null) return;
+        if (SelectedServices.Any(x => x.TemplateId == tpl.Id))
+        {
+            ErrorMessage = "Эта услуга уже добавлена в этап.";
+            return;
+        }
         var line = new StageServiceLineVm(tpl.Id, tpl.Name, tpl.Unit, tpl.BasePrice)
         {
             Quantity = 1
         };
         SelectedServices.Add(line);
+        ErrorMessage = null;
     }
 
     [RelayCommand]
@@ -505,16 +767,86 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         MaterialLines.Add(new StageMaterialLineVm { Quantity = 1 });
     }
 
+    [RelayCommand]
+    private void AddMaterialTemplate(LocalMaterial? material)
+    {
+        if (material is null) return;
+        if (material.Quantity <= 0m)
+        {
+            ErrorMessage = "Этого материала нет на складе.";
+            return;
+        }
+        if (MaterialLines.Any(x => x.MaterialId == material.Id))
+        {
+            ErrorMessage = "Этот материал уже добавлен в этап.";
+            return;
+        }
+        var line = new StageMaterialLineVm();
+        line.ApplyFrom(material);
+        line.Quantity = 1;
+        MaterialLines.Add(line);
+        RecalculateTotals();
+        ErrorMessage = null;
+    }
+
     public void AdjustServiceQuantity(StageServiceLineVm line, decimal delta)
     {
         var n = Math.Round(line.Quantity + delta, 2, MidpointRounding.AwayFromZero);
-        line.Quantity = Math.Max(0.01m, n);
+        line.Quantity = Math.Max(1m, n);
     }
 
     public void AdjustMaterialQuantity(StageMaterialLineVm line, decimal delta)
     {
         var n = Math.Round(line.Quantity + delta, 2, MidpointRounding.AwayFromZero);
-        line.Quantity = Math.Max(0.01m, n);
+        var maxAllowed = line.StockAvailable > 0m ? line.StockAvailable : decimal.MaxValue;
+        line.Quantity = Math.Min(Math.Max(1m, n), maxAllowed);
+    }
+
+    public void AdjustEquipmentQuantity(StageEquipmentLineVm line, decimal delta)
+    {
+        line.Quantity = 1m;
+    }
+
+    [RelayCommand]
+    private void AddServiceMarkup()
+    {
+        ServiceAdjustmentPercent += 5;
+        RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void AddServiceDiscount()
+    {
+        ServiceAdjustmentPercent -= 5;
+        RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void AddMaterialMarkup()
+    {
+        MaterialAdjustmentPercent += 5;
+        RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void AddMaterialDiscount()
+    {
+        MaterialAdjustmentPercent -= 5;
+        RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void ResetServiceAdjustment()
+    {
+        ServiceAdjustmentPercent = 0;
+        RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void ResetMaterialAdjustment()
+    {
+        MaterialAdjustmentPercent = 0;
+        RecalculateTotals();
     }
 
     [RelayCommand]
@@ -536,6 +868,36 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         if (mat is null) return;
         line.ApplyFrom(mat);
         RecalculateTotals();
+    }
+
+    [RelayCommand]
+    private void AddEquipmentTemplate(LocalEquipment? equipment)
+    {
+        if (equipment is null) return;
+        if (EquipmentLines.Any(x => x.EquipmentId == equipment.Id))
+        {
+            ErrorMessage = "Это оборудование уже добавлено в этап.";
+            return;
+        }
+        var line = new StageEquipmentLineVm { Quantity = 1 };
+        line.ApplyFrom(equipment);
+        EquipmentLines.Add(line);
+        ApplyEquipmentFilters();
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private void RemoveEquipmentLine(StageEquipmentLineVm? line)
+    {
+        if (line is null) return;
+        EquipmentLines.Remove(line);
+        ApplyEquipmentFilters();
+    }
+
+    private void NotifyWorkerCounters()
+    {
+        OnPropertyChanged(nameof(SelectedWorkersCount));
+        OnPropertyChanged(nameof(AvailableWorkersCount));
     }
 
     [RelayCommand]
@@ -587,6 +949,12 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
             taskId = _task.Id;
         }
 
+        if (IsWorker() && _editStage is null)
+        {
+            ErrorMessage = "Работники не могут создавать этапы.";
+            return;
+        }
+
         if (!IsWorker() && _selectedAssigneeIds.Count == 0)
         {
             ErrorMessage = "Назначьте хотя бы одного работника на этап.";
@@ -617,6 +985,25 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
             if (ml.MaterialId == Guid.Empty)
             {
                 ErrorMessage = "Укажите материал во всех строках или удалите пустые.";
+                return;
+            }
+            if (ml.Quantity < 1m)
+            {
+                ErrorMessage = "Количество материалов не может быть меньше 1.";
+                return;
+            }
+            if (ml.StockAvailable > 0m && ml.Quantity > ml.StockAvailable)
+            {
+                ErrorMessage = $"Материала \"{ml.MaterialName}\" недостаточно на складе. Доступно: {ml.StockAvailable:N2}.";
+                return;
+            }
+        }
+
+        foreach (var sl in SelectedServices)
+        {
+            if (sl.Quantity < 1m)
+            {
+                ErrorMessage = "Количество услуг не может быть меньше 1.";
                 return;
             }
         }
@@ -720,5 +1107,34 @@ public sealed partial class PickerRowVm : ObservableObject
     {
         Id = id;
         Name = name;
+    }
+}
+
+public sealed class ReceiptRowVm
+{
+    public string Name { get; }
+    public decimal Quantity { get; }
+    public decimal UnitPrice { get; }
+    public decimal BaseTotal { get; }
+    public decimal AdjustedTotal { get; }
+    public decimal AdjustmentPercent { get; }
+    public string AdjustmentLabel =>
+        AdjustmentPercent == 0 ? "0%" :
+        AdjustmentPercent > 0 ? $"+{AdjustmentPercent:N0}%" : $"{AdjustmentPercent:N0}%";
+
+    public ReceiptRowVm(
+        string name,
+        decimal quantity,
+        decimal unitPrice,
+        decimal baseTotal,
+        decimal adjustedTotal,
+        decimal adjustmentPercent)
+    {
+        Name = name;
+        Quantity = quantity;
+        UnitPrice = unitPrice;
+        BaseTotal = baseTotal;
+        AdjustedTotal = adjustedTotal;
+        AdjustmentPercent = adjustmentPercent;
     }
 }

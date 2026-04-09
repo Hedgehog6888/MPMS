@@ -317,7 +317,7 @@
                                                         VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                                            <Setter Property="Background" Value="#E3FCEF"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
                                                                     <Setter Property="Background" Value="#FFEBE6"/>
@@ -335,15 +335,15 @@
                                                                FontSize="12">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="→"/>
-                                                                <Setter Property="Foreground" Value="#1B6EC2"/>
+                                                                <Setter Property="Text" Value="＋"/>
+                                                                <Setter Property="Foreground" Value="#00875A"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
                                                                         <Setter Property="Text" Value="✕"/>
                                                                         <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding EventType}" Value="Returned">
-                                                                        <Setter Property="Text" Value="←"/>
+                                                                        <Setter Property="Text" Value="＋"/>
                                                                         <Setter Property="Foreground" Value="#00875A"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding EventType}" Value="Added">

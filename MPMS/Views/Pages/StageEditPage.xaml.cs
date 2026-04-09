@@ -62,11 +62,27 @@ public partial class StageEditPage
             vm.AdjustServiceQuantity(line, 1);
     }
 
+    private void AddMaterialTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: LocalMaterial material }) return;
+        if (DataContext is StageEditViewModel vm)
+            vm.AddMaterialTemplateCommand.Execute(material);
+    }
+
     private void WorkerRow_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.DataContext is not AssigneePickerItem item) return;
         if (DataContext is StageEditViewModel vm)
             vm.ToggleAssigneeCommand.Execute(item);
+    }
+
+    private void WorkerPeek_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not FrameworkElement fe || fe.DataContext is not AssigneePickerItem item) return;
+        if (DataContext is not StageEditViewModel vm) return;
+        if (vm.PeekProjectId is not Guid projectId) return;
+        MainWindow.Instance?.TryOpenUserPeek(item.UserId, projectId);
     }
 
     private void MaterialCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -88,6 +104,34 @@ public partial class StageEditPage
         if (sender is not Button { Tag: StageMaterialLineVm line }) return;
         if (DataContext is StageEditViewModel vm)
             vm.AdjustMaterialQuantity(line, 1);
+    }
+
+    private void AddEquipmentTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: LocalEquipment equipment }) return;
+        if (DataContext is StageEditViewModel vm)
+            vm.AddEquipmentTemplateCommand.Execute(equipment);
+    }
+
+    private void DecEqQty_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: StageEquipmentLineVm line }) return;
+        if (DataContext is StageEditViewModel vm)
+            vm.AdjustEquipmentQuantity(line, -1);
+    }
+
+    private void IncEqQty_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: StageEquipmentLineVm line }) return;
+        if (DataContext is StageEditViewModel vm)
+            vm.AdjustEquipmentQuantity(line, 1);
+    }
+
+    private void RemoveEquipmentRow_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: StageEquipmentLineVm line }) return;
+        if (DataContext is StageEditViewModel vm)
+            vm.RemoveEquipmentLineCommand.Execute(line);
     }
 
     private void RemoveMaterialRow_Click(object sender, RoutedEventArgs e)

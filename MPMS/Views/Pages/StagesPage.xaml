@@ -36,6 +36,7 @@
                 </StackPanel>
                 <Button x:Name="CreateStageBtn" Grid.Column="1"
                         Click="CreateStage_Click"
+                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Foreman,Project Manager,Administrator'}"
                         Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
