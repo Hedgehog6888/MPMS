@@ -98,6 +98,9 @@ public class TasksController : ControllerBase
             .Include(t => t.Stages)
                 .ThenInclude(s => s.StageAssignees)
             .Include(t => t.Stages)
+                .ThenInclude(s => s.StageServices)
+                .ThenInclude(ss => ss.ServiceTemplate)
+            .Include(t => t.Stages)
                 .ThenInclude(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
             .Include(t => t.Stages)
@@ -289,12 +292,40 @@ public class TasksController : ControllerBase
 
         var stages = t.Stages.OrderBy(s => s.CreatedAt).Select(s => new TaskStageResponse(
             s.Id, s.TaskId, s.Name, s.Description,
+            s.ServiceTemplateId,
+            s.ServiceNameSnapshot,
+            s.ServiceDescriptionSnapshot,
+            s.WorkUnitSnapshot,
+            s.WorkQuantity,
+            s.WorkPricePerUnit,
+            (s.StageServices.Count > 0
+                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+                : s.WorkQuantity * s.WorkPricePerUnit),
+            s.StageServices.Select(ss => new StageServiceResponse(
+                ss.Id,
+                ss.ServiceTemplateId,
+                ss.ServiceNameSnapshot,
+                ss.ServiceDescriptionSnapshot,
+                ss.UnitSnapshot,
+                ss.Quantity,
+                ss.PricePerUnit,
+                ss.Quantity * ss.PricePerUnit)).ToList(),
+            s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
+            (s.StageServices.Count > 0
+                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+                : s.WorkQuantity * s.WorkPricePerUnit) + s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
             s.AssignedUserId,
             s.AssignedUser?.Name,
             s.Status.ToString(),
             s.DueDate,
             s.StageMaterials.Select(sm => new StageMaterialResponse(
-                sm.Id, sm.MaterialId, sm.Material.Name, sm.Material.Unit, sm.Quantity)).ToList(),
+                sm.Id,
+                sm.MaterialId,
+                sm.Material.Name,
+                sm.Material.Unit,
+                sm.Quantity,
+                sm.PricePerUnit,
+                sm.Quantity * sm.PricePerUnit)).ToList(),
             s.Files.Select(f => new FileResponse(
                 f.Id, f.FileName, f.FileType ?? "", f.FileSize,
                 f.UploadedById, f.UploadedBy.Name,

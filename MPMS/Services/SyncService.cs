@@ -515,6 +515,12 @@ public class SyncService : ISyncService
                     {
                         localStage.Name = s.Name;
                         localStage.Description = s.Description;
+                        localStage.ServiceTemplateId = s.ServiceTemplateId;
+                        localStage.ServiceNameSnapshot = s.ServiceName;
+                        localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
+                        localStage.WorkUnitSnapshot = s.WorkUnit;
+                        localStage.WorkQuantity = s.WorkQuantity;
+                        localStage.WorkPricePerUnit = s.WorkPricePerUnit;
                         localStage.AssignedUserName = s.AssignedUserName;
                         localStage.AssignedUserId = s.AssignedUserId;
                         localStage.DueDate = s.DueDate;
@@ -531,6 +537,12 @@ public class SyncService : ISyncService
                     {
                         Id = s.Id, TaskId = s.TaskId, Name = s.Name,
                         Description = s.Description, AssignedUserName = s.AssignedUserName,
+                        ServiceTemplateId = s.ServiceTemplateId,
+                        ServiceNameSnapshot = s.ServiceName,
+                        ServiceDescriptionSnapshot = s.ServiceDescription,
+                        WorkUnitSnapshot = s.WorkUnit,
+                        WorkQuantity = s.WorkQuantity,
+                        WorkPricePerUnit = s.WorkPricePerUnit,
                         AssignedUserId = s.AssignedUserId,
                         DueDate = s.DueDate,
                         Status = Enum.Parse<StageStatus>(s.Status),
@@ -543,6 +555,7 @@ public class SyncService : ISyncService
                 }
 
                 await db.StageAssignees.Where(a => a.StageId == s.Id).ExecuteDeleteAsync();
+                await db.StageServices.Where(x => x.StageId == s.Id).ExecuteDeleteAsync();
                 if (s.AssigneeUserIds is { Count: > 0 })
                 {
                     foreach (var uid in s.AssigneeUserIds)
@@ -559,6 +572,25 @@ public class SyncService : ISyncService
                     }
                 }
 
+                if (s.Services is { Count: > 0 })
+                {
+                    foreach (var ss in s.Services)
+                    {
+                        db.StageServices.Add(new LocalStageService
+                        {
+                            Id = ss.Id,
+                            StageId = s.Id,
+                            ServiceTemplateId = ss.ServiceTemplateId,
+                            ServiceName = ss.ServiceName,
+                            ServiceDescription = ss.ServiceDescription,
+                            Unit = ss.Unit,
+                            Quantity = ss.Quantity,
+                            PricePerUnit = ss.PricePerUnit,
+                            IsSynced = true
+                        });
+                    }
+                }
+
                 foreach (var sm in s.Materials)
                 {
                     var existingMat = await db.StageMaterials
@@ -569,12 +601,13 @@ public class SyncService : ISyncService
                         {
                             Id = sm.Id, StageId = s.Id,
                             MaterialId = sm.MaterialId, MaterialName = sm.MaterialName,
-                            Unit = sm.Unit, Quantity = sm.Quantity, IsSynced = true
+                            Unit = sm.Unit, Quantity = sm.Quantity, PricePerUnit = sm.PricePerUnit, IsSynced = true
                         });
                     }
                     else
                     {
                         existingMat.Quantity = sm.Quantity;
+                        existingMat.PricePerUnit = sm.PricePerUnit;
                         existingMat.IsSynced = true;
                     }
                 }

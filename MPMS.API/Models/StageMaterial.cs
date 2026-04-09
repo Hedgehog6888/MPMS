@@ -11,4 +11,6 @@ public class StageMaterial
     public Material Material { get; set; } = null!;
 
     public decimal Quantity { get; set; }
+
+    public decimal PricePerUnit { get; set; }
 }

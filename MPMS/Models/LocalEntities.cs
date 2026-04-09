@@ -176,6 +176,12 @@ public class LocalTaskStage : LocalEntity
     public Guid TaskId { get; set; }
     [MaxLength(200)] public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public Guid? ServiceTemplateId { get; set; }
+    [MaxLength(200)] public string? ServiceNameSnapshot { get; set; }
+    public string? ServiceDescriptionSnapshot { get; set; }
+    [MaxLength(50)] public string? WorkUnitSnapshot { get; set; }
+    public decimal WorkQuantity { get; set; }
+    public decimal WorkPricePerUnit { get; set; }
     public Guid? AssignedUserId { get; set; }
     [MaxLength(100)] public string? AssignedUserName { get; set; }
     [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
@@ -224,6 +230,29 @@ public class LocalMaterialCategory
 {
     public Guid Id { get; set; }
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
+}
+
+public class LocalServiceCategory
+{
+    public Guid Id { get; set; }
+    [MaxLength(120)] public string Name { get; set; } = string.Empty;
+    [MaxLength(500)] public string? Description { get; set; }
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class LocalServiceTemplate : LocalEntity
+{
+    [MaxLength(200)] public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    [MaxLength(50)] public string? Unit { get; set; }
+    [MaxLength(100)] public string? Article { get; set; }
+    public decimal BasePrice { get; set; }
+    public Guid CategoryId { get; set; }
+    [MaxLength(120)] public string CategoryName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 public class LocalEquipmentCategory
@@ -352,7 +381,19 @@ public class LocalStageMaterial : LocalEntity
     [MaxLength(200)] public string MaterialName { get; set; } = string.Empty;
     [MaxLength(50)]  public string? Unit { get; set; }
     public decimal Quantity { get; set; }
+    public decimal PricePerUnit { get; set; }
     [NotMapped] public string StageName { get; set; } = string.Empty;
+}
+
+public class LocalStageService : LocalEntity
+{
+    public Guid StageId { get; set; }
+    public Guid ServiceTemplateId { get; set; }
+    [MaxLength(200)] public string ServiceName { get; set; } = string.Empty;
+    public string? ServiceDescription { get; set; }
+    [MaxLength(50)] public string? Unit { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal PricePerUnit { get; set; }
 }
 
 public class LocalFile : LocalEntity

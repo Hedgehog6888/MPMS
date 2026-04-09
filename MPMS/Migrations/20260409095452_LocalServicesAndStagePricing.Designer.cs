@@ -3,6 +3,7 @@ using System;
 using MPMS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MPMS.Migrations
 {
     [DbContext(typeof(LocalDbContext))]
-    partial class LocalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409095452_LocalServicesAndStagePricing")]
+    partial class LocalServicesAndStagePricing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.13");
@@ -741,49 +744,6 @@ namespace MPMS.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("StageMaterials");
-                });
-
-            modelBuilder.Entity("MPMS.Models.LocalStageService", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsSynced")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("LastModifiedLocally")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("PricePerUnit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ServiceDescription")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ServiceName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ServiceTemplateId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("StageId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Unit")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StageServices");
                 });
 
             modelBuilder.Entity("MPMS.Models.LocalTask", b =>

@@ -55,12 +55,30 @@ public class TaskStagesController : ControllerBase
         if (!DueDatePolicy.IsAllowed(request.DueDate))
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
+        ServiceTemplate? serviceTemplate = null;
+        if (request.ServiceTemplateId.HasValue)
+        {
+            serviceTemplate = await _db.ServiceTemplates
+                .FirstOrDefaultAsync(s => s.Id == request.ServiceTemplateId.Value && s.IsActive);
+            if (serviceTemplate is null)
+                return BadRequest(new { message = "Услуга не найдена" });
+        }
+
+        var workPricePerUnit = request.WorkPricePerUnit ?? serviceTemplate?.BasePrice ?? 0m;
+        var workQuantity = request.WorkQuantity;
+
         var stage = new TaskStage
         {
             Id = id,
             TaskId = request.TaskId,
             Name = request.Name,
             Description = request.Description,
+            ServiceTemplateId = request.ServiceTemplateId,
+            ServiceNameSnapshot = serviceTemplate?.Name,
+            ServiceDescriptionSnapshot = serviceTemplate?.Description,
+            WorkUnitSnapshot = serviceTemplate?.Unit,
+            WorkQuantity = workQuantity,
+            WorkPricePerUnit = workPricePerUnit,
             AssignedUserId = request.AssignedUserId,
             DueDate = request.DueDate,
             Status = StageStatus.Planned,
@@ -69,6 +87,33 @@ public class TaskStagesController : ControllerBase
         };
 
         _db.TaskStages.Add(stage);
+
+        var serviceItems = request.ServiceItems ?? [];
+        if (serviceItems.Count > 0)
+        {
+            var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
+            var templates = await _db.ServiceTemplates
+                .Where(s => ids.Contains(s.Id) && s.IsActive)
+                .ToDictionaryAsync(s => s.Id);
+            if (templates.Count != ids.Count)
+                return BadRequest(new { message = "Одна или несколько услуг не найдены" });
+
+            foreach (var item in serviceItems)
+            {
+                var tpl = templates[item.ServiceTemplateId];
+                _db.StageServices.Add(new StageService
+                {
+                    StageId = stage.Id,
+                    ServiceTemplateId = tpl.Id,
+                    ServiceNameSnapshot = tpl.Name,
+                    ServiceDescriptionSnapshot = tpl.Description,
+                    UnitSnapshot = tpl.Unit,
+                    Quantity = item.Quantity,
+                    PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
+                });
+            }
+        }
+
         await _db.SaveChangesAsync();
 
         await _log.LogAsync(CurrentUserId(), ActivityActionType.Created,
@@ -92,6 +137,58 @@ public class TaskStagesController : ControllerBase
 
         stage.Name = request.Name;
         stage.Description = request.Description;
+        stage.ServiceTemplateId = request.ServiceTemplateId;
+        if (request.ServiceTemplateId.HasValue)
+        {
+            var serviceTemplate = await _db.ServiceTemplates.FirstOrDefaultAsync(s => s.Id == request.ServiceTemplateId.Value);
+            if (serviceTemplate is null)
+                return BadRequest(new { message = "Услуга не найдена" });
+
+            stage.ServiceNameSnapshot = serviceTemplate.Name;
+            stage.ServiceDescriptionSnapshot = serviceTemplate.Description;
+            stage.WorkUnitSnapshot = serviceTemplate.Unit;
+        }
+        else
+        {
+            stage.ServiceNameSnapshot = null;
+            stage.ServiceDescriptionSnapshot = null;
+            stage.WorkUnitSnapshot = null;
+        }
+        stage.WorkQuantity = request.WorkQuantity;
+        stage.WorkPricePerUnit = request.WorkPricePerUnit;
+        var serviceItems = request.ServiceItems ?? [];
+        if (serviceItems.Count > 0)
+        {
+            var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
+            var templates = await _db.ServiceTemplates
+                .Where(s => ids.Contains(s.Id) && s.IsActive)
+                .ToDictionaryAsync(s => s.Id);
+            if (templates.Count != ids.Count)
+                return BadRequest(new { message = "Одна или несколько услуг не найдены" });
+
+            var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
+            _db.StageServices.RemoveRange(existingServices);
+            foreach (var item in serviceItems)
+            {
+                var tpl = templates[item.ServiceTemplateId];
+                _db.StageServices.Add(new StageService
+                {
+                    Id = Guid.NewGuid(),
+                    StageId = id,
+                    ServiceTemplateId = tpl.Id,
+                    ServiceNameSnapshot = tpl.Name,
+                    ServiceDescriptionSnapshot = tpl.Description,
+                    UnitSnapshot = tpl.Unit,
+                    Quantity = item.Quantity,
+                    PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
+                });
+            }
+        }
+        else if (!request.ServiceTemplateId.HasValue)
+        {
+            var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
+            _db.StageServices.RemoveRange(existingServices);
+        }
         stage.AssignedUserId = request.AssignedUserId;
         stage.Status = request.Status;
         stage.DueDate = request.DueDate;
@@ -154,6 +251,8 @@ public class TaskStagesController : ControllerBase
                 StageId = id,
                 MaterialId = request.MaterialId,
                 Quantity = request.Quantity
+                ,
+                PricePerUnit = material.Cost ?? 0m
             };
             _db.StageMaterials.Add(existing);
         }
@@ -168,7 +267,13 @@ public class TaskStagesController : ControllerBase
             $"В этап «{stage.Name}» добавлен материал «{material.Name}» в количестве {request.Quantity:g} {(material.Unit ?? "").Trim()}".Trim());
 
         return Ok(new StageMaterialResponse(
-            existing.Id, material.Id, material.Name, material.Unit, existing.Quantity));
+            existing.Id,
+            material.Id,
+            material.Name,
+            material.Unit,
+            existing.Quantity,
+            existing.PricePerUnit,
+            existing.Quantity * existing.PricePerUnit));
     }
 
     /// <summary>Remove material from stage</summary>
@@ -222,6 +327,7 @@ public class TaskStagesController : ControllerBase
         await _db.TaskStages
             .Include(s => s.AssignedUser)
             .Include(s => s.StageAssignees)
+            .Include(s => s.StageServices)
             .Include(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
             .Include(s => s.Files)
@@ -229,12 +335,41 @@ public class TaskStagesController : ControllerBase
             .FirstOrDefaultAsync(s => s.Id == id);
 
     private static TaskStageResponse MapToResponse(TaskStage s) =>
-        new(s.Id, s.TaskId, s.Name, s.Description,
+        new(
+            s.Id, s.TaskId, s.Name, s.Description,
+            s.ServiceTemplateId,
+            s.ServiceNameSnapshot,
+            s.ServiceDescriptionSnapshot,
+            s.WorkUnitSnapshot,
+            s.WorkQuantity,
+            s.WorkPricePerUnit,
+            (s.StageServices.Count > 0
+                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+                : s.WorkQuantity * s.WorkPricePerUnit),
+            s.StageServices.Select(ss => new StageServiceResponse(
+                ss.Id,
+                ss.ServiceTemplateId,
+                ss.ServiceNameSnapshot,
+                ss.ServiceDescriptionSnapshot,
+                ss.UnitSnapshot,
+                ss.Quantity,
+                ss.PricePerUnit,
+                ss.Quantity * ss.PricePerUnit)).ToList(),
+            s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
+            (s.StageServices.Count > 0
+                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+                : s.WorkQuantity * s.WorkPricePerUnit) + s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
             s.AssignedUserId, s.AssignedUser?.Name,
             s.Status.ToString(),
             s.DueDate,
             s.StageMaterials.Select(sm => new StageMaterialResponse(
-                sm.Id, sm.MaterialId, sm.Material.Name, sm.Material.Unit, sm.Quantity)).ToList(),
+                sm.Id,
+                sm.MaterialId,
+                sm.Material.Name,
+                sm.Material.Unit,
+                sm.Quantity,
+                sm.PricePerUnit,
+                sm.Quantity * sm.PricePerUnit)).ToList(),
             s.Files.Select(f => new FileResponse(
                 f.Id, f.FileName, f.FileType ?? "", f.FileSize,
                 f.UploadedById, f.UploadedBy.Name,

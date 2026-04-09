@@ -63,13 +63,21 @@ public record TaskResponse(Guid Id, Guid ProjectId, string ProjectName,
 
 // ── Stages ────────────────────────────────────────────────────────────────────
 public record CreateStageRequest(Guid TaskId, string Name, string? Description,
-    Guid? AssignedUserId, DateOnly? DueDate = null, Guid? Id = null);
+    Guid? AssignedUserId, DateOnly? DueDate = null, Guid? Id = null,
+    Guid? ServiceTemplateId = null, decimal WorkQuantity = 0, decimal? WorkPricePerUnit = null,
+    List<StageServiceItemRequest>? ServiceItems = null);
 
 public record UpdateStageRequest(string Name, string? Description,
     Guid? AssignedUserId, StageStatus Status, DateOnly? DueDate = null,
-    bool IsMarkedForDeletion = false, bool IsArchived = false);
+    bool IsMarkedForDeletion = false, bool IsArchived = false,
+    Guid? ServiceTemplateId = null, decimal WorkQuantity = 0, decimal WorkPricePerUnit = 0,
+    List<StageServiceItemRequest>? ServiceItems = null);
+
+public record StageServiceItemRequest(Guid ServiceTemplateId, decimal Quantity, decimal? PricePerUnit = null);
 
 public record StageResponse(Guid Id, Guid TaskId, string Name, string? Description,
+    Guid? ServiceTemplateId, string? ServiceName, string? ServiceDescription, string? WorkUnit,
+    decimal WorkQuantity, decimal WorkPricePerUnit, decimal WorkTotal, List<StageServiceResponse> Services, decimal MaterialTotal, decimal StageTotal,
     Guid? AssignedUserId, string? AssignedUserName, string Status,
     DateOnly? DueDate,
     List<StageMaterialResponse> Materials, List<FileDto> Files,
@@ -234,7 +242,9 @@ public record RecordEquipmentEventRequest(
     string? Comment);
 
 public record StageMaterialResponse(Guid Id, Guid MaterialId, string MaterialName,
-    string? Unit, decimal Quantity);
+    string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
+public record StageServiceResponse(Guid Id, Guid ServiceTemplateId, string ServiceName, string? ServiceDescription,
+    string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
 public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity);
 
 // ── Files ─────────────────────────────────────────────────────────────────────

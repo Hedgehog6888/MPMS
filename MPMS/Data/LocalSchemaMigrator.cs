@@ -37,6 +37,7 @@ public static class LocalSchemaMigrator
         AddBirthDateAndAddressColumns(conn);
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
+        ApplyServicesSchema(conn);
     }
 
     private static void ApplyMaterialsInventorySchema(SqliteConnection conn)
@@ -360,6 +361,62 @@ public static class LocalSchemaMigrator
         catch (SqliteException) { /* ignore */ }
     }
 
+    private static void ApplyServicesSchema(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "ServiceCategories" (
+                "Id"          TEXT NOT NULL CONSTRAINT "PK_ServiceCategories" PRIMARY KEY,
+                "Name"        TEXT NOT NULL DEFAULT '',
+                "Description" TEXT NULL,
+                "SortOrder"   INTEGER NOT NULL DEFAULT 0,
+                "IsActive"    INTEGER NOT NULL DEFAULT 1
+            );
+            """);
+
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "ServiceTemplates" (
+                "Id"                 TEXT NOT NULL CONSTRAINT "PK_ServiceTemplates" PRIMARY KEY,
+                "Name"               TEXT NOT NULL DEFAULT '',
+                "Description"        TEXT NULL,
+                "Unit"               TEXT NULL,
+                "Article"            TEXT NULL,
+                "BasePrice"          TEXT NOT NULL DEFAULT '0',
+                "CategoryId"         TEXT NOT NULL,
+                "CategoryName"       TEXT NOT NULL DEFAULT '',
+                "IsActive"           INTEGER NOT NULL DEFAULT 1,
+                "CreatedAt"          TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "UpdatedAt"          TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
+                "IsSynced"           INTEGER NOT NULL DEFAULT 1,
+                "LastModifiedLocally" TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
+
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceTemplateId\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceNameSnapshot\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceDescriptionSnapshot\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkUnitSnapshot\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkQuantity\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkPricePerUnit\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"StageMaterials\" ADD COLUMN \"PricePerUnit\" TEXT NOT NULL DEFAULT '0';");
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "StageServices" (
+                "Id"                TEXT NOT NULL CONSTRAINT "PK_StageServices" PRIMARY KEY,
+                "StageId"           TEXT NOT NULL,
+                "ServiceTemplateId" TEXT NOT NULL,
+                "ServiceName"       TEXT NOT NULL DEFAULT '',
+                "ServiceDescription" TEXT NULL,
+                "Unit"              TEXT NULL,
+                "Quantity"          TEXT NOT NULL DEFAULT '0',
+                "PricePerUnit"      TEXT NOT NULL DEFAULT '0',
+                "IsSynced"          INTEGER NOT NULL DEFAULT 1,
+                "LastModifiedLocally" TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
+
+        SeedDefaultServiceCategories(conn);
+        SeedDefaultServiceTemplates(conn);
+    }
+
     private static void TryAlterTable(SqliteConnection conn, string sql)
     {
         try { Execute(conn, sql); }
@@ -428,6 +485,136 @@ public static class LocalSchemaMigrator
         cmd.Parameters.AddWithValue("@name", name);
         cmd.ExecuteNonQuery();
     }
+
+    private static void SeedDefaultServiceCategories(SqliteConnection conn)
+    {
+        if (!IsCategoryTableEmpty(conn, "ServiceCategories"))
+            return;
+
+        for (var i = 0; i < DefaultServiceCategoryNames.Length; i++)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                INSERT INTO "ServiceCategories" ("Id", "Name", "SortOrder", "IsActive")
+                VALUES (@id, @name, @sort, 1)
+                """;
+            cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("@name", DefaultServiceCategoryNames[i]);
+            cmd.Parameters.AddWithValue("@sort", i + 1);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    private static void SeedDefaultServiceTemplates(SqliteConnection conn)
+    {
+        using var countCmd = conn.CreateCommand();
+        countCmd.CommandText = "SELECT COUNT(*) FROM \"ServiceTemplates\"";
+        var count = Convert.ToInt32(countCmd.ExecuteScalar());
+        if (count > 0) return;
+
+        var categories = new List<(string Id, string Name)>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT \"Id\", \"Name\" FROM \"ServiceCategories\" ORDER BY \"SortOrder\", \"Name\"";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+                categories.Add((reader.GetString(0), reader.GetString(1)));
+        }
+        if (categories.Count == 0) return;
+
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        for (var i = 0; i < 100; i++)
+        {
+            var category = categories[i % categories.Count];
+            using var insert = conn.CreateCommand();
+            insert.CommandText = """
+                INSERT INTO "ServiceTemplates"
+                ("Id","Name","Description","Unit","Article","BasePrice","CategoryId","CategoryName","IsActive","CreatedAt","UpdatedAt","IsSynced","LastModifiedLocally")
+                VALUES
+                (@id,@name,@description,@unit,@article,@price,@categoryId,@categoryName,1,@createdAt,@updatedAt,1,@lastModified)
+                """;
+            insert.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
+            insert.Parameters.AddWithValue("@name", $"{DefaultServiceTemplateNames[i % DefaultServiceTemplateNames.Length]} #{i + 1:000}");
+            insert.Parameters.AddWithValue("@description", "Шаблонная услуга для формирования этапов и расчета сметы.");
+            insert.Parameters.AddWithValue("@unit", i % 3 == 0 ? "м" : i % 3 == 1 ? "м2" : "шт");
+            insert.Parameters.AddWithValue("@article", $"SRV-{i + 1:0000}");
+            insert.Parameters.AddWithValue("@price", (120 + (i * 17 % 980)).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            insert.Parameters.AddWithValue("@categoryId", category.Id);
+            insert.Parameters.AddWithValue("@categoryName", category.Name);
+            insert.Parameters.AddWithValue("@createdAt", now);
+            insert.Parameters.AddWithValue("@updatedAt", now);
+            insert.Parameters.AddWithValue("@lastModified", now);
+            insert.ExecuteNonQuery();
+        }
+    }
+
+    private static readonly string[] DefaultServiceCategoryNames =
+    [
+        "Электромонтаж",
+        "Слаботочные системы",
+        "Сантехника",
+        "Отопление",
+        "Вентиляция",
+        "Кондиционирование",
+        "Отделочные работы",
+        "Малярные работы",
+        "Штукатурные работы",
+        "Напольные покрытия",
+        "Плиточные работы",
+        "Гипсокартон",
+        "Фасадные работы",
+        "Кровельные работы",
+        "Бетонные работы",
+        "Кладочные работы",
+        "Монтаж дверей",
+        "Монтаж окон",
+        "Демонтажные работы",
+        "Пуско-наладка"
+    ];
+
+    private static readonly string[] DefaultServiceTemplateNames =
+    [
+        "Прокладка кабеля ВВГ-Пнг(А)-LS 3х1.5",
+        "Прокладка кабеля ВВГ-Пнг(А)-LS 3х2.5",
+        "Монтаж распределительной коробки",
+        "Установка автоматического выключателя",
+        "Монтаж розетки внутренней",
+        "Монтаж выключателя одноклавишного",
+        "Монтаж светильника потолочного",
+        "Прокладка гофры ПВХ",
+        "Штробление стен под кабель",
+        "Заделка штробы",
+        "Прокладка витой пары UTP cat.6",
+        "Установка слаботочного щита",
+        "Обжим и тестирование линии",
+        "Монтаж трубы ППР",
+        "Монтаж трубы металлопластик",
+        "Установка смесителя",
+        "Установка унитаза",
+        "Монтаж радиатора отопления",
+        "Опрессовка системы отопления",
+        "Монтаж воздуховода",
+        "Установка решетки вентиляции",
+        "Монтаж внутреннего блока сплит-системы",
+        "Монтаж наружного блока сплит-системы",
+        "Шпаклевка стен под покраску",
+        "Грунтование поверхности",
+        "Покраска стен в 2 слоя",
+        "Штукатурка стен по маякам",
+        "Укладка ламината",
+        "Укладка керамогранита",
+        "Затирка плиточных швов",
+        "Монтаж каркаса ГКЛ",
+        "Обшивка стен ГКЛ",
+        "Монтаж фасадного утеплителя",
+        "Монтаж кровельной мембраны",
+        "Армирование монолитной плиты",
+        "Заливка бетонной стяжки",
+        "Кладка перегородок из газоблока",
+        "Монтаж межкомнатной двери",
+        "Монтаж ПВХ окна",
+        "Демонтаж перегородки"
+    ];
 
     private static void Execute(SqliteConnection conn, string sql)
     {

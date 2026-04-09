@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
     public DbSet<TaskStage> TaskStages => Set<TaskStage>();
+    public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
+    public DbSet<ServiceTemplate> ServiceTemplates => Set<ServiceTemplate>();
     public DbSet<MaterialCategory> MaterialCategories => Set<MaterialCategory>();
     public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
     public DbSet<Material> Materials => Set<Material>();
@@ -23,6 +25,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Equipment> Equipments => Set<Equipment>();
     public DbSet<EquipmentHistoryEntry> EquipmentHistoryEntries => Set<EquipmentHistoryEntry>();
     public DbSet<StageMaterial> StageMaterials => Set<StageMaterial>();
+    public DbSet<StageService> StageServices => Set<StageService>();
     public DbSet<FileAttachment> Files => Set<FileAttachment>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
@@ -141,6 +144,8 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.WorkQuantity).HasPrecision(18, 3);
+            entity.Property(e => e.WorkPricePerUnit).HasPrecision(18, 2);
 
             entity.HasOne(e => e.Task)
                   .WithMany(t => t.Stages)
@@ -151,6 +156,36 @@ public class ApplicationDbContext : DbContext
                   .WithMany(u => u.AssignedStages)
                   .HasForeignKey(e => e.AssignedUserId)
                   .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ServiceTemplate)
+                  .WithMany(st => st.TaskStages)
+                  .HasForeignKey(e => e.ServiceTemplateId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── ServiceCategory ───────────────────────────────────────────────
+        modelBuilder.Entity<ServiceCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        // ── ServiceTemplate ───────────────────────────────────────────────
+        modelBuilder.Entity<ServiceTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.BasePrice).HasPrecision(18, 2);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.HasIndex(e => e.Name);
+            entity.HasIndex(e => e.Article).IsUnique().HasFilter("[Article] IS NOT NULL");
+
+            entity.HasOne(e => e.Category)
+                  .WithMany(c => c.Services)
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ── MaterialCategory ──────────────────────────────────────────────
@@ -293,6 +328,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
 
             entity.Property(e => e.Quantity).HasPrecision(18, 3);
+            entity.Property(e => e.PricePerUnit).HasPrecision(18, 2);
 
             entity.HasOne(e => e.Stage)
                   .WithMany(s => s.StageMaterials)
@@ -302,6 +338,25 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.Material)
                   .WithMany(m => m.StageMaterials)
                   .HasForeignKey(e => e.MaterialId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── StageService ──────────────────────────────────────────────────
+        modelBuilder.Entity<StageService>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.Quantity).HasPrecision(18, 3);
+            entity.Property(e => e.PricePerUnit).HasPrecision(18, 2);
+
+            entity.HasOne(e => e.Stage)
+                  .WithMany(s => s.StageServices)
+                  .HasForeignKey(e => e.StageId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ServiceTemplate)
+                  .WithMany()
+                  .HasForeignKey(e => e.ServiceTemplateId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

@@ -4,6 +4,7 @@ using MPMS.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MPMS.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409095432_AddServicesAndStagePricing")]
+    partial class AddServicesAndStagePricing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -788,46 +791,6 @@ namespace MPMS.API.Migrations
                     b.ToTable("StageMaterials");
                 });
 
-            modelBuilder.Entity("MPMS.API.Models.StageService", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWSEQUENTIALID()");
-
-                    b.Property<decimal>("PricePerUnit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
-
-                    b.Property<string>("ServiceDescriptionSnapshot")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ServiceNameSnapshot")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ServiceTemplateId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("StageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UnitSnapshot")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceTemplateId");
-
-                    b.HasIndex("StageId");
-
-                    b.ToTable("StageServices");
-                });
-
             modelBuilder.Entity("MPMS.API.Models.SyncedActivityLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1355,25 +1318,6 @@ namespace MPMS.API.Migrations
                     b.Navigation("Stage");
                 });
 
-            modelBuilder.Entity("MPMS.API.Models.StageService", b =>
-                {
-                    b.HasOne("MPMS.API.Models.ServiceTemplate", "ServiceTemplate")
-                        .WithMany()
-                        .HasForeignKey("ServiceTemplateId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MPMS.API.Models.TaskStage", "Stage")
-                        .WithMany("StageServices")
-                        .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ServiceTemplate");
-
-                    b.Navigation("Stage");
-                });
-
             modelBuilder.Entity("MPMS.API.Models.SyncedActivityLog", b =>
                 {
                     b.HasOne("MPMS.API.Models.User", "User")
@@ -1524,8 +1468,6 @@ namespace MPMS.API.Migrations
                     b.Navigation("StageAssignees");
 
                     b.Navigation("StageMaterials");
-
-                    b.Navigation("StageServices");
                 });
 
             modelBuilder.Entity("MPMS.API.Models.User", b =>

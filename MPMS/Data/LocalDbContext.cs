@@ -24,6 +24,8 @@ public class LocalDbContext : DbContext
     public DbSet<LocalProject>       Projects         => Set<LocalProject>();
     public DbSet<LocalTask>          Tasks            => Set<LocalTask>();
     public DbSet<LocalTaskStage>     TaskStages       => Set<LocalTaskStage>();
+    public DbSet<LocalServiceCategory> ServiceCategories => Set<LocalServiceCategory>();
+    public DbSet<LocalServiceTemplate> ServiceTemplates => Set<LocalServiceTemplate>();
     public DbSet<LocalMaterialCategory> MaterialCategories => Set<LocalMaterialCategory>();
     public DbSet<LocalEquipmentCategory> EquipmentCategories => Set<LocalEquipmentCategory>();
     public DbSet<LocalMaterial>      Materials        => Set<LocalMaterial>();
@@ -31,6 +33,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalEquipment>     Equipments       => Set<LocalEquipment>();
     public DbSet<LocalEquipmentHistoryEntry> EquipmentHistoryEntries => Set<LocalEquipmentHistoryEntry>();
     public DbSet<LocalStageMaterial> StageMaterials   => Set<LocalStageMaterial>();
+    public DbSet<LocalStageService> StageServices   => Set<LocalStageService>();
     public DbSet<LocalFile>          Files            => Set<LocalFile>();
     public DbSet<LocalActivityLog>   ActivityLogs     => Set<LocalActivityLog>();
     public DbSet<LocalProjectMember> ProjectMembers    => Set<LocalProjectMember>();
@@ -55,6 +58,10 @@ public class LocalDbContext : DbContext
 
         modelBuilder.Entity<LocalTaskStage>()
             .Property(e => e.Status).HasConversion<string>();
+        modelBuilder.Entity<LocalTaskStage>()
+            .Property(e => e.WorkQuantity).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalTaskStage>()
+            .Property(e => e.WorkPricePerUnit).HasPrecision(18, 2);
 
         modelBuilder.Entity<PendingOperation>()
             .Property(e => e.OperationType).HasConversion<string>();
@@ -76,6 +83,14 @@ public class LocalDbContext : DbContext
             .Property(e => e.Delta).HasPrecision(18, 3);
         modelBuilder.Entity<LocalMaterialStockMovement>()
             .Property(e => e.QuantityAfter).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalStageMaterial>()
+            .Property(e => e.PricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalStageService>()
+            .Property(e => e.Quantity).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalStageService>()
+            .Property(e => e.PricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalServiceTemplate>()
+            .Property(e => e.BasePrice).HasPrecision(18, 2);
     }
 }
 
