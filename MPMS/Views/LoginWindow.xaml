@@ -145,211 +145,141 @@
             <Grid Grid.Column="0" ClipToBounds="True"
                   MouseLeftButtonDown="DragBar_MouseLeftButtonDown">
 
-                <!-- Background gradient -->
                 <Grid.Background>
                     <SolidColorBrush Color="#111111"/>
                 </Grid.Background>
 
-                <!-- Decorative rings with animation -->
-                <Grid IsHitTestVisible="False">
+                <Grid Margin="26,28,26,22">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <!-- Top-left thick ring — slow fade -->
-                    <Ellipse Width="280" Height="280"
-                             Stroke="#0F2540" StrokeThickness="40"
-                             Fill="Transparent"
-                             HorizontalAlignment="Left" VerticalAlignment="Top"
-                             Margin="-110,-110,0,0">
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever"
-                                                AutoReverse="True">
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="Opacity"
-                                            From="1" To="0.25"
-                                            Duration="0:0:5">
-                                            <DoubleAnimation.EasingFunction>
-                                                <SineEase EasingMode="EaseInOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
+                    <!-- Header -->
+                    <StackPanel Grid.Row="0">
+                        <Border Width="90" Height="40"
+                                Background="White"
+                                CornerRadius="8"
+                                HorizontalAlignment="Left">
+                            <TextBlock Text="MPMS"
+                                       Foreground="#111111"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Montage Project Management System"
+                                   Foreground="#C1C7D0"
+                                   FontSize="11"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
 
-                    <!-- Bottom-right ring — opposite phase -->
-                    <Ellipse Width="230" Height="230"
-                             Stroke="#0D2035" StrokeThickness="32"
-                             Fill="Transparent" Opacity="0.25"
-                             HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                             Margin="0,0,-75,-75">
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever"
-                                                AutoReverse="True">
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="Opacity"
-                                            From="0.25" To="1"
-                                            Duration="0:0:5">
-                                            <DoubleAnimation.EasingFunction>
-                                                <SineEase EasingMode="EaseInOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-
-                    <!-- Slowly rotating tilted ellipse (centre) -->
-                    <Ellipse Width="160" Height="100"
-                             Stroke="#152A45" StrokeThickness="1"
-                             Fill="Transparent" Opacity="0.6"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center"
-                             RenderTransformOrigin="0.5,0.5">
-                        <Ellipse.RenderTransform>
-                            <RotateTransform Angle="0"/>
-                        </Ellipse.RenderTransform>
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                            From="0" To="360"
-                                            Duration="0:0:28"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-
-                    <!-- Inner smaller rotating ellipse (opposite direction) -->
-                    <Ellipse Width="100" Height="60"
-                             Stroke="#1B3A5A" StrokeThickness="0.8"
-                             Fill="Transparent" Opacity="0.5"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center"
-                             RenderTransformOrigin="0.5,0.5">
-                        <Ellipse.RenderTransform>
-                            <RotateTransform Angle="45"/>
-                        </Ellipse.RenderTransform>
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever">
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                            From="45" To="-315"
-                                            Duration="0:0:18"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-
-                    <!-- Radial glow — pulsing -->
-                    <Ellipse Width="200" Height="200"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center" Opacity="0.5">
-                        <Ellipse.Fill>
-                            <RadialGradientBrush>
-                                <GradientStop Color="#0E2240" Offset="0"/>
-                                <GradientStop Color="Transparent" Offset="1"/>
-                            </RadialGradientBrush>
-                        </Ellipse.Fill>
-                        <Ellipse.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard RepeatBehavior="Forever"
-                                                AutoReverse="True">
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="Opacity"
-                                            From="0.3" To="0.8"
-                                            Duration="0:0:4">
-                                            <DoubleAnimation.EasingFunction>
-                                                <SineEase EasingMode="EaseInOut"/>
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Ellipse.Triggers>
-                    </Ellipse>
-
-                    <!-- Small accent dots -->
-                    <Ellipse Width="5" Height="5" Fill="#1B6EC2" Opacity="0.7"
-                             HorizontalAlignment="Right" VerticalAlignment="Top"
-                             Margin="0,115,40,0"/>
-                    <Ellipse Width="4" Height="4" Fill="#4DA3F5" Opacity="0.5"
-                             HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                             Margin="46,0,0,95"/>
-                </Grid>
-
-                <!-- ── Main content ───────────────────────────────── -->
-                <StackPanel VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
-                            Margin="28,0">
-
-                    <!-- Logo МС -->
-                    <Border Width="92" Height="92" CornerRadius="22"
-                            HorizontalAlignment="Center"
-                            Margin="0,0,0,26">
-                        <Border.Background>
-                            <SolidColorBrush Color="#000000"/>
-                        </Border.Background>
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="М"
+                    <!-- Main card -->
+                    <Border Grid.Row="1"
+                            Margin="0,22,0,22"
+                            Background="#1A1A1A"
+                            CornerRadius="12"
+                            BorderThickness="1"
+                            BorderBrush="#2A2A2A"
+                            Padding="18,18,18,16"
+                            VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="Монтажные проекты под контролем"
                                        Foreground="White"
-                                       FontSize="34" FontWeight="Bold"
-                                       FontFamily="Segoe UI"/>
-                            <Rectangle Width="2" Height="26"
-                                       Fill="White" Opacity="0.45"
-                                       VerticalAlignment="Center"
-                                       Margin="6,0,6,0"/>
-                            <TextBlock Text="С"
-                                       Foreground="#D0D0D0"
-                                       FontSize="34" FontWeight="Bold"
-                                       FontFamily="Segoe UI"/>
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8"/>
+                            <TextBlock Text="MPMS объединяет планирование, склад и командную работу в одном рабочем пространстве."
+                                       TextWrapping="Wrap"
+                                       Foreground="#9FA7B5"
+                                       FontSize="12"
+                                       Margin="0,0,0,14"/>
+
+                            <Border Height="1" Background="#2A2A2A" Margin="0,0,0,14"/>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE8C8;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="#DADDE3"
+                                           VerticalAlignment="Top"
+                                           Margin="0,1,10,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Проекты и этапы"
+                                               Foreground="#DADDE3"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Структурируйте работы по стадиям и ответственным."
+                                               Foreground="#9FA7B5"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE823;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="#DADDE3"
+                                           VerticalAlignment="Top"
+                                           Margin="0,1,10,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Задачи и сроки"
+                                               Foreground="#DADDE3"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Отслеживайте статус, приоритеты и дедлайны без лишних шагов."
+                                               Foreground="#9FA7B5"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE7BF;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="#DADDE3"
+                                           VerticalAlignment="Top"
+                                           Margin="0,1,10,0"/>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Материалы и команда"
+                                               Foreground="#DADDE3"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Синхронизируйте склад, исполнителей и ход выполнения."
+                                               Foreground="#9FA7B5"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
-                    <!-- System name -->
-                    <TextBlock Text="Информационная система"
-                               Foreground="#DADDE3"
-                               FontSize="13" FontWeight="SemiBold"
-                               FontFamily="Segoe UI"
-                               TextAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,5"/>
-                    <TextBlock Text="планирования и контроля"
-                               Foreground="#DADDE3"
-                               FontSize="13" FontWeight="SemiBold"
-                               FontFamily="Segoe UI"
-                               TextAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,5"/>
-                    <TextBlock Text="монтажных проектов"
-                               Foreground="#DADDE3"
-                               FontSize="13" FontWeight="SemiBold"
-                               FontFamily="Segoe UI"
-                               TextAlignment="Center"
-                               HorizontalAlignment="Center"/>
-
-                </StackPanel>
-
-                <!-- Version footer -->
-                <TextBlock Text="v 1.0  ·  2026"
-                           Foreground="#6B778C"
-                           FontSize="11"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Bottom"
-                           Margin="0,0,0,16"/>
+                    <!-- Footer -->
+                    <TextBlock Grid.Row="2"
+                               Text="v 1.0  ·  2026"
+                               Foreground="#6B778C"
+                               FontSize="11"
+                               HorizontalAlignment="Left"/>
+                </Grid>
             </Grid>
 
             <!-- ═══════════════════════════════════════════════════
