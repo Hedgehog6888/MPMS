@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS;
 using MPMS.Models;
@@ -76,8 +77,21 @@ public partial class ProjectsPage : UserControl
 
     private ProjectsViewModel? VM => DataContext as ProjectsViewModel;
 
-    private MainViewModel? MainVM =>
-        Application.Current.MainWindow?.DataContext as MainViewModel;
+    private MainViewModel? MainVM
+    {
+        get
+        {
+            // After login, Application.Current.MainWindow may still point to LoginWindow.
+            // Resolve MainViewModel from the actual main shell window.
+            if (MainWindow.Instance?.DataContext is MainViewModel vm)
+                return vm;
+
+            if (Application.Current.Windows.OfType<MainWindow>().FirstOrDefault() is { DataContext: MainViewModel fallbackVm })
+                return fallbackVm;
+
+            return App.Services.GetService<MainViewModel>();
+        }
+    }
 
     private void CreateProject_Click(object sender, RoutedEventArgs e)
     {
