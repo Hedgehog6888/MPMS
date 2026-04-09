@@ -45,7 +45,10 @@ public class ProjectsController : ControllerBase
             .Select(p => new ProjectListResponse(
                 p.Id, p.Name, p.Client,
                 p.StartDate, p.EndDate,
-                p.Status.ToString(), p.Manager.Name))
+                p.Status.ToString(), p.Manager.Name,
+                p.ManagerId, p.Description, p.Address,
+                p.CreatedAt, p.UpdatedAt,
+                p.IsMarkedForDeletion, p.IsArchived))
             .ToListAsync();
 
         return Ok(projects);
@@ -74,7 +77,8 @@ public class ProjectsController : ControllerBase
             p.Tasks.Count(t => t.Status == Models.TaskStatus.Completed),
             p.Tasks.Count(t => t.Status == Models.TaskStatus.InProgress),
             overdue,
-            p.CreatedAt, p.UpdatedAt));
+            p.CreatedAt, p.UpdatedAt,
+            p.IsMarkedForDeletion, p.IsArchived));
     }
 
     /// <summary>Create a new project</summary>
@@ -129,6 +133,8 @@ public class ProjectsController : ControllerBase
         project.EndDate = request.EndDate;
         project.Status = request.Status;
         project.ManagerId = request.ManagerId;
+        project.IsMarkedForDeletion = request.IsMarkedForDeletion;
+        project.IsArchived = request.IsArchived;
         project.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -162,7 +168,8 @@ public class ProjectsController : ControllerBase
             .ThenInclude(u => u.Role)
             .Select(pm => new UserResponse(
                 pm.User.Id, pm.User.FirstName, pm.User.LastName, pm.User.Username,
-                pm.User.Email, pm.User.Role.Name, pm.User.RoleId, pm.User.CreatedAt, pm.User.AvatarData, pm.User.SubRole, pm.User.AdditionalSubRoles, pm.User.BirthDate, pm.User.HomeAddress))
+                pm.User.Email, pm.User.Role.Name, pm.User.RoleId, pm.User.CreatedAt, pm.User.AvatarData, pm.User.SubRole, pm.User.AdditionalSubRoles, pm.User.BirthDate, pm.User.HomeAddress,
+                pm.User.IsBlocked, pm.User.BlockedAt, pm.User.BlockedReason))
             .ToListAsync();
 
         return Ok(members);

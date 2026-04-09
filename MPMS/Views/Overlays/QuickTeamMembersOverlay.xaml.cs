@@ -349,5 +349,6 @@ public partial class QuickTeamMembersOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 }

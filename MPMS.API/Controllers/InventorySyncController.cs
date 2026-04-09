@@ -26,7 +26,7 @@ public class InventorySyncController : ControllerBase
 
     private static EquipmentResponse EqToDto(Equipment e) => new(
         e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
-        e.Status.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
+        e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
         e.CheckedOutProjectId, e.CheckedOutTaskId);
 
     private static EquipmentHistoryEntryResponse HistToDto(EquipmentHistoryEntry x) => new(

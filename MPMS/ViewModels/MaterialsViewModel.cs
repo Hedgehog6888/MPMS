@@ -121,6 +121,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
     public async Task SaveNewMaterialAsync(CreateMaterialRequest req, Guid localId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
+        var inv = await InventoryNumbers.NextMaterialAsync(db, req.InventoryNumber);
         var material = new LocalMaterial
         {
             Id = localId,
@@ -128,6 +129,8 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             Unit = req.Unit,
             Description = req.Description,
             Quantity = req.InitialQuantity < 0 ? 0 : req.InitialQuantity,
+            Cost = req.Cost,
+            InventoryNumber = inv,
             CategoryId = req.CategoryId,
             ImagePath = req.ImagePath,
             IsSynced = false,
@@ -139,7 +142,8 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Material", localId, SyncOperation.Create,
-            req with { Id = localId });
+            req with { Id = localId, InventoryNumber = material.InventoryNumber });
+        await LogActivityAsync(db, $"Создан материал «{material.Name}»", "Material", localId, ActivityActionKind.Created);
 
         await LoadAsync();
     }
@@ -153,13 +157,24 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         material.Name = req.Name;
         material.Unit = req.Unit;
         material.Description = req.Description;
+        material.Cost = req.Cost;
         material.CategoryId = req.CategoryId;
         material.ImagePath = req.ImagePath;
         material.UpdatedAt = DateTime.UtcNow;
         material.IsSynced = false;
 
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Material", id, SyncOperation.Update, req);
+        await _sync.QueueOperationAsync("Material", id, SyncOperation.Update,
+            req with
+            {
+                InventoryNumber = material.InventoryNumber,
+                CategoryId = material.CategoryId,
+                ImagePath = material.ImagePath,
+                Cost = material.Cost,
+                IsWrittenOff = material.IsWrittenOff,
+                WrittenOffAt = material.WrittenOffAt,
+                WrittenOffComment = material.WrittenOffComment
+            });
         await LoadAsync();
     }
 
@@ -177,6 +192,37 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Material", material.Id, SyncOperation.Delete, new { });
 
         await LoadAsync();
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    {
+        var session = await db.AuthSessions.FindAsync(1);
+        var userName = session?.UserName ?? "Система";
+        var userId = session?.UserId;
+        var actorRole = session?.UserRole;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        var log = new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionType = actionType,
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ActivityLogs.Add(log);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 }
 

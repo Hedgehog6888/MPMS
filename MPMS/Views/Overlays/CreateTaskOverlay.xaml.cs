@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.ViewModels;
 using TaskStatus = MPMS.Models.TaskStatus;
 
@@ -44,6 +45,7 @@ public partial class CreateTaskOverlay : UserControl
         _fixedProjectId = projectId;
         _onSaved = onSaved;
         TitleLabel.Text = "Создать задачу";
+        SubtitleLabel.Text = "Добавьте задачу для отслеживания выполнения";
         SaveButton.Content = "Создать задачу";
         _ = LoadDataAsync(null, null);
     }
@@ -54,6 +56,7 @@ public partial class CreateTaskOverlay : UserControl
         _onSaved = onSaved;
         _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать задачу";
+        SubtitleLabel.Text = "Измените название, описание, приоритет и исполнителей";
         SaveButton.Content = "Сохранить изменения";
         StatusRow.Visibility = Visibility.Collapsed; // Status is auto from stages
 
@@ -350,7 +353,8 @@ public partial class CreateTaskOverlay : UserControl
                 var req = new UpdateTaskRequest(
                     NameBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
-                    primaryAssigneeId, priority, dueDate, status);
+                    primaryAssigneeId, priority, dueDate, status,
+                    _editTask.IsMarkedForDeletion, _editTask.IsArchived);
                 await taskDetailVm.EditTaskAsync(_editTask.Id, req);
                 if (_onSaved is not null) await _onSaved();
                 taskId = _editTask.Id;
@@ -397,6 +401,11 @@ public partial class CreateTaskOverlay : UserControl
             });
         }
         await db.SaveChangesAsync();
+
+        var sync = App.Services.GetRequiredService<ISyncService>();
+        var rows = await db.TaskAssignees.Where(a => a.TaskId == taskId).ToListAsync();
+        await sync.QueueOperationAsync("TaskAssignees", taskId, SyncOperation.Update,
+            new ReplaceTaskAssigneesRequest(rows.Select(a => new AssigneeSyncItemDto(a.Id, a.UserId)).ToList()));
     }
 
     private void PriorityLow_Click(object sender, RoutedEventArgs e)
@@ -483,6 +492,7 @@ public partial class CreateTaskOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 }
 

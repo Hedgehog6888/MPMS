@@ -178,6 +178,8 @@
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
                                                  Foreground="#000000"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="#000000"
                                                  GotFocus="UserSearch_GotFocus"
                                                  LostFocus="UserSearch_LostFocus"/>
                                     </Grid>
@@ -414,6 +416,8 @@
                                     <TextBox Text="{Binding ArchiveSearchText, UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent" BorderThickness="0"
                                              VerticalAlignment="Center" FontSize="13" Foreground="#000000"
+                                             SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                             SelectionTextBrush="#000000"
                                              GotFocus="ArchiveSearch_GotFocus" LostFocus="ArchiveSearch_LostFocus"/>
                                 </Grid>
                                 <Button Grid.Column="2"
@@ -741,6 +745,8 @@
                                         <TextBox Text="{Binding HistorySearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13" Foreground="#000000"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="#000000"
                                                  GotFocus="HistorySearch_GotFocus" LostFocus="HistorySearch_LostFocus"/>
                                     </Grid>
                                     <Button Grid.Column="2"
@@ -906,6 +912,8 @@
                                         <TextBox Text="{Binding ActivitySearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13" Foreground="#000000"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="#000000"
                                                  GotFocus="ActivitySearch_GotFocus" LostFocus="ActivitySearch_LostFocus"/>
                                     </Grid>
                                     <Button Grid.Column="2"

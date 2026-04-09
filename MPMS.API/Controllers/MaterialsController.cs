@@ -22,7 +22,9 @@ public class MaterialsController : ControllerBase
 
     private static MaterialResponse ToDto(Material m) => new(
         m.Id, m.Name, m.Unit, m.Description, m.Quantity,
-        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt);
+        m.Cost, m.InventoryNumber,
+        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt,
+        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment);
 
     /// <summary>Get all materials (with optional search)</summary>
     [HttpGet]
@@ -31,7 +33,12 @@ public class MaterialsController : ControllerBase
         var query = _db.Materials.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(m => m.Name.Contains(search));
+        {
+            var s = search.Trim();
+            query = query.Where(m =>
+                m.Name.Contains(s) ||
+                (m.InventoryNumber != null && m.InventoryNumber.Contains(s)));
+        }
 
         var materials = await query
             .OrderBy(m => m.Name)
@@ -41,11 +48,16 @@ public class MaterialsController : ControllerBase
                 m.Unit,
                 m.Description,
                 m.Quantity,
+                m.Cost,
+                m.InventoryNumber,
                 m.CategoryId,
                 m.Category != null ? m.Category.Name : null,
                 m.ImagePath,
                 m.CreatedAt,
-                m.UpdatedAt))
+                m.UpdatedAt,
+                m.IsWrittenOff,
+                m.WrittenOffAt,
+                m.WrittenOffComment))
             .ToListAsync();
 
         return Ok(materials);
@@ -78,6 +90,8 @@ public class MaterialsController : ControllerBase
             Unit = request.Unit,
             Description = request.Description,
             Quantity = request.InitialQuantity < 0 ? 0 : request.InitialQuantity,
+            Cost = request.Cost,
+            InventoryNumber = request.InventoryNumber,
             CategoryId = request.CategoryId,
             ImagePath = request.ImagePath,
             CreatedAt = now,
@@ -122,8 +136,13 @@ public class MaterialsController : ControllerBase
         material.Name = request.Name;
         material.Unit = request.Unit;
         material.Description = request.Description;
+        material.Cost = request.Cost;
+        material.InventoryNumber = request.InventoryNumber;
         material.CategoryId = request.CategoryId;
         material.ImagePath = request.ImagePath;
+        material.IsWrittenOff = request.IsWrittenOff;
+        material.WrittenOffAt = request.WrittenOffAt;
+        material.WrittenOffComment = request.WrittenOffComment;
         material.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

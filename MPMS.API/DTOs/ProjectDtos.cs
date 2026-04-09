@@ -22,7 +22,9 @@ public record UpdateProjectRequest(
     DateOnly? StartDate,
     DateOnly? EndDate,
     ProjectStatus Status,
-    Guid ManagerId
+    Guid ManagerId,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false
 );
 
 public record ProjectResponse(
@@ -41,7 +43,9 @@ public record ProjectResponse(
     int InProgressTasks,
     int OverdueTasks,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    bool IsMarkedForDeletion = false,
+    bool IsArchived = false
 );
 
 public record ProjectListResponse(
@@ -51,5 +55,12 @@ public record ProjectListResponse(
     DateOnly? StartDate,
     DateOnly? EndDate,
     string Status,
-    string ManagerName
+    string ManagerName,
+    Guid ManagerId,
+    string? Description,
+    string? Address,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    bool IsMarkedForDeletion,
+    bool IsArchived
 );

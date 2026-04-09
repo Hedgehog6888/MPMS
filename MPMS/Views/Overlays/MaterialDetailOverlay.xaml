@@ -141,16 +141,18 @@
                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="64" Height="64" CornerRadius="32"
                                     Background="#DFE1E6" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE714;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="28" Foreground="#6B778C"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image Width="28" Height="28" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Source="{svgc:SvgImage Source=/icons/picture.svg, AppName=MPMS}"/>
                             </Border>
                             <TextBlock Text="Фото не добавлено" FontSize="12" Foreground="#6B778C"
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
                         <!-- Actual image (Uniform — whole image visible, no cropping) -->
                         <Image x:Name="MaterialPhoto" Stretch="Uniform"
-                               Visibility="Collapsed" MaxHeight="220"/>
+                               Visibility="Collapsed" MaxHeight="220"
+                               RenderOptions.BitmapScalingMode="Fant"/>
 
                         <!-- Written off overlay -->
                         <Border x:Name="WrittenOffBanner"
@@ -193,6 +195,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,12,0">
                             <TextBlock Text="Количество" Style="{StaticResource InfoLabel}"/>
@@ -206,7 +209,11 @@
                             <TextBlock Text="Цена за ед., ₽" Style="{StaticResource InfoLabel}"/>
                             <TextBlock x:Name="CostText" Style="{StaticResource InfoValue}" Text="—"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="3">
+                        <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                            <TextBlock Text="Инв. номер" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock x:Name="InventoryNumberText" Style="{StaticResource InfoValue}" Text="—"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
                             <TextBlock Text="Добавлен" Style="{StaticResource InfoLabel}"/>
                             <TextBlock x:Name="CreatedAtText" Style="{StaticResource InfoValue}"/>
                         </StackPanel>
@@ -237,18 +244,19 @@
                     <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal"
                                Margin="0,16,0,0">
-                        <Button Content="＋  Добавить кол-во" Style="{StaticResource ActionBtn}"
+                        <Button Content="Добавить" Style="{StaticResource ActionBtn}"
                                 Margin="0,0,8,8" Click="AddQuantity_Click"/>
-                        <Button Content="✎  Редактировать" Style="{StaticResource OutlineBtn}"
+                        <Button Content="Редактировать" Style="{StaticResource OutlineBtn}"
                                 Margin="0,0,8,8" Click="Edit_Click"/>
                         <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
                                 Margin="0,0,0,8" Click="WriteOff_Click"/>
                     </WrapPanel>
 
                     <!-- History section (role-filtered) -->
-                    <Border x:Name="HistorySection" Margin="0,8,0,24">
+                    <Border x:Name="HistorySection" Margin="0,0,0,24">
                         <StackPanel>
-                            <TextBlock Text="ИСТОРИЯ ДВИЖЕНИЯ" Style="{StaticResource SectionLabel}"/>
+                            <TextBlock Text="ИСТОРИЯ ДВИЖЕНИЯ" Style="{StaticResource SectionLabel}"
+                                       Margin="0,6,0,8"/>
 
                             <!-- Loading -->
                             <TextBlock x:Name="HistoryLoading" Text="Загрузка..."
@@ -263,9 +271,9 @@
                             <ItemsControl x:Name="HistoryList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,6"
+                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,5"
                                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                                Padding="12,10">
+                                                Padding="10,7">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -274,8 +282,8 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Delta indicator -->
-                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
-                                                        VerticalAlignment="Top" Margin="0,0,12,0">
+                                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                                        VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#E3FCEF"/>
@@ -284,13 +292,13 @@
                                                                     <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
-                                                                    <Setter Property="Background" Value="#FFF4E5"/>
+                                                                    <Setter Property="Background" Value="#FFEBE6"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               FontSize="13" FontWeight="Bold">
+                                                               FontSize="12" FontWeight="Bold">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="＋"/>
@@ -301,8 +309,8 @@
                                                                         <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding OperationType}" Value="Consumption">
-                                                                        <Setter Property="Text" Value="−"/>
-                                                                        <Setter Property="Foreground" Value="#FF8B00"/>
+                                                                        <Setter Property="Text" Value="✕"/>
+                                                                        <Setter Property="Foreground" Value="#DE350B"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -312,7 +320,7 @@
 
                                                 <!-- Info -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#000000">
+                                                    <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#000000">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="{Binding Delta, StringFormat='＋{0:G}'}"/>
@@ -328,10 +336,10 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
                                                     <TextBlock Text="{Binding UserName, FallbackValue='—'}"
-                                                               FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                               FontSize="11" Foreground="#6B778C" Margin="0,1,0,0"/>
                                                     <TextBlock Text="{Binding Comment}" FontSize="11" Foreground="#6B778C"
                                                                Visibility="{Binding Comment, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                               TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                 </StackPanel>
 
                                                 <!-- Date + quantity after -->
@@ -340,7 +348,7 @@
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>
                                                     <TextBlock FontSize="11" Foreground="#6B778C"
                                                                Text="{Binding QuantityAfter, StringFormat='Остаток: {0:G}'}"
-                                                               HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                                                               HorizontalAlignment="Right" Margin="0,1,0,0"/>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>

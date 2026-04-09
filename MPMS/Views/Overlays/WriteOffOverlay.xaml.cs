@@ -107,7 +107,7 @@ public partial class WriteOffOverlay : UserControl
             }
 
             var comment = string.IsNullOrWhiteSpace(CommentBox.Text) ? null : CommentBox.Text.Trim();
-            MainWindow.Instance?.HideAllOverlays();
+            MainWindow.Instance?.HideDrawer();
             _ = _partialWriteOffAction(qty.Value, comment);
         }
         else

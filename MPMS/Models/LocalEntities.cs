@@ -239,6 +239,7 @@ public class LocalMaterial : LocalEntity
     public string? Description { get; set; }
     public decimal Quantity { get; set; }
     public decimal? Cost { get; set; }
+    [MaxLength(100)] public string? InventoryNumber { get; set; }
     public Guid? CategoryId { get; set; }
     [MaxLength(100)] public string? CategoryName { get; set; }
     [MaxLength(500)] public string? ImagePath { get; set; }
@@ -273,6 +274,7 @@ public class LocalEquipment : LocalEntity
     [MaxLength(100)] public string? CategoryName { get; set; }
     [MaxLength(500)] public string? ImagePath { get; set; }
     [MaxLength(30)] public string Status { get; set; } = "Available";
+    [MaxLength(30)] public string Condition { get; set; } = "Good";
     [MaxLength(100)] public string? InventoryNumber { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -286,8 +288,11 @@ public class LocalEquipment : LocalEntity
     public string StatusDisplay => Status switch
     {
         "Available"   => "Доступно",
+        "Unavailable" => "Недоступно",
+        "3"           => "Недоступно",
         "InUse"       => "Используется",
-        "Maintenance" => "На обслуживании",
+        "CheckedOut"  => "Используется",
+        "Retired"     => "Списано",
         _             => Status
     };
 
@@ -295,9 +300,22 @@ public class LocalEquipment : LocalEntity
     public string StatusColor => Status switch
     {
         "Available"   => "#00875A",
+        "Unavailable" => "#DE350B",
+        "3"           => "#DE350B",
         "InUse"       => "#FF8B00",
-        "Maintenance" => "#1B6EC2",
+        "CheckedOut"  => "#FF8B00",
+        "Retired"     => "#6B778C",
+        "WrittenOff"  => "#6B778C",
         _             => "#6B778C"
+    };
+
+    [NotMapped]
+    public string ConditionDisplay => Condition switch
+    {
+        "Good"              => "Исправно",
+        "NeedsMaintenance"  => "Требует обслуживания",
+        "Faulty"            => "Неисправно",
+        _                   => Condition
     };
 }
 

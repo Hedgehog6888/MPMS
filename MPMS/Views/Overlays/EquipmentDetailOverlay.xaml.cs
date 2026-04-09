@@ -1,6 +1,8 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MPMS.Models;
 using MPMS.ViewModels;
@@ -9,7 +11,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class EquipmentDetailOverlay : UserControl
 {
-    private readonly LocalEquipment _equipment;
+    private LocalEquipment _equipment;
     private readonly WarehouseViewModel _vm;
 
     public EquipmentDetailOverlay(LocalEquipment equipment, WarehouseViewModel vm)
@@ -21,11 +23,26 @@ public partial class EquipmentDetailOverlay : UserControl
         Loaded += async (_, _) => await RefreshAsync();
     }
 
+    private async Task ReloadFromVmAsync()
+    {
+        await _vm.LoadAsync();
+        var eq = _vm.Equipments.FirstOrDefault(x => x.Id == _equipment.Id);
+        if (eq is null)
+        {
+            MainWindow.Instance?.HideDrawer();
+            return;
+        }
+
+        _equipment = eq;
+        await RefreshAsync();
+    }
+
     private async Task RefreshAsync()
     {
         NameText.Text = _equipment.Name;
         CategoryText.Text = _equipment.CategoryName ?? string.Empty;
         StatusText.Text = _equipment.StatusDisplay;
+        ConditionText.Text = _equipment.ConditionDisplay;
         InvNumberText.Text = _equipment.InventoryNumber ?? "—";
         CreatedAtText.Text = _equipment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
 
@@ -52,6 +69,7 @@ public partial class EquipmentDetailOverlay : UserControl
                 ? $"Дата списания: {_equipment.WrittenOffAt.Value.ToLocalTime():dd.MM.yyyy HH:mm}"
                 : string.Empty;
             ActionPanel.Visibility = Visibility.Collapsed;
+            ConditionPanel.Visibility = Visibility.Collapsed;
         }
         else
         {
@@ -59,7 +77,10 @@ public partial class EquipmentDetailOverlay : UserControl
             WrittenOffBanner.Visibility = Visibility.Collapsed;
             WriteOffInfoPanel.Visibility = Visibility.Collapsed;
             ActionPanel.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
+            ConditionPanel.Visibility = _vm.CanManage ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        ApplyConditionButtons();
 
         if (_vm.CanViewHistory)
         {
@@ -76,7 +97,7 @@ public partial class EquipmentDetailOverlay : UserControl
             else
             {
                 HistoryList.Visibility = Visibility.Visible;
-                HistoryList.ItemsSource = history;
+                HistoryList.ItemsSource = history.Take(10).ToList();
             }
         }
         else
@@ -121,7 +142,8 @@ public partial class EquipmentDetailOverlay : UserControl
             "Equipment", _vm,
             _vm.MaterialCategories.ToList(),
             _vm.EquipmentCategories.ToList(),
-            editEquipment: _equipment);
+            editEquipment: _equipment,
+            afterStackedCloseSuccess: ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 560);
     }
 
@@ -131,5 +153,45 @@ public partial class EquipmentDetailOverlay : UserControl
         var overlay = new WriteOffOverlay("оборудование", _equipment.Name,
             comment => _vm.WriteOffEquipmentAsync(_equipment.Id, comment));
         mw.ShowStackedModalOverDrawer(overlay, 520);
+    }
+
+    private async void SetConditionGood_Click(object sender, RoutedEventArgs e)
+        => await ChangeConditionAsync(EquipmentCondition.Good);
+
+    private async void SetConditionMaintenance_Click(object sender, RoutedEventArgs e)
+        => await ChangeConditionAsync(EquipmentCondition.NeedsMaintenance);
+
+    private async void SetConditionFaulty_Click(object sender, RoutedEventArgs e)
+        => await ChangeConditionAsync(EquipmentCondition.Faulty);
+
+    private async Task ChangeConditionAsync(EquipmentCondition condition)
+    {
+        if (!_vm.CanManage || _equipment.IsWrittenOff) return;
+        await _vm.UpdateEquipmentConditionAsync(_equipment.Id, condition);
+        await ReloadFromVmAsync();
+    }
+
+    private void ApplyConditionButtons()
+    {
+        var current = Enum.TryParse<EquipmentCondition>(_equipment.Condition, out var parsed)
+            ? parsed
+            : EquipmentCondition.Good;
+
+        ApplyButtonState(BtnConditionGood, current == EquipmentCondition.Good, "#00875A", "#E3FCEF");
+        ApplyButtonState(BtnConditionMaintenance, current == EquipmentCondition.NeedsMaintenance, "#1B6EC2", "#DEEBFF");
+        ApplyButtonState(BtnConditionFaulty, current == EquipmentCondition.Faulty, "#DE350B", "#FFEBE6");
+    }
+
+    private static void ApplyButtonState(Button button, bool selected, string accentHex, string selectedBgHex)
+    {
+        var accent = (Color)ColorConverter.ConvertFromString(accentHex);
+        var selectedBg = (Color)ColorConverter.ConvertFromString(selectedBgHex);
+        var neutralBorder = (Color)ColorConverter.ConvertFromString("#DFE1E6");
+        var neutralFg = (Color)ColorConverter.ConvertFromString("#6B778C");
+
+        button.BorderBrush = new SolidColorBrush(selected ? accent : neutralBorder);
+        button.Background = new SolidColorBrush(selected ? selectedBg : Colors.White);
+        button.Foreground = new SolidColorBrush(selected ? accent : neutralFg);
+        button.FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal;
     }
 }

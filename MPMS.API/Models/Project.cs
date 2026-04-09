@@ -28,6 +28,10 @@ public class Project
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsMarkedForDeletion { get; set; }
+
+    public bool IsArchived { get; set; }
+
     public ICollection<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();
     public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();
     public ICollection<FileAttachment> Files { get; set; } = new List<FileAttachment>();

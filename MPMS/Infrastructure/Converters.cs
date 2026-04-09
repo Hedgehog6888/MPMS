@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MPMS.Models;
@@ -586,6 +589,8 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush ProjectBrush  = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
     private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xEA, 0xB3, 0x08));
     private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
+    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x93, 0x35, 0xEA));
     private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
     private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
@@ -595,6 +600,8 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
             "Project"  => ProjectBrush,
             "Task"     => TaskBrush,
             "Stage"    => StageBrush,
+            "Material" => MaterialBrush,
+            "Equipment" => EquipmentBrush,
             "Message"  => MessageBrush,
             _          => DefaultBrush
         };
@@ -616,12 +623,18 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush ProjectBrush        = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
     private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xEA, 0xB3, 0x08));
     private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0F, 0x76, 0x8C));
+    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x93, 0x35, 0xEA));
     private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not MPMS.Models.LocalActivityLog log)
             return DefaultBrush;
+
+        // Для материалов всегда используем цвет сущности, а не цвет action type.
+        if (string.Equals(log.EntityType, "Material", StringComparison.Ordinal))
+            return MaterialBrush;
 
         var actionType = log.ActionType;
         if (!string.IsNullOrEmpty(actionType))
@@ -644,6 +657,8 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         "Project"  => ProjectBrush,
         "Task"     => TaskBrush,
         "Stage"    => StageBrush,
+        "Material" => MaterialBrush,
+        "Equipment" => EquipmentBrush,
         "Message"  => MessageBrush,
         _          => DefaultBrush
     };
@@ -663,6 +678,8 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
             "Project"  => "Проект",
             "Task"     => "Задача",
             "Stage"    => "Этап",
+            "Material" => "Материал",
+            "Equipment" => "Оборудование",
             "Message"  => "Сообщение",
             _          => "—"
         };
@@ -874,4 +891,87 @@ public class InitialsToBrushConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
+}
+
+/// <summary>Текст строки выпадающего списка FormCombo: DisplayMemberPath родительского ComboBox или строка/ToString().</summary>
+public sealed class FormComboItemTextConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values is not { Length: >= 2 }) return "";
+        var item = values[0];
+        if (item is null) return "";
+
+        if (values[1] is ComboBox cb && !string.IsNullOrEmpty(cb.DisplayMemberPath))
+        {
+            var prop = item.GetType().GetProperty(
+                cb.DisplayMemberPath,
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            if (prop != null)
+                return prop.GetValue(item)?.ToString() ?? "";
+        }
+
+        return item switch
+        {
+            string s => s,
+            _ => item.ToString() ?? ""
+        };
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Вспомогательные штуки для шаблона FormCombo: прокрутка попапа, проверка для полосы фильтров.</summary>
+public static class FormComboHelpers
+{
+    public static readonly DependencyProperty PopupScrollProperty =
+        DependencyProperty.RegisterAttached(
+            "PopupScroll",
+            typeof(bool),
+            typeof(FormComboHelpers),
+            new PropertyMetadata(false, OnPopupScrollChanged));
+
+    public static void SetPopupScroll(DependencyObject element, bool value)
+        => element.SetValue(PopupScrollProperty, value);
+
+    public static bool GetPopupScroll(DependencyObject element)
+        => (bool)element.GetValue(PopupScrollProperty);
+
+    private static readonly MouseWheelEventHandler FormComboDropWheelHandler = OnFormComboDropWheel;
+
+    private static void OnPopupScrollChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ScrollViewer sv) return;
+        if ((bool)e.NewValue)
+            sv.AddHandler(UIElement.PreviewMouseWheelEvent, FormComboDropWheelHandler, handledEventsToo: true);
+        else
+            sv.RemoveHandler(UIElement.PreviewMouseWheelEvent, FormComboDropWheelHandler);
+    }
+
+    private static void OnFormComboDropWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not ScrollViewer sv) return;
+        var max = Math.Max(0, sv.ExtentHeight - sv.ViewportHeight);
+        if (max <= 0) return;
+
+        var step = -e.Delta / 8.0;
+        var next = Math.Clamp(sv.VerticalOffset + step, 0, max);
+        sv.ScrollToVerticalOffset(next);
+        e.Handled = true;
+    }
+
+    /// <summary>Не перехватывать колесо на полосе фильтра, если открыт ComboBox под курсором.</summary>
+    public static bool IsMouseWheelOverOpenComboBox(MouseWheelEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject;
+             d != null;
+             d = VisualTreeHelper.GetParent(d))
+        {
+            if (d is ComboBox { IsDropDownOpen: true })
+                return true;
+        }
+
+        return false;
+    }
 }

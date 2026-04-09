@@ -16,6 +16,12 @@ public class Material
 
     public decimal Quantity { get; set; }
 
+    /// <summary>Цена за единицу (учёт).</summary>
+    public decimal? Cost { get; set; }
+
+    [MaxLength(100)]
+    public string? InventoryNumber { get; set; }
+
     public Guid? CategoryId { get; set; }
     public MaterialCategory? Category { get; set; }
 
@@ -25,6 +31,13 @@ public class Material
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public bool IsWrittenOff { get; set; }
+
+    public DateTime? WrittenOffAt { get; set; }
+
+    [MaxLength(500)]
+    public string? WrittenOffComment { get; set; }
 
     public ICollection<StageMaterial> StageMaterials { get; set; } = new List<StageMaterial>();
 

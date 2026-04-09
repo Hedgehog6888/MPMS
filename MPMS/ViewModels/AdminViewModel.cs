@@ -93,6 +93,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
     private readonly IApiService _api;
+    private readonly ISyncService _sync;
 
     // Events to open drawers (handled by AdminPage.xaml.cs)
     public event Action<AdminUserRow>? OpenUserInfoRequested;
@@ -205,11 +206,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         IsConfirmOverlayOpen = true;
     }
 
-    public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api)
+    public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, ISyncService sync)
     {
         _dbFactory = dbFactory;
         _auth      = auth;
         _api       = api;
+        _sync      = sync;
     }
 
     public async Task LoadAsync()
@@ -382,6 +384,13 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 : $"Разблокировал пользователя {user.Name} ({user.Username})",
             "User", user.Id);
         await db.SaveChangesAsync();
+        var updateReq = new UpdateUserRequest(
+            user.FirstName, user.LastName, user.Username, user.Email, user.RoleId,
+            NewPassword: null,
+            user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
+            IsBlocked: newBlocked,
+            BlockedReason: newBlocked ? BlockReason.Trim() : null);
+        await _sync.QueueOperationAsync("UserProfile", user.Id, SyncOperation.Update, updateReq);
         await LoadUsersAsync();
         SetStatus(newBlocked ? $"Пользователь {user.Name} заблокирован" : $"Пользователь {user.Name} разблокирован");
     }

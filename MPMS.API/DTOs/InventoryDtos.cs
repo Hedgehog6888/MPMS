@@ -6,11 +6,11 @@ namespace MPMS.API.DTOs;
 // ── Categories ───────────────────────────────────────────────────────────────
 public record MaterialCategoryResponse(Guid Id, string Name);
 
-public record CreateMaterialCategoryRequest([Required, MaxLength(100)] string Name);
+public record CreateMaterialCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
 
 public record EquipmentCategoryResponse(Guid Id, string Name);
 
-public record CreateEquipmentCategoryRequest([Required, MaxLength(100)] string Name);
+public record CreateEquipmentCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
 
 // ── Material stock ───────────────────────────────────────────────────────────
 public record MaterialStockMovementResponse(
@@ -41,11 +41,15 @@ public record EquipmentResponse(
     string? CategoryName,
     string? ImagePath,
     string Status,
+    string Condition,
     string? InventoryNumber,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     Guid? CheckedOutProjectId,
-    Guid? CheckedOutTaskId);
+    Guid? CheckedOutTaskId,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    string? WrittenOffComment = null);
 
 public record CreateEquipmentRequest(
     [Required, MaxLength(200)] string Name,
@@ -53,6 +57,7 @@ public record CreateEquipmentRequest(
     Guid? CategoryId,
     string? ImagePath,
     string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good,
     Guid? Id = null);
 
 public record UpdateEquipmentRequest(
@@ -60,7 +65,12 @@ public record UpdateEquipmentRequest(
     string? Description,
     Guid? CategoryId,
     string? ImagePath,
-    string? InventoryNumber);
+    string? InventoryNumber,
+    EquipmentCondition Condition = EquipmentCondition.Good,
+    EquipmentStatus? Status = null,
+    bool IsWrittenOff = false,
+    DateTime? WrittenOffAt = null,
+    [MaxLength(500)] string? WrittenOffComment = null);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,

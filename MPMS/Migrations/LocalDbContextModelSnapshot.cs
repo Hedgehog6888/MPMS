@@ -145,6 +145,11 @@ namespace MPMS.Migrations
                     b.Property<Guid?>("CheckedOutTaskId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -162,6 +167,9 @@ namespace MPMS.Migrations
                     b.Property<bool>("IsSynced")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsWrittenOff")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("LastModifiedLocally")
                         .HasColumnType("TEXT");
 
@@ -176,6 +184,13 @@ namespace MPMS.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("WrittenOffAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WrittenOffComment")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -235,6 +250,10 @@ namespace MPMS.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -309,6 +328,10 @@ namespace MPMS.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<decimal?>("Cost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -319,7 +342,14 @@ namespace MPMS.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("InventoryNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsSynced")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsWrittenOff")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("LastModifiedLocally")
@@ -339,6 +369,13 @@ namespace MPMS.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("WrittenOffAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WrittenOffComment")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -398,6 +435,10 @@ namespace MPMS.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -28,11 +29,16 @@ public partial class MainWindow : Window
     /// <summary>Сводка слева (300) + карточка задачи/этапа (700).</summary>
     public const double TaskOrStageDetailWithLeftTotalWidth = 1000;
 
+    /// <summary>Центрированные формы создания/редактирования (как материал/оборудование).</summary>
+    public const double CenteredFormOverlayWidth = 560;
+
+    /// <summary>Форма проекта с блоком команды — чуть шире.</summary>
+    public const double CenteredProjectFormOverlayWidth = 640;
+
     private enum OverlayPresentationMode { None, Drawer, Modal }
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
 
-    /// <summary>Центральное окно поверх открытого drawer (карточка пользователя и т.п.).</summary>
-    private bool _stackedModalActive;
+    private readonly List<UIElement> _drawerModalStack = [];
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -77,9 +83,12 @@ public partial class MainWindow : Window
             vm.ToggleSidebarCommand.Execute(null);
     }
 
+    /// <summary>Открыт ли поверх drawer стековый модал (для закрытия только его, без drawer).</summary>
+    public bool HasStackedModalOverDrawer => _drawerModalStack.Count > 0;
+
     public void ShowDrawer(UIElement content, double width = 520)
     {
-        _stackedModalActive = false;
+        _drawerModalStack.Clear();
         // Detach previous content first to avoid "child must be detached from parent Visual" when the same or related element is reparented
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
@@ -115,7 +124,7 @@ public partial class MainWindow : Window
 
     public void ShowCenteredOverlay(UIElement content, double width = 920)
     {
-        _stackedModalActive = false;
+        _drawerModalStack.Clear();
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = content;
@@ -157,9 +166,9 @@ public partial class MainWindow : Window
         }
 
         ModalOverlayContentPresenter.Content = null;
+        _drawerModalStack.Add(content);
         ModalOverlayContentPresenter.Content = content;
         ModalOverlayPanel.Width = width;
-        _stackedModalActive = true;
 
         ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
         ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
@@ -225,7 +234,7 @@ public partial class MainWindow : Window
 
     public void HideDrawer()
     {
-        if (_stackedModalActive)
+        if (_drawerModalStack.Count > 0)
         {
             HideStackedModalOnly();
             return;
@@ -233,13 +242,13 @@ public partial class MainWindow : Window
 
         void CompleteClose()
         {
+            _drawerModalStack.Clear();
             DrawerContentPresenter.Content = null;
             ModalOverlayContentPresenter.Content = null;
             DrawerPanel.Visibility = Visibility.Visible;
             ModalOverlayPanel.Visibility = Visibility.Collapsed;
             OverlayLayer.Visibility = Visibility.Collapsed;
             _overlayMode = OverlayPresentationMode.None;
-            _stackedModalActive = false;
             // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
             if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
                 _ = loadable.LoadAsync();
@@ -280,7 +289,7 @@ public partial class MainWindow : Window
     /// <summary>Принудительно закрывает все оверлеи (drawer + stacked modal) без анимации.</summary>
     public void HideAllOverlays()
     {
-        _stackedModalActive = false;
+        _drawerModalStack.Clear();
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
         DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
@@ -297,19 +306,40 @@ public partial class MainWindow : Window
 
     private void HideStackedModalOnly()
     {
-        if (!_stackedModalActive)
+        if (_drawerModalStack.Count == 0)
             return;
 
         var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(180));
         fadeOut.Completed += (_, _) =>
         {
-            ModalOverlayContentPresenter.Content = null;
-            ModalOverlayPanel.Visibility = Visibility.Collapsed;
             ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
-            ModalOverlayPanel.Opacity = 0;
             ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
-            ModalOverlayTransform.Y = 16;
-            _stackedModalActive = false;
+
+            if (_drawerModalStack.Count > 0)
+                _drawerModalStack.RemoveAt(_drawerModalStack.Count - 1);
+
+            if (_drawerModalStack.Count > 0)
+            {
+                var prev = _drawerModalStack[^1];
+                ModalOverlayContentPresenter.Content = prev;
+                ModalOverlayPanel.Visibility = Visibility.Visible;
+                ModalOverlayPanel.Opacity = 0;
+                ModalOverlayTransform.Y = 8;
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160));
+                ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+                var slideIn = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(160))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
+            }
+            else
+            {
+                ModalOverlayContentPresenter.Content = null;
+                ModalOverlayPanel.Visibility = Visibility.Collapsed;
+                ModalOverlayPanel.Opacity = 0;
+                ModalOverlayTransform.Y = 16;
+            }
         };
         ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeOut);
 
@@ -455,6 +485,24 @@ public partial class MainWindow : Window
                         SearchHelper.ContainsIgnoreCase(s.Description, searchTerm))
                     .Take(5).ToList();
 
+            var materials = searchTerm is null
+                ? new List<LocalMaterial>()
+                : (await db.Materials.ToListAsync(ct))
+                    .Where(m => SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.Description, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.CategoryName, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(m.InventoryNumber, searchTerm))
+                    .Take(5).ToList();
+
+            var equipment = searchTerm is null
+                ? new List<LocalEquipment>()
+                : (await db.Equipments.ToListAsync(ct))
+                    .Where(eq => SearchHelper.ContainsIgnoreCase(eq.Name, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.Description, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.CategoryName, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(eq.InventoryNumber, searchTerm))
+                    .Take(5).ToList();
+
             // Populate TaskName for stages
             var taskIds = stages.Select(s => s.TaskId).Distinct().ToList();
             var taskNames = await db.Tasks.Where(t => taskIds.Contains(t.Id))
@@ -469,18 +517,26 @@ public partial class MainWindow : Window
                 bool hasProjects = projects.Count > 0;
                 bool hasTasks = tasks.Count > 0;
                 bool hasStages = stages.Count > 0;
-                bool hasAny = hasProjects || hasTasks || hasStages;
+                bool hasMaterials = materials.Count > 0;
+                bool hasEquipment = equipment.Count > 0;
+                bool hasAny = hasProjects || hasTasks || hasStages || hasMaterials || hasEquipment;
 
                 SearchProjectsSection.Visibility = hasProjects ? Visibility.Visible : Visibility.Collapsed;
                 SearchProjectsDivider.Visibility = hasProjects && (hasTasks || hasStages) ? Visibility.Visible : Visibility.Collapsed;
                 SearchTasksSection.Visibility = hasTasks ? Visibility.Visible : Visibility.Collapsed;
-                SearchTasksDivider.Visibility = hasTasks && hasStages ? Visibility.Visible : Visibility.Collapsed;
+                SearchTasksDivider.Visibility = hasTasks && (hasStages || hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
                 SearchStagesSection.Visibility = hasStages ? Visibility.Visible : Visibility.Collapsed;
+                SearchStagesDivider.Visibility = hasStages && (hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
+                SearchMaterialsSection.Visibility = hasMaterials ? Visibility.Visible : Visibility.Collapsed;
+                SearchMaterialsDivider.Visibility = hasMaterials && hasEquipment ? Visibility.Visible : Visibility.Collapsed;
+                SearchEquipmentSection.Visibility = hasEquipment ? Visibility.Visible : Visibility.Collapsed;
                 NoSearchResultsText.Visibility = hasAny ? Visibility.Collapsed : Visibility.Visible;
 
                 SearchProjectsList.ItemsSource = projects;
                 SearchTasksList.ItemsSource = tasks;
                 SearchStagesList.ItemsSource = stages;
+                SearchMaterialsList.ItemsSource = materials;
+                SearchEquipmentList.ItemsSource = equipment;
 
                 SearchResultsPopup.IsOpen = true;
             });
@@ -506,6 +562,14 @@ public partial class MainWindow : Window
             else if (fe.Tag is LocalTaskStage stage)
             {
                 await OpenStageFromSearchAsync(stage);
+            }
+            else if (fe.Tag is LocalMaterial material)
+            {
+                await OpenMaterialFromSearchAsync(material);
+            }
+            else if (fe.Tag is LocalEquipment equipment)
+            {
+                await OpenEquipmentFromSearchAsync(equipment);
             }
         }
 
@@ -597,6 +661,38 @@ public partial class MainWindow : Window
         }, task);
 
         ShowDrawer(taskPanel, overlay, TaskOrStageDetailWithLeftTotalWidth);
+    }
+
+    private async Task OpenMaterialFromSearchAsync(LocalMaterial material)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.NavigateCommand.Execute("Warehouse");
+
+        var warehouseVm = App.Services.GetRequiredService<WarehouseViewModel>();
+        warehouseVm.ActiveTab = "Materials";
+        await warehouseVm.LoadAsync();
+
+        var selected = warehouseVm.Materials.FirstOrDefault(m => m.Id == material.Id);
+        if (selected is null) return;
+
+        var overlay = new MaterialDetailOverlay(selected, warehouseVm);
+        ShowDrawer(overlay, 560);
+    }
+
+    private async Task OpenEquipmentFromSearchAsync(LocalEquipment equipment)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.NavigateCommand.Execute("Warehouse");
+
+        var warehouseVm = App.Services.GetRequiredService<WarehouseViewModel>();
+        warehouseVm.ActiveTab = "Equipment";
+        await warehouseVm.LoadAsync();
+
+        var selected = warehouseVm.Equipments.FirstOrDefault(eq => eq.Id == equipment.Id);
+        if (selected is null) return;
+
+        var overlay = new EquipmentDetailOverlay(selected, warehouseVm);
+        ShowDrawer(overlay, 560);
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

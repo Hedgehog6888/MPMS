@@ -191,10 +191,10 @@
                                         Opacity="0">
                                     <StackPanel VerticalAlignment="Center"
                                                 HorizontalAlignment="Center">
-                                        <TextBlock Text="&#xE722;" FontSize="20"
-                                                   FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="White"
-                                                   HorizontalAlignment="Center"/>
+                                        <Image Width="22" Height="22" Stretch="Uniform"
+                                               HorizontalAlignment="Center"
+                                               RenderOptions.BitmapScalingMode="HighQuality"
+                                               Source="{svgc:SvgImage Source=/icons/picture_white.svg, AppName=MPMS}"/>
                                         <TextBlock Text="Изменить" FontSize="9"
                                                    FontWeight="SemiBold"
                                                    Foreground="White"

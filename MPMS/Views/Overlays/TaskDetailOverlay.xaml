@@ -904,7 +904,7 @@
                                                  Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"
                                                  Padding="10,8" MinHeight="36" VerticalContentAlignment="Center"
                                                  CaretBrush="{StaticResource TextPrimaryBrush}"
-                                                 SelectionBrush="#B3D4FF"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
                                                  SelectionTextBrush="{StaticResource TextPrimaryBrush}"
                                                  KeyDown="MessageInput_KeyDown"
                                                  AcceptsReturn="False"/>

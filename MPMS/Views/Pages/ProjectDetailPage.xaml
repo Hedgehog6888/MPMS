@@ -978,6 +978,8 @@
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
                                                  Foreground="#000000"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="#000000"
                                                  GotFocus="LocalSearch_GotFocus"
                                                  LostFocus="LocalSearch_LostFocus"/>
                                     </Grid>
@@ -1306,6 +1308,8 @@
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
                                                  Foreground="#000000"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="#000000"
                                                  GotFocus="LocalSearch_GotFocus"
                                                  LostFocus="LocalSearch_LostFocus"/>
                                     </Grid>
@@ -1842,7 +1846,7 @@
                                              FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
                                              VerticalContentAlignment="Center"
                                              CaretBrush="{StaticResource TextPrimaryBrush}"
-                                             SelectionBrush="#B3D4FF"
+                                             SelectionBrush="{StaticResource NeutralSelectionBrush}"
                                              SelectionTextBrush="{StaticResource TextPrimaryBrush}"
                                              AcceptsReturn="False"
                                              KeyDown="ProjectMessageInput_KeyDown">

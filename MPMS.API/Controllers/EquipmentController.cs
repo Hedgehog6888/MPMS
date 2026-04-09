@@ -20,10 +20,27 @@ public class EquipmentController : ControllerBase
         _db = db;
     }
 
+    private static bool ShouldBeUnavailable(EquipmentCondition condition) =>
+        condition is EquipmentCondition.NeedsMaintenance or EquipmentCondition.Faulty;
+
+    private static EquipmentStatus ResolveStatusAfterConditionChange(EquipmentStatus currentStatus, EquipmentCondition condition)
+    {
+        if (currentStatus == EquipmentStatus.Retired)
+            return EquipmentStatus.Retired;
+
+        if (ShouldBeUnavailable(condition))
+            return EquipmentStatus.Unavailable;
+
+        return currentStatus == EquipmentStatus.Unavailable
+            ? EquipmentStatus.Available
+            : currentStatus;
+    }
+
     private static EquipmentResponse ToDto(Equipment e) => new(
         e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
-        e.Status.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
-        e.CheckedOutProjectId, e.CheckedOutTaskId);
+        e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
+        e.CheckedOutProjectId, e.CheckedOutTaskId,
+        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment);
 
     private static EquipmentHistoryEntryResponse HistoryToDto(EquipmentHistoryEntry x) => new(
         x.Id, x.EquipmentId, x.OccurredAt, x.EventType.ToString(),
@@ -56,6 +73,9 @@ public class EquipmentController : ControllerBase
             return BadRequest(new { message = "Категория оборудования не найдена" });
 
         var now = DateTime.UtcNow;
+        var initialStatus = ShouldBeUnavailable(request.Condition)
+            ? EquipmentStatus.Unavailable
+            : EquipmentStatus.Available;
         var entity = new Equipment
         {
             Id = request.Id ?? Guid.NewGuid(),
@@ -64,7 +84,8 @@ public class EquipmentController : ControllerBase
             CategoryId = request.CategoryId,
             ImagePath = request.ImagePath,
             InventoryNumber = request.InventoryNumber,
-            Status = EquipmentStatus.Available,
+            Status = initialStatus,
+            Condition = request.Condition,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -89,6 +110,17 @@ public class EquipmentController : ControllerBase
         entity.CategoryId = request.CategoryId;
         entity.ImagePath = request.ImagePath;
         entity.InventoryNumber = request.InventoryNumber;
+        entity.Condition = request.Condition;
+        var derivedStatus = ResolveStatusAfterConditionChange(entity.Status, request.Condition);
+        entity.Status = request.Status ?? derivedStatus;
+        if (entity.Status != EquipmentStatus.InUse)
+        {
+            entity.CheckedOutProjectId = null;
+            entity.CheckedOutTaskId = null;
+        }
+        entity.IsWrittenOff = request.IsWrittenOff;
+        entity.WrittenOffAt = request.WrittenOffAt;
+        entity.WrittenOffComment = request.WrittenOffComment;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -142,17 +174,19 @@ public class EquipmentController : ControllerBase
                 if (request.TaskId.HasValue &&
                     !await _db.Tasks.AnyAsync(t => t.Id == request.TaskId.Value))
                     return BadRequest(new { message = "Задача не найдена" });
-                eq.Status = EquipmentStatus.CheckedOut;
+                eq.Status = EquipmentStatus.InUse;
                 eq.CheckedOutProjectId = request.ProjectId;
                 eq.CheckedOutTaskId = request.TaskId;
                 break;
 
             case EquipmentHistoryEventType.Returned:
-                if (eq.Status != EquipmentStatus.CheckedOut)
+                if (eq.Status != EquipmentStatus.InUse)
                     return BadRequest(new { message = "Возврат только для выданного оборудования" });
                 histProject = eq.CheckedOutProjectId;
                 histTask = eq.CheckedOutTaskId;
-                eq.Status = EquipmentStatus.Available;
+                eq.Status = ShouldBeUnavailable(eq.Condition)
+                    ? EquipmentStatus.Unavailable
+                    : EquipmentStatus.Available;
                 eq.CheckedOutProjectId = null;
                 eq.CheckedOutTaskId = null;
                 break;
@@ -161,7 +195,7 @@ public class EquipmentController : ControllerBase
                 if (request.NewStatus is null)
                     return BadRequest(new { message = "Укажите новый статус" });
                 eq.Status = request.NewStatus.Value;
-                if (eq.Status != EquipmentStatus.CheckedOut)
+                if (eq.Status != EquipmentStatus.InUse)
                 {
                     eq.CheckedOutProjectId = null;
                     eq.CheckedOutTaskId = null;
@@ -169,6 +203,15 @@ public class EquipmentController : ControllerBase
                 break;
 
             case EquipmentHistoryEventType.Note:
+                break;
+
+            case EquipmentHistoryEventType.WrittenOff:
+                eq.Status = EquipmentStatus.Retired;
+                eq.CheckedOutProjectId = null;
+                eq.CheckedOutTaskId = null;
+                eq.IsWrittenOff = true;
+                eq.WrittenOffAt = now;
+                eq.WrittenOffComment = request.Comment;
                 break;
 
             default:

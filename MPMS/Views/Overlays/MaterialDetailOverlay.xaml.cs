@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -9,7 +10,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class MaterialDetailOverlay : UserControl
 {
-    private readonly LocalMaterial _material;
+    private LocalMaterial _material;
     private readonly WarehouseViewModel _vm;
 
     public MaterialDetailOverlay(LocalMaterial material, WarehouseViewModel vm)
@@ -21,6 +22,20 @@ public partial class MaterialDetailOverlay : UserControl
         Loaded += async (_, _) => await RefreshAsync();
     }
 
+    private async Task ReloadFromVmAsync()
+    {
+        await _vm.LoadAsync();
+        var m = _vm.Materials.FirstOrDefault(x => x.Id == _material.Id);
+        if (m is null)
+        {
+            MainWindow.Instance?.HideDrawer();
+            return;
+        }
+
+        _material = m;
+        await RefreshAsync();
+    }
+
     private async Task RefreshAsync()
     {
         NameText.Text = _material.Name;
@@ -29,7 +44,12 @@ public partial class MaterialDetailOverlay : UserControl
         var unitLabel = string.IsNullOrWhiteSpace(_material.Unit) ? string.Empty : $" {_material.Unit}";
         QuantityText.Text = $"{_material.Quantity:G}{unitLabel}";
         UnitText.Text = _material.Unit ?? "—";
-        CostText.Text = _material.Cost.HasValue ? $"{_material.Cost:G}" : "—";
+        CostText.Text = _material.Cost.HasValue
+            ? _material.Cost.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+            : "—";
+        InventoryNumberText.Text = string.IsNullOrWhiteSpace(_material.InventoryNumber)
+            ? "—"
+            : _material.InventoryNumber;
         CreatedAtText.Text = _material.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
 
         if (!string.IsNullOrWhiteSpace(_material.Description))
@@ -81,7 +101,7 @@ public partial class MaterialDetailOverlay : UserControl
             else
             {
                 HistoryList.Visibility = Visibility.Visible;
-                HistoryList.ItemsSource = history;
+                HistoryList.ItemsSource = history.Take(10).ToList();
             }
         }
         else
@@ -122,7 +142,7 @@ public partial class MaterialDetailOverlay : UserControl
     private void AddQuantity_Click(object sender, RoutedEventArgs e)
     {
         if (MainWindow.Instance is not { } mw) return;
-        var overlay = new AddQuantityOverlay(_material, _vm);
+        var overlay = new AddQuantityOverlay(_material, _vm, ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 520);
     }
 
@@ -133,7 +153,8 @@ public partial class MaterialDetailOverlay : UserControl
             "Material", _vm,
             _vm.MaterialCategories.ToList(),
             _vm.EquipmentCategories.ToList(),
-            editMaterial: _material);
+            editMaterial: _material,
+            afterStackedCloseSuccess: ReloadFromVmAsync);
         mw.ShowStackedModalOverDrawer(overlay, 560);
     }
 
@@ -145,7 +166,14 @@ public partial class MaterialDetailOverlay : UserControl
             fullWriteOffAction: comment => _vm.WriteOffMaterialAsync(_material.Id, comment),
             currentQuantity: _material.Quantity,
             unit: _material.Unit,
-            partialWriteOffAction: (amount, comment) => _vm.ConsumeMaterialAsync(_material.Id, amount, comment));
+            partialWriteOffAction: async (amount, comment) =>
+            {
+                await _vm.ConsumeMaterialAsync(_material.Id, amount, comment);
+                var m = _vm.Materials.FirstOrDefault(x => x.Id == _material.Id);
+                if (m is not null)
+                    _material = m;
+                await RefreshAsync();
+            });
         mw.ShowStackedModalOverDrawer(overlay, 540);
     }
 }

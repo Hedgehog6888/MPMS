@@ -29,9 +29,15 @@ public class ProjectTask
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
+    public bool IsMarkedForDeletion { get; set; }
+
+    public bool IsArchived { get; set; }
+
     public ICollection<TaskStage> Stages { get; set; } = new List<TaskStage>();
     public ICollection<FileAttachment> Files { get; set; } = new List<FileAttachment>();
 
     public ICollection<TaskDependency> Dependencies { get; set; } = new List<TaskDependency>();
     public ICollection<TaskDependency> Dependents { get; set; } = new List<TaskDependency>();
+
+    public ICollection<TaskAssignee> TaskAssignees { get; set; } = new List<TaskAssignee>();
 }

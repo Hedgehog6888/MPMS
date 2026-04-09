@@ -39,6 +39,8 @@
             <SolidColorBrush x:Key="SuccessBrush"          Color="{StaticResource SuccessColor}"/>
             <SolidColorBrush x:Key="DangerBrush"           Color="{StaticResource DangerColor}"/>
             <SolidColorBrush x:Key="WarningBrush"          Color="{StaticResource WarningColor}"/>
+            <!-- Выделение текста / нейтральные hover без системного голубого -->
+            <SolidColorBrush x:Key="NeutralSelectionBrush" Color="#C5C9D0"/>
 
             <!-- ── Button: Primary ─────────────────────────────────────── -->
             <Style x:Key="PrimaryButton" TargetType="Button">
@@ -81,7 +83,7 @@
                 <Setter Property="FontSize"        Value="14"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="CaretBrush"      Value="{StaticResource TextPrimaryBrush}"/>
-                <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
+                <Setter Property="SelectionBrush"  Value="{StaticResource NeutralSelectionBrush}"/>
                 <Setter Property="SelectionTextBrush" Value="{StaticResource TextPrimaryBrush}"/>
                 <Setter Property="Template">
                     <Setter.Value>
@@ -307,9 +309,11 @@
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="CaretBrush"      Value="#000000"/>
-                <Setter Property="SelectionBrush"  Value="#B3D4FF"/>
+                <Setter Property="SelectionBrush"  Value="{StaticResource NeutralSelectionBrush}"/>
                 <Setter Property="SelectionTextBrush" Value="#000000"/>
             </Style>
+
+            <infra:FormComboItemTextConverter x:Key="FormComboItemText"/>
 
             <!-- ComboBox with rounded corners, custom dropdown popup -->
             <Style x:Key="FormCombo" TargetType="ComboBox">
@@ -320,6 +324,29 @@
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Height"          Value="38"/>
                 <Setter Property="Cursor"          Value="Hand"/>
+                <Setter Property="ItemTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock TextWrapping="Wrap"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}, Path=Foreground}"
+                                       FontSize="{Binding RelativeSource={RelativeSource AncestorType=ComboBox}, Path=FontSize}">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource FormComboItemText}">
+                                        <Binding Path="."/>
+                                        <Binding RelativeSource="{RelativeSource AncestorType=ComboBox}" Path="."/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel ScrollUnit="Pixel"/>
+                        </ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="ItemContainerStyle">
                     <Setter.Value>
                         <Style TargetType="ComboBoxItem">
@@ -327,20 +354,23 @@
                             <Setter Property="Foreground" Value="#000000"/>
                             <Setter Property="Padding"    Value="10,8"/>
                             <Setter Property="Cursor"     Value="Hand"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ComboBoxItem">
                                         <Border x:Name="Bg" Background="Transparent"
-                                                Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter/>
+                                                Padding="{TemplateBinding Padding}"
+                                                HorizontalAlignment="Stretch">
+                                            <ContentPresenter HorizontalAlignment="Stretch"
+                                                              VerticalAlignment="Center"/>
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsHighlighted" Value="True">
                                                 <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
-                                                <Setter Property="Foreground" Value="#1B6EC2"/>
+                                                <Setter TargetName="Bg" Property="Background" Value="#E8EAED"/>
+                                                <Setter Property="Foreground" Value="#000000"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -392,24 +422,28 @@
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
-                                <!-- Dropdown popup -->
+                                <!-- Popup: прозрачный слой — без AllowsTransparency=False (даёт системную тёмную рамку) -->
                                 <Popup x:Name="PART_Popup"
                                        AllowsTransparency="True"
                                        IsOpen="{TemplateBinding IsDropDownOpen}"
                                        Placement="Bottom"
                                        StaysOpen="False"
                                        Focusable="False">
-                                    <Border MinWidth="{Binding ActualWidth,
+                                    <Border Width="{Binding ActualWidth,
+                                                RelativeSource={RelativeSource TemplatedParent}}"
+                                            MaxWidth="{Binding ActualWidth,
                                                 RelativeSource={RelativeSource TemplatedParent}}"
                                             Background="White"
-                                            BorderBrush="#DFE1E6" BorderThickness="1"
-                                            CornerRadius="6" MaxHeight="220"
+                                            BorderBrush="#DFE1E6"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            MaxHeight="220"
                                             Margin="0,2,0,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="10" Opacity="0.12"
-                                                              ShadowDepth="2" Direction="270"/>
-                                        </Border.Effect>
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      CanContentScroll="False"
+                                                      Focusable="False"
+                                                      infra:FormComboHelpers.PopupScroll="True">
                                             <ItemsPresenter/>
                                         </ScrollViewer>
                                     </Border>
@@ -417,8 +451,8 @@
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsDropDownOpen" Value="True">
-                                    <Setter TargetName="MainBorder" Property="BorderBrush" Value="#1B6EC2"/>
-                                    <Setter TargetName="Arrow" Property="Stroke" Value="#1B6EC2"/>
+                                    <Setter TargetName="MainBorder" Property="BorderBrush" Value="#6B778C"/>
+                                    <Setter TargetName="Arrow" Property="Stroke" Value="#6B778C"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="MainBorder" Property="BorderBrush" Value="#B0BEC5"/>
@@ -653,8 +687,8 @@
                                     <Setter TargetName="Content" Property="Foreground" Value="#C1C7D0"/>
                                 </Trigger>
                                 <Trigger Property="IsToday" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
-                                    <Setter TargetName="Content" Property="Foreground" Value="#1B6EC2"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8EAED"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#111111"/>
                                     <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
@@ -684,7 +718,7 @@
                                     </MultiTrigger.Conditions>
                                     <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
                                 </MultiTrigger>
-                                <!-- Сегодня: при наведении оставляем голубой фон, без «белой» подсветки -->
+                                <!-- Сегодня: при наведении — нейтральный серый, как у остальных дней -->
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -693,8 +727,8 @@
                                         <Condition Property="IsEnabled" Value="True"/>
                                         <Condition Property="IsBlackedOut" Value="False"/>
                                     </MultiTrigger.Conditions>
-                                    <Setter TargetName="Bg" Property="Background" Value="#EBF2FF"/>
-                                    <Setter TargetName="Content" Property="Foreground" Value="#1B6EC2"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    <Setter TargetName="Content" Property="Foreground" Value="#111111"/>
                                 </MultiTrigger>
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
@@ -852,6 +886,8 @@
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                 <Setter Property="Padding" Value="0"/>
                 <Setter Property="CaretBrush" Value="#172B4D"/>
+                <Setter Property="SelectionBrush" Value="{StaticResource NeutralSelectionBrush}"/>
+                <Setter Property="SelectionTextBrush" Value="#000000"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="DatePickerTextBox">
@@ -998,7 +1034,7 @@
                 </Setter>
             </Style>
             <Style x:Key="AvatarImage" TargetType="Image">
-                <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="Fant"/>
                 <Setter Property="Stretch" Value="UniformToFill"/>
             </Style>
 

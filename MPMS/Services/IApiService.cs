@@ -44,8 +44,15 @@ public interface IApiService
 
     Task<List<MaterialCategoryResponse>?> GetMaterialCategoriesAsync();
     Task<List<EquipmentCategoryResponse>?> GetEquipmentCategoriesAsync();
+    Task<MaterialCategoryResponse?> CreateMaterialCategoryAsync(CreateMaterialCategoryRequest request);
+    Task<EquipmentCategoryResponse?> CreateEquipmentCategoryAsync(CreateEquipmentCategoryRequest request);
     Task<List<MaterialStockMovementResponse>?> GetAllMaterialStockMovementsAsync();
+    Task<MaterialStockMovementResponse?> RecordMaterialStockMovementAsync(Guid materialId, RecordMaterialStockRequest request);
     Task<List<EquipmentResponse>?> GetAllEquipmentAsync();
+    Task<EquipmentResponse?> CreateEquipmentAsync(CreateEquipmentRequest request);
+    Task<EquipmentResponse?> UpdateEquipmentAsync(Guid id, UpdateEquipmentRequest request);
+    Task<bool> DeleteEquipmentAsync(Guid id);
+    Task<EquipmentHistoryEntryResponse?> RecordEquipmentEventAsync(Guid equipmentId, RecordEquipmentEventRequest request);
     Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync();
 
     // Files
@@ -58,4 +65,12 @@ public interface IApiService
     Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request);
     Task<bool> DeleteUserAsync(Guid id);
     Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData);
+
+    // Sync: обсуждения, активность, соисполнители
+    Task<List<DiscussionMessageResponse>?> GetDiscussionMessagesAsync(DateTime? since = null);
+    Task<DiscussionMessageResponse?> PostDiscussionMessageAsync(CreateDiscussionMessageRequest request);
+    Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null);
+    Task<SyncedActivityLogResponse?> PostSyncedActivityLogAsync(CreateSyncedActivityLogRequest request);
+    Task<bool> ReplaceTaskAssigneesAsync(Guid taskId, ReplaceTaskAssigneesRequest request);
+    Task<bool> ReplaceStageAssigneesAsync(Guid stageId, ReplaceStageAssigneesRequest request);
 }

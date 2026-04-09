@@ -75,7 +75,10 @@ public class TasksController : ControllerBase
                 t.Stages.Count == 0 ? 0 :
                     (int)Math.Round((double)t.Stages.Count(s => s.Status == StageStatus.Completed) /
                     t.Stages.Count * 100),
-                t.DueDate < today && t.Status != Models.TaskStatus.Completed
+                t.DueDate < today && t.Status != Models.TaskStatus.Completed,
+                t.AssignedUserId,
+                t.IsMarkedForDeletion,
+                t.IsArchived
             ))
             .ToListAsync();
 
@@ -89,8 +92,11 @@ public class TasksController : ControllerBase
         var t = await _db.Tasks
             .Include(t => t.Project)
             .Include(t => t.AssignedUser)
+            .Include(t => t.TaskAssignees)
             .Include(t => t.Stages)
                 .ThenInclude(s => s.AssignedUser)
+            .Include(t => t.Stages)
+                .ThenInclude(s => s.StageAssignees)
             .Include(t => t.Stages)
                 .ThenInclude(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
@@ -167,6 +173,8 @@ public class TasksController : ControllerBase
         task.Priority = request.Priority;
         task.DueDate = request.DueDate;
         task.Status = request.Status;
+        task.IsMarkedForDeletion = request.IsMarkedForDeletion;
+        task.IsArchived = request.IsArchived;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -192,6 +200,39 @@ public class TasksController : ControllerBase
         if (task is null) return NotFound();
 
         _db.Tasks.Remove(task);
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    /// <summary>Полная замена списка соисполнителей задачи (синхронизация с клиентом).</summary>
+    [HttpPut("{id:guid}/assignees")]
+    public async Task<IActionResult> ReplaceAssignees(Guid id, [FromBody] ReplaceTaskAssigneesRequest request)
+    {
+        var task = await _db.Tasks.FindAsync(id);
+        if (task is null) return NotFound();
+
+        var items = request.Assignees ?? [];
+        foreach (var uid in items.Select(a => a.UserId).Distinct())
+        {
+            if (!await _db.Users.AnyAsync(u => u.Id == uid))
+                return BadRequest(new { message = "Пользователь не найден" });
+        }
+
+        var existing = await _db.TaskAssignees.Where(x => x.TaskId == id).ToListAsync();
+        _db.TaskAssignees.RemoveRange(existing);
+
+        foreach (var a in items)
+        {
+            _db.TaskAssignees.Add(new TaskAssignee
+            {
+                Id = a.Id == Guid.Empty ? Guid.NewGuid() : a.Id,
+                TaskId = id,
+                UserId = a.UserId
+            });
+        }
+
+        task.AssignedUserId = items.Count > 0 ? items[0].UserId : null;
+        task.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return NoContent();
     }
@@ -258,7 +299,9 @@ public class TasksController : ControllerBase
                 f.Id, f.FileName, f.FileType ?? "", f.FileSize,
                 f.UploadedById, f.UploadedBy.Name,
                 f.ProjectId, f.TaskId, f.StageId, f.CreatedAt)).ToList(),
-            s.CreatedAt, s.UpdatedAt
+            s.CreatedAt, s.UpdatedAt,
+            s.IsMarkedForDeletion, s.IsArchived,
+            s.StageAssignees.Select(x => x.UserId).ToList()
         )).ToList();
 
         return new TaskResponse(
@@ -267,7 +310,9 @@ public class TasksController : ControllerBase
             t.Priority.ToString(), t.DueDate, t.Status.ToString(),
             totalStages, completedStages, progress,
             t.DueDate < today && t.Status != Models.TaskStatus.Completed,
-            t.CreatedAt, t.UpdatedAt, stages);
+            t.CreatedAt, t.UpdatedAt, stages,
+            t.IsMarkedForDeletion, t.IsArchived,
+            t.TaskAssignees.Select(x => x.UserId).ToList());
     }
 
     private Guid CurrentUserId() =>

@@ -67,6 +67,8 @@ public static class LocalSchemaMigrator
         }
         catch (SqliteException) { /* ignore */ }
 
+        SeedDefaultWarehouseCategories(conn);
+
         Execute(conn, """
             CREATE TABLE IF NOT EXISTS "MaterialStockMovements" (
                 "Id"            TEXT NOT NULL CONSTRAINT "PK_MaterialStockMovements" PRIMARY KEY,
@@ -90,6 +92,7 @@ public static class LocalSchemaMigrator
                 "CategoryName"         TEXT NULL,
                 "ImagePath"            TEXT NULL,
                 "Status"               TEXT NOT NULL DEFAULT 'Available',
+                "Condition"            TEXT NOT NULL DEFAULT 'Good',
                 "InventoryNumber"      TEXT NULL,
                 "CreatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
                 "UpdatedAt"            TEXT NOT NULL DEFAULT '0001-01-01 00:00:00',
@@ -341,12 +344,89 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"MaterialStockMovements\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"EquipmentHistoryEntries\" ADD COLUMN \"UserName\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"Cost\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Materials\" ADD COLUMN \"InventoryNumber\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Equipments\" ADD COLUMN \"Condition\" TEXT NOT NULL DEFAULT 'Good';");
+        try
+        {
+            Execute(conn, """
+                UPDATE "Equipments"
+                SET "Status" = CASE
+                    WHEN "Status" = 'CheckedOut' THEN 'InUse'
+                    WHEN "Status" = 'InMaintenance' THEN 'Available'
+                    ELSE "Status"
+                END
+                """);
+        }
+        catch (SqliteException) { /* ignore */ }
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)
     {
         try { Execute(conn, sql); }
         catch (SqliteException) { /* column already exists */ }
+    }
+
+    /// <summary>Примерные категории для пустой БД (по одному разу на таблицу).</summary>
+    private static void SeedDefaultWarehouseCategories(SqliteConnection conn)
+    {
+        if (IsCategoryTableEmpty(conn, "MaterialCategories"))
+        {
+            foreach (var name in DefaultMaterialCategoryNames)
+                InsertCategoryRow(conn, "MaterialCategories", Guid.NewGuid(), name);
+        }
+
+        if (IsCategoryTableEmpty(conn, "EquipmentCategories"))
+        {
+            foreach (var name in DefaultEquipmentCategoryNames)
+                InsertCategoryRow(conn, "EquipmentCategories", Guid.NewGuid(), name);
+        }
+    }
+
+    private static readonly string[] DefaultMaterialCategoryNames =
+    [
+        "Крепёж и метизы",
+        "Электрика и кабель",
+        "Сантехника",
+        "Отделочные материалы",
+        "ЛКМ и герметики",
+        "Расходники для инструмента",
+        "Пиломатериалы",
+        "Цемент и сухие смеси",
+        "Изоляция и утеплители",
+        "Хозяйственные товары"
+    ];
+
+    private static readonly string[] DefaultEquipmentCategoryNames =
+    [
+        "Электроинструмент",
+        "Бензоинструмент",
+        "Измерительные приборы",
+        "Опалубка и леса",
+        "Компрессоры и генераторы",
+        "Садовая техника",
+        "Сварочное оборудование",
+        "Подъёмное оборудование",
+        "Малая механизация",
+        "Прочее оборудование"
+    ];
+
+    private static bool IsCategoryTableEmpty(SqliteConnection conn, string table)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT COUNT(*) FROM \"{table}\"";
+        var scalar = cmd.ExecuteScalar();
+        return scalar is long l ? l == 0 : Convert.ToInt64(scalar, System.Globalization.CultureInfo.InvariantCulture) == 0;
+    }
+
+    private static void InsertCategoryRow(SqliteConnection conn, string table, Guid id, string name)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"""
+            INSERT INTO "{table}" ("Id", "Name") VALUES (@id, @name)
+            """;
+        cmd.Parameters.AddWithValue("@id", id.ToString());
+        cmd.Parameters.AddWithValue("@name", name);
+        cmd.ExecuteNonQuery();
     }
 
     private static void Execute(SqliteConnection conn, string sql)

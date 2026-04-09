@@ -5,7 +5,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -40,7 +42,7 @@ public partial class StagesPage : UserControl
         {
             if (vm is not null) await vm.LoadAsync();
         });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
@@ -95,7 +97,7 @@ public partial class StagesPage : UserControl
         if (task is null) return;
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(item.Stage, task, async () => { if (VM is not null) await VM.LoadAsync(); });
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
@@ -145,6 +147,8 @@ public partial class StagesPage : UserControl
 
     private void FilterBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
+        if (FormComboHelpers.IsMouseWheelOverOpenComboBox(e))
+            return;
         if (MainListScroll is null) return;
         var next = MainListScroll.VerticalOffset - e.Delta;
         next = Math.Max(0, Math.Min(next, MainListScroll.ScrollableHeight));

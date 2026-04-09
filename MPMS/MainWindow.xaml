@@ -146,7 +146,7 @@
                                        Margin="0,0,8,0"
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
                             <Grid Grid.Column="1">
-                                <TextBlock Text="Поиск проектов, задач, этапов..."
+                                <TextBlock Text="Поиск проектов, задач, этапов, материалов, оборудования..."
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            FontSize="13" VerticalAlignment="Center"
                                            IsHitTestVisible="False">
@@ -166,6 +166,8 @@
                                          BorderThickness="0" Background="Transparent"
                                          VerticalAlignment="Center" FontSize="13"
                                          Foreground="{StaticResource TextPrimaryBrush}"
+                                         SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                         SelectionTextBrush="{StaticResource TextPrimaryBrush}"
                                          GotFocus="GlobalSearch_GotFocus"
                                          LostFocus="GlobalSearch_LostFocus"
                                          KeyDown="GlobalSearch_KeyDown"
@@ -305,6 +307,76 @@
                                                                        Foreground="#000000" FontWeight="SemiBold"
                                                                        VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding TaskName}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchStagesDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Materials section -->
+                                    <StackPanel x:Name="SearchMaterialsSection" Margin="0,0,0,8">
+                                        <TextBlock Text="МАТЕРИАЛЫ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchMaterialsList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding InventoryNumber}" FontSize="12"
+                                                                       Foreground="#6B778C" Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchMaterialsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Equipment section -->
+                                    <StackPanel x:Name="SearchEquipmentSection">
+                                        <TextBlock Text="ОБОРУДОВАНИЕ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchEquipmentList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       Foreground="#000000" FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding InventoryNumber}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"/>
                                                         </StackPanel>
@@ -927,37 +999,6 @@
                     </StackPanel>
                 </RadioButton>
 
-                <!-- Журнал (виден всем, кроме администратора) -->
-                <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Journal, Mode=OneWay}"
-                             Style="{StaticResource NavButton}"
-                             Command="{Binding NavigateCommand}"
-                             CommandParameter="Journal"
-                             Visibility="{Binding IsAdminPanelVisible, Converter={StaticResource BoolToVisInv}}">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Width="20" Height="20"
-                               Margin="12,0,8,0"
-                               VerticalAlignment="Center"
-                               Source="{svgc:SvgImage Source=/icons/journal.svg, AppName=MPMS}">
-                            <Image.Style>
-                                <Style TargetType="Image">
-                                    <Setter Property="Opacity" Value="0.7"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
-                                            <Setter Property="Opacity" Value="1"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Image.Style>
-                        </Image>
-                        <TextBlock Text="Журнал"
-                                   FontSize="14"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </RadioButton>
-
                 <!-- Администрирование (только для Administrator) -->
                 <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Admin, Mode=OneWay}"
                              Style="{StaticResource NavButton}"
@@ -1030,6 +1071,7 @@
                     VerticalAlignment="Center"
                     Width="840"
                     MaxWidth="900"
+                    MaxHeight="720"
                     Margin="24"
                     Visibility="Collapsed"
                     Opacity="0"

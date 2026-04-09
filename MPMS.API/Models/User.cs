@@ -47,6 +47,13 @@ public class User
     /// <summary>Avatar stored as PNG bytes.</summary>
     public byte[]? AvatarData { get; set; }
 
+    public bool IsBlocked { get; set; }
+
+    public DateTime? BlockedAt { get; set; }
+
+    [MaxLength(500)]
+    public string? BlockedReason { get; set; }
+
     public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
     public ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
     public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();

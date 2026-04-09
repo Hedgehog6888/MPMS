@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="560"
              Background="White">
@@ -85,6 +86,34 @@
             <Setter Property="Foreground" Value="#DE350B"/>
             <Setter Property="BorderBrush" Value="#FFCDD2"/>
         </Style>
+
+        <Style x:Key="StatusSegmentedBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="White">
@@ -135,15 +164,17 @@
                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="64" Height="64" CornerRadius="32"
                                     Background="#DFE1E6" HorizontalAlignment="Center">
-                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="28" Foreground="#6B778C"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image Width="28" Height="28" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Source="{svgc:SvgImage Source=/icons/picture.svg, AppName=MPMS}"/>
                             </Border>
                             <TextBlock Text="Фото не добавлено" FontSize="12" Foreground="#6B778C"
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
                         <Image x:Name="EquipmentPhoto" Stretch="Uniform" MaxHeight="220"
-                               Visibility="Collapsed"/>
+                               Visibility="Collapsed"
+                               RenderOptions.BitmapScalingMode="Fant"/>
                         <Border x:Name="WrittenOffBanner"
                                 Background="#BF000000" Visibility="Collapsed"
                                 VerticalAlignment="Bottom" Padding="16,10">
@@ -185,6 +216,8 @@
                         <StackPanel Grid.Column="0" Margin="0,0,12,0">
                             <TextBlock Text="Статус" Style="{StaticResource InfoLabel}"/>
                             <TextBlock x:Name="StatusText" Style="{StaticResource InfoValue}"/>
+                            <TextBlock Text="Состояние" Style="{StaticResource InfoLabel}" Margin="0,8,0,2"/>
+                            <TextBlock x:Name="ConditionText" Style="{StaticResource InfoValue}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="0,0,12,0">
                             <TextBlock Text="Инв. номер" Style="{StaticResource InfoLabel}"/>
@@ -220,16 +253,47 @@
 
                     <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal" Margin="0,16,0,0">
-                        <Button Content="✎  Редактировать" Style="{StaticResource OutlineBtn}"
+                        <Button Content="Редактировать" Style="{StaticResource OutlineBtn}"
                                 Margin="0,0,8,8" Click="Edit_Click"/>
                         <Button Content="Списать" Style="{StaticResource DangerOutlineBtn}"
                                 Margin="0,0,0,8" Click="WriteOff_Click"/>
                     </WrapPanel>
 
-                    <!-- History -->
-                    <Border x:Name="HistorySection" Margin="0,8,0,24">
+                    <Border x:Name="ConditionPanel" Background="White" CornerRadius="8" Padding="0"
+                            Margin="0,0,0,8" Visibility="Collapsed">
                         <StackPanel>
-                            <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"/>
+                            <TextBlock Text="СМЕНА СОСТОЯНИЯ"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#8993A4" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="BtnConditionGood" Grid.Column="0" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionGood_Click">
+                                    <TextBlock Text="Исправно"/>
+                                </Button>
+                                <Button x:Name="BtnConditionMaintenance" Grid.Column="2" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionMaintenance_Click">
+                                    <TextBlock Text="Обслуживание"/>
+                                </Button>
+                                <Button x:Name="BtnConditionFaulty" Grid.Column="4" Style="{StaticResource StatusSegmentedBtn}"
+                                        Click="SetConditionFaulty_Click">
+                                    <TextBlock Text="Неисправно"/>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- History -->
+                    <Border x:Name="HistorySection" Margin="0,0,0,24">
+                        <StackPanel>
+                            <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"
+                                       Margin="0,6,0,8"/>
                             <TextBlock x:Name="HistoryLoading" Text="Загрузка..."
                                        FontSize="12" Foreground="#6B778C" Margin="0,0,0,8"
                                        Visibility="Collapsed"/>
@@ -238,9 +302,9 @@
                             <ItemsControl x:Name="HistoryList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,6"
+                                        <Border Background="White" CornerRadius="6" Margin="0,0,0,5"
                                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                                Padding="12,10">
+                                                Padding="10,7">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -249,8 +313,8 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Event icon -->
-                                                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
-                                                        VerticalAlignment="Top" Margin="0,0,12,0">
+                                                <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                                        VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="#E3F2FD"/>
@@ -268,7 +332,7 @@
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               FontSize="14">
+                                                               FontSize="12">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="→"/>
@@ -295,12 +359,12 @@
                                                 <!-- Info -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding EventTypeDisplay}"
-                                                               FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                                                               FontSize="12" FontWeight="SemiBold" Foreground="#000000"/>
                                                     <TextBlock Text="{Binding UserName, FallbackValue='—'}"
-                                                               FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                               FontSize="11" Foreground="#6B778C" Margin="0,1,0,0"/>
                                                     <TextBlock Text="{Binding Comment}" FontSize="11" Foreground="#6B778C"
                                                                Visibility="{Binding Comment, Converter={StaticResource StringToVis}}"
-                                                               TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                               TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                 </StackPanel>
 
                                                 <!-- Date -->
@@ -308,7 +372,7 @@
                                                     <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>
                                                     <TextBlock Text="{Binding NewStatus}" FontSize="11" Foreground="#6B778C"
-                                                               HorizontalAlignment="Right" Margin="0,2,0,0"
+                                                               HorizontalAlignment="Right" Margin="0,1,0,0"
                                                                Visibility="{Binding NewStatus, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
                                             </Grid>

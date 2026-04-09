@@ -27,69 +27,108 @@ public static class ActivityFilterService
         if (excludeAuthEvents)
             query = query.Where(a => a.ActionType == null || !AdminOnlyEventKinds.Contains(a.ActionType));
 
-        var allActivities = await query.Take(50).ToListAsync(ct);
-        ct.ThrowIfCancellationRequested();
-
-        // Populate AvatarData/AvatarPath from Users for display
-        var userIds = allActivities.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct().ToList();
-        if (userIds.Count > 0)
+        // Admin: no post-filter — a single query is enough
+        if (IsAdminRole(userRole))
         {
-            var userAvatars = await db.Users
-                .Where(u => userIds.Contains(u.Id))
-                .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
-                .ToDictionaryAsync(u => u.Id, ct);
-            foreach (var a in allActivities)
-            {
-                if (a.UserId.HasValue && userAvatars.TryGetValue(a.UserId.Value, out var av))
-                {
-                    a.AvatarData = av.AvatarData;
-                    a.AvatarPath = av.AvatarPath;
-                }
-            }
+            var adminList = await query.Take(take).ToListAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            await AttachAvatarsAsync(db, adminList, ct);
+            return adminList;
         }
 
-        // Admin: see all
-        if (IsAdminRole(userRole))
-            return allActivities.Take(take).ToList();
-
-        // Manager: exclude actions by admins (including when role is unknown — treat as admin for safety)
+        // Other roles: filtering can drop most recent rows (e.g. many admin actions, then login as manager).
+        // Scan chronologically in batches until we have `take` visible entries or hit a scan cap.
+        Dictionary<Guid, string>? userRolesById = null;
         if (IsManagerRole(userRole))
         {
-            var userRoles = await db.Users
+            userRolesById = await db.Users
                 .Select(u => new { u.Id, u.RoleName })
                 .ToDictionaryAsync(u => u.Id, u => u.RoleName, ct);
             ct.ThrowIfCancellationRequested();
-
-            return allActivities
-                .Where(a =>
-                {
-                    var actorRole = a.ActorRole ?? (a.UserId.HasValue ? userRoles.GetValueOrDefault(a.UserId.Value) : null);
-                    return actorRole != null && !IsAdminRole(actorRole);
-                })
-                .Take(take)
-                .ToList();
         }
 
-        // Foreman: only own + collaborators — exclude activities without UserId (could be admin/manager)
+        HashSet<Guid>? foremanVisibleIds = null;
         if (IsForemanRole(userRole) && currentUserId.HasValue)
         {
-            var visibleUserIds = await GetForemanVisibleUserIdsAsync(db, currentUserId.Value, ct);
-            return allActivities
-                .Where(a => a.UserId.HasValue && visibleUserIds.Contains(a.UserId.Value))
-                .Take(take)
-                .ToList();
+            foremanVisibleIds = await GetForemanVisibleUserIdsAsync(db, currentUserId.Value, ct);
+            ct.ThrowIfCancellationRequested();
         }
 
-        // Worker and others: only own actions
-        if (currentUserId.HasValue)
+        const int batchSize = 150;
+        var maxScan = Math.Min(20_000, Math.Max(2_000, take * 100));
+        var result = new List<LocalActivityLog>(Math.Min(take, 32));
+        var skip = 0;
+
+        while (result.Count < take && skip < maxScan)
         {
-            return allActivities
-                .Where(a => a.UserId == currentUserId.Value)
-                .Take(take)
-                .ToList();
+            var batch = await query.Skip(skip).Take(batchSize).ToListAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            if (batch.Count == 0)
+                break;
+            skip += batch.Count;
+
+            foreach (var a in batch)
+            {
+                if (result.Count >= take)
+                    break;
+                if (PassesRoleFilter(a, userRole, currentUserId, userRolesById, foremanVisibleIds))
+                    result.Add(a);
+            }
         }
 
-        return allActivities.Take(take).ToList();
+        await AttachAvatarsAsync(db, result, ct);
+        return result;
+    }
+
+    private static bool PassesRoleFilter(
+        LocalActivityLog a,
+        string userRole,
+        Guid? currentUserId,
+        Dictionary<Guid, string>? userRolesById,
+        HashSet<Guid>? foremanVisibleIds)
+    {
+        if (IsManagerRole(userRole))
+        {
+            var actorRole = a.ActorRole
+                ?? (a.UserId.HasValue && userRolesById is not null
+                    ? userRolesById.GetValueOrDefault(a.UserId.Value)
+                    : null);
+            return actorRole != null && !IsAdminRole(actorRole);
+        }
+
+        if (IsForemanRole(userRole))
+        {
+            if (!currentUserId.HasValue || foremanVisibleIds is null)
+                return true;
+            return a.UserId.HasValue && foremanVisibleIds.Contains(a.UserId.Value);
+        }
+
+        if (currentUserId.HasValue)
+            return a.UserId == currentUserId.Value;
+
+        return true;
+    }
+
+    private static async Task AttachAvatarsAsync(LocalDbContext db, List<LocalActivityLog> activities, CancellationToken ct)
+    {
+        var userIds = activities.Where(a => a.UserId.HasValue).Select(a => a.UserId!.Value).Distinct().ToList();
+        if (userIds.Count == 0)
+            return;
+
+        var userAvatars = await db.Users
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.AvatarData, u.AvatarPath })
+            .ToDictionaryAsync(u => u.Id, ct);
+        ct.ThrowIfCancellationRequested();
+
+        foreach (var a in activities)
+        {
+            if (a.UserId.HasValue && userAvatars.TryGetValue(a.UserId.Value, out var av))
+            {
+                a.AvatarData = av.AvatarData;
+                a.AvatarPath = av.AvatarPath;
+            }
+        }
     }
 
     /// <summary>Returns the count of activities visible to the current user (for stats display). Uses a reasonable limit.</summary>

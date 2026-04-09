@@ -32,10 +32,17 @@ public class EquipmentCategoriesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EquipmentCategoryResponse>> Create([FromBody] CreateEquipmentCategoryRequest request)
     {
+        var normalizedName = request.Name.Trim();
+        var existingByName = await _db.EquipmentCategories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Name == normalizedName);
+        if (existingByName is not null)
+            return Ok(new EquipmentCategoryResponse(existingByName.Id, existingByName.Name));
+
         var entity = new EquipmentCategory
         {
-            Id = Guid.NewGuid(),
-            Name = request.Name.Trim()
+            Id = request.Id ?? Guid.NewGuid(),
+            Name = normalizedName
         };
         try
         {
@@ -44,6 +51,12 @@ public class EquipmentCategoriesController : ControllerBase
         }
         catch (DbUpdateException)
         {
+            // Idempotent create for sync retries/races: return existing category by name.
+            var existing = await _db.EquipmentCategories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Name == normalizedName);
+            if (existing is not null)
+                return Ok(new EquipmentCategoryResponse(existing.Id, existing.Name));
             return Conflict(new { message = "Категория с таким именем уже существует" });
         }
 

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using MPMS;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -138,7 +139,7 @@ public partial class AdminUserInfoOverlay : UserControl
         // Replace drawer content directly without HideDrawer (avoids animation conflict)
         var overlay = new AdminUserFormOverlay();
         overlay.SetEditMode(_adminVm, _row);
-        MainWindow.Instance?.ShowDrawer(overlay);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
     private void Block_Click(object sender, RoutedEventArgs e)

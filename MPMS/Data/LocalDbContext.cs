@@ -70,6 +70,8 @@ public class LocalDbContext : DbContext
 
         modelBuilder.Entity<LocalMaterial>()
             .Property(e => e.Quantity).HasPrecision(18, 3);
+        modelBuilder.Entity<LocalMaterial>()
+            .Property(e => e.Cost).HasPrecision(18, 2);
         modelBuilder.Entity<LocalMaterialStockMovement>()
             .Property(e => e.Delta).HasPrecision(18, 3);
         modelBuilder.Entity<LocalMaterialStockMovement>()

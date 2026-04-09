@@ -167,8 +167,15 @@
                                                 <Setter Property="Cursor"     Value="Arrow"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                <Setter Property="Background" Value="#EFF6FF"/>
+                                                <Setter Property="Background" Value="#E8EAED"/>
                                             </DataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsEmpty}" Value="False"/>
+                                                    <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#F4F5F7"/>
+                                            </MultiDataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -176,8 +183,8 @@
                                 <StackPanel>
                                     <!-- Day number -->
                                     <Grid Margin="0,0,0,3" HorizontalAlignment="Left">
-                                        <!-- Today: blue circle -->
-                                        <Border Width="22" Height="22" Background="#2563EB"
+                                        <!-- Today: нейтральный акцент -->
+                                        <Border Width="22" Height="22" Background="#4B5563"
                                                 CornerRadius="11"
                                                 Visibility="{Binding IsToday, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="{Binding Date.Day}"

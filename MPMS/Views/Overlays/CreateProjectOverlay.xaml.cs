@@ -65,6 +65,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         _vm = vm;
         TitleLabel.Text = "Создать проект";
+        SubtitleLabel.Text = "Заполните информацию о монтажном проекте";
         SaveButton.Content = "Создать проект";
         _ = LoadUsersAsync();
     }
@@ -77,6 +78,7 @@ public partial class CreateProjectOverlay : UserControl
         _onSaved = onSaved;
         _onAfterSave = onAfterSave;
         TitleLabel.Text = "Редактировать проект";
+        SubtitleLabel.Text = "Измените данные проекта, команду и сроки";
         SaveButton.Content = "Сохранить изменения";
 
         NameBox.Text = project.Name;
@@ -463,7 +465,8 @@ public partial class CreateProjectOverlay : UserControl
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
                     ClientBox.Text.Trim(),
                     string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim(),
-                    startDate, endDate, _editProject!.Status, managerId);
+                    startDate, endDate, _editProject!.Status, managerId,
+                    _editProject.IsMarkedForDeletion, _editProject.IsArchived);
                 await _vm!.SaveUpdatedProjectAsync(_editProject.Id, req);
                 if (_onSaved is not null) await _onSaved();
                 projectId = _editProject.Id;
@@ -562,6 +565,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
+        MainScrollViewer.ScrollToVerticalOffset(0);
     }
 
     private record WorkerChipInfo(Guid UserId, string Name, string Initials);

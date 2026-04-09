@@ -490,6 +490,8 @@
                                          Background="Transparent" BorderThickness="0"
                                          VerticalAlignment="Center" FontSize="13"
                                          Foreground="#000000"
+                                         SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                         SelectionTextBrush="#000000"
                                          GotFocus="SearchBox_GotFocus"
                                          LostFocus="SearchBox_LostFocus"/>
                             </Grid>
