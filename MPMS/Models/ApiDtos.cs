@@ -245,7 +245,7 @@ public record StageMaterialResponse(Guid Id, Guid MaterialId, string MaterialNam
     string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
 public record StageServiceResponse(Guid Id, Guid ServiceTemplateId, string ServiceName, string? ServiceDescription,
     string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
-public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity);
+public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity, decimal? PricePerUnit = null);
 
 // ── Files ─────────────────────────────────────────────────────────────────────
 public record FileDto(Guid Id, string FileName, string FileType, long FileSize,

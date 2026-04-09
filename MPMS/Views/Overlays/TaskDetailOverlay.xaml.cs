@@ -322,19 +322,21 @@ public partial class TaskDetailOverlay : UserControl
     private void AddStage_Click(object sender, RoutedEventArgs e)
     {
         if (_vm?.Task is null) return;
-        var overlay = new CreateStageOverlay();
-        overlay.SetTask(
-            _vm.Task,
-            onSaved: async () =>
+        MainWindow.Instance?.HideDrawer();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var task = _vm.Task;
+        stageEditor.SetCreateForTask(
+            task,
+            goBack: () => main.Navigate("Tasks"),
+            onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();
                 UpdateStagesTabLabel();
                 UpdateEmptyStates();
-                _onClosed?.Invoke(); // Refresh project page
-            },
-            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
-
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+                _onClosed?.Invoke();
+            });
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private void UploadFiles_Click(object sender, RoutedEventArgs e)
@@ -410,21 +412,21 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
 
-        var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(
+        MainWindow.Instance?.HideDrawer();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        stageEditor.SetEditMode(
             stage,
             _vm.Task,
-            onSaved: async () =>
+            goBack: () => main.Navigate("Tasks"),
+            onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();
                 UpdateStagesTabLabel();
                 UpdateEmptyStates();
-                _onClosed?.Invoke(); // Sync project page
-            },
-            onAfterSave: () => _ = ReopenTaskDetailDualAsync());
-
-        // Только форма этапа; после закрытия — снова деталь задачи в том же режиме drawer.
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+                _onClosed?.Invoke();
+            });
+        main.NavigateToStageEditor(stageEditor);
     }
 }
 

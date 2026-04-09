@@ -36,13 +36,13 @@ public partial class StagesPage : UserControl
             return;
         }
 
-        var overlay = new CreateStageOverlay();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
         var vm = VM;
-        overlay.SetCreateModeFromStagesPage(async () =>
-        {
-            if (vm is not null) await vm.LoadAsync();
-        });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        stageEditor.SetCreateFromStagesPage(
+            goBack: () => main.Navigate("Stages"),
+            onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
@@ -89,15 +89,19 @@ public partial class StagesPage : UserControl
         await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.InProgress));
     }
 
-    private void EditStage_Click(object sender, RoutedEventArgs e)
+    private async void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
-        var task = VM.GetTaskForStageAsync(item.TaskId).GetAwaiter().GetResult();
+        var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
-        var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(item.Stage, task, async () => { if (VM is not null) await VM.LoadAsync(); });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var vm = VM;
+        stageEditor.SetEditMode(item.Stage, task,
+            goBack: () => main.Navigate("Stages"),
+            onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private static readonly SolidColorBrush _focusBrush = new(Colors.Black);

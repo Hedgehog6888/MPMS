@@ -116,7 +116,7 @@ public partial class MainViewModel : ViewModelBase
     private void ToggleSidebar() => IsSidebarExpanded = !IsSidebarExpanded;
 
     [RelayCommand]
-    private void Navigate(string page)
+    public void Navigate(string page)
     {
         CurrentPage = page;
         ViewModelBase? vm = page switch
@@ -150,6 +150,14 @@ public partial class MainViewModel : ViewModelBase
         vm.SetProject(project, () => Navigate("Projects"));
         _ = vm.LoadAsync();
         CurrentPageViewModel = vm;
+    }
+
+    /// <summary>Встроенный редактор этапа (полноэкранная страница, как карточка проекта).</summary>
+    public void NavigateToStageEditor(StageEditViewModel vm)
+    {
+        CurrentPage = "StageEdit";
+        CurrentPageViewModel = vm;
+        _ = vm.LoadAsync();
     }
 
     [RelayCommand]

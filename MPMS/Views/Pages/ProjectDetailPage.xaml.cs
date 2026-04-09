@@ -459,10 +459,13 @@ public partial class ProjectDetailPage : UserControl
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
-        var overlay = new CreateStageOverlay();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
         var vm = VM;
-        overlay.SetEditMode(stage, task,
-            onSaved: async () =>
+        var project = VM.Project!;
+        stageEditor.SetEditMode(stage, task,
+            goBack: () => main.NavigateToProject(project),
+            onSavedAsync: async () =>
             {
                 if (vm != null)
                 {
@@ -470,7 +473,7 @@ public partial class ProjectDetailPage : UserControl
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)
@@ -514,11 +517,14 @@ public partial class ProjectDetailPage : UserControl
     private void AddProjectStage_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.Project is null) return;
-        var overlay = new CreateStageOverlay();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
         var vm = VM;
-        overlay.SetCreateModeForProject(vm.Project.Id,
-            onSaved: async () => { if (vm != null) await vm.LoadAsync(); });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        var project = VM.Project;
+        stageEditor.SetCreateForProject(project.Id,
+            goBack: () => main.NavigateToProject(project),
+            onSavedAsync: async () => { if (vm != null) await vm.LoadAsync(); });
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)

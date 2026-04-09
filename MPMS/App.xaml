@@ -1055,6 +1055,9 @@
             <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
                 <pages:ProjectDetailPage/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:StageEditViewModel}">
+                <pages:StageEditPage/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:TasksViewModel}">
                 <pages:TasksPage/>
             </DataTemplate>

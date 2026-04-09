@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -227,6 +228,9 @@ public partial class TaskDetailViewModel : ViewModelBase
             AssignedUserName = assignedName,
             DueDate = req.DueDate,
             Status = StageStatus.Planned,
+            ServiceTemplateId = req.ServiceTemplateId,
+            WorkQuantity = req.WorkQuantity,
+            WorkPricePerUnit = req.WorkPricePerUnit ?? 0m,
             IsSynced = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -234,6 +238,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         };
 
         db.TaskStages.Add(stage);
+        await ReplaceLocalStageServicesAsync(db, localId, req.ServiceItems);
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Stage", localId, SyncOperation.Create,
@@ -258,9 +263,15 @@ public partial class TaskDetailViewModel : ViewModelBase
         stage.AssignedUserId = req.AssignedUserId;
         stage.Status = req.Status;
         stage.DueDate = req.DueDate;
+        stage.ServiceTemplateId = req.ServiceTemplateId;
+        stage.WorkQuantity = req.WorkQuantity;
+        stage.WorkPricePerUnit = req.WorkPricePerUnit;
         stage.IsSynced = false;
         stage.UpdatedAt = DateTime.UtcNow;
         stage.LastModifiedLocally = DateTime.UtcNow;
+
+        if (req.ServiceItems is not null)
+            await ReplaceLocalStageServicesAsync(db, id, req.ServiceItems);
 
         await db.SaveChangesAsync();
         var syncStageReq = req with
@@ -272,6 +283,70 @@ public partial class TaskDetailViewModel : ViewModelBase
         await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated);
         await LoadAsync();
         await UpdateTaskProgressAsync();
+    }
+
+    private static async System.Threading.Tasks.Task ReplaceLocalStageServicesAsync(
+        LocalDbContext db, Guid stageId, IReadOnlyList<StageServiceItemRequest>? items)
+    {
+        var existing = await db.StageServices.Where(x => x.StageId == stageId).ToListAsync();
+        db.StageServices.RemoveRange(existing);
+        if (items is null || items.Count == 0) return;
+
+        foreach (var item in items)
+        {
+            var tpl = await db.ServiceTemplates.FindAsync(item.ServiceTemplateId);
+            var price = item.PricePerUnit ?? tpl?.BasePrice ?? 0m;
+            db.StageServices.Add(new LocalStageService
+            {
+                Id = Guid.NewGuid(),
+                StageId = stageId,
+                ServiceTemplateId = item.ServiceTemplateId,
+                ServiceName = tpl?.Name ?? "—",
+                ServiceDescription = tpl?.Description,
+                Unit = tpl?.Unit,
+                Quantity = item.Quantity,
+                PricePerUnit = price,
+                IsSynced = false,
+                LastModifiedLocally = DateTime.UtcNow
+            });
+        }
+    }
+
+    public async Task ReplaceStageAssigneesAsync(Guid stageId, IReadOnlyList<(Guid UserId, string UserName)> assignees)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var existing = await db.StageAssignees.Where(a => a.StageId == stageId).ToListAsync();
+        db.StageAssignees.RemoveRange(existing);
+        foreach (var a in assignees)
+        {
+            db.StageAssignees.Add(new LocalStageAssignee
+            {
+                Id = Guid.NewGuid(),
+                StageId = stageId,
+                UserId = a.UserId,
+                UserName = a.UserName
+            });
+        }
+        await db.SaveChangesAsync();
+
+        var rows = await db.StageAssignees.Where(x => x.StageId == stageId).ToListAsync();
+        await _sync.QueueOperationAsync("StageAssignees", stageId, SyncOperation.Update,
+            new ReplaceStageAssigneesRequest(rows.Select(r => new AssigneeSyncItemDto(r.Id, r.UserId)).ToList()));
+    }
+
+    public async Task ReplaceStageMaterialsAsync(Guid stageId, IReadOnlyList<LocalStageMaterial> materials)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var existing = await db.StageMaterials.Where(m => m.StageId == stageId).ToListAsync();
+        db.StageMaterials.RemoveRange(existing);
+        foreach (var m in materials)
+        {
+            m.StageId = stageId;
+            m.IsSynced = false;
+            m.LastModifiedLocally = DateTime.UtcNow;
+            db.StageMaterials.Add(m);
+        }
+        await db.SaveChangesAsync();
     }
 
     public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)

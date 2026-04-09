@@ -1,0 +1,450 @@
+<UserControl x:Class="MPMS.Views.Pages.StageEditPage"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:infra="clr-namespace:MPMS.Infrastructure"
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:models="clr-namespace:MPMS.Models"
+             Background="{StaticResource BackgroundBrush}">
+
+    <UserControl.Resources>
+        <Style x:Key="PickerRowBorder" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#F0F0F0"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="UserPickerItem" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="24,16" Background="Transparent">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Назад"
+                        Style="{StaticResource OutlineBtn}"
+                        Command="{Binding GoBackCommand}"
+                        VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding PageTitle}" FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding ContextSubtitle}" FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tabs -->
+        <Border Grid.Row="1" Background="#F4F5F7" Padding="24,4,24,6">
+            <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="Основное" Tag="Main" GroupName="StageEditTabs" IsChecked="True"
+                                 Style="{StaticResource TabButton}"
+                                 Click="StageTab_Click"/>
+                    <RadioButton Content="Услуги" Tag="Services" GroupName="StageEditTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="StageTab_Click"/>
+                    <RadioButton Content="Работники" Tag="Workers" GroupName="StageEditTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="StageTab_Click"/>
+                    <RadioButton Content="Материалы/оборудование" Tag="Materials" GroupName="StageEditTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="StageTab_Click"/>
+                    <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs"
+                                 Style="{StaticResource TabButton}"
+                                 Click="StageTab_Click"/>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Body -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="24,8,24,16">
+            <Grid>
+                <!-- Main -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Main}">
+                    <StackPanel Visibility="{Binding ShowProjectNameRow, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Проект" Style="{StaticResource FormLabel}"/>
+                        <Border Background="#F8F9FA" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding ProjectNameReadOnly}" FontSize="13" Foreground="#6B778C"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding ShowProjectTaskPickers, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Visibility="{Binding ShowProjectPickerList, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
+                            <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                    CornerRadius="8" MaxHeight="160" Margin="0,0,0,12">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding ProjectRows}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:PickerRowVm}">
+                                                <Border Style="{StaticResource PickerRowBorder}"
+                                                        MouseLeftButtonDown="ProjectRow_Click">
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                        <Border Width="22" Height="22" CornerRadius="11" Background="#111111"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                Visibility="{Binding IsSelected, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="✓" Foreground="White" FontSize="10"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="Задача *" Style="{StaticResource FormLabel}"/>
+                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                CornerRadius="8" MaxHeight="160" Margin="0,0,0,12">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding TaskRows}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:PickerRowVm}">
+                                            <Border Style="{StaticResource PickerRowBorder}"
+                                                    MouseLeftButtonDown="TaskRow_Click">
+                                                <Grid>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                    <Border Width="22" Height="22" CornerRadius="11" Background="#111111"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelected, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="✓" Foreground="White" FontSize="10"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Text="Название этапа *" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
+                        <TextBox Text="{Binding StageName, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent" FontSize="13"
+                                 VerticalContentAlignment="Center"/>
+                    </Border>
+
+                    <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
+                        <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent" FontSize="13"
+                                 Height="76" TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
+                    </Border>
+
+                    <TextBlock Text="Срок выполнения" Style="{StaticResource FormLabel}"/>
+                    <DatePicker x:Name="DueDatePicker" SelectedDate="{Binding DueDate}"
+                                Height="42" FontSize="13" Margin="0,0,0,12"/>
+                </StackPanel>
+
+                <!-- Services -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Services}">
+                    <TextBlock Text="Каталог услуг" Style="{StaticResource FormLabel}"/>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="200"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SearchBoxBorder}">
+                            <TextBox Text="{Binding ServiceSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0" Background="Transparent" FontSize="13"
+                                     VerticalContentAlignment="Center" Padding="4,0"
+                                     ToolTip="Поиск по названию, описанию, артикулу"/>
+                        </Border>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding ServiceCategoryOptions}"
+                                  SelectedItem="{Binding ServiceCategoryFilter}"
+                                  Style="{StaticResource FormCombo}" Height="36"/>
+                    </Grid>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" MaxHeight="220" Margin="0,0,0,16">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ServiceCatalogFiltered}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:LocalServiceTemplate}">
+                                        <Border Padding="10,8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                                            <Grid>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock FontSize="11" Foreground="#6B778C" TextWrapping="Wrap">
+                                                        <Run Text="{Binding CategoryName, Mode=OneWay}"/>
+                                                        <Run Text=" · "/>
+                                                        <Run Text="{Binding BasePrice, Mode=OneWay, StringFormat={}{0:N2} ₽}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <Button Content="Добавить" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                        Style="{StaticResource BlackBtn}" Padding="12,4"
+                                                        Tag="{Binding}"
+                                                        Click="AddServiceTemplate_Click"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <TextBlock Text="Услуги в этапе" Style="{StaticResource FormLabel}"/>
+                    <ItemsControl ItemsSource="{Binding SelectedServices}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:StageServiceLineVm}">
+                                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                        CornerRadius="8" Padding="10,8" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="−" Width="32" Height="32" Tag="{Binding}"
+                                                    Click="DecServiceQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
+                                            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="56" Height="32" Margin="6,0" TextAlignment="Center"
+                                                     VerticalContentAlignment="Center"/>
+                                            <Button Content="+" Width="32" Height="32" Tag="{Binding}"
+                                                    Click="IncServiceQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                            <TextBlock FontSize="11" Foreground="#6B778C">
+                                                <Run Text="{Binding Unit, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+                                            <TextBlock Text="Цена за ед." FontSize="10" Foreground="#8993A4"/>
+                                            <TextBox Text="{Binding PricePerUnit, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="100" Height="32"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <TextBlock Text="Сумма" FontSize="10" Foreground="#8993A4"/>
+                                            <TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}"
+                                                       FontWeight="SemiBold" FontSize="14"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="4" Content="Удалить" Style="{StaticResource OutlineBtn}"
+                                                VerticalAlignment="Center" Margin="12,0,0,0" Padding="10,4"
+                                                Command="{Binding DataContext.RemoveServiceLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Workers -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Workers}">
+                    <Border Background="#F0F9FF" CornerRadius="8" Padding="12,10" Margin="0,0,0,10"
+                            BorderBrush="#BAE6FD" BorderThickness="1"
+                            Visibility="{Binding ShowAssigneesSection, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Исполнители назначаются только из участников задачи"
+                                   FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Background="#F0F9FF" CornerRadius="8" Padding="12,10" Margin="0,0,0,10"
+                            BorderBrush="#BAE6FD" BorderThickness="1"
+                            Visibility="{Binding ShowWorkerAutoHint, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Вы будете автоматически назначены исполнителем этапа."
+                                   FontSize="12" Foreground="#0284C7" TextWrapping="Wrap"/>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding WorkerPickerItems}"
+                                  Visibility="{Binding ShowAssigneesSection, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border MouseLeftButtonDown="WorkerRow_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource UserPickerItem}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource AvatarCircle32}"
+                                                        Background="{Binding AvatarBrush}" Margin="0,0,10,0">
+                                                    <Grid>
+                                                        <Image Style="{StaticResource AvatarImage}"
+                                                               Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                               Width="32" Height="32"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                        <TextBlock Text="{Binding Initials}"
+                                                                   FontSize="11" FontWeight="Bold" Foreground="White"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Text="{Binding RoleSubtitle}" FontSize="11"
+                                                               Foreground="{Binding RoleSubtitleBrush}"
+                                                               Visibility="{Binding RoleSubtitleVis}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Border Width="22" Height="22" CornerRadius="11" Background="#111111"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                    Visibility="{Binding IsSelectedVis}">
+                                                <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Materials -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Materials}">
+                    <Button Content="Добавить материал" Style="{StaticResource BlackBtn}" HorizontalAlignment="Left"
+                            Command="{Binding AddMaterialRowCommand}" Margin="0,0,0,12"/>
+                    <ItemsControl ItemsSource="{Binding MaterialLines}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:StageMaterialLineVm}">
+                                <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                        CornerRadius="8" Padding="10,8" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <ComboBox Grid.Row="0"
+                                                  ItemsSource="{Binding MaterialCatalog, ElementName=Root}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding MaterialId, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectionChanged="MaterialCombo_SelectionChanged"
+                                                  Tag="{Binding}"
+                                                  Margin="0,0,0,8" Style="{StaticResource FormCombo}"/>
+                                        <Grid Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="−" Width="32" Height="32" Tag="{Binding}"
+                                                        Click="DecMatQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
+                                                <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                                         Width="56" Height="32" Margin="6,0" TextAlignment="Center"/>
+                                                <Button Content="+" Width="32" Height="32" Tag="{Binding}"
+                                                        Click="IncMatQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+                                                <TextBlock Text="Цена за ед." FontSize="10" Foreground="#8993A4"/>
+                                                <TextBox Text="{Binding PricePerUnit, UpdateSourceTrigger=PropertyChanged}"
+                                                         Width="100" Height="32"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                <TextBlock Text="Сумма" FontSize="10" Foreground="#8993A4"/>
+                                                <TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}"
+                                                           FontWeight="SemiBold" FontSize="14"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="Удалить строку" Style="{StaticResource OutlineBtn}"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                    Tag="{Binding}" Click="RemoveMaterialRow_Click"/>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Summary -->
+                <StackPanel Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Summary}">
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Итоги по этапу" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Услуги" Foreground="#6B778C"/>
+                                <TextBlock Grid.Column="1" Text="{Binding SummaryServicesTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Материалы" Foreground="#6B778C"/>
+                                <TextBlock Grid.Column="1" Text="{Binding SummaryMaterialsTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold"/>
+                            </Grid>
+                            <Border Height="1" Background="#EBECF0" Margin="0,8,0,12"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Всего" FontWeight="Bold" FontSize="15"/>
+                                <TextBlock Grid.Column="1" Text="{Binding SummaryGrandTotal, StringFormat={}{0:N2} ₽}"
+                                           FontWeight="Bold" FontSize="18"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="3" Padding="24,14" BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Background="#FFF0F0" CornerRadius="8" Padding="10,8" Margin="0,0,0,10"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVis}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                </Border>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Отмена" Style="{StaticResource OutlineBtn}" Command="{Binding GoBackCommand}" Margin="0,0,8,0"/>
+                    <Button Content="{Binding SaveButtonText}" Style="{StaticResource BlackBtn}"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

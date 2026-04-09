@@ -156,38 +156,41 @@ public class TaskStagesController : ControllerBase
         }
         stage.WorkQuantity = request.WorkQuantity;
         stage.WorkPricePerUnit = request.WorkPricePerUnit;
-        var serviceItems = request.ServiceItems ?? [];
-        if (serviceItems.Count > 0)
+        // ServiceItems == null — не трогаем строки услуг (частичные обновления, например только статус).
+        if (request.ServiceItems is { } serviceItems)
         {
-            var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
-            var templates = await _db.ServiceTemplates
-                .Where(s => ids.Contains(s.Id) && s.IsActive)
-                .ToDictionaryAsync(s => s.Id);
-            if (templates.Count != ids.Count)
-                return BadRequest(new { message = "Одна или несколько услуг не найдены" });
-
-            var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
-            _db.StageServices.RemoveRange(existingServices);
-            foreach (var item in serviceItems)
+            if (serviceItems.Count > 0)
             {
-                var tpl = templates[item.ServiceTemplateId];
-                _db.StageServices.Add(new StageService
+                var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
+                var templates = await _db.ServiceTemplates
+                    .Where(s => ids.Contains(s.Id) && s.IsActive)
+                    .ToDictionaryAsync(s => s.Id);
+                if (templates.Count != ids.Count)
+                    return BadRequest(new { message = "Одна или несколько услуг не найдены" });
+
+                var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
+                _db.StageServices.RemoveRange(existingServices);
+                foreach (var item in serviceItems)
                 {
-                    Id = Guid.NewGuid(),
-                    StageId = id,
-                    ServiceTemplateId = tpl.Id,
-                    ServiceNameSnapshot = tpl.Name,
-                    ServiceDescriptionSnapshot = tpl.Description,
-                    UnitSnapshot = tpl.Unit,
-                    Quantity = item.Quantity,
-                    PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
-                });
+                    var tpl = templates[item.ServiceTemplateId];
+                    _db.StageServices.Add(new StageService
+                    {
+                        Id = Guid.NewGuid(),
+                        StageId = id,
+                        ServiceTemplateId = tpl.Id,
+                        ServiceNameSnapshot = tpl.Name,
+                        ServiceDescriptionSnapshot = tpl.Description,
+                        UnitSnapshot = tpl.Unit,
+                        Quantity = item.Quantity,
+                        PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
+                    });
+                }
             }
-        }
-        else if (!request.ServiceTemplateId.HasValue)
-        {
-            var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
-            _db.StageServices.RemoveRange(existingServices);
+            else if (!request.ServiceTemplateId.HasValue)
+            {
+                var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
+                _db.StageServices.RemoveRange(existingServices);
+            }
         }
         stage.AssignedUserId = request.AssignedUserId;
         stage.Status = request.Status;
@@ -240,9 +243,13 @@ public class TaskStagesController : ControllerBase
         var existing = await _db.StageMaterials
             .FirstOrDefaultAsync(sm => sm.StageId == id && sm.MaterialId == request.MaterialId);
 
+        var unitPrice = request.PricePerUnit ?? material.Cost ?? 0m;
+
         if (existing is not null)
         {
             existing.Quantity += request.Quantity;
+            if (request.PricePerUnit.HasValue)
+                existing.PricePerUnit = request.PricePerUnit.Value;
         }
         else
         {
@@ -250,9 +257,8 @@ public class TaskStagesController : ControllerBase
             {
                 StageId = id,
                 MaterialId = request.MaterialId,
-                Quantity = request.Quantity
-                ,
-                PricePerUnit = material.Cost ?? 0m
+                Quantity = request.Quantity,
+                PricePerUnit = unitPrice
             };
             _db.StageMaterials.Add(existing);
         }

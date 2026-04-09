@@ -66,7 +66,8 @@ public record TaskStageResponse(
 
 public record AddStageMaterialRequest(
     Guid MaterialId,
-    decimal Quantity
+    decimal Quantity,
+    decimal? PricePerUnit = null
 );
 
 public record StageMaterialResponse(

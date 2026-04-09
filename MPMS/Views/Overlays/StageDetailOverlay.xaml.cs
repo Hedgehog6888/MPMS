@@ -261,17 +261,19 @@ public partial class StageDetailOverlay : UserControl
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
         if (_stage is null || _task is null) return;
-        var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(
+        MainWindow.Instance?.HideDrawer();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        stageEditor.SetEditMode(
             _stage,
             _task,
-            onSaved: () =>
+            goBack: () => main.Navigate("Stages"),
+            onSavedAsync: async () =>
             {
                 _onClosed?.Invoke();
-                return System.Threading.Tasks.Task.CompletedTask;
-            },
-            onAfterSave: () => _ = ReopenStageDetailAsync());
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+                await System.Threading.Tasks.Task.CompletedTask;
+            });
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private async void SetStatusPlanned_Click(object sender, RoutedEventArgs e)
