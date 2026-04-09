@@ -590,7 +590,7 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xEA, 0xB3, 0x08));
     private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x93, 0x35, 0xEA));
+    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
     private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
     private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
@@ -624,7 +624,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xEA, 0xB3, 0x08));
     private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x93, 0x35, 0xEA));
+    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x0F, 0x76, 0x8C));
     private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -632,9 +632,11 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         if (value is not MPMS.Models.LocalActivityLog log)
             return DefaultBrush;
 
-        // Для материалов всегда используем цвет сущности, а не цвет action type.
+        // Для материалов/оборудования всегда используем цвет сущности, а не цвет action type.
         if (string.Equals(log.EntityType, "Material", StringComparison.Ordinal))
             return MaterialBrush;
+        if (string.Equals(log.EntityType, "Equipment", StringComparison.Ordinal))
+            return EquipmentBrush;
 
         var actionType = log.ActionType;
         if (!string.IsNullOrEmpty(actionType))
