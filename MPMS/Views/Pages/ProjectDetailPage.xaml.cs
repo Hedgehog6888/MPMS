@@ -87,6 +87,12 @@ public partial class ProjectDetailPage : UserControl
     private async void MarkProject_Click(object sender, RoutedEventArgs e)
     {
         if (VM is null) return;
+        if (VM.Project is { IsMarkedForDeletion: false } projectToMark)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", projectToMark.Name))
+                return;
+        }
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(null);
         // Update button text based on project state
         UpdateMarkProjectButton();
@@ -239,12 +245,24 @@ public partial class ProjectDetailPage : UserControl
     private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
+        if (!task.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
+                return;
+        }
         await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
     }
 
     private async void MarkStageForDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        if (!stage.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", stage.Name))
+                return;
+        }
         await VM.MarkStageForDeletionCommand.ExecuteAsync(stage);
     }
 

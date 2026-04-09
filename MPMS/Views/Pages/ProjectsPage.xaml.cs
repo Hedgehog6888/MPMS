@@ -122,6 +122,12 @@ public partial class ProjectsPage : UserControl
     private async void MarkProjectForDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
+        if (!project.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", project.Name))
+                return;
+        }
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(project);
     }
 

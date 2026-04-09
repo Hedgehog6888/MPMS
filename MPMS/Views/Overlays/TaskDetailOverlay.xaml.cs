@@ -229,6 +229,12 @@ public partial class TaskDetailOverlay : UserControl
     private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (_vm?.Task is null) return;
+        if (!_vm.Task.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this);
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Задачу", _vm.Task.Name))
+                return;
+        }
         await _vm.MarkTaskForDeletionCommand.ExecuteAsync(null);
         ApplyRoleRestrictions();
         _onClosed?.Invoke();
@@ -384,6 +390,12 @@ public partial class TaskDetailOverlay : UserControl
     private async void MarkStageForDeletion_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
+        if (!stage.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this);
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", stage.Name))
+                return;
+        }
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
         _onClosed?.Invoke(); // Синхронизация страницы проекта
     }

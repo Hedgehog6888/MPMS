@@ -375,6 +375,12 @@ public partial class StageDetailOverlay : UserControl
         var proj = taskEntity is not null ? await db.Projects.FindAsync(taskEntity.ProjectId) : null;
         if (taskEntity?.IsMarkedForDeletion == true || proj?.IsMarkedForDeletion == true)
             return;
+        if (!entity.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this);
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", entity.Name))
+                return;
+        }
 
         entity.IsMarkedForDeletion = !entity.IsMarkedForDeletion;
         entity.IsSynced = false;

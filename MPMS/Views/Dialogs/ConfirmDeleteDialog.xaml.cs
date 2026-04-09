@@ -22,6 +22,7 @@ public partial class ConfirmDeleteDialog : Window
         TitleText.Text = $"Удалить {entityType.ToLower()}?";
         EntityTypeText.Text = entityType;
         ItemNameText.Text = itemName;
+        ConfirmBtn.Content = "Удалить";
 
         if (!string.IsNullOrWhiteSpace(cascadeMessage))
         {
@@ -42,6 +43,32 @@ public partial class ConfirmDeleteDialog : Window
         var dialog = new ConfirmDeleteDialog();
         dialog.Owner = owner;
         dialog.Configure(entityType, itemName, cascadeMessage);
+        dialog.ShowDialog();
+        return dialog.Confirmed;
+    }
+
+    /// <summary>
+    /// Configures the dialog for mark-for-deletion action.
+    /// </summary>
+    public void ConfigureMarkForDeletion(string entityType, string itemName)
+    {
+        TitleText.Text = $"Пометить {entityType.ToLower()} к удалению?";
+        EntityTypeText.Text = entityType;
+        ItemNameText.Text = itemName;
+        ConfirmBtn.Content = "Пометить";
+        CascadeWarning.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Shows mark-for-deletion confirmation and returns true if confirmed.
+    /// </summary>
+    public static bool ShowMarkForDeletion(Window owner, string entityType, string itemName)
+    {
+        var dialog = new ConfirmDeleteDialog
+        {
+            Owner = owner
+        };
+        dialog.ConfigureMarkForDeletion(entityType, itemName);
         dialog.ShowDialog();
         return dialog.Confirmed;
     }

@@ -113,6 +113,12 @@ public partial class TasksPage : UserControl
     private async void MarkTask_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
+        if (!task.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
+                return;
+        }
         await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
     }
 

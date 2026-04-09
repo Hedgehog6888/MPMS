@@ -58,6 +58,12 @@ public partial class StagesPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
+        if (!item.Stage.IsMarkedForDeletion)
+        {
+            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", item.Stage.Name))
+                return;
+        }
         await VM.MarkStageForDeletionCommand.ExecuteAsync(item);
     }
 
