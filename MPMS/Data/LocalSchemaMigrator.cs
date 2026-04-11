@@ -35,6 +35,7 @@ public static class LocalSchemaMigrator
         AddSubRoleColumn(conn);
         AddAdditionalSubRolesColumn(conn);
         AddBirthDateAndAddressColumns(conn);
+        AddSessionPasswordProtectedColumn(conn);
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
         ApplyServicesSchema(conn);
@@ -190,6 +191,12 @@ public static class LocalSchemaMigrator
         // Kept on logout so the same account can re-login offline (1 = active, 0 = logged out)
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"IsActiveSession\" INTEGER NOT NULL DEFAULT 1;");
+    }
+
+    private static void AddSessionPasswordProtectedColumn(SqliteConnection conn)
+    {
+        TryAlterTable(conn,
+            "ALTER TABLE \"AuthSessions\" ADD COLUMN \"SessionPasswordProtected\" TEXT NULL;");
     }
 
     private static void CreateActivityLogsTable(SqliteConnection conn)

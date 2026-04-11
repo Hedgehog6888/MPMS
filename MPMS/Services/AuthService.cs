@@ -1,3 +1,7 @@
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
 using MPMS.Models;
@@ -9,11 +13,19 @@ public class AuthService : IAuthService
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private const int MaxRecentAccounts = 5;
 
+    private const string DefaultApiBase = "http://localhost:5147/api/";
+
+    private readonly string _defaultApiBaseUrl;
+    private string? _activeApiBaseUrl;
+
     private AuthResponse? _current;
+    /// <summary>Пароль текущей сессии (только в памяти) — нужен для получения JWT после офлайн-входа при появлении сети.</summary>
+    private string? _sessionPlainPassword;
 
     public AuthService(IDbContextFactory<LocalDbContext> dbFactory)
     {
         _dbFactory = dbFactory;
+        _defaultApiBaseUrl = ReadDefaultApiBaseUrlFromAppSettings();
     }
 
     public bool IsAuthenticated => _current is not null;
@@ -23,9 +35,14 @@ public class AuthService : IAuthService
     public string? Username  => _current?.Username;
     public string? UserRole  => _current?.Role;
 
+    /// <inheritdoc />
+    public string ApiBaseUrl => NormalizeApiBaseUrl(_activeApiBaseUrl ?? _defaultApiBaseUrl);
+
     public async Task SetSessionAsync(AuthResponse response, string plainPassword)
     {
         _current = response;
+        _sessionPlainPassword = plainPassword;
+        _activeApiBaseUrl = null;
         await PersistSessionAsync(response, plainPassword);
         _ = SaveRecentAccountAsync(response);
     }
@@ -33,14 +50,42 @@ public class AuthService : IAuthService
     public void SetSession(AuthResponse response, string plainPassword)
     {
         _current = response;
+        _sessionPlainPassword = plainPassword;
+        _activeApiBaseUrl = null;
         _ = PersistSessionAsync(response, plainPassword);
         _ = SaveRecentAccountAsync(response);
+    }
+
+    public async Task<bool> TryRefreshJwtIfNeededAsync(IApiService api)
+    {
+        var hasPassword = !string.IsNullOrEmpty(_sessionPlainPassword) && !string.IsNullOrWhiteSpace(Username);
+
+        if (!string.IsNullOrWhiteSpace(Token))
+        {
+            if (await api.VerifyAuthAsync())
+                return true;
+        }
+
+        if (!hasPassword)
+            return false;
+
+        var result = await api.LoginAsync(Username!.Trim(), _sessionPlainPassword!);
+        if (!result.Success || result.Response is null) return false;
+
+        var (allowed, _) = await CanUserLoginAsync(result.Response.UserId);
+        if (!allowed) return false;
+
+        _current = result.Response;
+        await PersistSessionAsync(result.Response, _sessionPlainPassword!);
+        return true;
     }
 
     public void Logout()
     {
         var currentUserId = _current?.UserId;
         _current = null;
+        _sessionPlainPassword = null;
+        _activeApiBaseUrl = null;
         _ = ClearSessionAsync(currentUserId);
     }
 
@@ -52,10 +97,8 @@ public class AuthService : IAuthService
             .OrderByDescending(s => s.ExpiresAt)
             .FirstOrDefaultAsync();
 
-        // Only auto-restore if the user was actively logged in (didn't explicitly log out).
         if (session is null || !session.IsActiveSession) return false;
 
-        // Не восстанавливать сессию удалённого или заблокированного пользователя
         var (allowed, _) = await CanUserLoginAsync(session.UserId);
         if (!allowed)
         {
@@ -69,6 +112,9 @@ public class AuthService : IAuthService
             session.UserId, session.UserName, session.Username,
             session.UserRole, session.Token, session.ExpiresAt);
 
+        ApplyRestoredApiUrl(session);
+        _sessionPlainPassword = TryDecryptSessionPassword(session.SessionPasswordProtected);
+
         return true;
     }
 
@@ -78,7 +124,7 @@ public class AuthService : IAuthService
         if (await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
             return (false, "Пользователь удалён");
         var user = await db.Users.FindAsync(userId);
-        if (user is null) return (true, null); // Нет в локальной БД — разрешаем
+        if (user is null) return (true, null);
         if (user.IsBlocked)
         {
             var reason = !string.IsNullOrWhiteSpace(user.BlockedReason)
@@ -98,7 +144,6 @@ public class AuthService : IAuthService
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Primary check: any cached session for this username (user has previously logged in online)
         var session = (await db.AuthSessions
                 .OrderByDescending(s => s.ExpiresAt)
                 .ToListAsync())
@@ -114,7 +159,6 @@ public class AuthService : IAuthService
                 session.UserRole, session.Token, session.ExpiresAt), null);
         }
 
-        // Fallback: admin-created user with password stored in LocalUser.PasswordHash
         var localUser = await db.Users
             .FirstOrDefaultAsync(u => u.Username == username);
         if (localUser is null
@@ -158,7 +202,75 @@ public class AuthService : IAuthService
             .ToListAsync();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    private void ApplyRestoredApiUrl(AuthSession session)
+    {
+        if (!string.IsNullOrWhiteSpace(session.ApiBaseUrl))
+            _activeApiBaseUrl = session.ApiBaseUrl;
+        else
+            _activeApiBaseUrl = null;
+    }
+
+    private static string ReadDefaultApiBaseUrlFromAppSettings()
+    {
+        try
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            if (!File.Exists(path)) return DefaultApiBase;
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("ApiBaseUrl", out var el))
+            {
+                var s = el.GetString();
+                if (!string.IsNullOrWhiteSpace(s))
+                    return NormalizeApiBaseUrl(s);
+            }
+        }
+        catch { /* ignore */ }
+        return DefaultApiBase;
+    }
+
+    private static string NormalizeApiBaseUrl(string input)
+    {
+        var s = input.Trim();
+        if (string.IsNullOrEmpty(s)) return DefaultApiBase;
+        s = s.TrimEnd('/');
+        if (!s.EndsWith("/api", StringComparison.OrdinalIgnoreCase))
+            s += "/api";
+        return s + "/";
+    }
+
+    private static string? ProtectPlainPassword(string plainPassword)
+    {
+        try
+        {
+            var bytes = Encoding.UTF8.GetBytes(plainPassword);
+#pragma warning disable CA1416 // WPF: DPAPI только Windows
+            return Convert.ToBase64String(
+                ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser));
+#pragma warning restore CA1416
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? TryDecryptSessionPassword(string? stored)
+    {
+        if (string.IsNullOrEmpty(stored)) return null;
+        try
+        {
+            var raw = Convert.FromBase64String(stored);
+#pragma warning disable CA1416
+            var bytes = ProtectedData.Unprotect(raw, null, DataProtectionScope.CurrentUser);
+#pragma warning restore CA1416
+            return Encoding.UTF8.GetString(bytes);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private async Task PersistSessionAsync(AuthResponse r, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -167,6 +279,8 @@ public class AuthService : IAuthService
                 .ToListAsync())
             .FirstOrDefault(s => string.Equals(s.Username, r.Username, StringComparison.OrdinalIgnoreCase));
         var pwdHash  = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+        var apiUrl   = NormalizeApiBaseUrl(_activeApiBaseUrl ?? _defaultApiBaseUrl);
+        var encPlain = ProtectPlainPassword(plainPassword);
         var allSessions = await db.AuthSessions.ToListAsync();
         foreach (var session in allSessions)
             session.IsActiveSession = false;
@@ -179,6 +293,8 @@ public class AuthService : IAuthService
                 UserName = r.Name, Username = r.Username,
                 UserRole = r.Role, ExpiresAt = r.ExpiresAt,
                 LocalPasswordHash = pwdHash,
+                ApiBaseUrl = apiUrl,
+                SessionPasswordProtected = encPlain,
                 IsActiveSession = true
             });
         }
@@ -191,6 +307,8 @@ public class AuthService : IAuthService
             existing.UserRole          = r.Role;
             existing.ExpiresAt         = r.ExpiresAt;
             existing.LocalPasswordHash = pwdHash;
+            existing.ApiBaseUrl        = apiUrl;
+            existing.SessionPasswordProtected = encPlain;
             existing.IsActiveSession   = true;
         }
 
@@ -208,10 +326,9 @@ public class AuthService : IAuthService
             .FirstOrDefaultAsync();
         if (session is not null && session.IsActiveSession)
         {
-            // Mark as logged-out but keep the record so the same account
-            // can log back in offline using the cached password hash.
             session.IsActiveSession = false;
             session.Token = string.Empty;
+            session.SessionPasswordProtected = null;
             await db.SaveChangesAsync();
         }
     }

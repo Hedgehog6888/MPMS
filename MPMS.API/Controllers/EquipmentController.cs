@@ -68,6 +68,11 @@ public class EquipmentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EquipmentResponse>> Create([FromBody] CreateEquipmentRequest request)
     {
+        var id = request.Id ?? Guid.NewGuid();
+
+        if (await _db.Equipments.AnyAsync(e => e.Id == id))
+            return await GetById(id);
+
         if (request.CategoryId.HasValue &&
             !await _db.EquipmentCategories.AnyAsync(c => c.Id == request.CategoryId.Value))
             return BadRequest(new { message = "Категория оборудования не найдена" });
@@ -78,7 +83,7 @@ public class EquipmentController : ControllerBase
             : EquipmentStatus.Available;
         var entity = new Equipment
         {
-            Id = request.Id ?? Guid.NewGuid(),
+            Id = id,
             Name = request.Name,
             Description = request.Description,
             CategoryId = request.CategoryId,

@@ -13,17 +13,20 @@ public partial class LoginViewModel : ViewModelBase
     private readonly IApiService _api;
     private readonly IAuthService _auth;
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
+    private readonly ISyncService _sync;
 
     [ObservableProperty] private string _username = string.Empty;
     [ObservableProperty] private string _password = string.Empty;
     [ObservableProperty] private ObservableCollection<RecentAccount> _recentAccounts = new();
     [ObservableProperty] private bool _hasRecentAccounts;
 
-    public LoginViewModel(IApiService api, IAuthService auth, IDbContextFactory<LocalDbContext> dbFactory)
+    public LoginViewModel(IApiService api, IAuthService auth, IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync)
     {
         _api = api;
         _auth = auth;
         _dbFactory = dbFactory;
+        _sync = sync;
         _ = LoadRecentAccountsAsync();
     }
 
@@ -46,7 +49,7 @@ public partial class LoginViewModel : ViewModelBase
                     return;
                 }
                 await _auth.SetSessionAsync(result.Response!, Password);
-                OpenMainAndClose();
+                await OpenMainAndCloseAsync();
                 return;
             }
 
@@ -57,7 +60,7 @@ public partial class LoginViewModel : ViewModelBase
                 if (offlineResponse is not null)
                 {
                     await _auth.SetSessionAsync(offlineResponse, Password);
-                    OpenMainAndClose();
+                    await OpenMainAndCloseAsync();
                     return;
                 }
                 if (blockMessage is not null)
@@ -95,10 +98,10 @@ public partial class LoginViewModel : ViewModelBase
     private bool CanLogin() => !string.IsNullOrWhiteSpace(Username)
                              && !string.IsNullOrWhiteSpace(Password);
 
-    private void OpenMainAndClose()
+    private async Task OpenMainAndCloseAsync()
     {
-        _ = LogLoginAsync();
-        App.OpenMainWindow();
+        await LogLoginAsync();
+        await App.OpenMainWindowAsync();
         foreach (System.Windows.Window w in System.Windows.Application.Current.Windows)
         {
             if (w is Views.LoginWindow) { w.Close(); break; }
@@ -113,7 +116,7 @@ public partial class LoginViewModel : ViewModelBase
             var name     = _auth.UserName ?? "?";
             var initials = Services.AvatarHelper.GetInitials(name);
             var color    = Services.AvatarHelper.GetColorForName(name);
-            db.ActivityLogs.Add(new LocalActivityLog
+            var log = new LocalActivityLog
             {
                 UserId       = _auth.UserId,
                 ActorRole    = _auth.UserRole,
@@ -125,8 +128,10 @@ public partial class LoginViewModel : ViewModelBase
                 EntityType   = "User",
                 EntityId     = _auth.UserId ?? Guid.Empty,
                 CreatedAt    = DateTime.UtcNow
-            });
+            };
+            db.ActivityLogs.Add(log);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
         }
         catch { /* non-critical */ }
     }

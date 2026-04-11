@@ -27,10 +27,8 @@ public partial class App : Application
 
         if (await authService.TryRestoreSessionAsync())
         {
-            // Probe the server before showing the main window so the online/offline
-            // indicator is correct from the very first frame (no green→red flash).
             await Services.GetRequiredService<IApiService>().ProbeAsync();
-            OpenMainWindow();
+            await OpenMainWindowAsync();
         }
         else
         {
@@ -46,9 +44,9 @@ public partial class App : Application
             options.UseSqlite(LocalDbPaths.GetConnectionString()));
 
         // ── HTTP Client ───────────────────────────────────────────────────────
+        // Базовый URL задаётся в appsettings.json и IAuthService.ApiBaseUrl — запросы собирают полный Uri в ApiService.
         services.AddHttpClient("MPMS", client =>
         {
-            client.BaseAddress = new Uri("http://localhost:5147/api/");
             client.Timeout = TimeSpan.FromSeconds(15);
         });
         services.AddSingleton<IApiService>(sp =>
@@ -97,15 +95,13 @@ public partial class App : Application
         LocalSchemaMigrator.Apply(LocalDbPaths.GetConnectionString());
     }
 
-    public static void OpenMainWindow()
+    /// <summary>Сначала полная синхронизация с сервером в SQLite, затем главное окно и навигация — чтобы списки не были пустыми.</summary>
+    public static async Task OpenMainWindowAsync()
     {
+        await Services.GetRequiredService<ISyncService>().SyncAsync();
         var main = Services.GetRequiredService<MainWindow>();
-        // Refresh user info displayed in the sidebar (important after account switch)
         Services.GetRequiredService<MainViewModel>().RefreshUserInfo();
         main.Show();
-
-        // Start background sync
-        _ = Services.GetRequiredService<ISyncService>().SyncAsync();
     }
 
     public static void NavigateToLogin()

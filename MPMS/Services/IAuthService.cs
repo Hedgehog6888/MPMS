@@ -11,11 +11,20 @@ public interface IAuthService
     string? Username { get; }
     string? UserRole { get; }
 
+    /// <summary>Базовый URL API (заканчивается на /api/), из appsettings.json и сессии.</summary>
+    string ApiBaseUrl { get; }
+
     /// <summary>Saves session after successful online login (awaitable — ensures DB persistence).</summary>
     Task SetSessionAsync(AuthResponse response, string plainPassword);
 
     /// <summary>Fire-and-forget variant kept for internal use.</summary>
     void SetSession(AuthResponse response, string plainPassword);
+
+    /// <summary>
+    /// Если JWT отсутствует (например после офлайн-входа), но сервер доступен и известен пароль сессии,
+    /// выполняет вход и обновляет токен — иначе защищённые API (список пользователей и т.д.) не отдают данные.
+    /// </summary>
+    Task<bool> TryRefreshJwtIfNeededAsync(IApiService api);
 
     void Logout();
     Task<bool> TryRestoreSessionAsync();

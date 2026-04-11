@@ -40,8 +40,13 @@ public class DiscussionMessagesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<DiscussionMessageResponse>> Create([FromBody] CreateDiscussionMessageRequest request)
     {
-        var hasTask = request.TaskId.HasValue;
-        var hasProject = request.ProjectId.HasValue;
+        var taskId = request.TaskId;
+        var projectId = request.ProjectId;
+        if (taskId == Guid.Empty) taskId = null;
+        if (projectId == Guid.Empty) projectId = null;
+
+        var hasTask = taskId.HasValue;
+        var hasProject = projectId.HasValue;
         if (hasTask == hasProject)
             return BadRequest(new { message = "Укажите ровно одно из: TaskId или ProjectId" });
 
@@ -62,8 +67,8 @@ public class DiscussionMessagesController : ControllerBase
         var msg = new DiscussionMessage
         {
             Id = id,
-            TaskId = request.TaskId,
-            ProjectId = request.ProjectId,
+            TaskId = taskId,
+            ProjectId = projectId,
             UserId = userId,
             UserName = fullName,
             UserInitials = InitialsFromName(fullName),

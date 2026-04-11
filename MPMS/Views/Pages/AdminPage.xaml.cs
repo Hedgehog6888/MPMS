@@ -19,14 +19,19 @@ public partial class AdminPage : UserControl
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        if (e.OldValue is AdminViewModel oldVm)
+        {
+            oldVm.OpenCreateFormRequested -= OnOpenCreateForm;
+            oldVm.OpenEditFormRequested   -= OnOpenEditForm;
+            oldVm.OpenUserInfoRequested   -= OnOpenUserInfo;
+        }
+
         if (e.NewValue is not AdminViewModel vm) return;
         _vm = vm;
 
         vm.OpenCreateFormRequested += OnOpenCreateForm;
         vm.OpenEditFormRequested   += OnOpenEditForm;
         vm.OpenUserInfoRequested   += OnOpenUserInfo;
-
-        _ = vm.LoadAsync();
     }
 
     // ── Drawer openers ────────────────────────────────────────────────────

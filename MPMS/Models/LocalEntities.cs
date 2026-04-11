@@ -611,6 +611,9 @@ public class AuthSession
     public DateTime ExpiresAt { get; set; }
     public string ApiBaseUrl { get; set; } = "http://localhost:5147/";
 
+    /// <summary>DPAPI (CurrentUser) — для повторного LoginAsync и JWT после перезапуска без ввода пароля.</summary>
+    public string? SessionPasswordProtected { get; set; }
+
     /// <summary>BCrypt hash of the last entered password — allows offline login.</summary>
     public string LocalPasswordHash { get; set; } = string.Empty;
 

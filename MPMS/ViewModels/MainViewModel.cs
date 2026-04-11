@@ -200,9 +200,7 @@ public partial class MainViewModel : ViewModelBase
             await _sync.SyncAsync();
     }
 
-    /// <summary>
-    /// Called by App.OpenMainWindow() after a new login so the sidebar reflects the current user.
-    /// </summary>
+    /// <summary>Вызывается из <see cref="App.OpenMainWindowAsync"/> после синхронизации.</summary>
     public void RefreshUserInfo()
     {
         OnPropertyChanged(nameof(UserName));
@@ -247,7 +245,7 @@ public partial class MainViewModel : ViewModelBase
             var name     = _auth.UserName ?? "?";
             var initials = Services.AvatarHelper.GetInitials(name);
             var color    = Services.AvatarHelper.GetColorForName(name);
-            db.ActivityLogs.Add(new Models.LocalActivityLog
+            var log = new Models.LocalActivityLog
             {
                 UserId       = _auth.UserId,
                 ActorRole    = _auth.UserRole,
@@ -259,8 +257,10 @@ public partial class MainViewModel : ViewModelBase
                 EntityType   = "User",
                 EntityId     = _auth.UserId ?? Guid.Empty,
                 CreatedAt    = DateTime.UtcNow
-            });
+            };
+            db.ActivityLogs.Add(log);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
         }
         catch { /* non-critical */ }
     }

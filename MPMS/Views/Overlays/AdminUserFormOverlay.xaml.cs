@@ -364,17 +364,22 @@ public partial class AdminUserFormOverlay : UserControl
                 user.AdditionalSubRoles  = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
 
+                LocalActivityLog? pwdLog = null;
                 if (!string.IsNullOrEmpty(password))
                 {
                     user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-                    _adminVm?.AddAdminLog(db, ActivityActionKind.PasswordChanged,
+                    pwdLog = _adminVm?.AddAdminLog(db, ActivityActionKind.PasswordChanged,
                         $"Изменил пароль пользователя {fullName}", "User", user.Id);
                 }
 
-                _adminVm?.AddAdminLog(db, ActivityActionKind.UserEdited,
+                var editLog = _adminVm!.AddAdminLog(db, ActivityActionKind.UserEdited,
                     $"Изменил данные пользователя {fullName} ({username})", "User", user.Id);
 
                 await db.SaveChangesAsync();
+
+                var sync = App.Services.GetRequiredService<ISyncService>();
+                if (pwdLog is not null) await sync.QueueLocalActivityLogAsync(pwdLog);
+                await sync.QueueLocalActivityLogAsync(editLog);
 
                 if (api.IsOnline)
                 {
@@ -426,10 +431,11 @@ public partial class AdminUserFormOverlay : UserControl
                 };
                 db.Users.Add(newUser);
 
-                _adminVm?.AddAdminLog(db, ActivityActionKind.UserCreated,
+                var createLog = _adminVm!.AddAdminLog(db, ActivityActionKind.UserCreated,
                     $"Создал пользователя {fullName} ({username}) с ролью {role.Display}", "User", newUser.Id);
 
                 await db.SaveChangesAsync();
+                await App.Services.GetRequiredService<ISyncService>().QueueLocalActivityLogAsync(createLog);
 
                 if (api.IsOnline)
                 {

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -11,9 +12,11 @@ public class ApiService : IApiService
     private readonly HttpClient _http;
     private readonly IAuthService _auth;
 
+    /// <summary>Совпадает с AddJsonOptions в MPMS.API (camelCase) — иначе record/DTO могут не собраться из ответа.</summary>
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public ApiService(HttpClient http, IAuthService auth)
@@ -24,12 +27,16 @@ public class ApiService : IApiService
 
     public bool IsOnline { get; private set; } = true;
 
+    public string? LastUsersPullError { get; private set; }
+
+    public void ClearLastUsersPullError() => LastUsersPullError = null;
+
     public async Task ProbeAsync()
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
         try
         {
-            await _http.GetAsync("auth/roles",
+            await _http.GetAsync(Api("auth/roles"),
                 HttpCompletionOption.ResponseHeadersRead, cts.Token);
             IsOnline = true;
         }
@@ -39,13 +46,35 @@ public class ApiService : IApiService
         }
     }
 
+    public async Task<bool> VerifyAuthAsync()
+    {
+        try
+        {
+            AttachToken();
+            if (string.IsNullOrWhiteSpace(_auth.Token)) return false;
+            using var response = await _http.GetAsync(Api("auth/me"));
+            IsOnline = true;
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException)
+        {
+            IsOnline = false;
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            IsOnline = false;
+            return false;
+        }
+    }
+
     // ── Auth ──────────────────────────────────────────────────────────────────
     public async Task<LoginResult> LoginAsync(string username, string password)
     {
         try
         {
             var response = await _http.PostAsJsonAsync(
-                "auth/login",
+                Api("auth/login"),
                 new LoginRequest(username, password),
                 JsonOpts);
             IsOnline = true;
@@ -78,6 +107,9 @@ public class ApiService : IApiService
             return LoginResult.Fail("Превышено время ожидания. Проверьте, что API запущен.");
         }
     }
+
+    public Task<UserResponse?> GetCurrentUserAsync()
+        => GetAsync<UserResponse>("auth/me");
 
     public async Task<List<RoleDto>?> GetRolesAsync()
         => await GetAsync<List<RoleDto>>("auth/roles");
@@ -216,8 +248,51 @@ public class ApiService : IApiService
     // ── Users ─────────────────────────────────────────────────────────────────
     public async Task<List<UserResponse>?> GetUsersAsync(string? search = null)
     {
+        LastUsersPullError = null;
         var q = BuildQuery(("search", search));
-        return await GetAsync<List<UserResponse>>($"users{q}");
+        try
+        {
+            AttachToken();
+            var uri = Api($"users{q}");
+            using var response = await _http.GetAsync(uri);
+            IsOnline = true;
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                LastUsersPullError = response.StatusCode == HttpStatusCode.Unauthorized
+                    ? "Список пользователей: 401 — нет действующего JWT. Выйдите и войдите снова."
+                    : $"Список пользователей: HTTP {(int)response.StatusCode} {response.ReasonPhrase}. {TruncateForDiag(body, 500)}";
+                return null;
+            }
+
+            // Тот же путь, что у auth/me и остальных DTO — поэлементный JsonElement.Deserialize часто ломал record UserResponse.
+            var list = await response.Content.ReadFromJsonAsync<List<UserResponse>>(JsonOpts);
+            return list ?? [];
+        }
+        catch (HttpRequestException ex)
+        {
+            IsOnline = false;
+            LastUsersPullError = "Список пользователей: сеть — " + ex.Message;
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            IsOnline = false;
+            LastUsersPullError = "Список пользователей: запрос отменён или таймаут.";
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            LastUsersPullError = "Список пользователей: разбор JSON — " + ex.Message;
+            return null;
+        }
+    }
+
+    private static string TruncateForDiag(string s, int max)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        s = s.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length <= max ? s : s[..max] + "…";
     }
 
     public async Task<UserResponse?> CreateUserAsync(CreateUserRequest request)
@@ -241,7 +316,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.PostAsJsonAsync("discussion-messages", request, JsonOpts);
+            var response = await _http.PostAsJsonAsync(Api("discussion-messages"), request, JsonOpts);
             IsOnline = true;
             if (!response.IsSuccessStatusCode) return null;
             return await response.Content.ReadFromJsonAsync<DiscussionMessageResponse>(JsonOpts);
@@ -263,7 +338,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.PostAsJsonAsync("synced-activity-logs", request, JsonOpts);
+            var response = await _http.PostAsJsonAsync(Api("synced-activity-logs"), request, JsonOpts);
             IsOnline = true;
             if (!response.IsSuccessStatusCode) return null;
             return await response.Content.ReadFromJsonAsync<SyncedActivityLogResponse>(JsonOpts);
@@ -284,7 +359,7 @@ public class ApiService : IApiService
         {
             AttachToken();
             var request = new UploadAvatarRequest(avatarData);
-            var response = await _http.PutAsJsonAsync($"users/{userId}/avatar", request, JsonOpts);
+            var response = await _http.PutAsJsonAsync(Api($"users/{userId}/avatar"), request, JsonOpts);
             IsOnline = true;
             return response.IsSuccessStatusCode;
         }
@@ -309,7 +384,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.PutAsJsonAsync(url, body, JsonOpts);
+            var response = await _http.PutAsJsonAsync(Api(url), body, JsonOpts);
             IsOnline = true;
             return response.IsSuccessStatusCode;
         }
@@ -317,12 +392,25 @@ public class ApiService : IApiService
         catch (OperationCanceledException) { IsOnline = false; return false; }
     }
 
+    /// <summary>Абсолютный URI: база из <see cref="IAuthService.ApiBaseUrl"/>, путь относительно /api/.</summary>
+    private Uri Api(string relativePathAndQuery)
+    {
+        var baseUrl = _auth.ApiBaseUrl;
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            baseUrl = "http://localhost:5147/api/";
+        baseUrl = baseUrl.TrimEnd('/') + "/";
+        var rel = relativePathAndQuery.TrimStart('/');
+        return new Uri($"{baseUrl}{rel}", UriKind.Absolute);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void AttachToken()
     {
-        if (_auth.Token is not null)
+        if (!string.IsNullOrWhiteSpace(_auth.Token))
             _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _auth.Token);
+                new AuthenticationHeaderValue("Bearer", _auth.Token!.Trim());
+        else
+            _http.DefaultRequestHeaders.Authorization = null;
     }
 
     private async Task<T?> GetAsync<T>(string url)
@@ -330,7 +418,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.GetAsync(url);
+            var response = await _http.GetAsync(Api(url));
             IsOnline = true;
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
@@ -344,7 +432,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.PostAsJsonAsync(url, body, JsonOpts);
+            var response = await _http.PostAsJsonAsync(Api(url), body, JsonOpts);
             IsOnline = true;
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
@@ -358,7 +446,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.PutAsJsonAsync(url, body, JsonOpts);
+            var response = await _http.PutAsJsonAsync(Api(url), body, JsonOpts);
             IsOnline = true;
             if (!response.IsSuccessStatusCode) return default;
             return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
@@ -372,7 +460,7 @@ public class ApiService : IApiService
         try
         {
             AttachToken();
-            var response = await _http.DeleteAsync(url);
+            var response = await _http.DeleteAsync(Api(url));
             IsOnline = true;
             return response.IsSuccessStatusCode;
         }

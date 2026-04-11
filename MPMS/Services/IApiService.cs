@@ -6,11 +6,21 @@ public interface IApiService
 {
     bool IsOnline { get; }
 
+    /// <summary>Последняя ошибка GET users (HTTP/JSON/сеть).</summary>
+    string? LastUsersPullError { get; }
+
+    void ClearLastUsersPullError();
+
     /// <summary>Fast connectivity probe — updates IsOnline with a short timeout.</summary>
     Task ProbeAsync();
 
+    /// <summary>Проверяет, что текущий JWT принимается сервером (GET api/auth/me).</summary>
+    Task<bool> VerifyAuthAsync();
+
     // Auth
     Task<LoginResult> LoginAsync(string username, string password);
+    /// <summary>Текущий пользователь по JWT (GET api/auth/me).</summary>
+    Task<UserResponse?> GetCurrentUserAsync();
     Task<List<RoleDto>?> GetRolesAsync();
 
     // Projects

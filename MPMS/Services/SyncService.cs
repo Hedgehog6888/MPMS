@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Text.Json;
+using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
 using MPMS.Models;
@@ -19,11 +21,22 @@ public interface ISyncService
 
 public class SyncService : ISyncService
 {
+    /// <summary>
+    /// Очередь хранит JSON с именами свойств по умолчанию (PascalCase).
+    /// CaseInsensitive — чтобы подхватывать старые записи и не ломаться на смешанном регистре.
+    /// Не используем camelCase/IgnoreNull при записи: иначе часть DTO при чтении не собирается в record.
+    /// </summary>
+    private static readonly JsonSerializerOptions PendingOpJson = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IApiService _api;
     private readonly IAuthService _auth;
 
     private readonly PeriodicTimer _timer = new(TimeSpan.FromMinutes(5));
+    private readonly SemaphoreSlim _syncGate = new(1, 1);
     private bool _isSyncing;
 
     public bool IsSyncing => _isSyncing;
@@ -57,25 +70,46 @@ public class SyncService : ISyncService
         return IsUnavailableCondition(condition) ? "Unavailable" : "Available";
     }
 
+    private async Task PrepareSyncConnectionAsync()
+    {
+        _api.ClearLastUsersPullError();
+        await _api.ProbeAsync();
+        if (_api.IsOnline)
+            await _auth.TryRefreshJwtIfNeededAsync(_api);
+    }
+
     public async Task SyncAsync()
     {
-        if (_isSyncing || !_auth.IsAuthenticated) return;
-        _isSyncing = true;
-
+        if (!_auth.IsAuthenticated) return;
+        await _syncGate.WaitAsync();
         try
         {
-            // Сначала проверяем соединение — иначе при IsOnline=false запросы не отправляются
-            await _api.ProbeAsync();
-            await ProcessPendingOperationsAsync();
+            _isSyncing = true;
+            await PrepareSyncConnectionAsync();
+            try
+            {
+                await ProcessPendingOperationsAsync();
+            }
+            catch (Exception ex)
+            {
+                // Не блокируем pull с сервера из‑за сбоя исходящей очереди / складских ремапов
+                Debug.WriteLine($"[Sync] ProcessPendingOperations: {ex}");
+            }
+            if (_api.IsOnline)
+                await _auth.TryRefreshJwtIfNeededAsync(_api);
             await PullFromServerAsync();
         }
-        catch { /* errors are captured via _api.IsOnline */ }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Sync] PullFromServer: {ex}");
+        }
         finally
         {
             _isSyncing = false;
             // Always fire so the UI reflects the current connectivity state,
             // even when an exception interrupted the sync.
             OnlineStatusChanged?.Invoke(this, _api.IsOnline);
+            _syncGate.Release();
         }
     }
 
@@ -88,7 +122,7 @@ public class SyncService : ISyncService
             EntityType = entityType,
             EntityId = entityId,
             OperationType = operation,
-            Payload = JsonSerializer.Serialize(payload),
+            Payload = JsonSerializer.Serialize(payload, PendingOpJson),
             CreatedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
@@ -107,12 +141,8 @@ public class SyncService : ISyncService
     }
 
     // ── Pull latest data from server into local DB ────────────────────────────
-    private async Task PullFromServerAsync()
+    private async Task PullUsersAndRolesIntoLocalDbAsync(LocalDbContext db)
     {
-        if (!_api.IsOnline) return;
-
-        await using var db = await _dbFactory.CreateDbContextAsync();
-
         // Roles (for admin form)
         var apiRoles = await _api.GetRolesAsync();
         if (apiRoles is not null)
@@ -123,76 +153,32 @@ public class SyncService : ISyncService
                 if (existing is null)
                     db.Roles.Add(new LocalRole { Id = r.Id, Name = r.Name, Description = r.Description });
                 else
+                {
                     existing.Name = r.Name;
+                    existing.Description = r.Description;
+                }
             }
         }
 
-        // Users (for dropdowns)
+        // Пользователи: API → локальная таблица Users (источник на сервере — та же БД, что у MPMS.API)
         var users = await _api.GetUsersAsync();
-        if (!_api.IsOnline) return;  // bail out early if the first request already failed
+        if (!_api.IsOnline) return;
         if (users is not null)
-        {
-            var deletedIds = (await db.DeletedUserIds.Select(x => x.Id).ToListAsync()).ToHashSet();
-            var existing = await db.Users.ToDictionaryAsync(u => u.Id);
+            await UserListMergeHelper.ApplyPulledUsersAsync(db, users, _auth);
 
-            foreach (var u in users)
-            {
-                if (deletedIds.Contains(u.Id)) continue; // Не возвращать локально удалённых
-                var fullName = $"{u.FirstName} {u.LastName}".Trim();
-                if (existing.TryGetValue(u.Id, out var local))
-                {
-                    if (local.IsSynced)
-                    {
-                        local.Name = fullName;
-                        local.FirstName = u.FirstName; local.LastName = u.LastName;
-                        local.Username = u.Username;
-                        local.Email = u.Email;
-                        local.RoleName = u.Role;
-                        local.RoleId = u.RoleId;
-                        local.SubRole = u.SubRole;
-                        local.AdditionalSubRoles = u.AdditionalSubRoles;
-                        local.BirthDate = u.BirthDate;
-                        local.HomeAddress = u.HomeAddress;
-                        if (u.AvatarData is { Length: > 0 })
-                            local.AvatarData = u.AvatarData;
-                        local.IsBlocked = u.IsBlocked;
-                        local.BlockedAt = u.BlockedAt;
-                        local.BlockedReason = u.BlockedReason;
-                        local.IsSynced = true;
-                    }
-                    else
-                    {
-                        // Локальные правки профиля ещё не на сервере — не затираем ФИО, дату, адрес и аватар
-                        local.RoleName = u.Role;
-                        local.RoleId = u.RoleId;
-                        local.SubRole = u.SubRole;
-                        local.AdditionalSubRoles = u.AdditionalSubRoles;
-                        local.IsBlocked = u.IsBlocked;
-                        local.BlockedAt = u.BlockedAt;
-                        local.BlockedReason = u.BlockedReason;
-                    }
-                }
-                else
-                {
-                    db.Users.Add(new LocalUser
-                    {
-                        Id = u.Id, Name = fullName,
-                        FirstName = u.FirstName, LastName = u.LastName,
-                        Username = u.Username, Email = u.Email, RoleName = u.Role,
-                        RoleId = u.RoleId,
-                        SubRole = u.SubRole,
-                        AdditionalSubRoles = u.AdditionalSubRoles,
-                        BirthDate = u.BirthDate,
-                        HomeAddress = u.HomeAddress,
-                        AvatarData = u.AvatarData,
-                        IsSynced = true, CreatedAt = u.CreatedAt,
-                        IsBlocked = u.IsBlocked,
-                        BlockedAt = u.BlockedAt,
-                        BlockedReason = u.BlockedReason
-                    });
-                }
-            }
-        }
+        // Сохранить роли и пользователей до остального pull: при ошибке в проектах/задачах/этапах
+        // иначе один общий SaveChanges в конце не выполнится — локальная таблица Users останется пустой/устаревшей.
+        await db.SaveChangesAsync();
+    }
+
+    private async Task PullFromServerAsync()
+    {
+        if (!_api.IsOnline) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        await PullUsersAndRolesIntoLocalDbAsync(db);
+        if (!_api.IsOnline) return;
 
         // Projects
         var projects = await _api.GetProjectsAsync();
@@ -676,7 +662,16 @@ public class SyncService : ISyncService
         if (!_api.IsOnline) return;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
-        await EnsureWarehouseCategoriesReadyAsync(db);
+        try
+        {
+            await EnsureWarehouseCategoriesReadyAsync(db);
+        }
+        catch (Exception ex)
+        {
+            // Не блокируем отправку остальной очереди из‑за ремапов категорий склада
+            Debug.WriteLine($"[Sync] EnsureWarehouseCategoriesReadyAsync: {ex}");
+        }
+
         await RecoverWarehouseFailedOperationsAsync(db);
 
         var pending = await db.PendingOperations
@@ -754,7 +749,7 @@ public class SyncService : ISyncService
                     EntityType = "MaterialCategory",
                     EntityId = local.Id,
                     OperationType = SyncOperation.Create,
-                    Payload = JsonSerializer.Serialize(new CreateMaterialCategoryRequest(local.Name, local.Id)),
+                    Payload = JsonSerializer.Serialize(new CreateMaterialCategoryRequest(local.Name, local.Id), PendingOpJson),
                     CreatedAt = DateTime.UtcNow
                 });
             }
@@ -786,7 +781,7 @@ public class SyncService : ISyncService
                     EntityType = "EquipmentCategory",
                     EntityId = local.Id,
                     OperationType = SyncOperation.Create,
-                    Payload = JsonSerializer.Serialize(new CreateEquipmentCategoryRequest(local.Name, local.Id)),
+                    Payload = JsonSerializer.Serialize(new CreateEquipmentCategoryRequest(local.Name, local.Id), PendingOpJson),
                     CreatedAt = DateTime.UtcNow
                 });
             }
@@ -820,15 +815,15 @@ public class SyncService : ISyncService
         {
             if (op.OperationType == SyncOperation.Create)
             {
-                var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload);
+                var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload, PendingOpJson);
                 if (req?.CategoryId == oldId)
-                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId }, PendingOpJson);
             }
             else if (op.OperationType == SyncOperation.Update)
             {
-                var req = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload);
+                var req = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload, PendingOpJson);
                 if (req?.CategoryId == oldId)
-                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId }, PendingOpJson);
             }
         }
 
@@ -862,15 +857,15 @@ public class SyncService : ISyncService
         {
             if (op.OperationType == SyncOperation.Create)
             {
-                var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload);
+                var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload, PendingOpJson);
                 if (req?.CategoryId == oldId)
-                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId }, PendingOpJson);
             }
             else if (op.OperationType == SyncOperation.Update)
             {
-                var req = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload);
+                var req = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload, PendingOpJson);
                 if (req?.CategoryId == oldId)
-                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId });
+                    op.Payload = JsonSerializer.Serialize(req with { CategoryId = newId }, PendingOpJson);
             }
         }
 
@@ -903,7 +898,17 @@ public class SyncService : ISyncService
                 _             => true
             };
         }
-        catch { return false; }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Sync] {op.EntityType} {op.OperationType} {op.EntityId}: {ex}");
+            try
+            {
+                var msg = ex.Message;
+                op.ErrorMessage = msg.Length > 500 ? msg[..500] : msg;
+            }
+            catch { /* ignore */ }
+            return false;
+        }
     }
 
     private async Task<bool> SyncProjectAsync(PendingOperation op)
@@ -913,14 +918,13 @@ public class SyncService : ISyncService
 
         if (op.OperationType == SyncOperation.Create)
         {
-            var req = JsonSerializer.Deserialize<CreateProjectRequest>(op.Payload);
+            var req = JsonSerializer.Deserialize<CreateProjectRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
-            // Include the local ID so server creates with the same GUID
             req = req with { Id = op.EntityId };
             return await _api.CreateProjectAsync(req) is not null;
         }
 
-        var updateReq = JsonSerializer.Deserialize<UpdateProjectRequest>(op.Payload);
+        var updateReq = JsonSerializer.Deserialize<UpdateProjectRequest>(op.Payload, PendingOpJson);
         return updateReq is not null && await _api.UpdateProjectAsync(op.EntityId, updateReq) is not null;
     }
 
@@ -931,13 +935,13 @@ public class SyncService : ISyncService
 
         if (op.OperationType == SyncOperation.Create)
         {
-            var req = JsonSerializer.Deserialize<CreateTaskRequest>(op.Payload);
+            var req = JsonSerializer.Deserialize<CreateTaskRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
             return await _api.CreateTaskAsync(req) is not null;
         }
 
-        var updateReq = JsonSerializer.Deserialize<UpdateTaskRequest>(op.Payload);
+        var updateReq = JsonSerializer.Deserialize<UpdateTaskRequest>(op.Payload, PendingOpJson);
         return updateReq is not null && await _api.UpdateTaskAsync(op.EntityId, updateReq) is not null;
     }
 
@@ -948,20 +952,20 @@ public class SyncService : ISyncService
 
         if (op.OperationType == SyncOperation.Create)
         {
-            var req = JsonSerializer.Deserialize<CreateStageRequest>(op.Payload);
+            var req = JsonSerializer.Deserialize<CreateStageRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
             return await _api.CreateStageAsync(req) is not null;
         }
 
-        var updateReq = JsonSerializer.Deserialize<UpdateStageRequest>(op.Payload);
+        var updateReq = JsonSerializer.Deserialize<UpdateStageRequest>(op.Payload, PendingOpJson);
         return updateReq is not null && await _api.UpdateStageAsync(op.EntityId, updateReq) is not null;
     }
 
     private async Task<bool> SyncUserAvatarAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Update) return true;
-        var payload = JsonSerializer.Deserialize<UploadAvatarRequest>(op.Payload);
+        var payload = JsonSerializer.Deserialize<UploadAvatarRequest>(op.Payload, PendingOpJson);
         if (payload?.AvatarData is null || payload.AvatarData.Length == 0) return true;
         var ok = await _api.UploadUserAvatarAsync(op.EntityId, payload.AvatarData);
         if (ok)
@@ -976,7 +980,7 @@ public class SyncService : ISyncService
     private async Task<bool> SyncUserProfileAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Update) return true;
-        var req = JsonSerializer.Deserialize<UpdateUserRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<UpdateUserRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         var updated = await _api.UpdateUserAsync(op.EntityId, req);
         if (updated is null) return false;
@@ -999,20 +1003,20 @@ public class SyncService : ISyncService
 
         if (op.OperationType == SyncOperation.Create)
         {
-            var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload);
+            var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
             return await _api.CreateMaterialAsync(req) is not null;
         }
 
-        var updateReq = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload);
+        var updateReq = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload, PendingOpJson);
         return updateReq is not null && await _api.UpdateMaterialAsync(op.EntityId, updateReq) is not null;
     }
 
     private async Task<bool> SyncMaterialCategoryAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<CreateMaterialCategoryRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<CreateMaterialCategoryRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         req = req with { Id = op.EntityId };
         return await _api.CreateMaterialCategoryAsync(req) is not null;
@@ -1021,7 +1025,7 @@ public class SyncService : ISyncService
     private async Task<bool> SyncEquipmentCategoryAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<CreateEquipmentCategoryRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<CreateEquipmentCategoryRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         req = req with { Id = op.EntityId };
         return await _api.CreateEquipmentCategoryAsync(req) is not null;
@@ -1030,7 +1034,7 @@ public class SyncService : ISyncService
     private async Task<bool> SyncMaterialStockMovementAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<RecordMaterialStockRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<RecordMaterialStockRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.RecordMaterialStockMovementAsync(op.EntityId, req) is not null;
     }
@@ -1042,7 +1046,7 @@ public class SyncService : ISyncService
 
         if (op.OperationType == SyncOperation.Create)
         {
-            var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload);
+            var req = JsonSerializer.Deserialize<CreateEquipmentRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
             var created = await _api.CreateEquipmentAsync(req);
@@ -1057,7 +1061,7 @@ public class SyncService : ISyncService
             return true;
         }
 
-        var updateReq = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload);
+        var updateReq = JsonSerializer.Deserialize<UpdateEquipmentRequest>(op.Payload, PendingOpJson);
         if (updateReq is null) return false;
         var updated = await _api.UpdateEquipmentAsync(op.EntityId, updateReq);
         if (updated is null) return false;
@@ -1074,7 +1078,7 @@ public class SyncService : ISyncService
     private async Task<bool> SyncEquipmentHistoryAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<RecordEquipmentEventRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<RecordEquipmentEventRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.RecordEquipmentEventAsync(op.EntityId, req) is not null;
     }
@@ -1082,29 +1086,40 @@ public class SyncService : ISyncService
     private async Task<bool> SyncSyncedActivityLogAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<CreateSyncedActivityLogRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<CreateSyncedActivityLogRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.PostSyncedActivityLogAsync(req) is not null;
+    }
+
+    /// <summary>Пустой Guid в payload давал на API оба флага (task+project) и 400.</summary>
+    private static CreateDiscussionMessageRequest NormalizeDiscussionRequest(CreateDiscussionMessageRequest req)
+    {
+        var taskId = req.TaskId;
+        var projectId = req.ProjectId;
+        if (taskId == Guid.Empty) taskId = null;
+        if (projectId == Guid.Empty) projectId = null;
+        return req with { TaskId = taskId, ProjectId = projectId };
     }
 
     private async Task<bool> SyncDiscussionMessageAsync(PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
-        var req = JsonSerializer.Deserialize<CreateDiscussionMessageRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<CreateDiscussionMessageRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
+        req = NormalizeDiscussionRequest(req);
         return await _api.PostDiscussionMessageAsync(req) is not null;
     }
 
     private async Task<bool> SyncTaskAssigneesAsync(PendingOperation op)
     {
-        var req = JsonSerializer.Deserialize<ReplaceTaskAssigneesRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<ReplaceTaskAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceTaskAssigneesAsync(op.EntityId, req);
     }
 
     private async Task<bool> SyncStageAssigneesAsync(PendingOperation op)
     {
-        var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload);
+        var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceStageAssigneesAsync(op.EntityId, req);
     }

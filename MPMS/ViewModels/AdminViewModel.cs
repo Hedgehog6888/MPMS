@@ -383,13 +383,14 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         foreach (var s in await db.StageAssignees.Where(x => x.UserId == row.Id).ToListAsync()) s.UserName = label;
         foreach (var m in await db.Messages.Where(x => x.UserId == row.Id).ToListAsync()) m.UserName = label;
 
-        AddAdminLog(db,
+        var blockLog = AddAdminLog(db,
             newBlocked ? ActivityActionKind.UserBlocked : ActivityActionKind.UserUnblocked,
             newBlocked
                 ? $"Заблокировал пользователя {user.Name} ({user.Username}). Причина: {BlockReason}"
                 : $"Разблокировал пользователя {user.Name} ({user.Username})",
             "User", user.Id);
         await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(blockLog);
         var updateReq = new UpdateUserRequest(
             user.FirstName, user.LastName, user.Username, user.Email, user.RoleId,
             NewPassword: null,
@@ -440,12 +441,13 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                     foreach (var m in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
                         m.UserName = deletedLabel;
 
-                    AddAdminLog(db, ActivityActionKind.UserDeleted,
+                    var delLog = AddAdminLog(db, ActivityActionKind.UserDeleted,
                         $"Удалил пользователя {user.Name} ({user.Username})", "User", user.Id);
 
                     // Удалить напрямую через SQL (обходит возможные проблемы с трекером EF)
                     await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
                     await db.SaveChangesAsync();
+                    await _sync.QueueLocalActivityLogAsync(delLog);
                     await LoadUsersAsync();
                     SetStatus(apiDeleted ? $"Пользователь {user.Name} удалён" : $"Пользователь {user.Name} удалён локально (на сервере — возможно, руководитель проекта)");
                 }
@@ -603,8 +605,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             s.UpdatedAt = DateTime.UtcNow;
             await TryReserveRestoredStageEquipmentAsync(db, s, p.Id);
         }
-        AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
-        await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Проект «{p.Name}» восстановлен");
+        var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync(); SetStatus($"Проект «{p.Name}» восстановлен");
     }
 
     [RelayCommand]
@@ -615,9 +619,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
-            AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда проект «{p.Name}»", "Project", p.Id);
+            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда проект «{p.Name}»", "Project", p.Id);
             await PermanentlyDeleteProjectGraphAsync(db, p.Id);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
             SetStatus($"Проект «{p.Name}» удалён навсегда");
         });
@@ -645,8 +650,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             s.UpdatedAt = DateTime.UtcNow;
             await TryReserveRestoredStageEquipmentAsync(db, s, t.ProjectId);
         }
-        AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
-        await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Задача «{t.Name}» восстановлена");
+        var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync(); SetStatus($"Задача «{t.Name}» восстановлена");
     }
 
     [RelayCommand]
@@ -657,9 +664,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
-            AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда задачу «{t.Name}»", "Task", t.Id);
+            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда задачу «{t.Name}»", "Task", t.Id);
             await PermanentlyDeleteTaskGraphAsync(db, t.Id);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
             SetStatus($"Задача «{t.Name}» удалена навсегда");
         });
@@ -683,8 +691,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         s.UpdatedAt = DateTime.UtcNow;
         var task = await db.Tasks.FindAsync(s.TaskId);
         await TryReserveRestoredStageEquipmentAsync(db, s, task?.ProjectId);
-        AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил этап «{s.Name}» из архива", "Stage", s.Id);
-        await db.SaveChangesAsync(); await LoadArchiveAsync(); SetStatus($"Этап «{s.Name}» восстановлен");
+        var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил этап «{s.Name}» из архива", "Stage", s.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync(); SetStatus($"Этап «{s.Name}» восстановлен");
     }
 
     private static bool ShouldReserveStageEquipment(LocalTaskStage stage) =>
@@ -772,9 +782,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var m = await db.Materials.FindAsync(row.Id); if (m is null) return;
-            AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда материал «{m.Name}»", "Material", m.Id);
+            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда материал «{m.Name}»", "Material", m.Id);
             await PermanentlyDeleteMaterialGraphAsync(db, m.Id);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
             SetStatus($"Материал «{m.Name}» удалён навсегда");
         });
@@ -788,9 +799,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var e = await db.Equipments.FindAsync(row.Id); if (e is null) return;
-            AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда оборудование «{e.Name}»", "Equipment", e.Id);
+            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда оборудование «{e.Name}»", "Equipment", e.Id);
             await PermanentlyDeleteEquipmentGraphAsync(db, e.Id);
             await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
             SetStatus($"Оборудование «{e.Name}» удалено навсегда");
         });
@@ -1017,9 +1029,9 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // HELPERS
     // ══════════════════════════════════════════════════════════════════════
 
-    internal void AddAdminLog(LocalDbContext db, string actionType, string text, string entityType, Guid entityId)
+    internal LocalActivityLog AddAdminLog(LocalDbContext db, string actionType, string text, string entityType, Guid entityId)
     {
-        db.ActivityLogs.Add(new LocalActivityLog
+        var log = new LocalActivityLog
         {
             UserId       = _auth.UserId,
             ActorRole    = _auth.UserRole,
@@ -1031,7 +1043,9 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             EntityType   = entityType,
             EntityId     = entityId,
             CreatedAt    = DateTime.UtcNow
-        });
+        };
+        db.ActivityLogs.Add(log);
+        return log;
     }
 
     public static async Task UpdatePasswordHashAsync(LocalDbContext db, Guid userId, string hash)

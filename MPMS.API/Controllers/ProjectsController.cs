@@ -85,13 +85,19 @@ public class ProjectsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProjectResponse>> Create([FromBody] CreateProjectRequest request)
     {
+        var id = request.Id ?? Guid.NewGuid();
+
+        // Повторный POST с тем же Id (очередь синхронизации / ретраи) — без конфликта PK
+        if (await _db.Projects.AnyAsync(p => p.Id == id))
+            return await GetById(id);
+
         var managerExists = await _db.Users.AnyAsync(u => u.Id == request.ManagerId);
         if (!managerExists)
             return BadRequest(new { message = "Менеджер не найден" });
 
         var project = new Project
         {
-            Id = request.Id ?? Guid.NewGuid(),
+            Id = id,
             Name = request.Name,
             Description = request.Description,
             Client = request.Client,

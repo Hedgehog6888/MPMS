@@ -76,6 +76,11 @@ public class MaterialsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MaterialResponse>> Create([FromBody] CreateMaterialRequest request)
     {
+        var id = request.Id ?? Guid.NewGuid();
+
+        if (await _db.Materials.AnyAsync(m => m.Id == id))
+            return await GetById(id);
+
         if (request.CategoryId.HasValue)
         {
             var catOk = await _db.MaterialCategories.AnyAsync(c => c.Id == request.CategoryId.Value);
@@ -85,7 +90,7 @@ public class MaterialsController : ControllerBase
         var now = DateTime.UtcNow;
         var material = new Material
         {
-            Id = request.Id ?? Guid.NewGuid(),
+            Id = id,
             Name = request.Name,
             Unit = request.Unit,
             Description = request.Description,

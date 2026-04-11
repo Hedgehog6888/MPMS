@@ -53,7 +53,7 @@ public partial class ChangePasswordOverlay : UserControl
             { ShowError("Неверный текущий пароль."); return; }
 
             session.LocalPasswordHash = BCrypt.Net.BCrypt.HashPassword(next);
-            db.ActivityLogs.Add(new LocalActivityLog
+            var actLog = new LocalActivityLog
             {
                 UserId = _userId,
                 ActorRole = auth.UserRole,
@@ -65,8 +65,10 @@ public partial class ChangePasswordOverlay : UserControl
                 EntityType = "User",
                 EntityId = _userId,
                 CreatedAt = DateTime.UtcNow
-            });
+            };
+            db.ActivityLogs.Add(actLog);
             await db.SaveChangesAsync();
+            await App.Services.GetRequiredService<ISyncService>().QueueLocalActivityLogAsync(actLog);
 
             if (_onSaved is not null)
                 await _onSaved();

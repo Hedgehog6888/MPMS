@@ -73,11 +73,47 @@ public partial class ProfilePage : UserControl
     private async System.Threading.Tasks.Task LoadUserAsync()
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
+        var sync = App.Services.GetRequiredService<ISyncService>();
+        var api = App.Services.GetRequiredService<IApiService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await sync.SyncAsync();
+
         await using var db = await dbFactory.CreateDbContextAsync();
 
         if (auth.UserId.HasValue)
             _user = await db.Users.FindAsync(auth.UserId.Value);
+
+        if (_user is null && auth.UserId.HasValue && api.IsOnline && !string.IsNullOrEmpty(auth.Token))
+        {
+            var me = await api.GetCurrentUserAsync();
+            if (me is not null)
+            {
+                var fullName = $"{me.FirstName} {me.LastName}".Trim();
+                db.Users.Add(new LocalUser
+                {
+                    Id = me.Id,
+                    Name = fullName,
+                    FirstName = me.FirstName,
+                    LastName = me.LastName,
+                    Username = me.Username,
+                    Email = me.Email,
+                    RoleName = me.Role,
+                    RoleId = me.RoleId,
+                    SubRole = me.SubRole,
+                    AdditionalSubRoles = me.AdditionalSubRoles,
+                    BirthDate = me.BirthDate,
+                    HomeAddress = me.HomeAddress,
+                    AvatarData = me.AvatarData,
+                    IsSynced = true,
+                    CreatedAt = me.CreatedAt,
+                    IsBlocked = me.IsBlocked,
+                    BlockedAt = me.BlockedAt,
+                    BlockedReason = me.BlockedReason
+                });
+                await db.SaveChangesAsync();
+                _user = await db.Users.FindAsync(auth.UserId.Value);
+            }
+        }
 
         if (_user is null) return;
 
@@ -414,7 +450,7 @@ public partial class ProfilePage : UserControl
                 entity.IsSynced   = false;
                 entity.LastModifiedLocally = DateTime.UtcNow;
 
-                db.ActivityLogs.Add(new LocalActivityLog
+                var actLog = new LocalActivityLog
                 {
                     UserId      = _user.Id,
                     ActorRole   = auth.UserRole,
@@ -426,9 +462,11 @@ public partial class ProfilePage : UserControl
                     EntityType  = "User",
                     EntityId    = _user.Id,
                     CreatedAt   = DateTime.UtcNow
-                });
+                };
+                db.ActivityLogs.Add(actLog);
 
                 await db.SaveChangesAsync();
+                await App.Services.GetRequiredService<ISyncService>().QueueLocalActivityLogAsync(actLog);
             }
 
             _user.AvatarPath = avatarPath;
