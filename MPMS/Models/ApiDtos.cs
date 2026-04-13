@@ -112,7 +112,8 @@ public record UpdateMaterialRequest(
     string? InventoryNumber = null,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record MaterialResponse(
     Guid Id,
@@ -129,7 +130,8 @@ public record MaterialResponse(
     DateTime UpdatedAt,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record MaterialStockMovementResponse(
     Guid Id,
@@ -175,7 +177,8 @@ public record EquipmentResponse(
     Guid? CheckedOutTaskId,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,
@@ -232,7 +235,8 @@ public record UpdateEquipmentRequest(
     EquipmentStatus? Status = null,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record RecordEquipmentEventRequest(
     EquipmentHistoryEventType EventType,

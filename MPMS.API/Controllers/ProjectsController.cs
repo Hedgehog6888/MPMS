@@ -155,11 +155,8 @@ public class ProjectsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var project = await _db.Projects.FindAsync(id);
-        if (project is null) return NotFound();
-
-        _db.Projects.Remove(project);
-        await _db.SaveChangesAsync();
+        var ok = await ProjectCascadeDelete.TryDeleteProjectGraphAsync(_db, id);
+        if (!ok) return NotFound();
 
         return NoContent();
     }

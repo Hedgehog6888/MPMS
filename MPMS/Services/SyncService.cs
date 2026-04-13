@@ -206,6 +206,23 @@ public class SyncService : ISyncService
                         local.IsArchived = p.IsArchived;
                         local.IsSynced = true;
                     }
+                    else
+                    {
+                        // Очередь ещё не прошла: не затирать IsSynced, но выровнять строку с сервером (архив, сроки и т.д.).
+                        local.Name = p.Name;
+                        local.Description = p.Description;
+                        local.Client = p.Client;
+                        local.Address = p.Address;
+                        local.StartDate = p.StartDate;
+                        local.EndDate = p.EndDate;
+                        local.Status = Enum.Parse<ProjectStatus>(p.Status);
+                        local.ManagerId = p.ManagerId;
+                        local.ManagerName = p.ManagerName;
+                        local.CreatedAt = p.CreatedAt;
+                        local.UpdatedAt = p.UpdatedAt;
+                        local.IsMarkedForDeletion = p.IsMarkedForDeletion;
+                        local.IsArchived = p.IsArchived;
+                    }
                 }
                 else
                 {
@@ -229,6 +246,15 @@ public class SyncService : ISyncService
                     });
                 }
             }
+
+            // Проектов нет в ответе API — на сервере удалены; убрать локально (иначе «воскрешение» при pull).
+            var serverProjectIds = projects.Select(p => p.Id).ToHashSet();
+            var orphanProjectIds = await db.Projects
+                .Where(p => p.IsSynced && !serverProjectIds.Contains(p.Id))
+                .Select(p => p.Id)
+                .ToListAsync();
+            foreach (var pid in orphanProjectIds)
+                await LocalDbGraphDeletion.PermanentlyDeleteProjectGraphAsync(db, pid);
         }
 
         // Tasks (all)
@@ -255,6 +281,20 @@ public class SyncService : ISyncService
                         local.ProjectName = t.ProjectName;
                         local.IsSynced = true;
                     }
+                    else
+                    {
+                        local.Name = t.Name;
+                        local.Status = Enum.Parse<Models.TaskStatus>(t.Status);
+                        local.Priority = Enum.Parse<TaskPriority>(t.Priority);
+                        local.AssignedUserId = t.AssignedUserId;
+                        local.AssignedUserName = t.AssignedUserName;
+                        local.TotalStages = t.TotalStages;
+                        local.CompletedStages = t.CompletedStages;
+                        local.DueDate = t.DueDate;
+                        local.IsMarkedForDeletion = t.IsMarkedForDeletion;
+                        local.IsArchived = t.IsArchived;
+                        local.ProjectName = t.ProjectName;
+                    }
                 }
                 else
                 {
@@ -274,6 +314,14 @@ public class SyncService : ISyncService
                     });
                 }
             }
+
+            var serverTaskIds = tasks.Select(t => t.Id).ToHashSet();
+            var orphanTaskIds = await db.Tasks
+                .Where(t => t.IsSynced && !serverTaskIds.Contains(t.Id))
+                .Select(t => t.Id)
+                .ToListAsync();
+            foreach (var tid in orphanTaskIds)
+                await LocalDbGraphDeletion.PermanentlyDeleteTaskGraphAsync(db, tid);
         }
 
         // Material categories
@@ -328,6 +376,7 @@ public class SyncService : ISyncService
                         local.IsWrittenOff = m.IsWrittenOff;
                         local.WrittenOffAt = m.WrittenOffAt;
                         local.WrittenOffComment = m.WrittenOffComment;
+                        local.IsArchived = m.IsArchived;
                         local.IsSynced = true;
                     }
                 }
@@ -350,10 +399,19 @@ public class SyncService : ISyncService
                         IsWrittenOff = m.IsWrittenOff,
                         WrittenOffAt = m.WrittenOffAt,
                         WrittenOffComment = m.WrittenOffComment,
+                        IsArchived = m.IsArchived,
                         IsSynced = true
                     });
                 }
             }
+
+            var serverMaterialIds = materials.Select(m => m.Id).ToHashSet();
+            var orphanMaterialIds = await db.Materials
+                .Where(m => m.IsSynced && !serverMaterialIds.Contains(m.Id))
+                .Select(m => m.Id)
+                .ToListAsync();
+            foreach (var mid in orphanMaterialIds)
+                await LocalDbGraphDeletion.PermanentlyDeleteMaterialGraphAsync(db, mid);
         }
 
         // Material stock movements (полная замена снимка с сервера)
@@ -406,6 +464,7 @@ public class SyncService : ISyncService
                         IsWrittenOff = eq.IsWrittenOff,
                         WrittenOffAt = eq.WrittenOffAt,
                         WrittenOffComment = eq.WrittenOffComment,
+                        IsArchived = eq.IsArchived,
                         IsSynced = true
                     });
                 }
@@ -427,10 +486,19 @@ public class SyncService : ISyncService
                         existingEq.IsWrittenOff = eq.IsWrittenOff;
                         existingEq.WrittenOffAt = eq.WrittenOffAt;
                         existingEq.WrittenOffComment = eq.WrittenOffComment;
+                        existingEq.IsArchived = eq.IsArchived;
                         existingEq.IsSynced = true;
                     }
                 }
             }
+
+            var serverEquipIds = equips.Select(e => e.Id).ToHashSet();
+            var orphanEquipIds = await db.Equipments
+                .Where(e => e.IsSynced && !serverEquipIds.Contains(e.Id))
+                .Select(e => e.Id)
+                .ToListAsync();
+            foreach (var eid in orphanEquipIds)
+                await LocalDbGraphDeletion.PermanentlyDeleteEquipmentGraphAsync(db, eid);
         }
 
         // История оборудования
@@ -456,8 +524,10 @@ public class SyncService : ISyncService
             }
         }
 
-        // Task Stages + соисполнители (полный снимок по каждой задаче)
-        var taskIds = await db.Tasks.Where(t => t.IsSynced).Select(t => t.Id).ToListAsync();
+        // Task Stages + соисполнители (полный снимок по каждой задаче).
+        // Нельзя ограничивать только IsSynced: после восстановления из архива IsSynced=false, иначе этапы
+        // вообще не подтягиваются с сервера, пока очередь не отработает.
+        var taskIds = await db.Tasks.Select(t => t.Id).ToListAsync();
         var existingStages = await db.TaskStages.ToDictionaryAsync(s => s.Id);
         foreach (var taskId in taskIds)
         {
@@ -465,8 +535,9 @@ public class SyncService : ISyncService
             if (taskApi?.Stages is null) continue;
 
             var localTaskRow = await db.Tasks.FindAsync(taskId);
-            if (localTaskRow?.IsSynced == true)
+            if (localTaskRow is not null)
             {
+                // Обновляем и при IsSynced=false (восстановление из архива и т.п.), не меняя флаг IsSynced здесь.
                 localTaskRow.Description = taskApi.Description;
                 localTaskRow.AssignedUserId = taskApi.AssignedUserId;
                 localTaskRow.AssignedUserName = taskApi.AssignedUserName;
@@ -497,25 +568,21 @@ public class SyncService : ISyncService
             {
                 if (existingStages.TryGetValue(s.Id, out var localStage))
                 {
-                    if (localStage.IsSynced)
-                    {
-                        localStage.Name = s.Name;
-                        localStage.Description = s.Description;
-                        localStage.ServiceTemplateId = s.ServiceTemplateId;
-                        localStage.ServiceNameSnapshot = s.ServiceName;
-                        localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
-                        localStage.WorkUnitSnapshot = s.WorkUnit;
-                        localStage.WorkQuantity = s.WorkQuantity;
-                        localStage.WorkPricePerUnit = s.WorkPricePerUnit;
-                        localStage.AssignedUserName = s.AssignedUserName;
-                        localStage.AssignedUserId = s.AssignedUserId;
-                        localStage.DueDate = s.DueDate;
-                        localStage.Status = Enum.Parse<StageStatus>(s.Status);
-                        localStage.UpdatedAt = s.UpdatedAt;
-                        localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
-                        localStage.IsArchived = s.IsArchived;
-                        localStage.IsSynced = true;
-                    }
+                    localStage.Name = s.Name;
+                    localStage.Description = s.Description;
+                    localStage.ServiceTemplateId = s.ServiceTemplateId;
+                    localStage.ServiceNameSnapshot = s.ServiceName;
+                    localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
+                    localStage.WorkUnitSnapshot = s.WorkUnit;
+                    localStage.WorkQuantity = s.WorkQuantity;
+                    localStage.WorkPricePerUnit = s.WorkPricePerUnit;
+                    localStage.AssignedUserName = s.AssignedUserName;
+                    localStage.AssignedUserId = s.AssignedUserId;
+                    localStage.DueDate = s.DueDate;
+                    localStage.Status = Enum.Parse<StageStatus>(s.Status);
+                    localStage.UpdatedAt = s.UpdatedAt;
+                    localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
+                    localStage.IsArchived = s.IsArchived;
                 }
                 else
                 {
@@ -921,11 +988,26 @@ public class SyncService : ISyncService
             var req = JsonSerializer.Deserialize<CreateProjectRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
-            return await _api.CreateProjectAsync(req) is not null;
+            var created = await _api.CreateProjectAsync(req);
+            if (created is null) return false;
+            await using (var db = await _dbFactory.CreateDbContextAsync())
+            {
+                var local = await db.Projects.FindAsync(op.EntityId);
+                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
+            }
+            return true;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateProjectRequest>(op.Payload, PendingOpJson);
-        return updateReq is not null && await _api.UpdateProjectAsync(op.EntityId, updateReq) is not null;
+        if (updateReq is null) return false;
+        var updated = await _api.UpdateProjectAsync(op.EntityId, updateReq);
+        if (updated is null) return false;
+        await using (var db2 = await _dbFactory.CreateDbContextAsync())
+        {
+            var local2 = await db2.Projects.FindAsync(op.EntityId);
+            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
+        }
+        return true;
     }
 
     private async Task<bool> SyncTaskAsync(PendingOperation op)
@@ -938,11 +1020,26 @@ public class SyncService : ISyncService
             var req = JsonSerializer.Deserialize<CreateTaskRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
-            return await _api.CreateTaskAsync(req) is not null;
+            var created = await _api.CreateTaskAsync(req);
+            if (created is null) return false;
+            await using (var db = await _dbFactory.CreateDbContextAsync())
+            {
+                var local = await db.Tasks.FindAsync(op.EntityId);
+                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
+            }
+            return true;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateTaskRequest>(op.Payload, PendingOpJson);
-        return updateReq is not null && await _api.UpdateTaskAsync(op.EntityId, updateReq) is not null;
+        if (updateReq is null) return false;
+        var updated = await _api.UpdateTaskAsync(op.EntityId, updateReq);
+        if (updated is null) return false;
+        await using (var db2 = await _dbFactory.CreateDbContextAsync())
+        {
+            var local2 = await db2.Tasks.FindAsync(op.EntityId);
+            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
+        }
+        return true;
     }
 
     private async Task<bool> SyncStageAsync(PendingOperation op)
@@ -955,11 +1052,26 @@ public class SyncService : ISyncService
             var req = JsonSerializer.Deserialize<CreateStageRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
-            return await _api.CreateStageAsync(req) is not null;
+            var created = await _api.CreateStageAsync(req);
+            if (created is null) return false;
+            await using (var db = await _dbFactory.CreateDbContextAsync())
+            {
+                var local = await db.TaskStages.FindAsync(op.EntityId);
+                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
+            }
+            return true;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateStageRequest>(op.Payload, PendingOpJson);
-        return updateReq is not null && await _api.UpdateStageAsync(op.EntityId, updateReq) is not null;
+        if (updateReq is null) return false;
+        var updated = await _api.UpdateStageAsync(op.EntityId, updateReq);
+        if (updated is null) return false;
+        await using (var db2 = await _dbFactory.CreateDbContextAsync())
+        {
+            var local2 = await db2.TaskStages.FindAsync(op.EntityId);
+            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
+        }
+        return true;
     }
 
     private async Task<bool> SyncUserAvatarAsync(PendingOperation op)

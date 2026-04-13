@@ -16,6 +16,8 @@ public class AuthService : IAuthService
     private const string DefaultApiBase = "http://localhost:5147/api/";
 
     private readonly string _defaultApiBaseUrl;
+    /// <summary>Из %LocalAppData%\MPMS\client_settings.json — предпочтение пользователя на экране входа.</summary>
+    private string? _persistedApiBaseUrl;
     private string? _activeApiBaseUrl;
 
     private AuthResponse? _current;
@@ -26,6 +28,7 @@ public class AuthService : IAuthService
     {
         _dbFactory = dbFactory;
         _defaultApiBaseUrl = ReadDefaultApiBaseUrlFromAppSettings();
+        _persistedApiBaseUrl = LoadPersistedApiBaseUrlFromUserFile();
     }
 
     public bool IsAuthenticated => _current is not null;
@@ -36,7 +39,26 @@ public class AuthService : IAuthService
     public string? UserRole  => _current?.Role;
 
     /// <inheritdoc />
-    public string ApiBaseUrl => NormalizeApiBaseUrl(_activeApiBaseUrl ?? _defaultApiBaseUrl);
+    public string ApiBaseUrl =>
+        NormalizeApiBaseUrl(_activeApiBaseUrl ?? _persistedApiBaseUrl ?? _defaultApiBaseUrl);
+
+    /// <inheritdoc />
+    public async Task PersistApiBaseUrlForNextLoginAsync(string urlInput)
+    {
+        var n = NormalizeApiBaseUrl(string.IsNullOrWhiteSpace(urlInput) ? DefaultApiBase : urlInput);
+        _persistedApiBaseUrl = n;
+        try
+        {
+            var path = ClientSettingsFilePath;
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            var json = JsonSerializer.Serialize(
+                new Dictionary<string, string> { ["apiBaseUrl"] = n });
+            await File.WriteAllTextAsync(path, json);
+        }
+        catch { /* не блокируем вход */ }
+    }
 
     public async Task SetSessionAsync(AuthResponse response, string plainPassword)
     {
@@ -210,6 +232,30 @@ public class AuthService : IAuthService
             _activeApiBaseUrl = null;
     }
 
+    private static string ClientSettingsFilePath =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MPMS", "client_settings.json");
+
+    private static string? LoadPersistedApiBaseUrlFromUserFile()
+    {
+        try
+        {
+            var path = ClientSettingsFilePath;
+            if (!File.Exists(path)) return null;
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("apiBaseUrl", out var el) ||
+                doc.RootElement.TryGetProperty("ApiBaseUrl", out el))
+            {
+                var s = el.GetString();
+                if (!string.IsNullOrWhiteSpace(s))
+                    return NormalizeApiBaseUrl(s);
+            }
+        }
+        catch { /* ignore */ }
+        return null;
+    }
+
     private static string ReadDefaultApiBaseUrlFromAppSettings()
     {
         try
@@ -279,7 +325,7 @@ public class AuthService : IAuthService
                 .ToListAsync())
             .FirstOrDefault(s => string.Equals(s.Username, r.Username, StringComparison.OrdinalIgnoreCase));
         var pwdHash  = BCrypt.Net.BCrypt.HashPassword(plainPassword);
-        var apiUrl   = NormalizeApiBaseUrl(_activeApiBaseUrl ?? _defaultApiBaseUrl);
+        var apiUrl   = NormalizeApiBaseUrl(_activeApiBaseUrl ?? _persistedApiBaseUrl ?? _defaultApiBaseUrl);
         var encPlain = ProtectPlainPassword(plainPassword);
         var allSessions = await db.AuthSessions.ToListAsync();
         foreach (var session in allSessions)

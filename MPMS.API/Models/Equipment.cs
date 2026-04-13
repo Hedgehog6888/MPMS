@@ -40,5 +40,8 @@ public class Equipment
     [MaxLength(500)]
     public string? WrittenOffComment { get; set; }
 
+    /// <summary>Скрыт из основного списка склада (архив).</summary>
+    public bool IsArchived { get; set; }
+
     public ICollection<EquipmentHistoryEntry> History { get; set; } = new List<EquipmentHistoryEntry>();
 }

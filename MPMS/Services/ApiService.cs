@@ -93,7 +93,17 @@ public class ApiService : IApiService
             if (!response.IsSuccessStatusCode)
                 return LoginResult.Fail($"Ошибка сервера: {(int)response.StatusCode}");
 
-            var auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts);
+            AuthResponse? auth;
+            try
+            {
+                auth = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                IsOnline = false;
+                return LoginResult.Fail("Некорректный ответ сервера при входе.");
+            }
+
             return auth is not null ? LoginResult.Ok(auth) : LoginResult.Fail("Ошибка разбора ответа сервера.");
         }
         catch (HttpRequestException)
@@ -101,10 +111,10 @@ public class ApiService : IApiService
             IsOnline = false;
             return LoginResult.Offline();
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             IsOnline = false;
-            return LoginResult.Fail("Превышено время ожидания. Проверьте, что API запущен.");
+            return LoginResult.Offline();
         }
     }
 
@@ -462,6 +472,9 @@ public class ApiService : IApiService
             AttachToken();
             var response = await _http.DeleteAsync(Api(url));
             IsOnline = true;
+            // 404 — уже удалено на сервере; для очереди синхронизации считаем успехом (идемпотентность).
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
             return response.IsSuccessStatusCode;
         }
         catch (HttpRequestException)       { IsOnline = false; return false; }

@@ -173,7 +173,8 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
                 Cost = material.Cost,
                 IsWrittenOff = material.IsWrittenOff,
                 WrittenOffAt = material.WrittenOffAt,
-                WrittenOffComment = material.WrittenOffComment
+                WrittenOffComment = material.WrittenOffComment,
+                IsArchived = material.IsArchived
             });
         await LoadAsync();
     }
@@ -188,8 +189,7 @@ public partial class MaterialsViewModel : ViewModelBase, ILoadable
         db.Materials.Remove(entity);
         await db.SaveChangesAsync();
 
-        if (material.IsSynced)
-            await _sync.QueueOperationAsync("Material", material.Id, SyncOperation.Delete, new { });
+        await _sync.QueueOperationAsync("Material", material.Id, SyncOperation.Delete, new { });
 
         await LoadAsync();
     }

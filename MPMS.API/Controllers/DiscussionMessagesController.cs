@@ -60,6 +60,24 @@ public class DiscussionMessagesController : ControllerBase
                 existing.Text, existing.CreatedAt));
         }
 
+        if (projectId.HasValue &&
+            !await _db.Projects.AsNoTracking().AnyAsync(p => p.Id == projectId.Value))
+        {
+            return NotFound(new
+            {
+                message = "Проект не найден на сервере (возможно, удалён). Обновите данные или выберите другой проект."
+            });
+        }
+
+        if (taskId.HasValue &&
+            !await _db.Tasks.AsNoTracking().AnyAsync(t => t.Id == taskId.Value))
+        {
+            return NotFound(new
+            {
+                message = "Задача не найдена на сервере (возможно, удалена). Обновите данные."
+            });
+        }
+
         var userId = CurrentUserId();
         var user = await _db.Users.Include(u => u.Role).FirstAsync(u => u.Id == userId);
         var fullName = $"{user.FirstName} {user.LastName}".Trim();

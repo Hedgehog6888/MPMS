@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:MPMS.Infrastructure"
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-        Title="MPMS" Height="660" Width="880"
+        Title="MPMS" Height="740" Width="880"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -327,7 +327,33 @@
                                Margin="0,0,0,6"/>
                     <TextBlock Text="Введите логин и пароль для доступа"
                                FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,30"/>
+                               Margin="0,0,0,20"/>
+
+                    <!-- ── API base URL ───────────────── -->
+                    <TextBlock Text="АДРЕС СЕРВЕРА (API)" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <Border x:Name="ApiUrlContainer"
+                            Style="{StaticResource InputContainer}"
+                            Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="46"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="&#xE839;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                            <TextBox Grid.Column="1"
+                                     Style="{StaticResource InnerTextBox}"
+                                     Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Например: http://localhost:5147/api/ или http://192.168.1.5:5147/api/"
+                                     GotFocus="ApiUrlBox_GotFocus"
+                                     LostFocus="ApiUrlBox_LostFocus"/>
+                        </Grid>
+                    </Border>
 
                     <!-- ── Username ───────────────────── -->
                     <TextBlock Text="ЛОГИН" FontSize="11" FontWeight="SemiBold"

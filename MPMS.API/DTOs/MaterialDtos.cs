@@ -23,7 +23,8 @@ public record UpdateMaterialRequest(
     [MaxLength(100)] string? InventoryNumber = null,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    [MaxLength(500)] string? WrittenOffComment = null);
+    [MaxLength(500)] string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record MaterialResponse(
     Guid Id,
@@ -40,4 +41,5 @@ public record MaterialResponse(
     DateTime UpdatedAt,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);

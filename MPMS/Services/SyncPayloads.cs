@@ -19,13 +19,15 @@ public static class SyncPayloads
 
     public static UpdateMaterialRequest Material(LocalMaterial m) => new(
         m.Name, m.Unit, m.Description, m.CategoryId, m.ImagePath, m.Cost, m.InventoryNumber,
-        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment);
+        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment,
+        m.IsArchived);
 
     public static UpdateEquipmentRequest Equipment(LocalEquipment e) => new(
         e.Name, e.Description, e.CategoryId, e.ImagePath, e.InventoryNumber,
         Enum.TryParse<EquipmentCondition>(e.Condition, true, out var c) ? c : EquipmentCondition.Good,
         MapEquipmentStatus(e.Status),
-        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment);
+        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment,
+        e.IsArchived);
 
     private static EquipmentStatus? MapEquipmentStatus(string? s) => s switch
     {

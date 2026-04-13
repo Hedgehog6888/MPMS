@@ -543,7 +543,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                     EntityType = "Material",
                     Name = m.Name,
                     ParentName = m.CategoryName ?? "—",
-                    StatusText = "Списан",
+                    StatusText = m.IsWrittenOff ? "Списан" : (m.IsArchived ? "В архиве" : "—"),
                     DeletedAt = m.WrittenOffAt ?? m.UpdatedAt,
                     DeletedBy = m.InventoryNumber ?? "—",
                     Description = string.IsNullOrWhiteSpace(m.Description) ? null : m.Description
@@ -556,7 +556,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                     EntityType = "Equipment",
                     Name = e.Name,
                     ParentName = e.CategoryName ?? "—",
-                    StatusText = "Списано",
+                    StatusText = e.IsWrittenOff ? "Списано" : (e.IsArchived ? "В архиве" : "—"),
                     DeletedAt = e.WrittenOffAt ?? e.UpdatedAt,
                     DeletedBy = e.InventoryNumber ?? "—",
                     Description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description
@@ -594,21 +594,35 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
-        p.IsArchived = false; p.UpdatedAt = DateTime.UtcNow;
+        p.IsArchived = false;
+        p.UpdatedAt = DateTime.UtcNow;
+        p.IsSynced = false;
         var tasks = await db.Tasks.Where(t => t.ProjectId == p.Id && t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && s.IsArchived).ToListAsync();
-        foreach (var t in tasks) { t.IsArchived = false; t.UpdatedAt = DateTime.UtcNow; }
+        foreach (var t in tasks)
+        {
+            t.IsArchived = false;
+            t.UpdatedAt = DateTime.UtcNow;
+            t.IsSynced = false;
+        }
         foreach (var s in stages)
         {
             s.IsArchived = false;
             s.UpdatedAt = DateTime.UtcNow;
+            s.IsSynced = false;
             await TryReserveRestoredStageEquipmentAsync(db, s, p.Id);
         }
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Update, SyncPayloads.Project(p));
+        foreach (var t in tasks)
+            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+        foreach (var s in stages)
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await _sync.QueueLocalActivityLogAsync(log);
-        await LoadArchiveAsync(); SetStatus($"Проект «{p.Name}» восстановлен");
+        await LoadArchiveAsync();
+        SetStatus($"Проект «{p.Name}» восстановлен");
     }
 
     [RelayCommand]
@@ -619,8 +633,18 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
+            var taskIds = await db.Tasks.Where(t => t.ProjectId == p.Id).Select(t => t.Id).ToListAsync();
+            var stageIds = taskIds.Count == 0
+                ? new List<Guid>()
+                : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
+            var pendingScope = new HashSet<Guid> { p.Id };
+            foreach (var tid in taskIds) pendingScope.Add(tid);
+            foreach (var sid in stageIds) pendingScope.Add(sid);
+            await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
+
             var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда проект «{p.Name}»", "Project", p.Id);
-            await PermanentlyDeleteProjectGraphAsync(db, p.Id);
+            await _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Delete, new { });
+            await LocalDbGraphDeletion.PermanentlyDeleteProjectGraphAsync(db, p.Id);
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
@@ -642,18 +666,25 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
-        t.IsArchived = false; t.UpdatedAt = DateTime.UtcNow;
+        t.IsArchived = false;
+        t.UpdatedAt = DateTime.UtcNow;
+        t.IsSynced = false;
         var stages = await db.TaskStages.Where(s => s.TaskId == t.Id && s.IsArchived).ToListAsync();
         foreach (var s in stages)
         {
             s.IsArchived = false;
             s.UpdatedAt = DateTime.UtcNow;
+            s.IsSynced = false;
             await TryReserveRestoredStageEquipmentAsync(db, s, t.ProjectId);
         }
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+        foreach (var s in stages)
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await _sync.QueueLocalActivityLogAsync(log);
-        await LoadArchiveAsync(); SetStatus($"Задача «{t.Name}» восстановлена");
+        await LoadArchiveAsync();
+        SetStatus($"Задача «{t.Name}» восстановлена");
     }
 
     [RelayCommand]
@@ -664,8 +695,14 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
+            var stageIds = await db.TaskStages.Where(s => s.TaskId == t.Id).Select(s => s.Id).ToListAsync();
+            var pendingScope = new HashSet<Guid> { t.Id };
+            foreach (var sid in stageIds) pendingScope.Add(sid);
+            await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
+
             var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда задачу «{t.Name}»", "Task", t.Id);
-            await PermanentlyDeleteTaskGraphAsync(db, t.Id);
+            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Delete, new { });
+            await LocalDbGraphDeletion.PermanentlyDeleteTaskGraphAsync(db, t.Id);
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
@@ -689,12 +726,25 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var s = await db.TaskStages.FindAsync(row.Id); if (s is null) return;
         s.IsArchived = false;
         s.UpdatedAt = DateTime.UtcNow;
+        s.IsSynced = false;
         var task = await db.Tasks.FindAsync(s.TaskId);
+        var parentTaskUnarchived = false;
+        if (task is not null && task.IsArchived)
+        {
+            task.IsArchived = false;
+            task.UpdatedAt = DateTime.UtcNow;
+            task.IsSynced = false;
+            parentTaskUnarchived = true;
+        }
         await TryReserveRestoredStageEquipmentAsync(db, s, task?.ProjectId);
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил этап «{s.Name}» из архива", "Stage", s.Id);
         await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
+        if (parentTaskUnarchived && task is not null)
+            await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Update, SyncPayloads.Task(task));
         await _sync.QueueLocalActivityLogAsync(log);
-        await LoadArchiveAsync(); SetStatus($"Этап «{s.Name}» восстановлен");
+        await LoadArchiveAsync();
+        SetStatus($"Этап «{s.Name}» восстановлен");
     }
 
     private static bool ShouldReserveStageEquipment(LocalTaskStage stage) =>
@@ -766,8 +816,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var s = await db.TaskStages.FindAsync(row.Id); if (s is null) return;
+            await db.PendingOperations.Where(o => o.EntityId == s.Id).ExecuteDeleteAsync();
             AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда этап «{s.Name}»", "Stage", s.Id);
-            await PermanentlyDeleteStageGraphAsync(db, s.Id);
+            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Delete, new { });
+            await LocalDbGraphDeletion.PermanentlyDeleteStageGraphAsync(db, s.Id);
             await db.SaveChangesAsync();
             await LoadArchiveAsync();
             SetStatus($"Этап «{s.Name}» удалён навсегда");
@@ -782,8 +834,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var m = await db.Materials.FindAsync(row.Id); if (m is null) return;
+            await db.PendingOperations.Where(o => o.EntityId == m.Id).ExecuteDeleteAsync();
             var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда материал «{m.Name}»", "Material", m.Id);
-            await PermanentlyDeleteMaterialGraphAsync(db, m.Id);
+            await _sync.QueueOperationAsync("Material", m.Id, SyncOperation.Delete, new { });
+            await LocalDbGraphDeletion.PermanentlyDeleteMaterialGraphAsync(db, m.Id);
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
@@ -799,8 +853,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
             var e = await db.Equipments.FindAsync(row.Id); if (e is null) return;
+            await db.PendingOperations.Where(o => o.EntityId == e.Id).ExecuteDeleteAsync();
             var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда оборудование «{e.Name}»", "Equipment", e.Id);
-            await PermanentlyDeleteEquipmentGraphAsync(db, e.Id);
+            await _sync.QueueOperationAsync("Equipment", e.Id, SyncOperation.Delete, new { });
+            await LocalDbGraphDeletion.PermanentlyDeleteEquipmentGraphAsync(db, e.Id);
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
             await LoadArchiveAsync();
@@ -1061,75 +1117,4 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     internal IDbContextFactory<LocalDbContext> DbFactory => _dbFactory;
     internal IAuthService Auth => _auth;
-
-    private static async Task PermanentlyDeleteProjectGraphAsync(LocalDbContext db, Guid projectId)
-    {
-        var taskIds = await db.Tasks.Where(t => t.ProjectId == projectId).Select(t => t.Id).ToListAsync();
-        var stageIds = taskIds.Count == 0
-            ? []
-            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
-
-        if (stageIds.Count > 0)
-        {
-            await db.StageMaterials.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageServices.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageEquipments.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageAssignees.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.TaskStages.Where(x => stageIds.Contains(x.Id)).ExecuteDeleteAsync();
-        }
-
-        if (taskIds.Count > 0)
-        {
-            await db.TaskAssignees.Where(x => taskIds.Contains(x.TaskId)).ExecuteDeleteAsync();
-            await db.Messages.Where(x => x.TaskId.HasValue && taskIds.Contains(x.TaskId.Value)).ExecuteDeleteAsync();
-            await db.Files.Where(x => x.TaskId.HasValue && taskIds.Contains(x.TaskId.Value)).ExecuteDeleteAsync();
-            await db.Tasks.Where(x => taskIds.Contains(x.Id)).ExecuteDeleteAsync();
-        }
-
-        await db.Messages.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
-        await db.Files.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
-        await db.ProjectMembers.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
-        await db.Projects.Where(x => x.Id == projectId).ExecuteDeleteAsync();
-    }
-
-    private static async Task PermanentlyDeleteTaskGraphAsync(LocalDbContext db, Guid taskId)
-    {
-        var stageIds = await db.TaskStages.Where(s => s.TaskId == taskId).Select(s => s.Id).ToListAsync();
-        if (stageIds.Count > 0)
-        {
-            await db.StageMaterials.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageServices.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageEquipments.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageAssignees.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.TaskStages.Where(x => stageIds.Contains(x.Id)).ExecuteDeleteAsync();
-        }
-
-        await db.TaskAssignees.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
-        await db.Messages.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
-        await db.Files.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
-        await db.Tasks.Where(x => x.Id == taskId).ExecuteDeleteAsync();
-    }
-
-    private static async Task PermanentlyDeleteStageGraphAsync(LocalDbContext db, Guid stageId)
-    {
-        await db.StageMaterials.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
-        await db.StageServices.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
-        await db.StageEquipments.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
-        await db.StageAssignees.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
-        await db.TaskStages.Where(x => x.Id == stageId).ExecuteDeleteAsync();
-    }
-
-    private static async Task PermanentlyDeleteMaterialGraphAsync(LocalDbContext db, Guid materialId)
-    {
-        await db.MaterialStockMovements.Where(x => x.MaterialId == materialId).ExecuteDeleteAsync();
-        await db.StageMaterials.Where(x => x.MaterialId == materialId).ExecuteDeleteAsync();
-        await db.Materials.Where(x => x.Id == materialId).ExecuteDeleteAsync();
-    }
-
-    private static async Task PermanentlyDeleteEquipmentGraphAsync(LocalDbContext db, Guid equipmentId)
-    {
-        await db.EquipmentHistoryEntries.Where(x => x.EquipmentId == equipmentId).ExecuteDeleteAsync();
-        await db.StageEquipments.Where(x => x.EquipmentId == equipmentId).ExecuteDeleteAsync();
-        await db.Equipments.Where(x => x.Id == equipmentId).ExecuteDeleteAsync();
-    }
 }

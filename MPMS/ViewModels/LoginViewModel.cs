@@ -15,6 +15,7 @@ public partial class LoginViewModel : ViewModelBase
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
 
+    [ObservableProperty] private string _apiBaseUrl = string.Empty;
     [ObservableProperty] private string _username = string.Empty;
     [ObservableProperty] private string _password = string.Empty;
     [ObservableProperty] private ObservableCollection<RecentAccount> _recentAccounts = new();
@@ -27,6 +28,7 @@ public partial class LoginViewModel : ViewModelBase
         _auth = auth;
         _dbFactory = dbFactory;
         _sync = sync;
+        _apiBaseUrl = auth.ApiBaseUrl;
         _ = LoadRecentAccountsAsync();
     }
 
@@ -38,6 +40,7 @@ public partial class LoginViewModel : ViewModelBase
 
         try
         {
+            await _auth.PersistApiBaseUrlForNextLoginAsync(ApiBaseUrl);
             var result = await _api.LoginAsync(Username.Trim(), Password);
 
             if (result.Success)
@@ -53,32 +56,31 @@ public partial class LoginViewModel : ViewModelBase
                 return;
             }
 
-            // ── API недоступен → пробуем офлайн-вход ─────────────────────
-            if (!_api.IsOnline)
+            // Онлайн не удался — всегда пробуем локальный кэш (офлайн-режим с теми же логином/паролем)
+            var (offlineResponse, offlineBlock) = await _auth.TryOfflineLoginAsync(Username.Trim(), Password);
+            if (offlineResponse is not null)
             {
-                var (offlineResponse, blockMessage) = await _auth.TryOfflineLoginAsync(Username.Trim(), Password);
-                if (offlineResponse is not null)
-                {
-                    await _auth.SetSessionAsync(offlineResponse, Password);
-                    await OpenMainAndCloseAsync();
-                    return;
-                }
-                if (blockMessage is not null)
-                {
-                    SetError(blockMessage);
-                    return;
-                }
-
-                // Distinguish between "no local cache" and "wrong password"
-                var hasCache = await _auth.HasLocalCacheAsync(Username.Trim());
-                if (!hasCache)
-                    SetError("Сервер недоступен. Для первого входа необходимо подключение к серверу. После успешного входа онлайн будет доступен офлайн-режим.");
-                else
-                    SetError("Сервер недоступен. Неверный пароль для офлайн-входа.");
+                await _auth.SetSessionAsync(offlineResponse, Password);
+                await OpenMainAndCloseAsync();
+                return;
+            }
+            if (offlineBlock is not null)
+            {
+                SetError(offlineBlock);
                 return;
             }
 
-            SetError(result.Error ?? "Неизвестная ошибка.");
+            // Нет локального входа: сообщаем в зависимости от того, ответил ли сервер
+            if (!_api.IsOnline)
+            {
+                var hasCache = await _auth.HasLocalCacheAsync(Username.Trim());
+                if (!hasCache)
+                    SetError("Нет связи с сервером. Для первого входа нужен API. После успешного входа онлайн будет доступен офлайн-режим.");
+                else
+                    SetError("Нет связи с сервером или неверный пароль для офлайн-входа по сохранённому кэшу.");
+            }
+            else
+                SetError(result.Error ?? "Не удалось войти.");
         }
         finally
         {

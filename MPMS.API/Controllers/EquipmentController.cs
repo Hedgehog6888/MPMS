@@ -40,7 +40,8 @@ public class EquipmentController : ControllerBase
         e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
         e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
         e.CheckedOutProjectId, e.CheckedOutTaskId,
-        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment);
+        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment,
+        e.IsArchived);
 
     private static EquipmentHistoryEntryResponse HistoryToDto(EquipmentHistoryEntry x) => new(
         x.Id, x.EquipmentId, x.OccurredAt, x.EventType.ToString(),
@@ -126,6 +127,7 @@ public class EquipmentController : ControllerBase
         entity.IsWrittenOff = request.IsWrittenOff;
         entity.WrittenOffAt = request.WrittenOffAt;
         entity.WrittenOffComment = request.WrittenOffComment;
+        entity.IsArchived = request.IsArchived;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

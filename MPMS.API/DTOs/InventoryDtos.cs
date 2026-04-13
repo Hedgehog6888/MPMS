@@ -49,7 +49,8 @@ public record EquipmentResponse(
     Guid? CheckedOutTaskId,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    string? WrittenOffComment = null);
+    string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record CreateEquipmentRequest(
     [Required, MaxLength(200)] string Name,
@@ -70,7 +71,8 @@ public record UpdateEquipmentRequest(
     EquipmentStatus? Status = null,
     bool IsWrittenOff = false,
     DateTime? WrittenOffAt = null,
-    [MaxLength(500)] string? WrittenOffComment = null);
+    [MaxLength(500)] string? WrittenOffComment = null,
+    bool IsArchived = false);
 
 public record EquipmentHistoryEntryResponse(
     Guid Id,

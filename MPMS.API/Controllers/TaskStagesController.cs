@@ -130,7 +130,8 @@ public class TaskStagesController : ControllerBase
         var stage = await _db.TaskStages.FindAsync(id);
         if (stage is null) return NotFound();
 
-        if (!DueDatePolicy.IsAllowed(request.DueDate))
+        var restoringFromArchive = stage.IsArchived && !request.IsArchived;
+        if (!request.IsArchived && !DueDatePolicy.IsAllowed(request.DueDate) && !restoringFromArchive)
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
         var oldStatus = stage.Status;
@@ -198,6 +199,17 @@ public class TaskStagesController : ControllerBase
         stage.IsMarkedForDeletion = request.IsMarkedForDeletion;
         stage.IsArchived = request.IsArchived;
         stage.UpdatedAt = DateTime.UtcNow;
+
+        // Иначе этап снимается с архива, а задача остаётся IsArchived=true — клиент при pull снова «замораживает» задачу.
+        if (restoringFromArchive)
+        {
+            var task = await _db.Tasks.FindAsync(stage.TaskId);
+            if (task is not null && task.IsArchived)
+            {
+                task.IsArchived = false;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
+        }
 
         await _db.SaveChangesAsync();
 

@@ -11,8 +11,11 @@ public interface IAuthService
     string? Username { get; }
     string? UserRole { get; }
 
-    /// <summary>Базовый URL API (заканчивается на /api/), из appsettings.json и сессии.</summary>
+    /// <summary>Базовый URL API (заканчивается на /api/), из client_settings.json, appsettings и сессии.</summary>
     string ApiBaseUrl { get; }
+
+    /// <summary>Сохраняет адрес API для следующих запусков и применяет до запроса логина.</summary>
+    Task PersistApiBaseUrlForNextLoginAsync(string urlInput);
 
     /// <summary>Saves session after successful online login (awaitable — ensures DB persistence).</summary>
     Task SetSessionAsync(AuthResponse response, string plainPassword);

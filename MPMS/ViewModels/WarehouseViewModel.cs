@@ -479,15 +479,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Material", id, SyncOperation.Update,
-            new UpdateMaterialRequest(
-                Name: name,
-                Unit: unit,
-                Description: description,
-                CategoryId: categoryId,
-                ImagePath: imagePath,
-                Cost: cost,
-                InventoryNumber: m.InventoryNumber));
+        var mSync = await db.Materials.FindAsync(id);
+        if (mSync is not null)
+            await _sync.QueueOperationAsync("Material", id, SyncOperation.Update, SyncPayloads.Material(mSync));
         await LoadAsync();
     }
 
@@ -510,15 +504,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update,
-            new UpdateEquipmentRequest(
-                Name: name,
-                Description: description,
-                CategoryId: categoryId,
-                ImagePath: imagePath,
-                InventoryNumber: e.InventoryNumber,
-                Condition: condition,
-                Status: ToEquipmentStatusEnum(e.Status)));
+        var eSync = await db.Equipments.FindAsync(id);
+        if (eSync is not null)
+            await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update, SyncPayloads.Equipment(eSync));
         if (!string.Equals(previousStatus, e.Status, StringComparison.Ordinal))
         {
             var newStatus = ToEquipmentStatusEnum(e.Status);
@@ -553,15 +541,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.IsSynced = false;
         await db.SaveChangesAsync();
 
-        await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update,
-            new UpdateEquipmentRequest(
-                Name: e.Name,
-                Description: e.Description,
-                CategoryId: e.CategoryId,
-                ImagePath: e.ImagePath,
-                InventoryNumber: e.InventoryNumber,
-                Condition: condition,
-                Status: ToEquipmentStatusEnum(e.Status)));
+        var eSync = await db.Equipments.FindAsync(id);
+        if (eSync is not null)
+            await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update, SyncPayloads.Equipment(eSync));
 
         var conditionComment = string.IsNullOrWhiteSpace(comment)
             ? $"Состояние изменено: {e.ConditionDisplay}"
@@ -742,6 +724,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         m.UpdatedAt = DateTime.UtcNow;
         m.IsSynced = false;
         await db.SaveChangesAsync();
+        var m2 = await db.Materials.FindAsync(materialId);
+        if (m2 is not null)
+            await _sync.QueueOperationAsync("Material", materialId, SyncOperation.Update, SyncPayloads.Material(m2));
         await LogActivityAsync(
             db,
             $"Материал «{m.Name}» перемещён в архив",
@@ -763,6 +748,9 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
         await db.SaveChangesAsync();
+        var e2 = await db.Equipments.FindAsync(equipmentId);
+        if (e2 is not null)
+            await _sync.QueueOperationAsync("Equipment", equipmentId, SyncOperation.Update, SyncPayloads.Equipment(e2));
         await LogActivityAsync(
             db,
             $"Оборудование «{e.Name}» перемещено в архив",

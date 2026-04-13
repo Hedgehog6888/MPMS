@@ -24,7 +24,8 @@ public class MaterialsController : ControllerBase
         m.Id, m.Name, m.Unit, m.Description, m.Quantity,
         m.Cost, m.InventoryNumber,
         m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt,
-        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment);
+        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment,
+        m.IsArchived);
 
     /// <summary>Get all materials (with optional search)</summary>
     [HttpGet]
@@ -57,7 +58,8 @@ public class MaterialsController : ControllerBase
                 m.UpdatedAt,
                 m.IsWrittenOff,
                 m.WrittenOffAt,
-                m.WrittenOffComment))
+                m.WrittenOffComment,
+                m.IsArchived))
             .ToListAsync();
 
         return Ok(materials);
@@ -148,6 +150,7 @@ public class MaterialsController : ControllerBase
         material.IsWrittenOff = request.IsWrittenOff;
         material.WrittenOffAt = request.WrittenOffAt;
         material.WrittenOffComment = request.WrittenOffComment;
+        material.IsArchived = request.IsArchived;
         material.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();

@@ -165,7 +165,10 @@ public class TasksController : ControllerBase
         var task = await _db.Tasks.FindAsync(id);
         if (task is null) return NotFound();
 
-        if (!DueDatePolicy.IsAllowed(request.DueDate))
+        // Снятие архива: не блокировать по просроченному сроку — иначе IsArchived не сбрасывается на сервере.
+        // Для обычного редактирования активной задачи срок по-прежнему не раньше «сегодня».
+        var restoringFromArchive = task.IsArchived && !request.IsArchived;
+        if (!request.IsArchived && !DueDatePolicy.IsAllowed(request.DueDate) && !restoringFromArchive)
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
         var oldStatus = task.Status;
@@ -199,11 +202,9 @@ public class TasksController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var task = await _db.Tasks.FindAsync(id);
-        if (task is null) return NotFound();
+        var ok = await TaskCascadeDelete.TryDeleteTaskGraphAsync(_db, id);
+        if (!ok) return NotFound();
 
-        _db.Tasks.Remove(task);
-        await _db.SaveChangesAsync();
         return NoContent();
     }
 

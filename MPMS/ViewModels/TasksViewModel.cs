@@ -452,6 +452,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
 
+        await RecalcProjectStatusAsync(db, entity.ProjectId);
+
         await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         foreach (var s in stages)
             await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));

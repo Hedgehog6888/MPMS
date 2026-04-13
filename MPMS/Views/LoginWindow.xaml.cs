@@ -75,6 +75,12 @@ public partial class LoginWindow : Window
     private void UsernameBox_LostFocus(object sender, RoutedEventArgs e)
         => UsernameContainer.BorderBrush = NormalBrush;
 
+    private void ApiUrlBox_GotFocus(object sender, RoutedEventArgs e)
+        => ApiUrlContainer.BorderBrush = FocusBrush;
+
+    private void ApiUrlBox_LostFocus(object sender, RoutedEventArgs e)
+        => ApiUrlContainer.BorderBrush = NormalBrush;
+
     private void PwdBox_GotFocus(object sender, RoutedEventArgs e)
         => PasswordContainer.BorderBrush = FocusBrush;
 

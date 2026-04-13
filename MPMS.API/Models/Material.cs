@@ -39,6 +39,9 @@ public class Material
     [MaxLength(500)]
     public string? WrittenOffComment { get; set; }
 
+    /// <summary>Скрыт из основного списка склада (архив), синхронизируется с клиентом.</summary>
+    public bool IsArchived { get; set; }
+
     public ICollection<StageMaterial> StageMaterials { get; set; } = new List<StageMaterial>();
 
     public ICollection<MaterialStockMovement> StockMovements { get; set; } = new List<MaterialStockMovement>();
