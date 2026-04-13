@@ -298,6 +298,7 @@ public partial class AdminUserFormOverlay : UserControl
             BuildAdditionalRows(null, null);
         }
 
+        RoleFieldsPanel.Visibility = _isEditMode ? Visibility.Collapsed : Visibility.Visible;
         _loadingRoles = false;
     }
 
@@ -330,13 +331,14 @@ public partial class AdminUserFormOverlay : UserControl
             if (string.IsNullOrWhiteSpace(lastName))   { ShowError("Введите фамилию"); return; }
             if (string.IsNullOrWhiteSpace(username))   { ShowError("Введите логин"); return; }
             if (role is null)                          { ShowError("Выберите роль"); return; }
-            if (role.Name == "Worker" && string.IsNullOrWhiteSpace(GetMainSubRoleFromCombo()))
+            var roleNameForSpecs = (_isEditMode && _editingRow is not null) ? _editingRow.RoleName : role.Name;
+            if (IsDbWorkerRole(roleNameForSpecs) && string.IsNullOrWhiteSpace(GetMainSubRoleFromCombo()))
             { ShowError("Выберите основную специализацию работника."); return; }
             if (!_isEditMode && string.IsNullOrWhiteSpace(password)) { ShowError("Введите пароль"); return; }
             if (!string.IsNullOrEmpty(password) && password != passConfirm) { ShowError("Пароли не совпадают"); return; }
 
-            var subRole = role.Name == "Worker" ? GetMainSubRoleFromCombo()?.Trim() : null;
-            var additionalJson = role.Name == "Worker" ? CollectAdditionalSubRolesJson(subRole) : null;
+            var subRole = IsDbWorkerRole(roleNameForSpecs) ? GetMainSubRoleFromCombo()?.Trim() : null;
+            var additionalJson = IsDbWorkerRole(roleNameForSpecs) ? CollectAdditionalSubRolesJson(subRole) : null;
 
             var fullName = $"{firstName} {lastName}".Trim();
             var api = App.Services.GetRequiredService<IApiService>();
@@ -358,8 +360,8 @@ public partial class AdminUserFormOverlay : UserControl
                 user.Email     = string.IsNullOrWhiteSpace(email) ? null : email;
                 user.BirthDate = birthDate;
                 user.HomeAddress = homeAddress;
-                user.RoleId    = role.Id;
-                user.RoleName  = role.Name;
+                user.RoleId    = _editingRow.RoleId;
+                user.RoleName  = _editingRow.RoleName;
                 user.SubRole             = subRole;
                 user.AdditionalSubRoles  = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
@@ -388,7 +390,7 @@ public partial class AdminUserFormOverlay : UserControl
                         lastName,
                         username,
                         string.IsNullOrWhiteSpace(email) ? null : email,
-                        role.Id,
+                        _editingRow.RoleId,
                         string.IsNullOrEmpty(password) ? null : password,
                         subRole,
                         additionalJson,

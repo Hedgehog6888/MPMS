@@ -348,7 +348,8 @@
                                                         </Button>
                                                         <Button Style="{StaticResource RowIconBtn}" ToolTip="{Binding BlockLabel}"
                                                                 Command="{Binding DataContext.OpenBlockOverlayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}">
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding ShowBlockActionButton, Converter={StaticResource BoolToVis}}">
                                                             <Grid Width="14" Height="14">
                                                                 <Image Source="{svgc:SvgImage Source=/icons/block.svg, AppName=MPMS}" Width="14" Height="14"
                                                                        Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVisInv}}"/>
@@ -358,7 +359,8 @@
                                                         </Button>
                                                         <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить"
                                                                 Command="{Binding DataContext.OpenDeleteUserConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                                CommandParameter="{Binding}">
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding ShowDeleteActionButton, Converter={StaticResource BoolToVis}}">
                                                             <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                         </Button>
                                                     </StackPanel>

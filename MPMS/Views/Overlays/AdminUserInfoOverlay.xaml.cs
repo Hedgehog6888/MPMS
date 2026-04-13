@@ -100,6 +100,14 @@ public partial class AdminUserInfoOverlay : UserControl
             BlockButton.Content  = "Заблокировать";
         }
 
+        BlockButton.Visibility = (!UserPeekAccess.IsAdministrator(_row.RoleName) || _row.IsBlocked)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        DeleteButton.Visibility = UserPeekAccess.IsAdministrator(_row.RoleName)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
         // Contact info
         EmailText.Text     = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
         CreatedAtText.Text = _row.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");

@@ -98,12 +98,11 @@ public class UsersController : ControllerBase
 
         var currentUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var cid) ? cid : (Guid?)null;
         var isAdmin = User.IsInRole("Administrator");
-        if (!isAdmin)
-        {
-            if (currentUserId != id) return Forbid();
-            if (request.RoleId != user.RoleId)
-                return BadRequest(new { message = "Нельзя изменить роль самостоятельно" });
-        }
+        if (!isAdmin && currentUserId != id)
+            return Forbid();
+
+        if (request.RoleId != user.RoleId)
+            return BadRequest(new { message = "Нельзя изменить роль пользователя" });
 
         if (await _db.Users.AnyAsync(u => u.Username == request.Username && u.Id != id))
             return Conflict(new { message = "Пользователь с таким логином уже существует" });
@@ -128,6 +127,12 @@ public class UsersController : ControllerBase
 
         if (request.IsBlocked.HasValue && isAdmin)
         {
+            await _db.Entry(user).Reference(u => u.Role).LoadAsync();
+            var targetIsAdminRole = user.Role.Name.Equals("Administrator", StringComparison.OrdinalIgnoreCase)
+                || user.Role.Name.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+            if (request.IsBlocked.Value && targetIsAdminRole && !user.IsBlocked)
+                return BadRequest(new { message = "Нельзя заблокировать пользователя с ролью администратора" });
+
             user.IsBlocked = request.IsBlocked.Value;
             user.BlockedAt = request.IsBlocked.Value ? DateTime.UtcNow : null;
             if (!request.IsBlocked.Value)
@@ -171,8 +176,12 @@ public class UsersController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        var user = await _db.Users.FindAsync(id);
+        var user = await _db.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == id);
         if (user is null) return NotFound();
+
+        if (user.Role.Name.Equals("Administrator", StringComparison.OrdinalIgnoreCase)
+            || user.Role.Name.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { message = "Нельзя удалить пользователя с ролью администратора" });
 
         if (await _db.Projects.AnyAsync(p => p.ManagerId == id))
             return BadRequest(new { message = "Нельзя удалить пользователя, который является руководителем проекта" });

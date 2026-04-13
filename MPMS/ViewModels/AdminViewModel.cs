@@ -41,6 +41,12 @@ public class AdminUserRow : ObservableObject
     public string BlockIcon    => IsBlocked ? "🔓" : "🔒";
     public string BlockLabel   => IsBlocked ? "Разблокировать" : "Заблокировать";
 
+    /// <summary>Кнопка блокировки: администраторов нельзя блокировать (разблокировать — можно).</summary>
+    public bool ShowBlockActionButton => !UserPeekAccess.IsAdministrator(RoleName) || IsBlocked;
+
+    /// <summary>Удаление недоступно для пользователей с ролью администратора.</summary>
+    public bool ShowDeleteActionButton => !UserPeekAccess.IsAdministrator(RoleName);
+
     public string RoleColor => RoleName switch
     {
         "Administrator" or "Admin"                              => "#FEE2E2",
@@ -336,6 +342,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private void OpenBlockOverlay(AdminUserRow? row)
     {
         if (row is null) return;
+        if (UserPeekAccess.IsAdministrator(row.RoleName) && !row.IsBlocked)
+        {
+            SetStatus("Нельзя заблокировать пользователя с ролью администратора");
+            return;
+        }
+
         _blockTargetRow = row;
         BlockTargetName = row.Name;
         BlockTargetReason = row.BlockedReason ?? string.Empty;
@@ -371,6 +383,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (user is null) return;
 
         bool newBlocked = !user.IsBlocked;
+        if (newBlocked && UserPeekAccess.IsAdministrator(user.RoleName))
+        {
+            SetStatus("Нельзя заблокировать пользователя с ролью администратора");
+            return;
+        }
+
         user.IsBlocked     = newBlocked;
         user.BlockedAt     = newBlocked ? DateTime.UtcNow : null;
         user.BlockedReason = newBlocked ? BlockReason.Trim() : null;
@@ -409,6 +427,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     {
         if (row is null) return;
         if (row.Id == _auth.UserId) { SetStatus("Нельзя удалить текущего пользователя"); return; }
+        if (UserPeekAccess.IsAdministrator(row.RoleName))
+        {
+            SetStatus("Нельзя удалить пользователя с ролью администратора");
+            return;
+        }
 
         var userId = row.Id;
         SetupConfirm(

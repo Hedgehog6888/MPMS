@@ -160,13 +160,15 @@
                              VerticalContentAlignment="Center" Padding="0"/>
                 </Border>
 
-                <!-- Role -->
-                <TextBlock Text="Роль *" Style="{StaticResource FormLabel}"/>
-                <ComboBox x:Name="RoleCombo"
-                          Style="{StaticResource FormCombo}"
-                          Margin="0,0,0,12"
-                          DisplayMemberPath="Display"
-                          SelectionChanged="RoleCombo_SelectionChanged"/>
+                <!-- Роль — только при создании пользователя -->
+                <StackPanel x:Name="RoleFieldsPanel">
+                    <TextBlock Text="Роль *" Style="{StaticResource FormLabel}"/>
+                    <ComboBox x:Name="RoleCombo"
+                              Style="{StaticResource FormCombo}"
+                              Margin="0,0,0,12"
+                              DisplayMemberPath="Display"
+                              SelectionChanged="RoleCombo_SelectionChanged"/>
+                </StackPanel>
 
                 <!-- Main + additional specialties (visible only for Worker) -->
                 <StackPanel x:Name="SubRolePanel" Visibility="Collapsed">
