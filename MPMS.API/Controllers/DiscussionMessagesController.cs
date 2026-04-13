@@ -82,6 +82,7 @@ public class DiscussionMessagesController : ControllerBase
         var user = await _db.Users.Include(u => u.Role).FirstAsync(u => u.Id == userId);
         var fullName = $"{user.FirstName} {user.LastName}".Trim();
 
+        // Время только с сервера: часы на разных ПК и Kind=Unspecified у SQLite не должны ломать порядок ленты.
         var msg = new DiscussionMessage
         {
             Id = id,
@@ -93,7 +94,7 @@ public class DiscussionMessagesController : ControllerBase
             UserColor = "#1B6EC2",
             UserRole = user.Role.Name,
             Text = request.Text.Trim(),
-            CreatedAt = request.CreatedAt ?? DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         };
 
         _db.DiscussionMessages.Add(msg);

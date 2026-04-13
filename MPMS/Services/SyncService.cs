@@ -31,6 +31,14 @@ public class SyncService : ISyncService
         PropertyNameCaseInsensitive = true
     };
 
+    /// <summary>SQLite/EF и часть DTO отдают UTC без Kind=Utc — приводим к UTC для сравнений и отображения.</summary>
+    private static DateTime NormalizeUtcInstant(DateTime dt) => dt.Kind switch
+    {
+        DateTimeKind.Utc => dt,
+        DateTimeKind.Local => dt.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+    };
+
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IApiService _api;
     private readonly IAuthService _auth;
@@ -688,7 +696,7 @@ public class SyncService : ISyncService
                     UserColor = m.UserColor,
                     UserRole = m.UserRole,
                     Text = m.Text,
-                    CreatedAt = m.CreatedAt
+                    CreatedAt = NormalizeUtcInstant(m.CreatedAt)
                 });
             }
         }
@@ -715,7 +723,7 @@ public class SyncService : ISyncService
                     ActionText = a.ActionText,
                     EntityType = a.EntityType,
                     EntityId = a.EntityId,
-                    CreatedAt = a.CreatedAt
+                    CreatedAt = NormalizeUtcInstant(a.CreatedAt)
                 });
             }
         }
@@ -1219,7 +1227,19 @@ public class SyncService : ISyncService
         var req = JsonSerializer.Deserialize<CreateDiscussionMessageRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         req = NormalizeDiscussionRequest(req);
-        return await _api.PostDiscussionMessageAsync(req) is not null;
+        var response = await _api.PostDiscussionMessageAsync(req);
+        if (response is null) return false;
+
+        var messageId = req.Id ?? op.EntityId;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var local = await db.Messages.FindAsync(messageId);
+        if (local is not null)
+        {
+            local.CreatedAt = NormalizeUtcInstant(response.CreatedAt);
+            await db.SaveChangesAsync();
+        }
+
+        return true;
     }
 
     private async Task<bool> SyncTaskAssigneesAsync(PendingOperation op)

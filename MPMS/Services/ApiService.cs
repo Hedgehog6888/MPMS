@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -313,10 +314,25 @@ public class ApiService : IApiService
 
     public async Task<bool> DeleteUserAsync(Guid id) => await DeleteAsync($"users/{id}");
 
+    /// <summary>
+    /// Локальная SQLite/EF часто отдаёт UTC-моменты с Kind=Unspecified.
+    /// <see cref="DateTime.ToUniversalTime"/> для Unspecified трактует их как локальные и сдвигает инкрементальный since.
+    /// </summary>
+    private static string FormatUtcInstantForQuery(DateTime dt)
+    {
+        var utc = dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+        };
+        return utc.ToString("O", CultureInfo.InvariantCulture);
+    }
+
     public Task<List<DiscussionMessageResponse>?> GetDiscussionMessagesAsync(DateTime? since = null)
     {
         var q = since.HasValue
-            ? $"?since={Uri.EscapeDataString(since.Value.ToUniversalTime().ToString("O"))}"
+            ? $"?since={Uri.EscapeDataString(FormatUtcInstantForQuery(since.Value))}"
             : "";
         return GetAsync<List<DiscussionMessageResponse>>($"discussion-messages{q}");
     }
@@ -338,7 +354,7 @@ public class ApiService : IApiService
     public Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null)
     {
         var q = since.HasValue
-            ? $"?since={Uri.EscapeDataString(since.Value.ToUniversalTime().ToString("O"))}"
+            ? $"?since={Uri.EscapeDataString(FormatUtcInstantForQuery(since.Value))}"
             : "";
         return GetAsync<List<SyncedActivityLogResponse>>($"synced-activity-logs{q}");
     }
