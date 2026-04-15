@@ -512,24 +512,21 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
-                                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="✓"/>
-                                                        <Setter Property="Foreground" Value="#16A34A"/>
+                                            <Image Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/sync_status_ok.svg, AppName=MPMS}"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                                <Setter Property="Text" Value="✕"/>
-                                                                <Setter Property="Foreground" Value="#6B778C"/>
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/sync_status_offline.svg, AppName=MPMS}"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsSyncing}" Value="True">
-                                                                <Setter Property="Text" Value="↻"/>
-                                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/sync_status_progress.svg, AppName=MPMS}"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
+                                                </Image.Style>
+                                            </Image>
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="0">
                                             <TextBlock FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
@@ -630,7 +627,8 @@
                                         Background="#FFFBEB" BorderBrush="#FCD34D" BorderThickness="1"
                                         Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisInv}}">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Top" Foreground="#D97706"/>
+                                        <Image Width="14" Height="14" Margin="0,1,8,0" VerticalAlignment="Top"
+                                               Source="{svgc:SvgImage Source=/icons/sync_warning.svg, AppName=MPMS}"/>
                                         <TextBlock Text="Изменения сохраняются локально и будут синхронизированы при восстановлении соединения."
                                                    FontSize="11" Foreground="#92400E" TextWrapping="Wrap" MaxWidth="280"/>
                                     </StackPanel>
@@ -644,7 +642,8 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBlock Text="🕐" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <Image Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"
+                                                   Source="{svgc:SvgImage Source=/icons/sync_clock.svg, AppName=MPMS}"/>
                                             <TextBlock Text="Авто-синхронизация каждые 5 мин"
                                                        FontSize="11" Foreground="#6B778C" TextWrapping="Wrap"/>
                                         </StackPanel>
@@ -656,8 +655,8 @@
                                                             BorderBrush="#DFE1E6" BorderThickness="1"
                                                             Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
                                                         <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="↻" FontSize="13" Margin="0,0,6,0"
-                                                                       VerticalAlignment="Center" Foreground="#000000"/>
+                                                            <Image Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                   Source="{svgc:SvgImage Source=/icons/sync_refresh.svg, AppName=MPMS}"/>
                                                             <TextBlock Text="Синхронизировать" Foreground="#000000"
                                                                        FontSize="12" VerticalAlignment="Center"/>
                                                         </StackPanel>
