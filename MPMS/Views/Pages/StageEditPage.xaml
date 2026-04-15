@@ -555,7 +555,7 @@
         <Border Grid.Row="2" Panel.ZIndex="20" VerticalAlignment="Bottom" HorizontalAlignment="Center" MaxWidth="760" MinWidth="320" Margin="24,0,24,12"
                 Background="#FFF0F0" CornerRadius="8" Padding="10,8"
                 Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVis}}">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" TextWrapping="Wrap" TextAlignment="Center"/>
         </Border>
     </Grid>
 </UserControl>

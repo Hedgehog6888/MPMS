@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -19,6 +20,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class CreateTaskOverlay : UserControl
 {
+    private readonly DispatcherTimer _errorHideTimer;
     private TasksViewModel? _tasksVm;
     private LocalTask? _editTask;
     private Guid? _fixedProjectId;
@@ -34,6 +36,15 @@ public partial class CreateTaskOverlay : UserControl
     public CreateTaskOverlay()
     {
         InitializeComponent();
+        _errorHideTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(4)
+        };
+        _errorHideTimer.Tick += (_, _) =>
+        {
+            _errorHideTimer.Stop();
+            ErrorPanel.Visibility = Visibility.Collapsed;
+        };
         DueDatePickerRestrictions.AttachNoPastSelectableBlackout(DueDatePicker);
         Loaded += (_, _) => ApplyPrioritySelection(_selectedPriority);
     }
@@ -306,6 +317,7 @@ public partial class CreateTaskOverlay : UserControl
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        _errorHideTimer.Stop();
         ErrorPanel.Visibility = Visibility.Collapsed;
 
         if (string.IsNullOrWhiteSpace(NameBox.Text))
@@ -492,7 +504,8 @@ public partial class CreateTaskOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
-        MainScrollViewer.ScrollToVerticalOffset(0);
+        _errorHideTimer.Stop();
+        _errorHideTimer.Start();
     }
 }
 

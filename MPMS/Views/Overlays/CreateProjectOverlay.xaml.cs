@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
@@ -17,6 +18,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class CreateProjectOverlay : UserControl
 {
+    private readonly DispatcherTimer _errorHideTimer;
     private ProjectsViewModel? _vm;
     private LocalProject? _editProject;
     private Func<System.Threading.Tasks.Task>? _onSaved;
@@ -37,6 +39,15 @@ public partial class CreateProjectOverlay : UserControl
     public CreateProjectOverlay()
     {
         InitializeComponent();
+        _errorHideTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(4)
+        };
+        _errorHideTimer.Tick += (_, _) =>
+        {
+            _errorHideTimer.Stop();
+            ErrorPanel.Visibility = Visibility.Collapsed;
+        };
         StartDatePicker.SelectedDateChanged += (_, _) => RefreshEndDateBlackoutFromStart();
         Loaded += (_, _) => RefreshEndDateBlackoutFromStart();
     }
@@ -420,6 +431,7 @@ public partial class CreateProjectOverlay : UserControl
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        _errorHideTimer.Stop();
         ErrorPanel.Visibility = Visibility.Collapsed;
 
         if (string.IsNullOrWhiteSpace(NameBox.Text))
@@ -565,7 +577,8 @@ public partial class CreateProjectOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
-        MainScrollViewer.ScrollToVerticalOffset(0);
+        _errorHideTimer.Stop();
+        _errorHideTimer.Start();
     }
 
     private record WorkerChipInfo(Guid UserId, string Name, string Initials);
