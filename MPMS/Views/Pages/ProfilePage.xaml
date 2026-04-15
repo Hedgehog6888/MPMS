@@ -214,7 +214,7 @@
 
                         <!-- Name and role -->
                         <TextBlock x:Name="NameText"
-                                   Text="Имя пользователя"
+                                   Text=""
                                    FontSize="18" FontWeight="Bold"
                                    Foreground="#000000"
                                    HorizontalAlignment="Center"
@@ -222,7 +222,7 @@
                                    TextAlignment="Center"
                                    Margin="0,0,0,4"/>
                         <TextBlock x:Name="PositionText"
-                                   Text="Должность"
+                                   Text=""
                                    FontSize="13" Foreground="#6B778C"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,6"/>
@@ -316,7 +316,7 @@
                             <Border Grid.Row="0" Grid.Column="0" CornerRadius="8" Padding="12"
                                     Background="#EFF6FF" Margin="0,0,6,6">
                                 <StackPanel>
-                                    <TextBlock x:Name="ProjectCountText" Text="0"
+                        <TextBlock x:Name="ProjectCountText" Text=""
                                                FontSize="24" FontWeight="Bold"
                                                Foreground="#1D4ED8"/>
                                     <TextBlock Text="Проектов" FontSize="11"
@@ -327,7 +327,7 @@
                             <Border Grid.Row="0" Grid.Column="1" CornerRadius="8" Padding="12"
                                     Background="#F0FDF4" Margin="6,0,0,6">
                                 <StackPanel>
-                                    <TextBlock x:Name="TaskCountText" Text="0"
+                        <TextBlock x:Name="TaskCountText" Text=""
                                                FontSize="24" FontWeight="Bold"
                                                Foreground="#16A34A"/>
                                     <TextBlock Text="Задач" FontSize="11"
@@ -338,7 +338,7 @@
                             <Border Grid.Row="1" Grid.Column="0" CornerRadius="8" Padding="12"
                                     Background="#FFF7ED" Margin="0,0,6,0">
                                 <StackPanel>
-                                    <TextBlock x:Name="StageCountText" Text="0"
+                        <TextBlock x:Name="StageCountText" Text=""
                                                FontSize="24" FontWeight="Bold"
                                                Foreground="#EA580C"/>
                                     <TextBlock Text="Этапов" FontSize="11"
@@ -349,7 +349,7 @@
                             <Border Grid.Row="1" Grid.Column="1" CornerRadius="8" Padding="12"
                                     Background="#FDF4FF" Margin="6,0,0,0">
                                 <StackPanel>
-                                    <TextBlock x:Name="ActivityCountText" Text="0"
+                        <TextBlock x:Name="ActivityCountText" Text=""
                                                FontSize="24" FontWeight="Bold"
                                                Foreground="#9333EA"/>
                                     <TextBlock Text="Действий" FontSize="11"
@@ -610,14 +610,6 @@
                 </Border>
             </Border>
 
-            <Border x:Name="SkeletonOverlay" Grid.ColumnSpan="3" Panel.ZIndex="100"
-                    Background="#F8F9FA" Visibility="Collapsed" IsHitTestVisible="False">
-                <StackPanel Margin="8">
-                    <Border Height="24" Width="220" Background="#ECEFF3" CornerRadius="6" Margin="0,0,0,12"/>
-                    <Border Height="320" Background="#ECEFF3" CornerRadius="12" Margin="0,0,0,12"/>
-                    <Border Height="220" Background="#ECEFF3" CornerRadius="12"/>
-                </StackPanel>
-            </Border>
         </Grid>
     </ScrollViewer>
 </UserControl>

@@ -26,6 +26,7 @@ public partial class ProfilePage : UserControl
     private LocalUser? _user;
     private DispatcherTimer? _copyToastHideTimer;
     private bool _copyToastActive;
+    private bool _isBackgroundSyncInProgress;
 
     private static string AvatarDirectory =>
         System.IO.Path.Combine(
@@ -37,9 +38,7 @@ public partial class ProfilePage : UserControl
         InitializeComponent();
         Loaded += async (_, _) =>
         {
-            SkeletonOverlay.Visibility = Visibility.Visible;
             await LoadUserAsync();
-            SkeletonOverlay.Visibility = Visibility.Collapsed;
         };
         EmailRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(EmailText.Text, e);
         LoginRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(LoginText.Text, e);
@@ -53,13 +52,13 @@ public partial class ProfilePage : UserControl
         ["Admin"] = ("Администратор",
             "Полный доступ ко всем функциям системы",
             ["Создание и удаление проектов", "Управление пользователями", "Просмотр всех данных", "Управление ролями"]),
-        ["Project Manager"] = ("Менеджер проектов",
+        ["Project Manager"] = ("Менеджер",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["ProjectManager"] = ("Менеджер проектов",
+        ["ProjectManager"] = ("Менеджер",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["Manager"] = ("Менеджер проектов",
+        ["Manager"] = ("Менеджер",
             "Управление проектами и командой исполнителей",
             ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
         ["Foreman"] = ("Прораб",
@@ -76,7 +75,6 @@ public partial class ProfilePage : UserControl
         var sync = App.Services.GetRequiredService<ISyncService>();
         var api = App.Services.GetRequiredService<IApiService>();
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-        await sync.SyncAsync();
 
         await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -201,6 +199,28 @@ public partial class ProfilePage : UserControl
         LastLoginText.Text = recent is null
             ? "Нет данных"
             : recent.LastLoginAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+
+        if (!_isBackgroundSyncInProgress)
+            _ = RunBackgroundSyncAndRefreshAsync();
+    }
+
+    private async System.Threading.Tasks.Task RunBackgroundSyncAndRefreshAsync()
+    {
+        _isBackgroundSyncInProgress = true;
+        try
+        {
+            var sync = App.Services.GetRequiredService<ISyncService>();
+            await sync.SyncAsync();
+            await LoadUserAsync();
+        }
+        catch
+        {
+            // Тихо игнорируем ошибки фонового синка, чтобы не блокировать профиль.
+        }
+        finally
+        {
+            _isBackgroundSyncInProgress = false;
+        }
     }
 
     private void Edit_Click(object sender, RoutedEventArgs e)
