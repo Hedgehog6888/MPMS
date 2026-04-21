@@ -60,6 +60,7 @@ public partial class App : Application
         // ── Services ──────────────────────────────────────────────────────────
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<ISyncService, SyncService>();
+        services.AddSingleton<IUserSettingsService, UserSettingsService>();
 
         // ── Page ViewModels ───────────────────────────────────────────────────
         services.AddTransient<ProjectsViewModel>();
@@ -74,6 +75,7 @@ public partial class App : Application
         services.AddTransient<AdminViewModel>();
         services.AddTransient<CalendarViewModel>();
         services.AddTransient<GanttViewModel>();
+        services.AddTransient<FilesPageViewModel>();
 
         // ── Windows ───────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();

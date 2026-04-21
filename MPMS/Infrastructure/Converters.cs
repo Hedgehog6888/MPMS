@@ -977,3 +977,109 @@ public static class FormComboHelpers
         return false;
     }
 }
+
+public class StringMatchToBoolConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string strValue && parameter is string strParameter)
+        {
+            return string.Equals(strValue, strParameter, StringComparison.OrdinalIgnoreCase);
+        }
+        return false;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool b && b && parameter is string strParameter)
+        {
+            return strParameter;
+        }
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>Maps FileType string to a local SVG icon path.</summary>
+public class FileTypeToIconConverter : IValueConverter
+{
+    public static readonly FileTypeToIconConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string? type = value?.ToString()?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(type)) return "/icons/file.svg";
+
+        if (type.StartsWith("image/")) return "/icons/picture.svg";
+        return "/icons/file.svg";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Returns true if FileType starts with "image/".</summary>
+public class FileTypeToIsImageConverter : IValueConverter
+{
+    public static readonly FileTypeToIsImageConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string? type = value?.ToString()?.ToLowerInvariant();
+        return type != null && type.StartsWith("image/");
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Returns a background SolidColorBrush based on file extension.
+/// </summary>
+public class FileExtensionToBackgroundBrushConverter : IValueConverter
+{
+    public static readonly FileExtensionToBackgroundBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var ext = (value?.ToString() ?? "").ToLower().Trim();
+        return ext switch
+        {
+            ".doc" or ".docx" => new SolidColorBrush(Color.FromRgb(0xEB, 0xF5, 0xFF)), // Blue-50
+            ".pdf" => new SolidColorBrush(Color.FromRgb(0xFE, 0xF2, 0xF2)), // Red-50
+            ".xls" or ".xlsx" or ".csv" => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)), // Green-50
+            ".jpg" or ".jpeg" => new SolidColorBrush(Color.FromRgb(0xF5, 0xF3, 0xFF)), // Violet-50
+            ".png" => new SolidColorBrush(Color.FromRgb(0xFD, 0xF2, 0xF8)), // Pink-50
+            ".gif" or ".bmp" or ".webp" or ".tiff" or ".heic" => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)), // Amber-50
+            _ => new SolidColorBrush(Color.FromRgb(0xF9, 0xFA, 0xFB)) // Gray-50
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Returns a foreground/stroke SolidColorBrush based on file extension.
+/// </summary>
+public class FileExtensionToForegroundBrushConverter : IValueConverter
+{
+    public static readonly FileExtensionToForegroundBrushConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var ext = (value?.ToString() ?? "").ToLower().Trim();
+        return ext switch
+        {
+            ".doc" or ".docx" => new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)), // Blue-600
+            ".pdf" => new SolidColorBrush(Color.FromRgb(0xDC, 0x26, 0x26)), // Red-600
+            ".xls" or ".xlsx" or ".csv" => new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)), // Green-600
+            ".jpg" or ".jpeg" => new SolidColorBrush(Color.FromRgb(0x7C, 0x3A, 0xED)), // Violet-600
+            ".png" => new SolidColorBrush(Color.FromRgb(0xDB, 0x27, 0x77)), // Pink-600
+            ".gif" or ".bmp" or ".webp" or ".tiff" or ".heic" => new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)), // Amber-600
+            _ => new SolidColorBrush(Color.FromRgb(0x4B, 0x55, 0x63)) // Gray-600
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

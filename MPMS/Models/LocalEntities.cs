@@ -415,6 +415,7 @@ public class LocalFile : LocalEntity
     [MaxLength(1000)] public string FilePath { get; set; } = string.Empty;
     [MaxLength(100)]  public string? FileType { get; set; }
     public long FileSize { get; set; }
+    public byte[]? FileData { get; set; }
     public Guid UploadedById { get; set; }
     [MaxLength(100)] public string UploadedByName { get; set; } = string.Empty;
     public Guid? ProjectId { get; set; }

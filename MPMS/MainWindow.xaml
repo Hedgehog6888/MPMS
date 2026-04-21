@@ -878,6 +878,7 @@
                     </StackPanel>
                 </RadioButton>
 
+
                 <!-- Gantt -->
                 <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
                              Style="{StaticResource NavButton}"

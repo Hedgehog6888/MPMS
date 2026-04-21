@@ -18,6 +18,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly IUserSettingsService _settings;
     private Action? _goBackAction;
 
     [ObservableProperty] private LocalProject? _project;
@@ -53,7 +54,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     // ─── UI state and other entities ──────────────────────────────────────────
     [ObservableProperty] private string _activeTab = "Tasks";
     [ObservableProperty] private string _stageViewMode = "List";
-    [ObservableProperty] private ObservableCollection<LocalFile> _files = [];
+    public FilesControlViewModel FilesControlVM { get; }
     [ObservableProperty] private ObservableCollection<LocalProjectMember> _members = [];
 
     [ObservableProperty] private List<LocalProjectMember> _foremanMembers = [];
@@ -75,11 +76,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<StageItem> _filteredCompletedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredMarkedStages = [];
 
-    public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
+    public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth, IUserSettingsService settings)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _settings = settings;
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, settings);
+        _stageViewMode = _settings.GetValue("StagesViewMode", "List");
     }
 
     private bool CanMarkStageDeletion() =>
@@ -110,7 +114,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         FilteredMarkedStages = [];
         AllStages = [];
         FilteredStages = [];
-        Files = [];
+        FilesControlVM.AllFiles.Clear();
+        FilesControlVM.DisplayedFiles.Clear();
         Members = [];
         ForemanMembers = [];
         WorkerMembers = [];
@@ -360,11 +365,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         // Load files
         var projectId = Project!.Id;
-        var files = await db.Files
-            .Where(f => f.ProjectId == projectId)
-            .OrderByDescending(f => f.CreatedAt)
-            .ToListAsync();
-        Files = new ObservableCollection<LocalFile>(files);
+        FilesControlVM.Initialize(projectId);
 
         // Load project members (executors) with AvatarData/AvatarPath from Users
         var members = await db.ProjectMembers
@@ -585,7 +586,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private void SwitchTab(string tab) => ActiveTab = tab;
 
     [RelayCommand]
-    private void SwitchStageView(string mode) => StageViewMode = mode;
+    private void SwitchStageView(string mode)
+    {
+        StageViewMode = mode;
+        _settings.SetValue("StagesViewMode", mode);
+    }
 
     [RelayCommand]
     private async Task MarkStageForDeletionAsync(LocalTaskStage stage)

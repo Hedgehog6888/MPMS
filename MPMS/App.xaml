@@ -910,6 +910,7 @@
             <!-- ── Converters ──────────────────────────────────────── -->
             <infra:BoolToVisibilityConverter   x:Key="BoolToVis"/>
             <infra:BoolToVisibilityConverter   x:Key="BoolToVisInv"        Invert="True"/>
+            <infra:StringMatchToBoolConverter  x:Key="StringMatchToBoolConverter"/>
             <infra:BoolToVisibilityConverter   x:Key="StringToVis"         IsStringMode="True"/>
             <infra:BoolToVisibilityConverter   x:Key="StringToVisInv"      IsStringMode="True" Invert="True"/>
             <infra:AvatarPathToImageSourceConverter x:Key="AvatarPathToImage"/>
@@ -950,6 +951,8 @@
             <infra:FractionToGridLengthConverter        x:Key="FracToGL"/>
             <infra:TaskStatusToPaleBrushConverter       x:Key="TaskStatusToPaleBrush"/>
             <infra:TaskStatusToForegroundBrushConverter x:Key="TaskStatusToFgBrush"/>
+            <infra:FileExtensionToBackgroundBrushConverter x:Key="FileExtensionToBackgroundBrush"/>
+            <infra:FileExtensionToForegroundBrushConverter x:Key="FileExtensionToForegroundBrush"/>
 
             <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
             <Style x:Key="AvatarCircle20" TargetType="Border">
@@ -1060,6 +1063,9 @@
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:TasksViewModel}">
                 <pages:TasksPage/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:FilesPageViewModel}">
+                <pages:FilesPage/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:MaterialsViewModel}">
                 <pages:MaterialsPage/>
