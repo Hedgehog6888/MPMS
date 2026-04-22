@@ -158,7 +158,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="24,16" Background="Transparent">
+        <Border Grid.Row="0" Padding="24,16,24,8" Background="Transparent">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

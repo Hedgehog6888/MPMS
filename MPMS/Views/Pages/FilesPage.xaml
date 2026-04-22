@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:components="clr-namespace:MPMS.Views.Components"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              Background="{StaticResource BackgroundBrush}">
 
     <Grid>
@@ -12,7 +13,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="Transparent" Padding="24,24,24,8">
+        <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -29,7 +30,8 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Click="UploadFile_Click" Style="{StaticResource BlackBtn}" Height="40" Padding="20,0">
                         <StackPanel Orientation="Horizontal">
-                            <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Fill="White" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/upload_white.svg, AppName=MPMS}" 
+                                   Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Загрузить файл" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
