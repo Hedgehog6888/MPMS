@@ -10,5 +10,8 @@ public record FileResponse(
     Guid? ProjectId,
     Guid? TaskId,
     Guid? StageId,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? OriginalCreatedAt = null,
+    string? ProjectName = null,
+    string? StageName = null
 );

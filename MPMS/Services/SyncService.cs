@@ -188,6 +188,9 @@ public class SyncService : ISyncService
         await PullUsersAndRolesIntoLocalDbAsync(db);
         if (!_api.IsOnline) return;
 
+        await PullFilesIntoLocalDbAsync(db);
+        if (!_api.IsOnline) return;
+
         // Projects
         var projects = await _api.GetProjectsAsync();
         if (projects is not null)
@@ -1254,6 +1257,56 @@ public class SyncService : ISyncService
         var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceStageAssigneesAsync(op.EntityId, req);
+    }
+
+    private async Task PullFilesIntoLocalDbAsync(LocalDbContext db)
+    {
+        var files = await _api.GetFilesAsync();
+        if (files is null || !_api.IsOnline) return;
+
+        var existingFiles = await db.Files.ToDictionaryAsync(f => f.Id);
+        foreach (var f in files)
+        {
+            if (existingFiles.TryGetValue(f.Id, out var local))
+            {
+                if (local.IsSynced)
+                {
+                    local.FileName = f.FileName;
+                    local.FileType = f.FileType;
+                    local.FileSize = f.FileSize;
+                    local.UploadedByName = f.UploadedByName;
+                    local.ProjectId = f.ProjectId;
+                    local.TaskId = f.TaskId;
+                    local.StageId = f.StageId;
+                    local.CreatedAt = f.CreatedAt;
+                    local.OriginalCreatedAt = f.OriginalCreatedAt;
+                }
+            }
+            else
+            {
+                db.Files.Add(new LocalFile
+                {
+                    Id = f.Id,
+                    FileName = f.FileName,
+                    FileType = f.FileType,
+                    FileSize = f.FileSize,
+                    UploadedById = f.UploadedById,
+                    UploadedByName = f.UploadedByName,
+                    ProjectId = f.ProjectId,
+                    TaskId = f.TaskId,
+                    StageId = f.StageId,
+                    CreatedAt = f.CreatedAt,
+                    OriginalCreatedAt = f.OriginalCreatedAt,
+                    IsSynced = true
+                });
+            }
+        }
+
+        var serverFileIds = files.Select(f => f.Id).ToHashSet();
+        var orphanFiles = await db.Files
+            .Where(f => f.IsSynced && !serverFileIds.Contains(f.Id))
+            .ToListAsync();
+        db.Files.RemoveRange(orphanFiles);
     }
 
     private async Task RunPeriodicSyncAsync()

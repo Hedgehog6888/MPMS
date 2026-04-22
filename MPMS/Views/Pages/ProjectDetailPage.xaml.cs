@@ -63,6 +63,7 @@ public partial class ProjectDetailPage : UserControl
         MarkProjectBtn.Visibility      = canMarkProject ? Visibility.Visible : Visibility.Collapsed;
         CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
+        AddFileBtn.Visibility          = Visibility.Collapsed; // shown only on Files tab for editors
         CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
         QuickTeamBtn.Visibility        = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
         _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
@@ -112,6 +113,7 @@ public partial class ProjectDetailPage : UserControl
         QuickTeamBtn.Visibility = marked ? Visibility.Collapsed : (_canManageTeam ? Visibility.Visible : Visibility.Collapsed);
         CreateTaskBtn.Visibility  = marked ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = marked ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        AddFileBtn.Visibility     = marked ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
@@ -150,6 +152,7 @@ public partial class ProjectDetailPage : UserControl
         bool marked = VM?.Project?.IsMarkedForDeletion ?? false;
         CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
         CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
+        AddFileBtn.Visibility     = (tab == "Files"  && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
         {
@@ -524,6 +527,11 @@ public partial class ProjectDetailPage : UserControl
                 $"Выбрано файлов: {dialog.FileNames.Length}\nЗагрузка будет реализована при подключении к серверу.",
                 "Загрузка файлов", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+    }
+
+    private void AddFile_Click(object sender, RoutedEventArgs e)
+    {
+        VM?.FilesControlVM.UploadFileCommand.Execute(null);
     }
 
     private void AddProjectStage_Click(object sender, RoutedEventArgs e)

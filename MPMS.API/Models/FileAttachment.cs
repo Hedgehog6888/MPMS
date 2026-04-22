@@ -30,4 +30,6 @@ public class FileAttachment
     public TaskStage? Stage { get; set; }
 
     public DateTime CreatedAt { get; set; }
+    
+    public DateTime? OriginalCreatedAt { get; set; }
 }

@@ -31,7 +31,8 @@ public class FilesController : ControllerBase
         IFormFile file,
         [FromQuery] Guid? projectId,
         [FromQuery] Guid? taskId,
-        [FromQuery] Guid? stageId)
+        [FromQuery] Guid? stageId,
+        [FromQuery] DateTime? originalCreatedAt = null)
     {
         if (file is null || file.Length == 0)
             return BadRequest(new { message = "Файл не выбран" });
@@ -60,7 +61,8 @@ public class FilesController : ControllerBase
             ProjectId = projectId,
             TaskId = taskId,
             StageId = stageId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            OriginalCreatedAt = originalCreatedAt
         };
 
         _db.Files.Add(attachment);
@@ -73,7 +75,7 @@ public class FilesController : ControllerBase
             attachment.FileSize, attachment.UploadedById,
             attachment.UploadedBy.Name,
             attachment.ProjectId, attachment.TaskId, attachment.StageId,
-            attachment.CreatedAt));
+            attachment.CreatedAt, attachment.OriginalCreatedAt));
     }
 
     /// <summary>Download file by ID</summary>
@@ -103,6 +105,8 @@ public class FilesController : ControllerBase
     {
         var query = _db.Files
             .Include(f => f.UploadedBy)
+            .Include(f => f.Project)
+            .Include(f => f.Stage)
             .AsQueryable();
 
         if (projectId.HasValue) query = query.Where(f => f.ProjectId == projectId);
@@ -114,7 +118,8 @@ public class FilesController : ControllerBase
             .Select(f => new FileResponse(
                 f.Id, f.FileName, f.FileType ?? "",
                 f.FileSize, f.UploadedById, f.UploadedBy.Name,
-                f.ProjectId, f.TaskId, f.StageId, f.CreatedAt))
+                f.ProjectId, f.TaskId, f.StageId, f.CreatedAt,
+                f.OriginalCreatedAt, f.Project != null ? f.Project.Name : null, f.Stage != null ? f.Stage.Name : null))
             .ToListAsync();
 
         return Ok(files);

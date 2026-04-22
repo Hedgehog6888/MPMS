@@ -18,6 +18,7 @@ public partial class FilesControlViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
+    private readonly IApiService _api;
     private readonly IUserSettingsService _settings;
 
     [ObservableProperty] private bool _isLoading;
@@ -45,10 +46,11 @@ public partial class FilesControlViewModel : ViewModelBase
 
     private Guid? _projectId;
 
-    public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IUserSettingsService settings)
+    public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings)
     {
         _dbFactory = dbFactory;
         _auth = auth;
+        _api = api;
         _settings = settings;
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
@@ -103,6 +105,20 @@ public partial class FilesControlViewModel : ViewModelBase
             }
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
+            
+            var projectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId.Value).Distinct().ToList();
+            var stageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId.Value).Distinct().ToList();
+            
+            var projects = await db.Projects.Where(p => projectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name);
+            var stages = await db.TaskStages.Where(s => stageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name);
+
+            foreach (var f in files)
+            {
+                if (f.ProjectId.HasValue && projects.TryGetValue(f.ProjectId.Value, out var pname))
+                    f.ProjectName = pname;
+                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var sname))
+                    f.StageName = sname;
+            }
 
             AllFiles.Clear();
             foreach (var f in files)
@@ -222,10 +238,22 @@ public partial class FilesControlViewModel : ViewModelBase
                         ProjectId = _projectId,
                         UploadedById = _auth.UserId ?? Guid.Empty,
                         UploadedByName = _auth.UserName ?? "Unknown",
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
+                        OriginalCreatedAt = fileInfo.CreationTimeUtc
                     };
 
                     db.Files.Add(newFile);
+                    
+                    // Если мы в сети, пробуем сразу загрузить на сервер
+                    if (_api.IsOnline)
+                    {
+                        var uploaded = await _api.UploadFileAsync(filePath, _projectId, null, null, fileInfo.CreationTimeUtc);
+                        if (uploaded != null)
+                        {
+                            newFile.Id = uploaded.Id; // Синхронизируем ID с серверным
+                            newFile.IsSynced = true;
+                        }
+                    }
                 }
 
                 await db.SaveChangesAsync();
@@ -233,7 +261,9 @@ public partial class FilesControlViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке файлов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                var msg = ex.Message;
+                if (ex.InnerException != null) msg += $"\nInner: {ex.InnerException.Message}";
+                MessageBox.Show($"Ошибка при загрузке файлов: {msg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {

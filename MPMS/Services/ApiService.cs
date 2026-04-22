@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -255,6 +256,48 @@ public class ApiService : IApiService
     }
 
     public async Task<bool> DeleteFileAsync(Guid id) => await DeleteAsync($"files/{id}");
+
+    public async Task<FileDto?> UploadFileAsync(
+        string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null)
+    {
+        try
+        {
+            AttachToken();
+            var fileInfo = new FileInfo(filePath);
+            if (!fileInfo.Exists) return null;
+
+            using var content = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(GetMimeType(fileInfo.Extension));
+            
+            content.Add(fileContent, "file", fileInfo.Name);
+
+            var q = BuildQuery(
+                ("projectId", projectId?.ToString()),
+                ("taskId", taskId?.ToString()),
+                ("stageId", stageId?.ToString()),
+                ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null));
+
+            var response = await _http.PostAsync(Api($"files/upload{q}"), content);
+            IsOnline = true;
+            if (!response.IsSuccessStatusCode) return null;
+
+            return await response.Content.ReadFromJsonAsync<FileDto>(JsonOpts);
+        }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
+    }
+
+    private static string GetMimeType(string extension) => extension.ToLower() switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".gif" => "image/gif",
+        ".pdf" => "application/pdf",
+        ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        _ => "application/octet-stream"
+    };
 
     // ── Users ─────────────────────────────────────────────────────────────────
     public async Task<List<UserResponse>?> GetUsersAsync(string? search = null)

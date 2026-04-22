@@ -422,6 +422,10 @@ public class LocalFile : LocalEntity
     public Guid? TaskId { get; set; }
     public Guid? StageId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? OriginalCreatedAt { get; set; }
+    
+    [NotMapped] public string? ProjectName { get; set; }
+    [NotMapped] public string? StageName { get; set; }
 }
 
 /// <summary>Project member — users assigned to a project (executors).</summary>

@@ -254,7 +254,8 @@ public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity, decimal
 // ── Files ─────────────────────────────────────────────────────────────────────
 public record FileDto(Guid Id, string FileName, string FileType, long FileSize,
     Guid UploadedById, string UploadedByName,
-    Guid? ProjectId, Guid? TaskId, Guid? StageId, DateTime CreatedAt);
+    Guid? ProjectId, Guid? TaskId, Guid? StageId, DateTime CreatedAt,
+    DateTime? OriginalCreatedAt = null, string? ProjectName = null, string? StageName = null);
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 public record UserResponse(Guid Id, string FirstName, string LastName, string Username, string? Email, string Role, Guid RoleId, DateTime CreatedAt, byte[]? AvatarData = null, string? SubRole = null, string? AdditionalSubRoles = null, DateOnly? BirthDate = null, string? HomeAddress = null, bool IsBlocked = false, DateTime? BlockedAt = null, string? BlockedReason = null);

@@ -41,6 +41,7 @@ public static class LocalSchemaMigrator
         ApplyServicesSchema(conn);
         
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"FileData\" BLOB NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"OriginalCreatedAt\" TEXT NULL;");
     }
 
     private static void ApplyMaterialsInventorySchema(SqliteConnection conn)

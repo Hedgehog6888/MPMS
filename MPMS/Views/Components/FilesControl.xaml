@@ -6,11 +6,14 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              xmlns:viewmodels="clr-namespace:MPMS.ViewModels"
              xmlns:controls="clr-namespace:MPMS.Controls"
+             xmlns:infrastructure="clr-namespace:MPMS.Infrastructure"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=viewmodels:FilesControlViewModel, IsDesignTimeCreatable=False}">
 
     <UserControl.Resources>
+        <infrastructure:FileSizeConverter x:Key="FileSizeConverter" />
+        
         <!-- Template for Image Cards -->
         <DataTemplate x:Key="ImageCardTemplate">
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,16,16"
@@ -47,7 +50,13 @@
                     <StackPanel Grid.Row="1" Margin="8,6">
                         <TextBlock Text="{Binding FileName}" FontSize="12" FontWeight="SemiBold" 
                                    Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" 
+                        <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" 
+                                   FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="{Binding ProjectName, StringFormat=П: \{0\}}" FontSize="10" Foreground="#0052CC" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+                        <TextBlock Text="{Binding StageName, StringFormat=Э: \{0\}}" FontSize="10" Foreground="#00875A" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
+                        <TextBlock Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Загружен: dd.MM.yyyy HH\:mm}" 
                                    FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -93,10 +102,14 @@
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C"/>
                             <TextBlock Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" 
                                        FontSize="13" Foreground="#6B778C"/>
+                            <TextBlock Text=" • " FontSize="13" Foreground="#6B778C" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+                            <TextBlock Text="{Binding ProjectName, StringFormat=Проект: \{0\}}" FontSize="13" Foreground="#0052CC" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+                            <TextBlock Text=" • " FontSize="13" Foreground="#6B778C" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
+                            <TextBlock Text="{Binding StageName, StringFormat=Этап: \{0\}}" FontSize="13" Foreground="#00875A" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
                         </StackPanel>
                     </StackPanel>
                     
-                    <TextBlock Grid.Column="2" Text="{Binding FileSize}" FontSize="13" Foreground="#6B778C"
+                    <TextBlock Grid.Column="2" Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" FontSize="13" Foreground="#6B778C"
                                VerticalAlignment="Center" Margin="0,0,24,0"/>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
