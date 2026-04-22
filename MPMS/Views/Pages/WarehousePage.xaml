@@ -71,24 +71,21 @@
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bg" Background="#111111" CornerRadius="6"
                                     Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="AddBtnText" Text="Добавить материал" Foreground="White" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                                </StackPanel>
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="Bg" Property="Background" Value="#333333"/>
                                 </Trigger>
+                                <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
+                                    <Setter TargetName="AddBtnText" Property="Text" Value="Добавить оборудование"/>
+                                </DataTrigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Button.Template>
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}"
-                               Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Добавить"
-                                   Foreground="White"
-                                   VerticalAlignment="Center"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"/>
-                    </StackPanel>
                 </Button>
             </Grid>
         </Border>

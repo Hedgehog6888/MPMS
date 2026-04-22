@@ -54,6 +54,45 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style for the circular download button that appears on hover -->
+        <Style x:Key="CircularDownloadButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="14" 
+                                Opacity="0.95">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
+                                <Setter TargetName="Bg" Property="Opacity" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Show button when the parent card (Border) is hovered -->
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Template for Image Cards -->
         <DataTemplate x:Key="ImageCardTemplate">
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,16,16"
@@ -86,13 +125,21 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Delete Button overlay (Circular, visible on hover) -->
-                    <Button Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
-                            ToolTip="Удалить"
-                            Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                            Style="{StaticResource CircularDeleteButtonStyle}">
-                        <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
-                    </Button>
+                    <!-- Actions Overlay (visible on hover) -->
+                    <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" Margin="6">
+                        <Button ToolTip="Скачать"
+                                Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                Style="{StaticResource CircularDownloadButtonStyle}"
+                                Margin="0,0,6,0">
+                            <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+                        </Button>
+                        
+                        <Button ToolTip="Удалить"
+                                Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                Style="{StaticResource CircularDeleteButtonStyle}">
+                            <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+                        </Button>
+                    </StackPanel>
 
                     <StackPanel Grid.Row="1" Margin="8,6">
                         <TextBlock Text="{Binding FileName}" FontSize="12" FontWeight="SemiBold" 
@@ -160,6 +207,15 @@
                                VerticalAlignment="Center" Margin="0,0,24,0"/>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button ToolTip="Скачать"
+                                Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                Style="{StaticResource IconButton}"
+                                Margin="0,0,8,0">
+                            <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}"
+                                   Width="14" Height="14"
+                                   VerticalAlignment="Center" Opacity="0.9"/>
+                        </Button>
+
                         <Button ToolTip="Удалить"
                                 Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Style="{StaticResource IconButton}">

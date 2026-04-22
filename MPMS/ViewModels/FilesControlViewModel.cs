@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Win32;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Win32;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
@@ -305,5 +305,35 @@ public partial class FilesControlViewModel : ViewModelBase
         
         // Согласно фидбеку: "Смотри откррыватся будут в специально оверлее программы, это будет реализованно чуть позже"
         MessageBox.Show("Открытие файла будет реализовано в специальном оверлее чуть позже.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    [RelayCommand]
+    private async Task DownloadFileAsync(LocalFile file)
+    {
+        if (file == null || file.FileData == null)
+        {
+            MessageBox.Show("Данные файла отсутствуют.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            FileName = file.FileName,
+            DefaultExt = Path.GetExtension(file.FileName),
+            Filter = $"Файлы ({Path.GetExtension(file.FileName)})|*{Path.GetExtension(file.FileName)}|Все файлы (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                await File.WriteAllBytesAsync(dialog.FileName, file.FileData);
+                MessageBox.Show("Файл успешно сохранён.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
     }
 }
