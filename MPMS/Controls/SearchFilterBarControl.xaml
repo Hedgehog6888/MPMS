@@ -1,0 +1,136 @@
+<UserControl x:Class="MPMS.Controls.SearchFilterBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             x:Name="Root">
+    <!--
+        Переиспользуемая плавающая панель поиска с опциональными фильтрами.
+
+        Параметры:
+          SearchText   — строка поиска, двусторонний биндинг к VM
+          Placeholder  — текст-подсказка (маска) поля ввода
+          Filters      — любой XAML-контент (ComboBox-ы и пр.), вставляется справа от поля поиска
+          IsFloating   — если True, добавляет тень и позиционируется поверх ScrollViewer (Panel.ZIndex=1)
+          ScrollTarget — ScrolViewer, к которому пробрасывается PreviewMouseWheel
+
+        Использование (плавающий вариант):
+          <controls:SearchFilterBarControl
+              SearchText="{Binding SearchText, Mode=TwoWay}"
+              Placeholder="Поиск по названию..."
+              IsFloating="True"
+              ScrollTarget="{Binding ElementName=MainListScroll}">
+              <controls:SearchFilterBarControl.Filters>
+                  <ComboBox ItemsSource="{Binding StatusOptions}"
+                            SelectedItem="{Binding StatusFilter}"
+                            Style="{StaticResource FormCombo}"
+                            Width="160" Margin="0,0,10,0"/>
+              </controls:SearchFilterBarControl.Filters>
+          </controls:SearchFilterBarControl>
+
+        Использование (встроенный вариант — без тени и позиционирования):
+          <controls:SearchFilterBarControl
+              SearchText="{Binding SearchText, Mode=TwoWay}"
+              Placeholder="Поиск..."
+              IsFloating="False">
+          </controls:SearchFilterBarControl>
+    -->
+
+    <Border x:Name="OuterBorder"
+            Background="White" CornerRadius="8"
+            BorderBrush="#DFE1E6" BorderThickness="1"
+            Padding="16,10,16,14">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <!-- Тень только когда IsFloating=True -->
+                    <DataTrigger Binding="{Binding IsFloating, ElementName=Root}" Value="True">
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect BlurRadius="12" Opacity="0.14" ShadowDepth="2" Direction="270"/>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <!-- Поле поиска -->
+                <ColumnDefinition Width="*"/>
+                <!-- Слот под фильтры (виден только если есть контент) -->
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── Поле поиска ── -->
+            <Border x:Name="SearchBorder"
+                    Grid.Column="0"
+                    Background="#F4F5F7" CornerRadius="6"
+                    Padding="10,0" Height="36" Margin="0,0,10,0"
+                    BorderThickness="1.5" BorderBrush="Transparent"
+                    VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Иконка поиска -->
+                    <TextBlock Grid.Column="0" Text="&#xE721;"
+                               FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="#6B778C"/>
+
+                    <!-- Поле ввода + placeholder -->
+                    <Grid Grid.Column="1" Margin="0,0,4,0">
+                        <!-- Placeholder (маска) -->
+                        <TextBlock Text="{Binding Placeholder, ElementName=Root}"
+                                   Foreground="#6B778C" FontSize="12"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchText, ElementName=Root}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <!-- Текстовое поле -->
+                        <TextBox x:Name="SearchBox"
+                                 Text="{Binding SearchText, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent"
+                                 VerticalAlignment="Center" FontSize="13"
+                                 Foreground="#000000"
+                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                 SelectionTextBrush="#000000"
+                                 GotFocus="SearchBox_GotFocus"
+                                 LostFocus="SearchBox_LostFocus"/>
+                    </Grid>
+
+                    <!-- Кнопка очистки -->
+                    <Button Grid.Column="2"
+                            Click="ClearSearch_Click"
+                            Visibility="{Binding SearchText, ElementName=Root, Converter={StaticResource StringToVis}}"
+                            Width="20" Height="20"
+                            Style="{StaticResource IconButton}">
+                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11" Foreground="#6B778C"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ── Слот для фильтров ── -->
+            <ContentPresenter x:Name="FiltersPresenter"
+                              Grid.Column="1"
+                              Content="{Binding Filters, ElementName=Root}"
+                              VerticalAlignment="Center"/>
+        </Grid>
+    </Border>
+</UserControl>

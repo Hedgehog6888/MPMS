@@ -1,6 +1,7 @@
 <UserControl x:Class="MPMS.Views.Pages.GanttPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
              xmlns:vm="clr-namespace:MPMS.ViewModels"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
@@ -101,20 +102,12 @@
 
         <!-- ── TABS ROW ─────────────────────────────────────────────── -->
         <Border Grid.Row="1" Background="Transparent" Padding="16,0">
-            <Border Background="White" CornerRadius="8"
-                    BorderBrush="#DFE1E6" BorderThickness="1"
-                    Padding="6,4" Margin="0,6"
-                    HorizontalAlignment="Left">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="TabTasks" Content="Задачи"
-                                 Style="{StaticResource TabButton}"
-                                 IsChecked="True"
-                                 Click="TabTasks_Click"/>
-                    <RadioButton x:Name="TabStages" Content="Этапы"
-                                 Style="{StaticResource TabButton}"
-                                 Click="TabStages_Click"/>
-                </StackPanel>
-            </Border>
+            <controls:TabBarControl x:Name="GanttTabBar"
+                                    GroupName="GanttTabs"
+                                    SelectedTabChanged="GanttTab_SelectedTabChanged">
+                <controls:TabItemModel Text="Задачи" Tag="Tasks"/>
+                <controls:TabItemModel Text="Этапы"  Tag="Stages"/>
+            </controls:TabBarControl>
         </Border>
 
         <!-- ── GANTT BODY ────────────────────────────────────────────── -->

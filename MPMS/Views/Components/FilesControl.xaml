@@ -5,12 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              xmlns:viewmodels="clr-namespace:MPMS.ViewModels"
+             xmlns:controls="clr-namespace:MPMS.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=viewmodels:FilesControlViewModel, IsDesignTimeCreatable=False}">
 
     <UserControl.Resources>
-        <!-- Styles removed, using globals -->        <!-- Template for Image Cards -->
+        <!-- Template for Image Cards -->
         <DataTemplate x:Key="ImageCardTemplate">
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,16,16"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
@@ -24,11 +25,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Image Preview (using FileData if available, otherwise a placeholder) -->
+                    <!-- Image Preview -->
                     <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="#F4F5F7" ClipToBounds="True">
                         <Grid>
                             <Image Source="{Binding FileData, Converter={StaticResource AvatarBytesToImage}}" Stretch="UniformToFill" />
-                            <!-- Icon if no image preview can be loaded -->
                             <Image Source="{svgc:SvgImage Source=/icons/image.svg, AppName=MPMS}" Width="32" Height="32" Opacity="0.3"
                                    Visibility="{Binding FileData, Converter={StaticResource NullToVis}}"/>
                         </Grid>
@@ -111,6 +111,7 @@
                 </Grid>
             </Border>
         </DataTemplate>
+
         <!-- Files View Templates -->
         <DataTemplate x:Key="FilesGridViewTemplate">
             <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}">
@@ -139,27 +140,24 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Tabs & View Switcher Panel -->
+        <!-- ── Tabs & View Switcher ── -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White"
-                    BorderBrush="#DFE1E6" BorderThickness="1"
-                    CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton Content="Изображения" Command="{Binding SwitchTabCommand}" CommandParameter="Images" 
-                                 IsChecked="{Binding CurrentTab, Mode=OneWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=Images}"
-                                 Style="{StaticResource TabButton}"/>
-                    <RadioButton Content="Документы" Command="{Binding SwitchTabCommand}" CommandParameter="Documents"
-                                 IsChecked="{Binding CurrentTab, Mode=OneWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=Documents}"
-                                 Style="{StaticResource TabButton}"/>
-                </StackPanel>
-            </Border>
+            <!-- TabBar: Изображения / Документы -->
+            <controls:TabBarControl Grid.Column="0"
+                                    SelectedTab="{Binding CurrentTab, Mode=TwoWay}"
+                                    GroupName="FilesTabs">
+                <controls:TabBarControl.Tabs>
+                    <controls:TabItemModel Text="Изображения" Tag="Images"/>
+                    <controls:TabItemModel Text="Документы"   Tag="Documents"/>
+                </controls:TabBarControl.Tabs>
+            </controls:TabBarControl>
 
-            <!-- View Mode Switcher -->
+            <!-- View Mode Switcher (List / Grid) -->
             <Border Grid.Column="1" Background="White"
                     BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="4,4" VerticalAlignment="Center">
@@ -230,7 +228,7 @@
             </Border>
         </Grid>
 
-        <!-- Content Area -->
+        <!-- ── Content Area ── -->
         <Grid Grid.Row="1">
             <ScrollViewer x:Name="MainListScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
                 <Grid Margin="0,10,0,24">
@@ -270,72 +268,22 @@
                 </Grid>
             </ScrollViewer>
 
-            <!-- Floating Panel -->
-            <Border VerticalAlignment="Top" Panel.ZIndex="1"
-                    HorizontalAlignment="Stretch"
-                    Background="White" CornerRadius="8"
-                    BorderBrush="#DFE1E6" BorderThickness="1"
-                    Padding="16,10,16,14" Margin="0,0,0,0">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="12" Opacity="0.14" ShadowDepth="2" Direction="270"/>
-                </Border.Effect>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>    <!-- Search -->
-                        <ColumnDefinition Width="Auto"/> <!-- Extension Filter -->
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Search -->
-                    <Border Grid.Column="0"
-                            Background="#F4F5F7" CornerRadius="6"
-                            Padding="10,0" Height="36" Margin="0,0,10,0"
-                            BorderThickness="1.5" BorderBrush="Transparent"
-                            VerticalAlignment="Center" HorizontalAlignment="Stretch">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="&#xE721;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="14"
-                                       VerticalAlignment="Center" Margin="0,0,8,0"
-                                       Foreground="#6B778C"/>
-                            <Grid Grid.Column="1" Margin="0,0,4,0">
-                                <TextBlock Text="Поиск по названию файла..."
-                                           Foreground="#6B778C" FontSize="12"
-                                           VerticalAlignment="Center"
-                                           IsHitTestVisible="False">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SearchText}" Value="">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                                         BorderThickness="0" Background="Transparent" VerticalAlignment="Center" 
-                                         Foreground="#000000" FontSize="13"
-                                         SelectionBrush="{StaticResource NeutralSelectionBrush}"
-                                         SelectionTextBrush="#000000"
-                                         GotFocus="SearchBox_GotFocus"
-                                         LostFocus="SearchBox_LostFocus"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
+            <!-- ── Floating Search Panel ── -->
+            <controls:SearchFilterBarControl
+                VerticalAlignment="Top" Panel.ZIndex="1"
+                HorizontalAlignment="Stretch"
+                IsFloating="True"
+                ScrollTarget="{Binding ElementName=MainListScroll}"
+                SearchText="{Binding SearchText, Mode=TwoWay}"
+                Placeholder="Поиск по названию файла...">
+                <controls:SearchFilterBarControl.Filters>
                     <!-- Extension Filter -->
-                    <ComboBox Grid.Column="1"
-                              ItemsSource="{Binding ExtensionFilterOptions}"
+                    <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
                               SelectedItem="{Binding ExtensionFilter}"
                               Style="{StaticResource FormCombo}"
                               Width="160" VerticalAlignment="Center"/>
-                </Grid>
-            </Border>
+                </controls:SearchFilterBarControl.Filters>
+            </controls:SearchFilterBarControl>
         </Grid>
     </Grid>
 </UserControl>

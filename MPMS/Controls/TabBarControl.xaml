@@ -1,0 +1,42 @@
+<UserControl x:Class="MPMS.Controls.TabBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             x:Name="Root">
+    <!--
+        Переиспользуемая панель вкладок (TabBar).
+        
+        Использование:
+          <controls:TabBarControl SelectedTab="{Binding ActiveTab, Mode=TwoWay}"
+                                  GroupName="MyTabs">
+              <controls:TabBarControl.Tabs>
+                  <controls:TabItemModel Text="Материалы"   Tag="Materials"/>
+                  <controls:TabItemModel Text="Оборудование" Tag="Equipment"/>
+              </controls:TabBarControl.Tabs>
+          </controls:TabBarControl>
+    -->
+    <Border Background="White"
+            BorderBrush="#DFE1E6" BorderThickness="1"
+            CornerRadius="8" Padding="6,4"
+            HorizontalAlignment="Left">
+        <ItemsControl x:Name="ItemsList">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <RadioButton Content="{Binding Text}"
+                                 GroupName="{Binding GroupName, ElementName=Root}"
+                                 Tag="{Binding Tag}"
+                                 Style="{StaticResource TabButton}"
+                                 IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                 Click="Tab_Click"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Border>
+</UserControl>

@@ -1,0 +1,42 @@
+<UserControl x:Class="MPMS.Controls.EmptyStateControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             mc:Ignorable="d"
+             x:Name="Root">
+    <!--
+        Переиспользуемый блок «пустого состояния».
+
+        Использование:
+          <controls:EmptyStateControl
+              Visibility="{Binding Items.Count, Converter={StaticResource IntToVisInv}}"
+              IconPath="/icons/check.svg"
+              Title="Задачи не найдены"
+              Subtitle="Создайте первую задачу или измените фильтры"/>
+    -->
+    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
+        <!-- SVG-иконка (если задан IconPath) -->
+        <ContentControl HorizontalAlignment="Center"
+                        Visibility="{Binding IconPath, ElementName=Root, Converter={StaticResource StringToVis}}">
+            <ContentControl.Content>
+                <Image x:Name="IconImage"
+                       Width="48" Height="48"
+                       HorizontalAlignment="Center" Opacity="0.4"/>
+            </ContentControl.Content>
+        </ContentControl>
+
+        <!-- Заголовок -->
+        <TextBlock Text="{Binding Title, ElementName=Root}"
+                   FontSize="15" FontWeight="SemiBold"
+                   Foreground="#6B778C" HorizontalAlignment="Center"
+                   Margin="0,12,0,6"/>
+
+        <!-- Подзаголовок -->
+        <TextBlock Text="{Binding Subtitle, ElementName=Root}"
+                   FontSize="13" Foreground="#6B778C"
+                   HorizontalAlignment="Center"
+                   Visibility="{Binding Subtitle, ElementName=Root, Converter={StaticResource StringToVis}}"/>
+    </StackPanel>
+</UserControl>

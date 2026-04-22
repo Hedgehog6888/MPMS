@@ -36,8 +36,7 @@ public partial class GanttPage : UserControl
         if (_vm is not null)
         {
             _vm.PropertyChanged += OnVmPropertyChanged;
-            TabTasks.IsChecked   = _vm.ActiveTab == "Tasks";
-            TabStages.IsChecked  = _vm.ActiveTab == "Stages";
+            GanttTabBar.SelectedTab = _vm.ActiveTab == "Stages" ? "Stages" : "Tasks";
             UpdateTabVisibility();
         }
     }
@@ -51,15 +50,9 @@ public partial class GanttPage : UserControl
             Dispatcher.BeginInvoke(DrawTodayLine);
     }
 
-    private void TabTasks_Click(object sender, RoutedEventArgs e)
+    private void GanttTab_SelectedTabChanged(object? sender, string tag)
     {
-        if (_vm is not null) _vm.ActiveTab = "Tasks";
-        UpdateTabVisibility();
-    }
-
-    private void TabStages_Click(object sender, RoutedEventArgs e)
-    {
-        if (_vm is not null) _vm.ActiveTab = "Stages";
+        if (_vm is not null) _vm.ActiveTab = tag;
         UpdateTabVisibility();
     }
 

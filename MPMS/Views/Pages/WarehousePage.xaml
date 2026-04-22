@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:MPMS.ViewModels"
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             xmlns:controls="clr-namespace:MPMS.Controls"
              mc:Ignorable="d"
              Background="#F4F5F7"
              d:DataContext="{d:DesignInstance Type=vm:WarehouseViewModel}"
@@ -94,19 +95,13 @@
 
         <!-- Tabs -->
         <Border Grid.Row="1" Background="Transparent" Padding="24,12,24,0">
-            <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                    CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
-                <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="TabMaterials" GroupName="WarehouseTabs" IsChecked="True"
-                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="Materials">
-                        Материалы
-                    </RadioButton>
-                    <RadioButton x:Name="TabEquipment" GroupName="WarehouseTabs" IsChecked="False"
-                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="Equipment">
-                        Оборудование
-                    </RadioButton>
-                </StackPanel>
-            </Border>
+            <controls:TabBarControl SelectedTab="{Binding ActiveTab, Mode=TwoWay}"
+                                    GroupName="WarehouseTabs">
+                <controls:TabBarControl.Tabs>
+                    <controls:TabItemModel Text="Материалы"   Tag="Materials"/>
+                    <controls:TabItemModel Text="Оборудование" Tag="Equipment"/>
+                </controls:TabBarControl.Tabs>
+            </controls:TabBarControl>
         </Border>
 
         <!-- List + плавающая панель как на странице «Задачи» -->
@@ -333,116 +328,51 @@
                 </Grid>
             </ScrollViewer>
 
-            <Border VerticalAlignment="Top" Panel.ZIndex="1"
-                    HorizontalAlignment="Left"
-                    Width="{Binding ElementName=MainListScroll, Path=ViewportWidth}"
-                    Background="White" CornerRadius="8"
-                    BorderBrush="#DFE1E6" BorderThickness="1"
-                    Padding="16,10,16,14"
-                    PreviewMouseWheel="FilterBar_PreviewMouseWheel">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="12" Opacity="0.14" ShadowDepth="2" Direction="270"/>
-                </Border.Effect>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border Grid.Column="0"
-                            Background="#F4F5F7" CornerRadius="6"
-                            Padding="10,0" Height="36" Margin="0,0,10,0"
-                            BorderThickness="1.5" BorderBrush="Transparent"
-                            VerticalAlignment="Center" HorizontalAlignment="Stretch">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="&#xE721;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="14"
-                                       VerticalAlignment="Center" Margin="0,0,8,0"
-                                       Foreground="#6B778C"/>
-                            <Grid Grid.Column="1" Margin="0,0,4,0">
-                                <TextBlock Text="Поиск по названию, описанию, категории, инв. номеру…"
-                                           Foreground="#6B778C" FontSize="12"
-                                           VerticalAlignment="Center"
-                                           IsHitTestVisible="False">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SearchText}" Value="">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         Background="Transparent" BorderThickness="0"
-                                         VerticalAlignment="Center" FontSize="13"
-                                         Foreground="#000000"
-                                         SelectionBrush="{StaticResource NeutralSelectionBrush}"
-                                         SelectionTextBrush="#000000"
-                                         GotFocus="SearchBox_GotFocus"
-                                         LostFocus="SearchBox_LostFocus"/>
-                            </Grid>
-                            <Button Grid.Column="2" Click="ClearSearch_Click"
-                                    Visibility="{Binding SearchText, Converter={StaticResource StringToVis}}"
-                                    Width="20" Height="20" Margin="0,0,0,0"
-                                    Style="{StaticResource IconButton}">
-                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="11" Foreground="#6B778C"/>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Категория: материалы (тот же FormCombo, что и у остальных фильтров) -->
-                    <ComboBox Grid.Column="1"
-                              ItemsSource="{Binding MaterialCategoryFilterOptions}"
-                              DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectedValue="{Binding SelectedCategoryId}"
-                              Style="{StaticResource FormCombo}"
-                              Width="160" Margin="0,0,10,0"
-                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
-
-                    <!-- Категория: оборудование -->
-                    <ComboBox Grid.Column="1"
-                              ItemsSource="{Binding EquipmentCategoryFilterOptions}"
-                              DisplayMemberPath="Name" SelectedValuePath="Id"
-                              SelectedValue="{Binding SelectedCategoryId}"
-                              Style="{StaticResource FormCombo}"
-                              Width="160" Margin="0,0,10,0"
-                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
-
-                    <!-- «Статус» / жизненный цикл — как первый фильтр после поиска у задач -->
-                    <ComboBox Grid.Column="2"
-                              ItemsSource="{Binding LifecycleFilterOptions}"
-                              SelectedItem="{Binding LifecycleFilter}"
-                              Style="{StaticResource FormCombo}"
-                              Width="160" Margin="0,0,10,0"/>
-
-                    <!-- Материалы: остаток | Оборудование: статус -->
-                    <ComboBox Grid.Column="3"
-                              ItemsSource="{Binding MaterialStockFilterOptions}"
-                              SelectedItem="{Binding MaterialStockFilter}"
-                              Style="{StaticResource FormCombo}"
-                              Width="180"
-                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
-
-                    <ComboBox Grid.Column="3"
-                              ItemsSource="{Binding EquipmentStatusFilterOptions}"
-                              SelectedItem="{Binding EquipmentStatusFilter}"
-                              Style="{StaticResource FormCombo}"
-                              Width="180"
-                              Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
-                </Grid>
-            </Border>
+            <!-- ── Плавающая панель поиска ── -->
+            <controls:SearchFilterBarControl
+                VerticalAlignment="Top" Panel.ZIndex="1"
+                HorizontalAlignment="Left"
+                Width="{Binding ElementName=MainListScroll, Path=ViewportWidth}"
+                IsFloating="True"
+                ScrollTarget="{Binding ElementName=MainListScroll}"
+                SearchText="{Binding SearchText, Mode=TwoWay}"
+                Placeholder="Поиск по названию, описанию, категории, инв. номеру…">
+                <controls:SearchFilterBarControl.Filters>
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Категория: материалы -->
+                        <ComboBox ItemsSource="{Binding MaterialCategoryFilterOptions}"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectedValue="{Binding SelectedCategoryId}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
+                        <!-- Категория: оборудование -->
+                        <ComboBox ItemsSource="{Binding EquipmentCategoryFilterOptions}"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectedValue="{Binding SelectedCategoryId}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
+                        <!-- Жизненный цикл -->
+                        <ComboBox ItemsSource="{Binding LifecycleFilterOptions}"
+                                  SelectedItem="{Binding LifecycleFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"/>
+                        <!-- Остаток (материалы) -->
+                        <ComboBox ItemsSource="{Binding MaterialStockFilterOptions}"
+                                  SelectedItem="{Binding MaterialStockFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="180"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
+                        <!-- Статус (оборудование) -->
+                        <ComboBox ItemsSource="{Binding EquipmentStatusFilterOptions}"
+                                  SelectedItem="{Binding EquipmentStatusFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="180"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
+                    </StackPanel>
+                </controls:SearchFilterBarControl.Filters>
+            </controls:SearchFilterBarControl>
         </Grid>
     </Grid>
 </UserControl>
