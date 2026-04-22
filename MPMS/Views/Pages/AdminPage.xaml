@@ -185,7 +185,6 @@
                                     </Grid>
                                     <Button Grid.Column="2"
                                             Visibility="{Binding UserSearchText, Converter={StaticResource StringToVis}}"
-                                            Width="20" Height="20"
                                             Style="{StaticResource IconButton}"
                                             Click="ClearUserSearch_Click">
                                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
@@ -424,7 +423,7 @@
                                 </Grid>
                                 <Button Grid.Column="2"
                                         Visibility="{Binding ArchiveSearchText, Converter={StaticResource StringToVis}}"
-                                        Width="20" Height="20" Style="{StaticResource IconButton}"
+                                        Style="{StaticResource IconButton}"
                                         Click="ClearArchiveSearch_Click">
                                     <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="11" Foreground="#6B778C"/>
@@ -911,7 +910,7 @@
                                     </Grid>
                                     <Button Grid.Column="2"
                                             Visibility="{Binding HistorySearchText, Converter={StaticResource StringToVis}}"
-                                            Width="20" Height="20" Style="{StaticResource IconButton}"
+                                            Style="{StaticResource IconButton}"
                                             Click="ClearHistorySearch_Click">
                                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                    FontSize="11" Foreground="#6B778C"/>
@@ -1078,7 +1077,7 @@
                                     </Grid>
                                     <Button Grid.Column="2"
                                             Visibility="{Binding ActivitySearchText, Converter={StaticResource StringToVis}}"
-                                            Width="20" Height="20" Style="{StaticResource IconButton}"
+                                            Style="{StaticResource IconButton}"
                                             Click="ClearActivitySearch_Click">
                                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                    FontSize="11" Foreground="#6B778C"/>

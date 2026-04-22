@@ -156,7 +156,7 @@
                 <Setter Property="Foreground"      Value="{StaticResource TextSecondaryBrush}"/>
                 <Setter Property="FontSize"        Value="16"/>
                 <Setter Property="Cursor"          Value="Hand"/>
-                <Setter Property="Padding"         Value="7"/>
+                <Setter Property="Padding"         Value="6"/>
                 <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                 <Setter Property="Focusable"       Value="False"/>
                 <Setter Property="Template">
@@ -907,7 +907,33 @@
                 </Setter>
             </Style>
 
+            <!-- ── ToolTip ─────────────────────────────────────────── -->
+            <Style x:Key="ProgramToolTip" TargetType="ToolTip">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Foreground" Value="#111111"/>
+                <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="HasDropShadow" Value="False"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToolTip">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="ToolTip" BasedOn="{StaticResource ProgramToolTip}"/>
+
             <!-- ── Converters ──────────────────────────────────────── -->
+
             <infra:BoolToVisibilityConverter   x:Key="BoolToVis"/>
             <infra:BoolToVisibilityConverter   x:Key="BoolToVisInv"        Invert="True"/>
             <infra:StringMatchToBoolConverter  x:Key="StringMatchToBoolConverter"/>

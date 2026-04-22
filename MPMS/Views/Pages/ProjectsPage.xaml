@@ -251,7 +251,6 @@
                                 </Grid>
                                 <Button Grid.Column="2" Click="ClearSearch_Click"
                                         Visibility="{Binding SearchText, Converter={StaticResource StringToVis}}"
-                                        Width="20" Height="20" Margin="0,0,0,0"
                                         Style="{StaticResource IconButton}">
                                     <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="11" Foreground="#6B778C"/>
@@ -283,7 +282,7 @@
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="150"/>
                                     <ColumnDefinition Width="*" MinWidth="130" MaxWidth="180"/>
-                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="110"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="НАЗВАНИЕ ПРОЕКТА"   Style="{StaticResource ColHeader}"/>
                                 <TextBlock Grid.Column="1" Text="ЗАКАЗЧИК"           Style="{StaticResource ColHeader}"/>
@@ -335,7 +334,7 @@
                                                 <ColumnDefinition Width="120"/>
                                                 <ColumnDefinition Width="150"/>
                                                 <ColumnDefinition Width="*" MinWidth="130" MaxWidth="180"/>
-                                                <ColumnDefinition Width="80"/>
+                                                <ColumnDefinition Width="110"/>
                                             </Grid.ColumnDefinitions>
 
 
@@ -429,7 +428,8 @@
 
                                             <!-- Manager: аватар из БД или инициалы — EllipseGeometry для идеального круга -->
                                             <Grid Grid.Column="6" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0">
+                                                  Margin="0,0,8,0"
+                                                  ToolTip="{Binding ManagerName}">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
@@ -460,7 +460,7 @@
                                                                         VerticalAlignment="Center" HorizontalAlignment="Right">
                                                                 <!-- Edit (Manager+, hidden for Foreman, hidden when marked) -->
                                                                 <Button Tag="{Binding}" Click="EditProject_Click"
-                                                                        Width="26" Height="26" Margin="0,0,2,0"
+                                                                        Margin="0,0,4,0"
                                                                         ToolTip="Редактировать"
                                                                         Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                                     <Button.Style>
@@ -478,7 +478,7 @@
                                                                 <!-- Mark for deletion / Unmark (Manager role) -->
                                                                 <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click"
                                                                         Style="{StaticResource IconButton}"
-                                                                        Width="26" Height="26" Margin="0,0,2,0"
+                                                                        Margin="0,0,4,0"
                                                                         Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                                     <Button.ToolTip>
                                                                         <ToolTip>
@@ -527,7 +527,6 @@
                                                                 <!-- Delete (Admin only) -->
                                                                 <Button Tag="{Binding}" Click="DeleteProject_Click"
                                                                         Style="{StaticResource IconButton}"
-                                                                        Width="26" Height="26"
                                                                         ToolTip="Удалить проект"
                                                                         Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
                                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"

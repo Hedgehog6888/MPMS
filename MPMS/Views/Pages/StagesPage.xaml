@@ -287,7 +287,8 @@
                                                             <!-- Assignee -->
                                                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
                                                                         Margin="0,0,8,0"
-                                                                        Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}">
+                                                                        Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"
+                                                                        ToolTip="{Binding Stage.AssignedUserName}">
                                                                 <Border Style="{StaticResource AvatarCircle26}"
                                                                         Background="{Binding Stage.AssignedUserInitials, Converter={StaticResource InitialsToBrush}}"
                                                                         Margin="0,0,6,0">
