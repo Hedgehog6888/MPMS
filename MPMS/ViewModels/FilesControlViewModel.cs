@@ -27,6 +27,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private string _imagesViewMode = "Grid";
     [ObservableProperty] private string _documentsViewMode = "List";
     [ObservableProperty] private string _extensionFilter = "Все";
+    [ObservableProperty] private bool _isDraggingOver;
     [ObservableProperty] private bool _isSuccessToastVisible;
     [ObservableProperty] private string _successToastMessage = string.Empty;
 
@@ -219,58 +220,72 @@ public partial class FilesControlViewModel : ViewModelBase
 
         if (dialog.ShowDialog() == true)
         {
-            IsLoading = true;
-            try
+            await ProcessFilesInternalAsync(dialog.FileNames);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ProcessFilesAsync(IEnumerable<string> filePaths)
+    {
+        if (filePaths == null || !filePaths.Any()) return;
+        await ProcessFilesInternalAsync(filePaths);
+    }
+
+    private async Task ProcessFilesInternalAsync(IEnumerable<string> filePaths)
+    {
+        IsLoading = true;
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+
+            foreach (var filePath in filePaths)
             {
-                await using var db = await _dbFactory.CreateDbContextAsync();
+                if (!File.Exists(filePath)) continue;
+                
+                var fileInfo = new FileInfo(filePath);
+                byte[] fileData = await File.ReadAllBytesAsync(filePath);
 
-                foreach (var filePath in dialog.FileNames)
+                var newFile = new LocalFile
                 {
-                    var fileInfo = new FileInfo(filePath);
-                    byte[] fileData = await File.ReadAllBytesAsync(filePath);
+                    Id = Guid.NewGuid(),
+                    FileName = fileInfo.Name,
+                    FileSize = fileInfo.Length,
+                    FileType = fileInfo.Extension,
+                    FilePath = filePath,
+                    FileData = fileData,
+                    ProjectId = _projectId,
+                    UploadedById = _auth.UserId ?? Guid.Empty,
+                    UploadedByName = _auth.UserName ?? "Unknown",
+                    CreatedAt = DateTime.UtcNow,
+                    OriginalCreatedAt = fileInfo.CreationTimeUtc
+                };
 
-                    var newFile = new LocalFile
+                db.Files.Add(newFile);
+                
+                if (_api.IsOnline)
+                {
+                    var uploaded = await _api.UploadFileAsync(filePath, _projectId, null, null, fileInfo.CreationTimeUtc);
+                    if (uploaded != null)
                     {
-                        Id = Guid.NewGuid(),
-                        FileName = fileInfo.Name,
-                        FileSize = fileInfo.Length,
-                        FileType = fileInfo.Extension,
-                        FilePath = filePath, // Оригинальный путь (для справки)
-                        FileData = fileData, // Сохраняем в БД как просили
-                        ProjectId = _projectId,
-                        UploadedById = _auth.UserId ?? Guid.Empty,
-                        UploadedByName = _auth.UserName ?? "Unknown",
-                        CreatedAt = DateTime.UtcNow,
-                        OriginalCreatedAt = fileInfo.CreationTimeUtc
-                    };
-
-                    db.Files.Add(newFile);
-                    
-                    // Если мы в сети, пробуем сразу загрузить на сервер
-                    if (_api.IsOnline)
-                    {
-                        var uploaded = await _api.UploadFileAsync(filePath, _projectId, null, null, fileInfo.CreationTimeUtc);
-                        if (uploaded != null)
-                        {
-                            newFile.Id = uploaded.Id; // Синхронизируем ID с серверным
-                            newFile.IsSynced = true;
-                        }
+                        newFile.Id = uploaded.Id;
+                        newFile.IsSynced = true;
                     }
                 }
+            }
 
-                await db.SaveChangesAsync();
-                await LoadFilesAsync();
-            }
-            catch (Exception ex)
-            {
-                var msg = ex.Message;
-                if (ex.InnerException != null) msg += $"\nInner: {ex.InnerException.Message}";
-                MessageBox.Show($"Ошибка при загрузке файлов: {msg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
+            await db.SaveChangesAsync();
+            await LoadFilesAsync();
+            ShowSuccessToast(filePaths.Count() == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.Message;
+            if (ex.InnerException != null) msg += $"\nInner: {ex.InnerException.Message}";
+            MessageBox.Show($"Ошибка при загрузке файлов: {msg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 

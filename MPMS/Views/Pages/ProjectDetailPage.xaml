@@ -1916,5 +1916,10 @@
             </ScrollViewer>
 
         </Grid>
+
+        <!-- Global Drag & Drop Overlay -->
+        <controls:DragDropOverlay Grid.RowSpan="3"
+                                  UploadCommand="{Binding FilesControlVM.ProcessFilesCommand}"
+                                  Panel.ZIndex="9999"/>
     </Grid>
 </UserControl>

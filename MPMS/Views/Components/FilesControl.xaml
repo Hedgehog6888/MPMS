@@ -258,7 +258,7 @@
         </Grid.RowDefinitions>
 
         <!-- ── Tabs & View Switcher ── -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
+        <Grid Grid.Row="0" Margin="0,0,0,16" Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -396,9 +396,9 @@
                 <controls:SearchFilterBarControl.Filters>
                     <!-- Extension Filter -->
                     <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
-                              SelectedItem="{Binding ExtensionFilter}"
-                              Style="{StaticResource FormCombo}"
-                              Width="160" VerticalAlignment="Center"/>
+                               SelectedItem="{Binding ExtensionFilter}"
+                               Style="{StaticResource FormCombo}"
+                               Width="160" VerticalAlignment="Center"/>
                 </controls:SearchFilterBarControl.Filters>
             </controls:SearchFilterBarControl>
         </Grid>
@@ -425,5 +425,6 @@
                        TextAlignment="Center"
                        VerticalAlignment="Center"/>
         </Border>
+
     </Grid>
 </UserControl>
