@@ -21,7 +21,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Файлы и документы" FontSize="24" FontWeight="Bold" 
+                    <TextBlock Text="Файлы" FontSize="24" FontWeight="Bold" 
                                Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="Управляйте всеми загруженными файлами проекта" FontSize="14" 
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
