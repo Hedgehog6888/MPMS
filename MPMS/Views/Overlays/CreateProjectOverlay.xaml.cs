@@ -300,7 +300,7 @@ public partial class CreateProjectOverlay : UserControl
     {
         if (_selectedWorkerIds.Count <= 1)
         {
-            ShowError("В проекте должен остаться хотя бы один работник.");
+            ShowError("В проекте должен остаться хотя бы один работник");
             return;
         }
         if (_editProject is not null)
@@ -435,23 +435,23 @@ public partial class CreateProjectOverlay : UserControl
         ErrorPanel.Visibility = Visibility.Collapsed;
 
         if (string.IsNullOrWhiteSpace(NameBox.Text))
-        { ShowError("Введите название проекта."); return; }
+        { ShowError("Введите название проекта"); return; }
         if (string.IsNullOrWhiteSpace(ClientBox.Text))
-        { ShowError("Введите название заказчика."); return; }
+        { ShowError("Введите название заказчика"); return; }
         if (StartDatePicker.SelectedDate is null || EndDatePicker.SelectedDate is null)
-        { ShowError("Выберите даты начала и завершения."); return; }
+        { ShowError("Выберите даты начала и завершения"); return; }
         if (_selectedManagerId is not Guid managerId)
-        { ShowError("Выберите ответственного менеджера."); return; }
+        { ShowError("Выберите ответственного менеджера"); return; }
 
         if (_editProject is null && _selectedForemanIds.Count == 0 && _selectedWorkerIds.Count == 0)
-        { ShowError("Назначьте прораба или хотя бы одного работника на проект."); return; }
+        { ShowError("Назначьте прораба или хотя бы одного работника на проект"); return; }
         if (_editProject is not null && _selectedWorkerIds.Count == 0)
-        { ShowError("В проекте должен остаться хотя бы один работник."); return; }
+        { ShowError("В проекте должен остаться хотя бы один работник"); return; }
 
         var startDate = DateOnly.FromDateTime(StartDatePicker.SelectedDate.Value);
         var endDate   = DateOnly.FromDateTime(EndDatePicker.SelectedDate.Value);
         if (endDate < startDate)
-        { ShowError("Дата завершения не может быть раньше даты начала."); return; }
+        { ShowError("Дата завершения не может быть раньше даты начала"); return; }
 
         SaveButton.IsEnabled = false;
         try

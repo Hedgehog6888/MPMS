@@ -321,14 +321,14 @@ public partial class CreateTaskOverlay : UserControl
         ErrorPanel.Visibility = Visibility.Collapsed;
 
         if (string.IsNullOrWhiteSpace(NameBox.Text))
-        { ShowError("Введите название задачи."); return; }
+        { ShowError("Введите название задачи"); return; }
         if (ProjectCombo.SelectedValue is not Guid projectId)
-        { ShowError("Выберите проект."); return; }
+        { ShowError("Выберите проект"); return; }
         if (DueDatePicker.SelectedDate is null)
-        { ShowError("Выберите срок выполнения."); return; }
+        { ShowError("Выберите срок выполнения"); return; }
 
         if (_selectedAssigneeIds.Count == 0)
-        { ShowError("Назначьте хотя бы одного исполнителя на задачу."); return; }
+        { ShowError("Назначьте хотя бы одного исполнителя на задачу"); return; }
 
         var priority = GetPriority();
         var dueDate  = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);

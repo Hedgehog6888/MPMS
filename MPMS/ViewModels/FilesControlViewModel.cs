@@ -27,6 +27,8 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private string _imagesViewMode = "Grid";
     [ObservableProperty] private string _documentsViewMode = "List";
     [ObservableProperty] private string _extensionFilter = "Все";
+    [ObservableProperty] private bool _isSuccessToastVisible;
+    [ObservableProperty] private string _successToastMessage = string.Empty;
 
     public string ViewMode
     {
@@ -328,12 +330,20 @@ public partial class FilesControlViewModel : ViewModelBase
             try
             {
                 await File.WriteAllBytesAsync(dialog.FileName, file.FileData);
-                MessageBox.Show("Файл успешно сохранён.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowSuccessToast("Файл успешно сохранён");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+    }
+
+    private async void ShowSuccessToast(string message)
+    {
+        SuccessToastMessage = message;
+        IsSuccessToastVisible = true;
+        await Task.Delay(7000);
+        IsSuccessToastVisible = false;
     }
 }

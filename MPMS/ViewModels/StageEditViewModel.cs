@@ -739,7 +739,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             if (!IsWorker() && _selectedAssigneeIds.Count <= 1)
             {
-                ErrorMessage = "На этапе должен остаться хотя бы один работник.";
+                ErrorMessage = "На этапе должен остаться хотя бы один работник";
                 return;
             }
             _selectedAssigneeIds.Remove(item.UserId);
@@ -760,7 +760,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         if (tpl is null) return;
         if (SelectedServices.Any(x => x.TemplateId == tpl.Id))
         {
-            ErrorMessage = "Эта услуга уже добавлена в этап.";
+            ErrorMessage = "Эта услуга уже добавлена в этап";
             return;
         }
         var line = new StageServiceLineVm(tpl.Id, tpl.Name, tpl.Unit, tpl.BasePrice)
@@ -790,12 +790,12 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         if (material is null) return;
         if (material.Quantity <= 0m)
         {
-            ErrorMessage = "Этого материала нет на складе.";
+            ErrorMessage = "Этого материала нет на складе";
             return;
         }
         if (MaterialLines.Any(x => x.MaterialId == material.Id))
         {
-            ErrorMessage = "Этот материал уже добавлен в этап.";
+            ErrorMessage = "Этот материал уже добавлен в этап";
             return;
         }
         var line = new StageMaterialLineVm();
@@ -893,7 +893,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         if (equipment is null) return;
         if (EquipmentLines.Any(x => x.EquipmentId == equipment.Id))
         {
-            ErrorMessage = "Это оборудование уже добавлено в этап.";
+            ErrorMessage = "Это оборудование уже добавлено в этап";
             return;
         }
         var line = new StageEquipmentLineVm { Quantity = 1 };
@@ -931,7 +931,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
         if (string.IsNullOrWhiteSpace(StageName))
         {
-            ErrorMessage = "Введите название этапа.";
+            ErrorMessage = "Введите название этапа";
             return;
         }
 
@@ -942,14 +942,14 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             if (SelectedTaskId is not Guid tid)
             {
-                ErrorMessage = "Выберите задачу.";
+                ErrorMessage = "Выберите задачу";
                 return;
             }
             taskId = tid;
             var t = await GetTaskByIdAsync(taskId);
             if (t is null)
             {
-                ErrorMessage = "Задача не найдена.";
+                ErrorMessage = "Задача не найдена";
                 return;
             }
             taskVm.SetTask(t);
@@ -959,7 +959,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             if (_task is null)
             {
-                ErrorMessage = "Задача не выбрана.";
+                ErrorMessage = "Задача не выбрана";
                 return;
             }
             taskVm.SetTask(_task);
@@ -968,13 +968,13 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
         if (IsWorker() && _editStage is null)
         {
-            ErrorMessage = "Работники не могут создавать этапы.";
+            ErrorMessage = "Работники не могут создавать этапы";
             return;
         }
 
         if (!IsWorker() && _selectedAssigneeIds.Count == 0)
         {
-            ErrorMessage = "Назначьте хотя бы одного работника на этап.";
+            ErrorMessage = "Назначьте хотя бы одного работника на этап";
             return;
         }
 
@@ -1001,17 +1001,17 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             if (ml.MaterialId == Guid.Empty)
             {
-                ErrorMessage = "Укажите материал во всех строках или удалите пустые.";
+                ErrorMessage = "Укажите материал во всех строках или удалите пустые";
                 return;
             }
             if (ml.Quantity < 1m)
             {
-                ErrorMessage = "Количество материалов не может быть меньше 1.";
+                ErrorMessage = "Количество материалов не может быть меньше 1";
                 return;
             }
             if (ml.StockAvailable > 0m && ml.Quantity > ml.StockAvailable)
             {
-                ErrorMessage = $"Материала \"{ml.MaterialName}\" недостаточно на складе. Доступно: {ml.StockAvailable:N2}.";
+                ErrorMessage = $"Материала \"{ml.MaterialName}\" недостаточно на складе. Доступно: {ml.StockAvailable:N2}";
                 return;
             }
         }
@@ -1020,7 +1020,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
         {
             if (sl.Quantity < 1m)
             {
-                ErrorMessage = "Количество услуг не может быть меньше 1.";
+                ErrorMessage = "Количество услуг не может быть меньше 1";
                 return;
             }
         }

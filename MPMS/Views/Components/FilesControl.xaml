@@ -13,6 +13,8 @@
 
     <UserControl.Resources>
         <infrastructure:FileSizeConverter x:Key="FileSizeConverter" />
+        <infrastructure:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <infrastructure:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True" />
                 
         <!-- Style for the circular delete button that appears on hover -->
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
@@ -26,7 +28,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bg" 
                                 Background="{TemplateBinding Background}" 
-                                CornerRadius="14" 
+                                CornerRadius="6" 
                                 Opacity="0.95">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
@@ -35,7 +37,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -47,7 +49,6 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <!-- Show button when the parent card (Border) is hovered -->
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
                     <Setter Property="Visibility" Value="Visible"/>
                 </DataTrigger>
@@ -66,7 +67,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bg" 
                                 Background="{TemplateBinding Background}" 
-                                CornerRadius="14" 
+                                CornerRadius="6" 
                                 Opacity="0.95">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
@@ -75,7 +76,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
@@ -86,7 +88,6 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <!-- Show button when the parent card (Border) is hovered -->
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
                     <Setter Property="Visibility" Value="Visible"/>
                 </DataTrigger>
@@ -218,7 +219,7 @@
 
                         <Button ToolTip="Удалить"
                                 Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                                Style="{StaticResource IconButton}">
+                                Style="{StaticResource DangerIconButton}">
                             <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
                                    Width="14" Height="14"
                                    VerticalAlignment="Center" Opacity="0.9"/>
@@ -401,5 +402,28 @@
                 </controls:SearchFilterBarControl.Filters>
             </controls:SearchFilterBarControl>
         </Grid>
+
+        <!-- ── Success Toast Notification ── -->
+        <Border x:Name="SuccessToast" 
+                Grid.Row="0" Grid.RowSpan="2"
+                Background="#F0FDF4" 
+                BorderBrush="#86EFAC" 
+                BorderThickness="1"
+                CornerRadius="8" 
+                Padding="12,8" 
+                Margin="24,0,24,16"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"
+                MinWidth="320"
+                MaxWidth="600"
+                Visibility="{Binding IsSuccessToastVisible, Converter={StaticResource BoolToVis}}"
+                Panel.ZIndex="1000">
+            <TextBlock Text="{Binding SuccessToastMessage}" 
+                       Foreground="#15803D" 
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Border>
     </Grid>
 </UserControl>
