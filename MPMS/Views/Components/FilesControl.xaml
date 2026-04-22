@@ -94,6 +94,23 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style for list items in FilesControl, mimicking WarehouseRow style -->
+        <Style x:Key="FileListItemStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                    <Setter Property="BorderBrush" Value="#000000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Template for Image Cards -->
         <DataTemplate x:Key="ImageCardTemplate">
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,16,16"
@@ -160,10 +177,7 @@
 
         <!-- Template for Document List -->
         <DataTemplate x:Key="DocumentListTemplate">
-            <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
-                    Padding="16,12"
-                    BorderBrush="#DFE1E6" BorderThickness="1.5"
-                    Cursor="Hand">
+            <Border Style="{StaticResource FileListItemStyle}">
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                 </Border.InputBindings>
