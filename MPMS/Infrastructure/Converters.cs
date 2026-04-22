@@ -123,7 +123,14 @@ public class AvatarBytesToImageSourceConverter : IValueConverter
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         var bytes = value as byte[];
-        return MPMS.Services.AvatarHelper.BytesToBitmapImage(bytes);
+        int decodeWidth = 0;
+        
+        if (parameter != null && int.TryParse(parameter.ToString(), out int width))
+        {
+            decodeWidth = width;
+        }
+
+        return MPMS.Services.AvatarHelper.BytesToBitmapImage(bytes, decodeWidth);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

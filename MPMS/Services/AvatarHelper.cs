@@ -91,8 +91,11 @@ public static class AvatarHelper
         return ms.ToArray();
     }
 
-    /// <summary>Converts PNG byte array to a frozen BitmapImage for WPF display. Returns null if data is invalid.</summary>
-    public static BitmapImage? BytesToBitmapImage(byte[]? data)
+    /// <summary>
+    /// Converts raw byte array to a WPF BitmapImage.
+    /// Supports decodeWidth for high-quality downsampling during decoding.
+    /// </summary>
+    public static BitmapImage? BytesToBitmapImage(byte[]? data, int decodeWidth = 0)
     {
         if (data is null || data.Length == 0) return null;
         try
@@ -101,6 +104,12 @@ public static class AvatarHelper
             bmp.BeginInit();
             bmp.StreamSource = new MemoryStream(data);
             bmp.CacheOption = BitmapCacheOption.OnLoad;
+            
+            if (decodeWidth > 0)
+            {
+                bmp.DecodePixelWidth = decodeWidth;
+            }
+            
             bmp.EndInit();
             bmp.Freeze();
             return bmp;
