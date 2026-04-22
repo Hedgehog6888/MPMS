@@ -503,12 +503,30 @@ public partial class MainWindow : Window
                         SearchHelper.ContainsIgnoreCase(eq.InventoryNumber, searchTerm))
                     .Take(5).ToList();
 
+            var files = searchTerm is null
+                ? new List<LocalFile>()
+                : (await db.Files.ToListAsync(ct))
+                    .Where(f => SearchHelper.ContainsIgnoreCase(f.FileName, searchTerm) ||
+                        SearchHelper.ContainsIgnoreCase(f.UploadedByName, searchTerm))
+                    .Take(5).ToList();
+
             // Populate TaskName for stages
             var taskIds = stages.Select(s => s.TaskId).Distinct().ToList();
             var taskNames = await db.Tasks.Where(t => taskIds.Contains(t.Id))
                 .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
             foreach (var s in stages)
                 s.TaskName = taskNames.GetValueOrDefault(s.TaskId, "—");
+
+            // Populate ProjectName and StageName for files
+            var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId.Value).Distinct().ToList();
+            var fileStageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId.Value).Distinct().ToList();
+            var fileProjectNames = await db.Projects.Where(p => fileProjectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+            var fileStageNames = await db.TaskStages.Where(s => fileStageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+            foreach (var f in files)
+            {
+                if (f.ProjectId.HasValue) f.ProjectName = fileProjectNames.GetValueOrDefault(f.ProjectId.Value);
+                if (f.StageId.HasValue) f.StageName = fileStageNames.GetValueOrDefault(f.StageId.Value);
+            }
 
             ct.ThrowIfCancellationRequested();
 
@@ -519,17 +537,20 @@ public partial class MainWindow : Window
                 bool hasStages = stages.Count > 0;
                 bool hasMaterials = materials.Count > 0;
                 bool hasEquipment = equipment.Count > 0;
-                bool hasAny = hasProjects || hasTasks || hasStages || hasMaterials || hasEquipment;
+                bool hasFiles = files.Count > 0;
+                bool hasAny = hasProjects || hasTasks || hasStages || hasMaterials || hasEquipment || hasFiles;
 
                 SearchProjectsSection.Visibility = hasProjects ? Visibility.Visible : Visibility.Collapsed;
-                SearchProjectsDivider.Visibility = hasProjects && (hasTasks || hasStages) ? Visibility.Visible : Visibility.Collapsed;
+                SearchProjectsDivider.Visibility = hasProjects && (hasTasks || hasStages || hasMaterials || hasEquipment || hasFiles) ? Visibility.Visible : Visibility.Collapsed;
                 SearchTasksSection.Visibility = hasTasks ? Visibility.Visible : Visibility.Collapsed;
-                SearchTasksDivider.Visibility = hasTasks && (hasStages || hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
+                SearchTasksDivider.Visibility = hasTasks && (hasStages || hasMaterials || hasEquipment || hasFiles) ? Visibility.Visible : Visibility.Collapsed;
                 SearchStagesSection.Visibility = hasStages ? Visibility.Visible : Visibility.Collapsed;
-                SearchStagesDivider.Visibility = hasStages && (hasMaterials || hasEquipment) ? Visibility.Visible : Visibility.Collapsed;
+                SearchStagesDivider.Visibility = hasStages && (hasMaterials || hasEquipment || hasFiles) ? Visibility.Visible : Visibility.Collapsed;
                 SearchMaterialsSection.Visibility = hasMaterials ? Visibility.Visible : Visibility.Collapsed;
-                SearchMaterialsDivider.Visibility = hasMaterials && hasEquipment ? Visibility.Visible : Visibility.Collapsed;
+                SearchMaterialsDivider.Visibility = hasMaterials && (hasEquipment || hasFiles) ? Visibility.Visible : Visibility.Collapsed;
                 SearchEquipmentSection.Visibility = hasEquipment ? Visibility.Visible : Visibility.Collapsed;
+                SearchEquipmentDivider.Visibility = hasEquipment && hasFiles ? Visibility.Visible : Visibility.Collapsed;
+                SearchFilesSection.Visibility = hasFiles ? Visibility.Visible : Visibility.Collapsed;
                 NoSearchResultsText.Visibility = hasAny ? Visibility.Collapsed : Visibility.Visible;
 
                 SearchProjectsList.ItemsSource = projects;
@@ -537,6 +558,7 @@ public partial class MainWindow : Window
                 SearchStagesList.ItemsSource = stages;
                 SearchMaterialsList.ItemsSource = materials;
                 SearchEquipmentList.ItemsSource = equipment;
+                SearchFilesList.ItemsSource = files;
 
                 SearchResultsPopup.IsOpen = true;
             });
@@ -570,6 +592,10 @@ public partial class MainWindow : Window
             else if (fe.Tag is LocalEquipment equipment)
             {
                 await OpenEquipmentFromSearchAsync(equipment);
+            }
+            else if (fe.Tag is LocalFile file)
+            {
+                await OpenFileFromSearchAsync(file);
             }
         }
 
@@ -693,6 +719,16 @@ public partial class MainWindow : Window
 
         var overlay = new EquipmentDetailOverlay(selected, warehouseVm);
         ShowDrawer(overlay, 560);
+    }
+
+    private async Task OpenFileFromSearchAsync(LocalFile file)
+    {
+        if (DataContext is MainViewModel vm)
+            vm.NavigateCommand.Execute("Files");
+
+        var filesVm = App.Services.GetRequiredService<FilesPageViewModel>();
+        filesVm.FilesControlVM.SearchText = file.FileName;
+        await filesVm.FilesControlVM.LoadFilesAsync();
     }
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)

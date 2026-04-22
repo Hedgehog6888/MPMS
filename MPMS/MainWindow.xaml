@@ -146,7 +146,7 @@
                                        Margin="0,0,8,0"
                                        Foreground="{StaticResource TextSecondaryBrush}"/>
                             <Grid Grid.Column="1">
-                                <TextBlock Text="Поиск проектов, задач, этапов, материалов, оборудования..."
+                                <TextBlock Text="Поиск проектов, задач, этапов, файлов, материалов, оборудования..."
                                            Foreground="{StaticResource TextSecondaryBrush}"
                                            FontSize="13" VerticalAlignment="Center"
                                            IsHitTestVisible="False">
@@ -345,6 +345,7 @@
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"/>
                                                         </StackPanel>
+
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -353,7 +354,7 @@
                                     <Border x:Name="SearchMaterialsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
                                     <!-- Equipment section -->
-                                    <StackPanel x:Name="SearchEquipmentSection">
+                                    <StackPanel x:Name="SearchEquipmentSection" Margin="0,0,0,8">
                                         <TextBlock Text="ОБОРУДОВАНИЕ" FontSize="10" FontWeight="Bold"
                                                    Foreground="#6B778C" Margin="8,0,8,6"/>
                                         <ItemsControl x:Name="SearchEquipmentList">
@@ -379,6 +380,50 @@
                                                             <TextBlock Text="{Binding InventoryNumber}" FontSize="12"
                                                                        Foreground="#6B778C" Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"/>
+                                                        </StackPanel>
+
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Border x:Name="SearchEquipmentDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
+
+                                    <!-- Files section -->
+                                    <StackPanel x:Name="SearchFilesSection">
+                                        <TextBlock Text="ФАЙЛЫ" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#6B778C" Margin="8,0,8,6"/>
+                                        <ItemsControl x:Name="SearchFilesList">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="Transparent" CornerRadius="6"
+                                                            Padding="10,8" Cursor="Hand"
+                                                            MouseLeftButtonDown="SearchResult_Click"
+                                                            Tag="{Binding}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding FileName}" FontSize="13"
+                                                                           Foreground="#000000" FontWeight="SemiBold"/>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding ProjectName}" FontSize="11"
+                                                                               Foreground="#6B778C"
+                                                                               Visibility="{Binding ProjectName, Converter={StaticResource StringToVis}}"/>
+                                                                    <TextBlock Text=" • " FontSize="11" Foreground="#6B778C"
+                                                                               Visibility="{Binding StageName, Converter={StaticResource StringToVis}}"/>
+                                                                    <TextBlock Text="{Binding StageName}" FontSize="11"
+                                                                               Foreground="#6B778C"
+                                                                               Visibility="{Binding StageName, Converter={StaticResource StringToVis}}"/>
+                                                                </StackPanel>
+                                                            </StackPanel>
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
