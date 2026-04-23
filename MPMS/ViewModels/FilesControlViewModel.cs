@@ -20,6 +20,7 @@ public partial class FilesControlViewModel : ViewModelBase
     private readonly IAuthService _auth;
     private readonly IApiService _api;
     private readonly IUserSettingsService _settings;
+    private readonly ISyncService _sync;
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _searchText = string.Empty;
@@ -49,12 +50,13 @@ public partial class FilesControlViewModel : ViewModelBase
 
     private Guid? _projectId;
 
-    public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings)
+    public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
     {
         _dbFactory = dbFactory;
         _auth = auth;
         _api = api;
         _settings = settings;
+        _sync = sync;
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
     }
@@ -271,6 +273,9 @@ public partial class FilesControlViewModel : ViewModelBase
                         newFile.IsSynced = true;
                     }
                 }
+
+                var logText = _projectId.HasValue ? $"Загружен файл «{newFile.FileName}» в проект" : $"Загружен файл «{newFile.FileName}»";
+                await LogActivityAsync(db, logText, "File", newFile.Id, ActivityActionKind.Created);
             }
 
             await db.SaveChangesAsync();
@@ -305,7 +310,7 @@ public partial class FilesControlViewModel : ViewModelBase
             if (dbFile != null)
             {
                 db.Files.Remove(dbFile);
-                await db.SaveChangesAsync();
+                await LogActivityAsync(db, $"Удалён файл «{file.FileName}»", "File", file.Id, ActivityActionKind.Deleted);
                 await LoadFilesAsync();
             }
         }
@@ -360,5 +365,35 @@ public partial class FilesControlViewModel : ViewModelBase
         IsSuccessToastVisible = true;
         await Task.Delay(7000);
         IsSuccessToastVisible = false;
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    {
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        var log = new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#1B6EC2",
+            ActionType = actionType,
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        db.ActivityLogs.Add(log);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
     }
 }

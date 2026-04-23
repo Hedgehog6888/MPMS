@@ -598,6 +598,7 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
     private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
+    private static readonly SolidColorBrush FileBrush      = new(Color.FromRgb(0xE1, 0x1D, 0x48));
     private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
     private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
@@ -609,6 +610,7 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
             "Stage"    => StageBrush,
             "Material" => MaterialBrush,
             "Equipment" => EquipmentBrush,
+            "File"     => FileBrush,
             "Message"  => MessageBrush,
             _          => DefaultBrush
         };
@@ -632,6 +634,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0F, 0x76, 0x8C));
     private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x0F, 0x76, 0x8C));
+    private static readonly SolidColorBrush FileBrush           = new(Color.FromRgb(0xE1, 0x1D, 0x48));
     private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x6B, 0x77, 0x8C));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -644,6 +647,8 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
             return MaterialBrush;
         if (string.Equals(log.EntityType, "Equipment", StringComparison.Ordinal))
             return EquipmentBrush;
+        if (string.Equals(log.EntityType, "File", StringComparison.Ordinal))
+            return FileBrush;
 
         var actionType = log.ActionType;
         if (!string.IsNullOrEmpty(actionType))
@@ -668,6 +673,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         "Stage"    => StageBrush,
         "Material" => MaterialBrush,
         "Equipment" => EquipmentBrush,
+        "File"     => FileBrush,
         "Message"  => MessageBrush,
         _          => DefaultBrush
     };
@@ -689,6 +695,7 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
             "Stage"    => "Этап",
             "Material" => "Материал",
             "Equipment" => "Оборудование",
+            "File"     => "Файл",
             "Message"  => "Сообщение",
             _          => "—"
         };

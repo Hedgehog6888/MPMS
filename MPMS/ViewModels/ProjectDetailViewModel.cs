@@ -82,7 +82,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         _sync = sync;
         _auth = auth;
         _settings = settings;
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync);
         _stageViewMode = _settings.GetValue("StagesViewMode", "List");
     }
 

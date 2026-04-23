@@ -11,9 +11,9 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
 {
     public FilesControlViewModel FilesControlVM { get; }
 
-    public FilesPageViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings)
+    public FilesPageViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
     {
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync);
     }
 
     public async Task LoadAsync()
