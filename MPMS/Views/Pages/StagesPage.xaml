@@ -518,13 +518,7 @@
                 </Grid>
             </Border>
 
-            <!-- Loading indicator -->
-            <Border Background="#80FFFFFF"
-                    Panel.ZIndex="2"
-                    Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-                <TextBlock Text="Загрузка..." FontSize="16" Foreground="#6B778C"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
+
         </Grid>
     </Grid>
 </UserControl>

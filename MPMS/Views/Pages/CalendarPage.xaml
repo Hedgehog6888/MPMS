@@ -303,11 +303,6 @@
             </Grid>
         </Border>
 
-        <!-- Loading overlay -->
-        <Border Grid.Row="1" Background="#80FFFFFF"
-                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="Загрузка..." FontSize="16" Foreground="#6B778C"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Border>
+
     </Grid>
 </UserControl>
