@@ -10,6 +10,7 @@ using MPMS.API.Services;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Аутентификация, регистрация и получение данных текущего пользователя.</summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Выполнить вход по логину и получить JWT-токен.</summary>
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
     {
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
         return Ok(BuildAuthResponse(user));
     }
 
+    /// <summary>Зарегистрировать нового пользователя.</summary>
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
     {
@@ -68,6 +71,7 @@ public class AuthController : ControllerBase
         return Created($"/api/users/{user.Id}", BuildAuthResponse(user));
     }
 
+    /// <summary>Получить профиль текущего авторизованного пользователя.</summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<UserResponse>> GetMe()
@@ -82,6 +86,7 @@ public class AuthController : ControllerBase
         return Ok(_mapper.Map<UserResponse>(user));
     }
 
+    /// <summary>Изменить пароль текущего пользователя.</summary>
     [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
@@ -100,6 +105,7 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Получить список доступных ролей для формы регистрации и администрирования.</summary>
     [HttpGet("roles")]
     public async Task<ActionResult<List<object>>> GetRoles()
     {

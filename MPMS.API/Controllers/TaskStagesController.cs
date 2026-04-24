@@ -24,7 +24,7 @@ public class TaskStagesController : ControllerBase
         _log = log;
     }
 
-    /// <summary>Get stage by ID</summary>
+    /// <summary>Получить этап по идентификатору.</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TaskStageResponse>> GetById(Guid id)
     {
@@ -33,7 +33,7 @@ public class TaskStagesController : ControllerBase
         return Ok(MapToResponse(stage));
     }
 
-    /// <summary>Create a new stage</summary>
+    /// <summary>Создать новый этап задачи.</summary>
     [HttpPost]
     public async Task<ActionResult<TaskStageResponse>> Create([FromBody] CreateStageRequest request)
     {
@@ -123,7 +123,7 @@ public class TaskStagesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = stage.Id }, MapToResponse(created!));
     }
 
-    /// <summary>Update stage</summary>
+    /// <summary>Обновить данные этапа.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<TaskStageResponse>> Update(Guid id, [FromBody] UpdateStageRequest request)
     {
@@ -226,7 +226,7 @@ public class TaskStagesController : ControllerBase
         return Ok(MapToResponse(updated!));
     }
 
-    /// <summary>Delete stage</summary>
+    /// <summary>Удалить этап задачи.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -238,7 +238,7 @@ public class TaskStagesController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Add material to stage</summary>
+    /// <summary>Добавить материал к этапу.</summary>
     [HttpPost("{id:guid}/materials")]
     public async Task<ActionResult<StageMaterialResponse>> AddMaterial(
         Guid id, [FromBody] AddStageMaterialRequest request)
@@ -294,7 +294,7 @@ public class TaskStagesController : ControllerBase
             existing.Quantity * existing.PricePerUnit));
     }
 
-    /// <summary>Remove material from stage</summary>
+    /// <summary>Удалить материал из этапа.</summary>
     [HttpDelete("{id:guid}/materials/{stageMaterialId:guid}")]
     public async Task<IActionResult> RemoveMaterial(Guid id, Guid stageMaterialId)
     {

@@ -9,6 +9,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Управление оборудованием и его историей использования.</summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -39,6 +40,7 @@ public class EquipmentController : ControllerBase
             : currentStatus;
     }
 
+    /// <summary>Получить список оборудования с необязательным поиском по названию.</summary>
     [HttpGet]
     public async Task<ActionResult<List<EquipmentResponse>>> GetAll([FromQuery] string? search)
     {
@@ -49,6 +51,7 @@ public class EquipmentController : ControllerBase
         return Ok(_mapper.Map<List<EquipmentResponse>>(list));
     }
 
+    /// <summary>Получить карточку оборудования по идентификатору.</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<EquipmentResponse>> GetById(Guid id)
     {
@@ -57,6 +60,7 @@ public class EquipmentController : ControllerBase
         return Ok(_mapper.Map<EquipmentResponse>(e));
     }
 
+    /// <summary>Создать новую запись оборудования.</summary>
     [HttpPost]
     public async Task<ActionResult<EquipmentResponse>> Create([FromBody] CreateEquipmentRequest request)
     {
@@ -84,6 +88,7 @@ public class EquipmentController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, _mapper.Map<EquipmentResponse>(entity));
     }
 
+    /// <summary>Обновить данные оборудования.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<EquipmentResponse>> Update(Guid id, [FromBody] UpdateEquipmentRequest request)
     {
@@ -113,6 +118,7 @@ public class EquipmentController : ControllerBase
         return Ok(_mapper.Map<EquipmentResponse>(entity));
     }
 
+    /// <summary>Удалить оборудование.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -123,6 +129,7 @@ public class EquipmentController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Получить историю изменений и перемещений оборудования.</summary>
     [HttpGet("{id:guid}/history")]
     public async Task<ActionResult<List<EquipmentHistoryEntryResponse>>> GetHistory(Guid id)
     {
@@ -134,6 +141,7 @@ public class EquipmentController : ControllerBase
         return Ok(_mapper.Map<List<EquipmentHistoryEntryResponse>>(list));
     }
 
+    /// <summary>Добавить запись в историю оборудования и при необходимости изменить его статус.</summary>
     [HttpPost("{id:guid}/history")]
     public async Task<ActionResult<EquipmentHistoryEntryResponse>> AppendHistory(Guid id,
         [FromBody] RecordEquipmentEventRequest request)

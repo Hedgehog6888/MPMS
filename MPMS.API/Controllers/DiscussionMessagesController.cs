@@ -9,6 +9,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Сообщения обсуждений для проектов и задач.</summary>
 [ApiController]
 [Route("api/discussion-messages")]
 [Authorize]
@@ -23,6 +24,7 @@ public class DiscussionMessagesController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить сообщения обсуждения с фильтрацией по задаче, проекту и дате.</summary>
     [HttpGet]
     public async Task<ActionResult<List<DiscussionMessageResponse>>> GetAll(
         [FromQuery] Guid? taskId,
@@ -40,6 +42,7 @@ public class DiscussionMessagesController : ControllerBase
         return Ok(_mapper.Map<List<DiscussionMessageResponse>>(list));
     }
 
+    /// <summary>Создать новое сообщение в обсуждении проекта или задачи.</summary>
     [HttpPost]
     public async Task<ActionResult<DiscussionMessageResponse>> Create([FromBody] CreateDiscussionMessageRequest request)
     {

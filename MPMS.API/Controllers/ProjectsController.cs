@@ -26,7 +26,7 @@ public class ProjectsController : ControllerBase
         _mapper = mapper;
     }
 
-    /// <summary>Get all projects (with optional status filter)</summary>
+    /// <summary>Получить список проектов с необязательной фильтрацией по статусу и поиску.</summary>
     [HttpGet]
     public async Task<ActionResult<List<ProjectListResponse>>> GetAll(
         [FromQuery] string? status,
@@ -50,7 +50,7 @@ public class ProjectsController : ControllerBase
         return Ok(_mapper.Map<List<ProjectListResponse>>(projects));
     }
 
-    /// <summary>Get project by ID with full details</summary>
+    /// <summary>Получить проект по идентификатору с полной сводной информацией.</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectResponse>> GetById(Guid id)
     {
@@ -64,7 +64,7 @@ public class ProjectsController : ControllerBase
         return Ok(_mapper.Map<ProjectResponse>(p));
     }
 
-    /// <summary>Create a new project</summary>
+    /// <summary>Создать новый проект.</summary>
     [HttpPost]
     public async Task<ActionResult<ProjectResponse>> Create([FromBody] CreateProjectRequest request)
     {
@@ -93,7 +93,7 @@ public class ProjectsController : ControllerBase
             await GetById(project.Id));
     }
 
-    /// <summary>Update project</summary>
+    /// <summary>Обновить данные проекта.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProjectResponse>> Update(Guid id, [FromBody] UpdateProjectRequest request)
     {
@@ -115,7 +115,7 @@ public class ProjectsController : ControllerBase
         return Ok(await GetById(id));
     }
 
-    /// <summary>Delete project</summary>
+    /// <summary>Удалить проект вместе со связанными данными.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -125,7 +125,7 @@ public class ProjectsController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Get project members</summary>
+    /// <summary>Получить список участников проекта.</summary>
     [HttpGet("{id:guid}/members")]
     public async Task<ActionResult<List<UserResponse>>> GetMembers(Guid id)
     {
@@ -138,7 +138,7 @@ public class ProjectsController : ControllerBase
         return Ok(_mapper.Map<List<UserResponse>>(members.Select(pm => pm.User).ToList()));
     }
 
-    /// <summary>Add member to project</summary>
+    /// <summary>Добавить пользователя в состав проекта.</summary>
     [HttpPost("{id:guid}/members/{userId:guid}")]
     public async Task<IActionResult> AddMember(Guid id, Guid userId)
     {
@@ -163,7 +163,7 @@ public class ProjectsController : ControllerBase
         return Ok();
     }
 
-    /// <summary>Remove member from project</summary>
+    /// <summary>Удалить пользователя из состава проекта.</summary>
     [HttpDelete("{id:guid}/members/{userId:guid}")]
     public async Task<IActionResult> RemoveMember(Guid id, Guid userId)
     {

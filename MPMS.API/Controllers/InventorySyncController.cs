@@ -8,7 +8,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
-/// <summary>Bulk read endpoints for offline sync.</summary>
+/// <summary>Массовые read-only эндпоинты для офлайн-синхронизации клиента.</summary>
 [ApiController]
 [Route("api/inventory")]
 [Authorize]
@@ -23,6 +23,7 @@ public class InventorySyncController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить все движения материалов для полной синхронизации клиента.</summary>
     [HttpGet("material-stock-movements")]
     public async Task<ActionResult<List<MaterialStockMovementResponse>>> GetAllMaterialStockMovements()
     {
@@ -32,6 +33,7 @@ public class InventorySyncController : ControllerBase
         return Ok(_mapper.Map<List<MaterialStockMovementResponse>>(list));
     }
 
+    /// <summary>Получить весь список оборудования для полной синхронизации клиента.</summary>
     [HttpGet("equipment")]
     public async Task<ActionResult<List<EquipmentResponse>>> GetAllEquipment()
     {
@@ -42,6 +44,7 @@ public class InventorySyncController : ControllerBase
         return Ok(_mapper.Map<List<EquipmentResponse>>(list));
     }
 
+    /// <summary>Получить всю историю оборудования для полной синхронизации клиента.</summary>
     [HttpGet("equipment-history")]
     public async Task<ActionResult<List<EquipmentHistoryEntryResponse>>> GetAllEquipmentHistory()
     {

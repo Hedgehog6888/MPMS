@@ -9,6 +9,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Лента действий, синхронизируемая с клиентским приложением.</summary>
 [ApiController]
 [Route("api/synced-activity-logs")]
 [Authorize]
@@ -23,6 +24,7 @@ public class SyncedActivityLogsController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить синхронизированные события активности с фильтром по времени.</summary>
     [HttpGet]
     public async Task<ActionResult<List<SyncedActivityLogResponse>>> GetAll([FromQuery] DateTime? since)
     {
@@ -36,6 +38,7 @@ public class SyncedActivityLogsController : ControllerBase
         return Ok(_mapper.Map<List<SyncedActivityLogResponse>>(list));
     }
 
+    /// <summary>Создать новую запись в синхронизируемой ленте активности.</summary>
     [HttpPost]
     public async Task<ActionResult<SyncedActivityLogResponse>> Create([FromBody] CreateSyncedActivityLogRequest request)
     {

@@ -8,6 +8,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Категории материалов для складского учёта.</summary>
 [ApiController]
 [Route("api/material-categories")]
 [Authorize]
@@ -22,6 +23,7 @@ public class MaterialCategoriesController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить список категорий материалов.</summary>
     [HttpGet]
     public async Task<ActionResult<List<MaterialCategoryResponse>>> GetAll()
     {
@@ -31,6 +33,7 @@ public class MaterialCategoriesController : ControllerBase
         return Ok(_mapper.Map<List<MaterialCategoryResponse>>(list));
     }
 
+    /// <summary>Создать категорию материалов.</summary>
     [HttpPost]
     public async Task<ActionResult<MaterialCategoryResponse>> Create([FromBody] CreateMaterialCategoryRequest request)
     {

@@ -9,6 +9,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Загрузка, скачивание и удаление файлов, связанных с проектами, задачами и этапами.</summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -27,6 +28,7 @@ public class FilesController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Загрузить файл и привязать его к проекту, задаче или этапу.</summary>
     [HttpPost("upload")]
     [RequestSizeLimit(50 * 1024 * 1024)]
     public async Task<ActionResult<FileResponse>> Upload(
@@ -77,6 +79,7 @@ public class FilesController : ControllerBase
         return Ok(_mapper.Map<FileResponse>(attachment));
     }
 
+    /// <summary>Скачать файл по идентификатору.</summary>
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Download(Guid id)
     {
@@ -94,6 +97,7 @@ public class FilesController : ControllerBase
         return File(bytes, file.FileType ?? "application/octet-stream", file.FileName);
     }
 
+    /// <summary>Получить список файлов по проекту, задаче или этапу.</summary>
     [HttpGet]
     public async Task<ActionResult<List<FileResponse>>> GetFiles(
         [FromQuery] Guid? projectId,
@@ -117,6 +121,7 @@ public class FilesController : ControllerBase
         return Ok(_mapper.Map<List<FileResponse>>(files));
     }
 
+    /// <summary>Удалить файл из базы и с диска.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

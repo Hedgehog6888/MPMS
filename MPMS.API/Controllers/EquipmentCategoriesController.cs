@@ -8,6 +8,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Категории оборудования для складского учёта.</summary>
 [ApiController]
 [Route("api/equipment-categories")]
 [Authorize]
@@ -22,6 +23,7 @@ public class EquipmentCategoriesController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить список категорий оборудования.</summary>
     [HttpGet]
     public async Task<ActionResult<List<EquipmentCategoryResponse>>> GetAll()
     {
@@ -31,6 +33,7 @@ public class EquipmentCategoriesController : ControllerBase
         return Ok(_mapper.Map<List<EquipmentCategoryResponse>>(list));
     }
 
+    /// <summary>Создать категорию оборудования.</summary>
     [HttpPost]
     public async Task<ActionResult<EquipmentCategoryResponse>> Create([FromBody] CreateEquipmentCategoryRequest request)
     {

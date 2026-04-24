@@ -9,6 +9,7 @@ using MPMS.API.Models;
 
 namespace MPMS.API.Controllers;
 
+/// <summary>Движения материалов на складе: приход, расход, корректировки и списания.</summary>
 [ApiController]
 [Route("api/materials/{materialId:guid}/stock-movements")]
 [Authorize]
@@ -23,6 +24,7 @@ public class MaterialStockMovementsController : ControllerBase
         _mapper = mapper;
     }
 
+    /// <summary>Получить историю движений выбранного материала.</summary>
     [HttpGet]
     public async Task<ActionResult<List<MaterialStockMovementResponse>>> GetList(Guid materialId)
     {
@@ -37,6 +39,7 @@ public class MaterialStockMovementsController : ControllerBase
         return Ok(_mapper.Map<List<MaterialStockMovementResponse>>(list));
     }
 
+    /// <summary>Зафиксировать новое движение материала и пересчитать остаток.</summary>
     [HttpPost]
     public async Task<ActionResult<MaterialStockMovementResponse>> Record(Guid materialId,
         [FromBody] RecordMaterialStockRequest request)

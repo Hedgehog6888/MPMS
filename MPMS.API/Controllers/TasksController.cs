@@ -24,7 +24,7 @@ public class TasksController : ControllerBase
         _log = log;
     }
 
-    /// <summary>Get tasks (optional filters: projectId, status, assignedUserId, priority)</summary>
+    /// <summary>Получить список задач с фильтрами по проекту, статусу, приоритету, исполнителю и поиску.</summary>
     [HttpGet]
     public async Task<ActionResult<List<TaskListResponse>>> GetAll(
         [FromQuery] Guid? projectId,
@@ -85,7 +85,7 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
 
-    /// <summary>Get task by ID with stages</summary>
+    /// <summary>Получить задачу по идентификатору вместе с этапами и вложенными данными.</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TaskResponse>> GetById(Guid id)
     {
@@ -113,7 +113,7 @@ public class TasksController : ControllerBase
         return Ok(MapToTaskResponse(t));
     }
 
-    /// <summary>Create a new task</summary>
+    /// <summary>Создать новую задачу.</summary>
     [HttpPost]
     public async Task<ActionResult<TaskResponse>> Create([FromBody] CreateTaskRequest request)
     {
@@ -158,7 +158,7 @@ public class TasksController : ControllerBase
             await GetById(task.Id));
     }
 
-    /// <summary>Update task</summary>
+    /// <summary>Обновить данные задачи.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<TaskResponse>> Update(Guid id, [FromBody] UpdateTaskRequest request)
     {
@@ -198,7 +198,7 @@ public class TasksController : ControllerBase
         return Ok(await GetById(id));
     }
 
-    /// <summary>Delete task</summary>
+    /// <summary>Удалить задачу вместе со связанными сущностями.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -241,7 +241,7 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Add dependency between tasks (for Gantt)</summary>
+    /// <summary>Добавить зависимость между задачами для диаграммы Ганта.</summary>
     [HttpPost("{id:guid}/dependencies")]
     public async Task<IActionResult> AddDependency(Guid id, [FromBody] AddTaskDependencyRequest request)
     {
@@ -269,7 +269,7 @@ public class TasksController : ControllerBase
         return Ok();
     }
 
-    /// <summary>Remove task dependency</summary>
+    /// <summary>Удалить зависимость между задачами.</summary>
     [HttpDelete("{id:guid}/dependencies/{dependsOnTaskId:guid}")]
     public async Task<IActionResult> RemoveDependency(Guid id, Guid dependsOnTaskId)
     {

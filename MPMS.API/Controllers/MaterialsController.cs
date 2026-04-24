@@ -23,7 +23,7 @@ public class MaterialsController : ControllerBase
         _mapper = mapper;
     }
 
-    /// <summary>Get all materials (with optional search)</summary>
+    /// <summary>Получить список материалов с необязательным поиском.</summary>
     [HttpGet]
     public async Task<ActionResult<List<MaterialResponse>>> GetAll([FromQuery] string? search)
     {
@@ -44,7 +44,7 @@ public class MaterialsController : ControllerBase
         return Ok(_mapper.Map<List<MaterialResponse>>(materials));
     }
 
-    /// <summary>Get material by ID</summary>
+    /// <summary>Получить материал по идентификатору.</summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<MaterialResponse>> GetById(Guid id)
     {
@@ -53,7 +53,7 @@ public class MaterialsController : ControllerBase
         return Ok(_mapper.Map<MaterialResponse>(m));
     }
 
-    /// <summary>Create material</summary>
+    /// <summary>Создать новый материал.</summary>
     [HttpPost]
     public async Task<ActionResult<MaterialResponse>> Create([FromBody] CreateMaterialRequest request)
     {
@@ -97,7 +97,7 @@ public class MaterialsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = material.Id }, _mapper.Map<MaterialResponse>(material));
     }
 
-    /// <summary>Update material</summary>
+    /// <summary>Обновить данные материала.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<MaterialResponse>> Update(Guid id, [FromBody] UpdateMaterialRequest request)
     {
@@ -118,7 +118,7 @@ public class MaterialsController : ControllerBase
         return Ok(_mapper.Map<MaterialResponse>(material));
     }
 
-    /// <summary>Delete material</summary>
+    /// <summary>Удалить материал.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

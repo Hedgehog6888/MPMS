@@ -24,7 +24,7 @@ public class UsersController : ControllerBase
         _mapper = mapper;
     }
 
-    /// <summary>Get all users (for assignee dropdowns)</summary>
+    /// <summary>Получить список пользователей, в том числе для выбора исполнителей.</summary>
     [HttpGet]
     public async Task<ActionResult<List<UserResponse>>> GetAll([FromQuery] string? search)
     {
@@ -47,7 +47,7 @@ public class UsersController : ControllerBase
         return Ok(_mapper.Map<List<UserResponse>>(users));
     }
 
-    /// <summary>Create user (admin only)</summary>
+    /// <summary>Создать нового пользователя. Доступно администратору.</summary>
     [HttpPost]
     public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
     {
@@ -84,7 +84,7 @@ public class UsersController : ControllerBase
         return Created($"/api/users/{user.Id}", _mapper.Map<UserResponse>(user));
     }
 
-    /// <summary>Update user (admin only)</summary>
+    /// <summary>Обновить данные пользователя. Доступно администратору или самому пользователю.</summary>
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<UserResponse>> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
@@ -141,7 +141,7 @@ public class UsersController : ControllerBase
         return Ok(_mapper.Map<UserResponse>(user));
     }
 
-    /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>
+    /// <summary>Загрузить аватар для текущего пользователя или любого пользователя от имени администратора.</summary>
     [HttpPut("{id:guid}/avatar")]
     public async Task<ActionResult> UploadAvatar(Guid id, [FromBody] UploadAvatarRequest request)
     {
@@ -164,7 +164,7 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Delete user (admin only). Fails if user is a project manager.</summary>
+    /// <summary>Удалить пользователя. Недоступно для руководителей проектов и администраторов.</summary>
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> Delete(Guid id)
     {
@@ -184,7 +184,7 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Get activity log (with filters)</summary>
+    /// <summary>Получить журнал действий с фильтрами по пользователю, типу действия, сущности и периоду.</summary>
     [HttpGet("/api/activity-log")]
     public async Task<ActionResult<List<ActivityLogResponse>>> GetActivityLog(
         [FromQuery] Guid? userId,
