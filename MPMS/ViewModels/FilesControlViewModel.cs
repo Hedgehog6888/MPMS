@@ -263,22 +263,18 @@ public partial class FilesControlViewModel : ViewModelBase
                 };
 
                 db.Files.Add(newFile);
+                await db.SaveChangesAsync();
                 
-                if (_api.IsOnline)
-                {
-                    var uploaded = await _api.UploadFileAsync(filePath, _projectId, null, null, fileInfo.CreationTimeUtc);
-                    if (uploaded != null)
-                    {
-                        newFile.Id = uploaded.Id;
-                        newFile.IsSynced = true;
-                    }
-                }
+                // Queue for server upload
+                var dto = new FileDto(newFile.Id, newFile.FileName, newFile.FileType ?? "", newFile.FileSize, 
+                    newFile.UploadedById, newFile.UploadedByName, newFile.ProjectId, newFile.TaskId, newFile.StageId, 
+                    newFile.CreatedAt, newFile.OriginalCreatedAt);
+                await _sync.QueueOperationAsync("File", newFile.Id, SyncOperation.Create, dto);
 
                 var logText = _projectId.HasValue ? $"Загружен файл «{newFile.FileName}» в проект" : $"Загружен файл «{newFile.FileName}»";
                 await LogActivityAsync(db, logText, "File", newFile.Id, ActivityActionKind.Created);
             }
 
-            await db.SaveChangesAsync();
             await LoadFilesAsync();
             ShowSuccessToast(filePaths.Count() == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
         }
@@ -309,6 +305,10 @@ public partial class FilesControlViewModel : ViewModelBase
             var dbFile = await db.Files.FindAsync(file.Id);
             if (dbFile != null)
             {
+                if (dbFile.IsSynced)
+                {
+                    await _sync.QueueOperationAsync("File", file.Id, SyncOperation.Delete, new { });
+                }
                 db.Files.Remove(dbFile);
                 await LogActivityAsync(db, $"Удалён файл «{file.FileName}»", "File", file.Id, ActivityActionKind.Deleted);
                 await LoadFilesAsync();
@@ -332,10 +332,43 @@ public partial class FilesControlViewModel : ViewModelBase
     [RelayCommand]
     private async Task DownloadFileAsync(LocalFile file)
     {
-        if (file == null || file.FileData == null)
+        if (file == null) return;
+
+        if (file.FileData == null || file.FileData.Length == 0)
         {
-            MessageBox.Show("Данные файла отсутствуют.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            if (!_api.IsOnline)
+            {
+                MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            IsLoading = true;
+            try
+            {
+                var data = await _api.DownloadFileAsync(file.Id);
+                if (data != null)
+                {
+                    file.FileData = data;
+                    await using var db = await _dbFactory.CreateDbContextAsync();
+                    var dbFile = await db.Files.FindAsync(file.Id);
+                    if (dbFile != null)
+                    {
+                        dbFile.FileData = data;
+                        await db.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Не удалось скачать файл с сервера.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при скачивании: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            finally { IsLoading = false; }
         }
 
         var dialog = new SaveFileDialog

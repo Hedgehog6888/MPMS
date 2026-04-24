@@ -36,16 +36,19 @@ public class FilesController : ControllerBase
         [FromQuery] Guid? projectId,
         [FromQuery] Guid? taskId,
         [FromQuery] Guid? stageId,
-        [FromQuery] DateTime? originalCreatedAt = null)
+        [FromQuery] DateTime? originalCreatedAt = null,
+        [FromQuery] Guid? id = null)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(new { message = "Р¤Р°Р№Р» РЅРµ РІС‹Р±СЂР°РЅ" });
+            return BadRequest(new { message = "Файл не выбран" });
 
-        if (projectId is null && taskId is null && stageId is null)
-            return BadRequest(new { message = "РќРµРѕР±С…РѕРґРёРјРѕ СѓРєР°Р·Р°С‚СЊ projectId, taskId РёР»Рё stageId" });
+        // if (projectId is null && taskId is null && stageId is null)
+        //     return BadRequest(new { message = "Необходимо указать projectId, taskId или stageId" });
 
-        var basePath = Path.Combine(_env.ContentRootPath,
-            _config["FileStorage:BasePath"] ?? "wwwroot/uploads");
+        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
+        if (!Path.IsPathRooted(basePath))
+            basePath = Path.Combine(_env.ContentRootPath, basePath);
+        
         Directory.CreateDirectory(basePath);
 
         var ext = Path.GetExtension(file.FileName);
@@ -55,28 +58,43 @@ public class FilesController : ControllerBase
         await using (var stream = System.IO.File.Create(fullPath))
             await file.CopyToAsync(stream);
 
-        var attachment = new FileAttachment
+        try
         {
-            FileName = file.FileName,
-            FilePath = savedName,
-            FileType = file.ContentType,
-            FileSize = file.Length,
-            UploadedById = CurrentUserId(),
-            ProjectId = projectId,
-            TaskId = taskId,
-            StageId = stageId,
-            CreatedAt = DateTime.UtcNow,
-            OriginalCreatedAt = originalCreatedAt
-        };
+            var attachment = new FileAttachment
+            {
+                Id = id ?? Guid.NewGuid(),
+                FileName = file.FileName,
+                FilePath = savedName,
+                FileType = file.ContentType,
+                FileSize = file.Length,
+                UploadedById = CurrentUserId(),
+                ProjectId = projectId,
+                TaskId = taskId,
+                StageId = stageId,
+                CreatedAt = DateTime.UtcNow,
+                OriginalCreatedAt = originalCreatedAt
+            };
 
-        _db.Files.Add(attachment);
-        await _db.SaveChangesAsync();
+            _db.Files.Add(attachment);
+            await _db.SaveChangesAsync();
 
-        await _db.Entry(attachment).Reference(f => f.UploadedBy).LoadAsync();
-        await _db.Entry(attachment).Reference(f => f.Project).LoadAsync();
-        await _db.Entry(attachment).Reference(f => f.Stage).LoadAsync();
+            await _db.Entry(attachment).Reference(f => f.UploadedBy).LoadAsync();
+            if (attachment.UploadedById != Guid.Empty && attachment.UploadedBy == null)
+            {
+                // Should not happen if FK is correct, but let's be safe
+                attachment.UploadedBy = await _db.Users.FindAsync(attachment.UploadedById) ?? new User { FirstName = "System", LastName = "User" };
+            }
+            
+            if (attachment.ProjectId.HasValue) await _db.Entry(attachment).Reference(f => f.Project).LoadAsync();
+            if (attachment.StageId.HasValue) await _db.Entry(attachment).Reference(f => f.Stage).LoadAsync();
 
-        return Ok(_mapper.Map<FileResponse>(attachment));
+            var response = _mapper.Map<FileResponse>(attachment);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Ошибка при сохранении файла", detail = ex.Message, inner = ex.InnerException?.Message });
+        }
     }
 
     /// <summary>Скачать файл по идентификатору.</summary>
@@ -86,8 +104,10 @@ public class FilesController : ControllerBase
         var file = await _db.Files.FindAsync(id);
         if (file is null) return NotFound();
 
-        var basePath = Path.Combine(_env.ContentRootPath,
-            _config["FileStorage:BasePath"] ?? "wwwroot/uploads");
+        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
+        if (!Path.IsPathRooted(basePath))
+            basePath = Path.Combine(_env.ContentRootPath, basePath);
+            
         var fullPath = Path.Combine(basePath, file.FilePath);
 
         if (!System.IO.File.Exists(fullPath))
@@ -128,8 +148,10 @@ public class FilesController : ControllerBase
         var file = await _db.Files.FindAsync(id);
         if (file is null) return NotFound();
 
-        var basePath = Path.Combine(_env.ContentRootPath,
-            _config["FileStorage:BasePath"] ?? "wwwroot/uploads");
+        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
+        if (!Path.IsPathRooted(basePath))
+            basePath = Path.Combine(_env.ContentRootPath, basePath);
+            
         var fullPath = Path.Combine(basePath, file.FilePath);
 
         if (System.IO.File.Exists(fullPath))

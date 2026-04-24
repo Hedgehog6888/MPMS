@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 using MPMS.Data;
 using MPMS.Models;
 
@@ -739,10 +740,9 @@ public class SyncService : ISyncService
     {
         if (!_api.IsOnline) return;
 
-        await using var db = await _dbFactory.CreateDbContextAsync();
         try
         {
-            await EnsureWarehouseCategoriesReadyAsync(db);
+            await EnsureWarehouseCategoriesReadyAsync();
         }
         catch (Exception ex)
         {
@@ -750,6 +750,7 @@ public class SyncService : ISyncService
             Debug.WriteLine($"[Sync] EnsureWarehouseCategoriesReadyAsync: {ex}");
         }
 
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await RecoverWarehouseFailedOperationsAsync(db);
 
         var pending = await db.PendingOperations
@@ -759,17 +760,77 @@ public class SyncService : ISyncService
 
         foreach (var op in pending)
         {
-            var success = await ProcessOperationAsync(op);
-            if (success)
-                db.PendingOperations.Remove(op);
-            else
+            try
             {
+                var success = await ProcessOperationAsync(op);
+                if (success)
+                    db.PendingOperations.Remove(op);
+                else
+                {
+                    op.RetryCount++;
+                    if (op.RetryCount >= 5) op.IsFailed = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                op.ErrorMessage = ex.Message;
                 op.RetryCount++;
-                if (op.RetryCount >= 5) op.IsFailed = true;
+                if (op.RetryCount >= 10) op.IsFailed = true;
+                Debug.WriteLine($"[Sync] Operation {op.Id} failed: {ex.Message}");
             }
         }
 
-        await db.SaveChangesAsync();
+        await PushOrphanedFilesAsync(db);
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Someone else modified/deleted these operations already.
+            // This is okay, we just want them to be processed.
+            Debug.WriteLine("[Sync] Concurrency exception at end of ProcessPendingOperationsAsync - ignoring.");
+        }
+    }
+
+    private async Task PushOrphanedFilesAsync(LocalDbContext db)
+    {
+        // Find files that are not synced and don't have a pending "Create" operation
+        var unsyncedFileIds = await db.Files
+            .Where(f => !f.IsSynced)
+            .Select(f => f.Id)
+            .ToListAsync();
+
+        if (!unsyncedFileIds.Any()) return;
+
+        var pendingFileIds = await db.PendingOperations
+            .Where(op => op.EntityType == "File" && op.OperationType == SyncOperation.Create)
+            .Select(op => op.EntityId)
+            .ToListAsync();
+
+        var orphanedIds = unsyncedFileIds.Except(pendingFileIds).ToList();
+
+        foreach (var id in orphanedIds)
+        {
+            var file = await db.Files.FindAsync(id);
+            if (file == null) continue;
+
+            var dto = new FileDto(file.Id, file.FileName, file.FileType ?? "", file.FileSize,
+                file.UploadedById, file.UploadedByName, file.ProjectId, file.TaskId, file.StageId,
+                file.CreatedAt, file.OriginalCreatedAt);
+
+            var payload = JsonSerializer.Serialize(dto, PendingOpJson);
+            db.PendingOperations.Add(new PendingOperation
+            {
+                Id = Guid.NewGuid(),
+                EntityType = "File",
+                EntityId = id,
+                OperationType = SyncOperation.Create,
+                Payload = payload,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
     }
 
     private static async Task RecoverWarehouseFailedOperationsAsync(LocalDbContext db)
@@ -796,8 +857,10 @@ public class SyncService : ISyncService
             await db.SaveChangesAsync();
     }
 
-    private async Task EnsureWarehouseCategoriesReadyAsync(LocalDbContext db)
+    private async Task EnsureWarehouseCategoriesReadyAsync()
     {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        // ... (rest of method)
         var apiMatCats = await _api.GetMaterialCategoriesAsync() ?? [];
         var apiEqCats = await _api.GetEquipmentCategoriesAsync() ?? [];
 
@@ -973,6 +1036,7 @@ public class SyncService : ISyncService
                 "DiscussionMessage" => await SyncDiscussionMessageAsync(op),
                 "TaskAssignees" => await SyncTaskAssigneesAsync(op),
                 "StageAssignees" => await SyncStageAssigneesAsync(op),
+                "File"        => await SyncFileAsync(op),
                 _             => true
             };
         }
@@ -1257,6 +1321,46 @@ public class SyncService : ISyncService
         var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceStageAssigneesAsync(op.EntityId, req);
+    }
+
+    private async Task<bool> SyncFileAsync(PendingOperation op)
+    {
+        if (op.OperationType == SyncOperation.Delete)
+            return await _api.DeleteFileAsync(op.EntityId);
+
+        if (op.OperationType == SyncOperation.Create)
+        {
+            var meta = JsonSerializer.Deserialize<FileDto>(op.Payload, PendingOpJson);
+            if (meta is null) return false;
+
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var local = await db.Files.FindAsync(op.EntityId);
+            if (local is null) return false; // Wait for it to appear/commit
+            if (local.FileData is null || local.FileData.Length == 0) return true; // Nothing to upload
+
+            // Create a temp file to upload
+            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_{local.FileName}");
+            await File.WriteAllBytesAsync(tempPath, local.FileData);
+            try
+            {
+                var uploaded = await _api.UploadFileAsync(tempPath, local.ProjectId, local.TaskId, local.StageId, local.OriginalCreatedAt, local.Id);
+                if (uploaded is not null)
+                {
+                    local.IsSynced = true;
+                    // If server assigned a different ID (unlikely but possible), we might need to update.
+                    // But here we rely on the client-generated ID being accepted or handled.
+                    await db.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            finally
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+        }
+
+        return true;
     }
 
     private async Task PullFilesIntoLocalDbAsync(LocalDbContext db)

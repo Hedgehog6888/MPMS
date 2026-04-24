@@ -68,7 +68,8 @@ public interface IApiService
     // Files
     Task<List<FileDto>?> GetFilesAsync(Guid? projectId = null, Guid? taskId = null, Guid? stageId = null);
     Task<bool> DeleteFileAsync(Guid id);
-    Task<FileDto?> UploadFileAsync(string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null);
+    Task<FileDto?> UploadFileAsync(string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null, Guid? id = null);
+    Task<byte[]?> DownloadFileAsync(Guid id);
 
     // Users
     Task<List<UserResponse>?> GetUsersAsync(string? search = null);

@@ -257,8 +257,22 @@ public class ApiService : IApiService
 
     public async Task<bool> DeleteFileAsync(Guid id) => await DeleteAsync($"files/{id}");
 
+    public async Task<byte[]?> DownloadFileAsync(Guid id)
+    {
+        try
+        {
+            AttachToken();
+            var response = await _http.GetAsync(Api($"files/{id}"));
+            IsOnline = true;
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
+    }
+
     public async Task<FileDto?> UploadFileAsync(
-        string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null)
+        string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null, Guid? id = null)
     {
         try
         {
@@ -276,7 +290,8 @@ public class ApiService : IApiService
                 ("projectId", projectId?.ToString()),
                 ("taskId", taskId?.ToString()),
                 ("stageId", stageId?.ToString()),
-                ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null));
+                ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null),
+                ("id", id?.ToString()));
 
             var response = await _http.PostAsync(Api($"files/upload{q}"), content);
             IsOnline = true;
