@@ -106,6 +106,8 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource NeutralSelectionBrush}"/>
+            <Setter Property="SelectionTextBrush" Value="#172B4D"/>
         </Style>
         <Style x:Key="EditPasswordBox" TargetType="PasswordBox">
             <Setter Property="BorderThickness" Value="0"/>
@@ -114,6 +116,8 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource NeutralSelectionBrush}"/>
+            <Setter Property="SelectionTextBrush" Value="#172B4D"/>
         </Style>
         <Style x:Key="EditDatePicker" TargetType="DatePicker"
                BasedOn="{StaticResource {x:Type DatePicker}}">

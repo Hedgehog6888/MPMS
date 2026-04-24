@@ -54,6 +54,8 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Padding"                Value="0,0,14,2"/>
             <Setter Property="CaretBrush"             Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="SelectionBrush"         Value="{StaticResource NeutralSelectionBrush}"/>
+            <Setter Property="SelectionTextBrush"     Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
