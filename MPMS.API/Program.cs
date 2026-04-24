@@ -1,9 +1,11 @@
+using AutoMapper;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MPMS.API.Data;
+using MPMS.API.Mappings;
 using MPMS.API.Middleware;
 using MPMS.API.Services;
 
@@ -39,6 +41,7 @@ builder.Services.AddAuthorization();
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddAutoMapper(typeof(ApiMappingProfile));
 
 // ── Controllers + JSON ───────────────────────────────────────────────────────
 builder.Services.AddControllers()

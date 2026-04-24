@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,17 +17,18 @@ public class FilesController : ControllerBase
     private readonly ApplicationDbContext _db;
     private readonly IConfiguration _config;
     private readonly IWebHostEnvironment _env;
+    private readonly IMapper _mapper;
 
-    public FilesController(ApplicationDbContext db, IConfiguration config, IWebHostEnvironment env)
+    public FilesController(ApplicationDbContext db, IConfiguration config, IWebHostEnvironment env, IMapper mapper)
     {
         _db = db;
         _config = config;
         _env = env;
+        _mapper = mapper;
     }
 
-    /// <summary>Upload file (link to project, task, or stage via query params)</summary>
     [HttpPost("upload")]
-    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB
+    [RequestSizeLimit(50 * 1024 * 1024)]
     public async Task<ActionResult<FileResponse>> Upload(
         IFormFile file,
         [FromQuery] Guid? projectId,
@@ -35,10 +37,10 @@ public class FilesController : ControllerBase
         [FromQuery] DateTime? originalCreatedAt = null)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(new { message = "Файл не выбран" });
+            return BadRequest(new { message = "Р¤Р°Р№Р» РЅРµ РІС‹Р±СЂР°РЅ" });
 
         if (projectId is null && taskId is null && stageId is null)
-            return BadRequest(new { message = "Необходимо указать projectId, taskId или stageId" });
+            return BadRequest(new { message = "РќРµРѕР±С…РѕРґРёРјРѕ СѓРєР°Р·Р°С‚СЊ projectId, taskId РёР»Рё stageId" });
 
         var basePath = Path.Combine(_env.ContentRootPath,
             _config["FileStorage:BasePath"] ?? "wwwroot/uploads");
@@ -69,16 +71,12 @@ public class FilesController : ControllerBase
         await _db.SaveChangesAsync();
 
         await _db.Entry(attachment).Reference(f => f.UploadedBy).LoadAsync();
+        await _db.Entry(attachment).Reference(f => f.Project).LoadAsync();
+        await _db.Entry(attachment).Reference(f => f.Stage).LoadAsync();
 
-        return Ok(new FileResponse(
-            attachment.Id, attachment.FileName, attachment.FileType ?? "",
-            attachment.FileSize, attachment.UploadedById,
-            attachment.UploadedBy.Name,
-            attachment.ProjectId, attachment.TaskId, attachment.StageId,
-            attachment.CreatedAt, attachment.OriginalCreatedAt));
+        return Ok(_mapper.Map<FileResponse>(attachment));
     }
 
-    /// <summary>Download file by ID</summary>
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Download(Guid id)
     {
@@ -90,13 +88,12 @@ public class FilesController : ControllerBase
         var fullPath = Path.Combine(basePath, file.FilePath);
 
         if (!System.IO.File.Exists(fullPath))
-            return NotFound(new { message = "Файл не найден на диске" });
+            return NotFound(new { message = "Р¤Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ РЅР° РґРёСЃРєРµ" });
 
         var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
         return File(bytes, file.FileType ?? "application/octet-stream", file.FileName);
     }
 
-    /// <summary>Get files by project / task / stage</summary>
     [HttpGet]
     public async Task<ActionResult<List<FileResponse>>> GetFiles(
         [FromQuery] Guid? projectId,
@@ -115,17 +112,11 @@ public class FilesController : ControllerBase
 
         var files = await query
             .OrderByDescending(f => f.CreatedAt)
-            .Select(f => new FileResponse(
-                f.Id, f.FileName, f.FileType ?? "",
-                f.FileSize, f.UploadedById, f.UploadedBy.Name,
-                f.ProjectId, f.TaskId, f.StageId, f.CreatedAt,
-                f.OriginalCreatedAt, f.Project != null ? f.Project.Name : null, f.Stage != null ? f.Stage.Name : null))
             .ToListAsync();
 
-        return Ok(files);
+        return Ok(_mapper.Map<List<FileResponse>>(files));
     }
 
-    /// <summary>Delete file</summary>
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {

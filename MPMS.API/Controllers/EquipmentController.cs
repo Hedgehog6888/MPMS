@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace MPMS.API.Controllers;
 public class EquipmentController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public EquipmentController(ApplicationDbContext db)
+    public EquipmentController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
 
     private static bool ShouldBeUnavailable(EquipmentCondition condition) =>
@@ -36,18 +39,6 @@ public class EquipmentController : ControllerBase
             : currentStatus;
     }
 
-    private static EquipmentResponse ToDto(Equipment e) => new(
-        e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
-        e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
-        e.CheckedOutProjectId, e.CheckedOutTaskId,
-        e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment,
-        e.IsArchived);
-
-    private static EquipmentHistoryEntryResponse HistoryToDto(EquipmentHistoryEntry x) => new(
-        x.Id, x.EquipmentId, x.OccurredAt, x.EventType.ToString(),
-        x.PreviousStatus?.ToString(), x.NewStatus?.ToString(),
-        x.ProjectId, x.TaskId, x.UserId, x.Comment);
-
     [HttpGet]
     public async Task<ActionResult<List<EquipmentResponse>>> GetAll([FromQuery] string? search)
     {
@@ -55,7 +46,7 @@ public class EquipmentController : ControllerBase
         if (!string.IsNullOrWhiteSpace(search))
             q = q.Where(e => e.Name.Contains(search));
         var list = await q.OrderBy(e => e.Name).ToListAsync();
-        return Ok(list.Select(ToDto).ToList());
+        return Ok(_mapper.Map<List<EquipmentResponse>>(list));
     }
 
     [HttpGet("{id:guid}")]
@@ -63,7 +54,7 @@ public class EquipmentController : ControllerBase
     {
         var e = await _db.Equipments.Include(x => x.Category).FirstOrDefaultAsync(x => x.Id == id);
         if (e is null) return NotFound();
-        return Ok(ToDto(e));
+        return Ok(_mapper.Map<EquipmentResponse>(e));
     }
 
     [HttpPost]
@@ -82,23 +73,15 @@ public class EquipmentController : ControllerBase
         var initialStatus = ShouldBeUnavailable(request.Condition)
             ? EquipmentStatus.Unavailable
             : EquipmentStatus.Available;
-        var entity = new Equipment
-        {
-            Id = id,
-            Name = request.Name,
-            Description = request.Description,
-            CategoryId = request.CategoryId,
-            ImagePath = request.ImagePath,
-            InventoryNumber = request.InventoryNumber,
-            Status = initialStatus,
-            Condition = request.Condition,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+        var entity = _mapper.Map<Equipment>(request);
+        entity.Id = id;
+        entity.Status = initialStatus;
+        entity.CreatedAt = now;
+        entity.UpdatedAt = now;
         _db.Equipments.Add(entity);
         await _db.SaveChangesAsync();
         await _db.Entry(entity).Reference(x => x.Category).LoadAsync();
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, ToDto(entity));
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, _mapper.Map<EquipmentResponse>(entity));
     }
 
     [HttpPut("{id:guid}")]
@@ -111,12 +94,7 @@ public class EquipmentController : ControllerBase
             !await _db.EquipmentCategories.AnyAsync(c => c.Id == request.CategoryId.Value))
             return BadRequest(new { message = "Категория оборудования не найдена" });
 
-        entity.Name = request.Name;
-        entity.Description = request.Description;
-        entity.CategoryId = request.CategoryId;
-        entity.ImagePath = request.ImagePath;
-        entity.InventoryNumber = request.InventoryNumber;
-        entity.Condition = request.Condition;
+        _mapper.Map(request, entity);
         var derivedStatus = ResolveStatusAfterConditionChange(entity.Status, request.Condition);
         entity.Status = request.Status ?? derivedStatus;
         if (entity.Status != EquipmentStatus.InUse)
@@ -132,7 +110,7 @@ public class EquipmentController : ControllerBase
 
         await _db.SaveChangesAsync();
         await _db.Entry(entity).Reference(x => x.Category).LoadAsync();
-        return Ok(ToDto(entity));
+        return Ok(_mapper.Map<EquipmentResponse>(entity));
     }
 
     [HttpDelete("{id:guid}")]
@@ -153,7 +131,7 @@ public class EquipmentController : ControllerBase
             .Where(h => h.EquipmentId == id)
             .OrderByDescending(h => h.OccurredAt)
             .ToListAsync();
-        return Ok(list.Select(HistoryToDto).ToList());
+        return Ok(_mapper.Map<List<EquipmentHistoryEntryResponse>>(list));
     }
 
     [HttpPost("{id:guid}/history")]
@@ -243,7 +221,7 @@ public class EquipmentController : ControllerBase
         _db.EquipmentHistoryEntries.Add(entry);
         await _db.SaveChangesAsync();
 
-        return Ok(HistoryToDto(entry));
+        return Ok(_mapper.Map<EquipmentHistoryEntryResponse>(entry));
     }
 
     private Guid CurrentUserId() =>

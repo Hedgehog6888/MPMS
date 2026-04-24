@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,13 @@ public class ProjectsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     private readonly IActivityLogService _log;
+    private readonly IMapper _mapper;
 
-    public ProjectsController(ApplicationDbContext db, IActivityLogService log)
+    public ProjectsController(ApplicationDbContext db, IActivityLogService log, IMapper mapper)
     {
         _db = db;
         _log = log;
+        _mapper = mapper;
     }
 
     /// <summary>Get all projects (with optional status filter)</summary>
@@ -42,16 +45,9 @@ public class ProjectsController : ControllerBase
 
         var projects = await query
             .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new ProjectListResponse(
-                p.Id, p.Name, p.Client,
-                p.StartDate, p.EndDate,
-                p.Status.ToString(), p.Manager.Name,
-                p.ManagerId, p.Description, p.Address,
-                p.CreatedAt, p.UpdatedAt,
-                p.IsMarkedForDeletion, p.IsArchived))
             .ToListAsync();
 
-        return Ok(projects);
+        return Ok(_mapper.Map<List<ProjectListResponse>>(projects));
     }
 
     /// <summary>Get project by ID with full details</summary>
@@ -65,20 +61,7 @@ public class ProjectsController : ControllerBase
 
         if (p is null) return NotFound();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var overdue = p.Tasks.Count(t =>
-            t.DueDate < today && t.Status != Models.TaskStatus.Completed);
-
-        return Ok(new ProjectResponse(
-            p.Id, p.Name, p.Description, p.Client, p.Address,
-            p.StartDate, p.EndDate, p.Status.ToString(),
-            p.ManagerId, p.Manager.Name,
-            p.Tasks.Count,
-            p.Tasks.Count(t => t.Status == Models.TaskStatus.Completed),
-            p.Tasks.Count(t => t.Status == Models.TaskStatus.InProgress),
-            overdue,
-            p.CreatedAt, p.UpdatedAt,
-            p.IsMarkedForDeletion, p.IsArchived));
+        return Ok(_mapper.Map<ProjectResponse>(p));
     }
 
     /// <summary>Create a new project</summary>
@@ -95,20 +78,10 @@ public class ProjectsController : ControllerBase
         if (!managerExists)
             return BadRequest(new { message = "Менеджер не найден" });
 
-        var project = new Project
-        {
-            Id = id,
-            Name = request.Name,
-            Description = request.Description,
-            Client = request.Client,
-            Address = request.Address,
-            StartDate = request.StartDate,
-            EndDate = request.EndDate,
-            Status = ProjectStatus.Planning,
-            ManagerId = request.ManagerId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var project = _mapper.Map<Project>(request);
+        project.Id = id;
+        project.CreatedAt = DateTime.UtcNow;
+        project.UpdatedAt = DateTime.UtcNow;
 
         _db.Projects.Add(project);
         await _db.SaveChangesAsync();
@@ -131,16 +104,7 @@ public class ProjectsController : ControllerBase
         if (!managerExists)
             return BadRequest(new { message = "Менеджер не найден" });
 
-        project.Name = request.Name;
-        project.Description = request.Description;
-        project.Client = request.Client;
-        project.Address = request.Address;
-        project.StartDate = request.StartDate;
-        project.EndDate = request.EndDate;
-        project.Status = request.Status;
-        project.ManagerId = request.ManagerId;
-        project.IsMarkedForDeletion = request.IsMarkedForDeletion;
-        project.IsArchived = request.IsArchived;
+        _mapper.Map(request, project);
         project.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -169,13 +133,9 @@ public class ProjectsController : ControllerBase
             .Where(pm => pm.ProjectId == id)
             .Include(pm => pm.User)
             .ThenInclude(u => u.Role)
-            .Select(pm => new UserResponse(
-                pm.User.Id, pm.User.FirstName, pm.User.LastName, pm.User.Username,
-                pm.User.Email, pm.User.Role.Name, pm.User.RoleId, pm.User.CreatedAt, pm.User.AvatarData, pm.User.SubRole, pm.User.AdditionalSubRoles, pm.User.BirthDate, pm.User.HomeAddress,
-                pm.User.IsBlocked, pm.User.BlockedAt, pm.User.BlockedReason))
             .ToListAsync();
 
-        return Ok(members);
+        return Ok(_mapper.Map<List<UserResponse>>(members.Select(pm => pm.User).ToList()));
     }
 
     /// <summary>Add member to project</summary>

@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,18 +15,13 @@ namespace MPMS.API.Controllers;
 public class MaterialsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public MaterialsController(ApplicationDbContext db)
+    public MaterialsController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
-
-    private static MaterialResponse ToDto(Material m) => new(
-        m.Id, m.Name, m.Unit, m.Description, m.Quantity,
-        m.Cost, m.InventoryNumber,
-        m.CategoryId, m.Category?.Name, m.ImagePath, m.CreatedAt, m.UpdatedAt,
-        m.IsWrittenOff, m.WrittenOffAt, m.WrittenOffComment,
-        m.IsArchived);
 
     /// <summary>Get all materials (with optional search)</summary>
     [HttpGet]
@@ -43,26 +39,9 @@ public class MaterialsController : ControllerBase
 
         var materials = await query
             .OrderBy(m => m.Name)
-            .Select(m => new MaterialResponse(
-                m.Id,
-                m.Name,
-                m.Unit,
-                m.Description,
-                m.Quantity,
-                m.Cost,
-                m.InventoryNumber,
-                m.CategoryId,
-                m.Category != null ? m.Category.Name : null,
-                m.ImagePath,
-                m.CreatedAt,
-                m.UpdatedAt,
-                m.IsWrittenOff,
-                m.WrittenOffAt,
-                m.WrittenOffComment,
-                m.IsArchived))
             .ToListAsync();
 
-        return Ok(materials);
+        return Ok(_mapper.Map<List<MaterialResponse>>(materials));
     }
 
     /// <summary>Get material by ID</summary>
@@ -71,7 +50,7 @@ public class MaterialsController : ControllerBase
     {
         var m = await _db.Materials.Include(x => x.Category).FirstOrDefaultAsync(x => x.Id == id);
         if (m is null) return NotFound();
-        return Ok(ToDto(m));
+        return Ok(_mapper.Map<MaterialResponse>(m));
     }
 
     /// <summary>Create material</summary>
@@ -90,20 +69,11 @@ public class MaterialsController : ControllerBase
         }
 
         var now = DateTime.UtcNow;
-        var material = new Material
-        {
-            Id = id,
-            Name = request.Name,
-            Unit = request.Unit,
-            Description = request.Description,
-            Quantity = request.InitialQuantity < 0 ? 0 : request.InitialQuantity,
-            Cost = request.Cost,
-            InventoryNumber = request.InventoryNumber,
-            CategoryId = request.CategoryId,
-            ImagePath = request.ImagePath,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+        var material = _mapper.Map<Material>(request);
+        material.Id = id;
+        material.Quantity = request.InitialQuantity < 0 ? 0 : request.InitialQuantity;
+        material.CreatedAt = now;
+        material.UpdatedAt = now;
 
         _db.Materials.Add(material);
 
@@ -124,7 +94,7 @@ public class MaterialsController : ControllerBase
         await _db.SaveChangesAsync();
 
         await _db.Entry(material).Reference(x => x.Category).LoadAsync();
-        return CreatedAtAction(nameof(GetById), new { id = material.Id }, ToDto(material));
+        return CreatedAtAction(nameof(GetById), new { id = material.Id }, _mapper.Map<MaterialResponse>(material));
     }
 
     /// <summary>Update material</summary>
@@ -140,22 +110,12 @@ public class MaterialsController : ControllerBase
             if (!catOk) return BadRequest(new { message = "Категория материала не найдена" });
         }
 
-        material.Name = request.Name;
-        material.Unit = request.Unit;
-        material.Description = request.Description;
-        material.Cost = request.Cost;
-        material.InventoryNumber = request.InventoryNumber;
-        material.CategoryId = request.CategoryId;
-        material.ImagePath = request.ImagePath;
-        material.IsWrittenOff = request.IsWrittenOff;
-        material.WrittenOffAt = request.WrittenOffAt;
-        material.WrittenOffComment = request.WrittenOffComment;
-        material.IsArchived = request.IsArchived;
+        _mapper.Map(request, material);
         material.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
         await _db.Entry(material).Reference(x => x.Category).LoadAsync();
-        return Ok(ToDto(material));
+        return Ok(_mapper.Map<MaterialResponse>(material));
     }
 
     /// <summary>Delete material</summary>

@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +15,13 @@ namespace MPMS.API.Controllers;
 public class DiscussionMessagesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public DiscussionMessagesController(ApplicationDbContext db) => _db = db;
+    public DiscussionMessagesController(ApplicationDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
     [HttpGet]
     public async Task<ActionResult<List<DiscussionMessageResponse>>> GetAll(
@@ -30,11 +36,8 @@ public class DiscussionMessagesController : ControllerBase
 
         var list = await q
             .OrderBy(m => m.CreatedAt)
-            .Select(m => new DiscussionMessageResponse(
-                m.Id, m.TaskId, m.ProjectId, m.UserId, m.UserName, m.UserInitials,
-                m.UserColor, m.UserRole, m.Text, m.CreatedAt))
             .ToListAsync();
-        return Ok(list);
+        return Ok(_mapper.Map<List<DiscussionMessageResponse>>(list));
     }
 
     [HttpPost]
@@ -54,10 +57,7 @@ public class DiscussionMessagesController : ControllerBase
         if (await _db.DiscussionMessages.AnyAsync(m => m.Id == id))
         {
             var existing = await _db.DiscussionMessages.FirstAsync(m => m.Id == id);
-            return Ok(new DiscussionMessageResponse(
-                existing.Id, existing.TaskId, existing.ProjectId, existing.UserId,
-                existing.UserName, existing.UserInitials, existing.UserColor, existing.UserRole,
-                existing.Text, existing.CreatedAt));
+            return Ok(_mapper.Map<DiscussionMessageResponse>(existing));
         }
 
         if (projectId.HasValue &&
@@ -100,9 +100,7 @@ public class DiscussionMessagesController : ControllerBase
         _db.DiscussionMessages.Add(msg);
         await _db.SaveChangesAsync();
 
-        return Created($"/api/discussion-messages/{msg.Id}", new DiscussionMessageResponse(
-            msg.Id, msg.TaskId, msg.ProjectId, msg.UserId, msg.UserName, msg.UserInitials,
-            msg.UserColor, msg.UserRole, msg.Text, msg.CreatedAt));
+        return Created($"/api/discussion-messages/{msg.Id}", _mapper.Map<DiscussionMessageResponse>(msg));
     }
 
     private static string InitialsFromName(string name)

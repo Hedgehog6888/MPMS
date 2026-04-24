@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,15 +15,13 @@ namespace MPMS.API.Controllers;
 public class MaterialStockMovementsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public MaterialStockMovementsController(ApplicationDbContext db)
+    public MaterialStockMovementsController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
-
-    private static MaterialStockMovementResponse ToDto(MaterialStockMovement x) => new(
-        x.Id, x.MaterialId, x.OccurredAt, x.Delta, x.QuantityAfter,
-        x.OperationType.ToString(), x.Comment, x.UserId, x.ProjectId, x.TaskId);
 
     [HttpGet]
     public async Task<ActionResult<List<MaterialStockMovementResponse>>> GetList(Guid materialId)
@@ -35,7 +34,7 @@ public class MaterialStockMovementsController : ControllerBase
             .OrderByDescending(x => x.OccurredAt)
             .ToListAsync();
 
-        return Ok(list.Select(ToDto).ToList());
+        return Ok(_mapper.Map<List<MaterialStockMovementResponse>>(list));
     }
 
     [HttpPost]
@@ -77,7 +76,7 @@ public class MaterialStockMovementsController : ControllerBase
         _db.MaterialStockMovements.Add(movement);
         await _db.SaveChangesAsync();
 
-        return Ok(ToDto(movement));
+        return Ok(_mapper.Map<MaterialStockMovementResponse>(movement));
     }
 
     private Guid CurrentUserId() =>

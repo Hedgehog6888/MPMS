@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +15,13 @@ namespace MPMS.API.Controllers;
 public class SyncedActivityLogsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public SyncedActivityLogsController(ApplicationDbContext db) => _db = db;
+    public SyncedActivityLogsController(ApplicationDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
     [HttpGet]
     public async Task<ActionResult<List<SyncedActivityLogResponse>>> GetAll([FromQuery] DateTime? since)
@@ -26,11 +32,8 @@ public class SyncedActivityLogsController : ControllerBase
         var list = await q
             .OrderByDescending(l => l.CreatedAt)
             .Take(5000)
-            .Select(l => new SyncedActivityLogResponse(
-                l.Id, l.UserId, l.ActorRole, l.UserName, l.UserInitials, l.UserColor,
-                l.ActionType, l.ActionText, l.EntityType, l.EntityId, l.CreatedAt))
             .ToListAsync();
-        return Ok(list);
+        return Ok(_mapper.Map<List<SyncedActivityLogResponse>>(list));
     }
 
     [HttpPost]
@@ -44,32 +47,18 @@ public class SyncedActivityLogsController : ControllerBase
         if (await _db.SyncedActivityLogs.AnyAsync(l => l.Id == request.Id))
         {
             var e = await _db.SyncedActivityLogs.FirstAsync(l => l.Id == request.Id);
-            return Ok(new SyncedActivityLogResponse(
-                e.Id, e.UserId, e.ActorRole, e.UserName, e.UserInitials, e.UserColor,
-                e.ActionType, e.ActionText, e.EntityType, e.EntityId, e.CreatedAt));
+            return Ok(_mapper.Map<SyncedActivityLogResponse>(e));
         }
 
-        var entry = new SyncedActivityLog
-        {
-            Id = request.Id,
-            UserId = request.UserId,
-            ActorRole = request.ActorRole,
-            UserName = request.UserName.Trim(),
-            UserInitials = request.UserInitials,
-            UserColor = request.UserColor,
-            ActionType = request.ActionType,
-            ActionText = request.ActionText.Trim(),
-            EntityType = request.EntityType.Trim(),
-            EntityId = request.EntityId,
-            CreatedAt = request.CreatedAt
-        };
+        var entry = _mapper.Map<SyncedActivityLog>(request);
+        entry.UserName = entry.UserName.Trim();
+        entry.ActionText = entry.ActionText.Trim();
+        entry.EntityType = entry.EntityType.Trim();
 
         _db.SyncedActivityLogs.Add(entry);
         await _db.SaveChangesAsync();
 
-        return Created($"/api/synced-activity-logs/{entry.Id}", new SyncedActivityLogResponse(
-            entry.Id, entry.UserId, entry.ActorRole, entry.UserName, entry.UserInitials, entry.UserColor,
-            entry.ActionType, entry.ActionText, entry.EntityType, entry.EntityId, entry.CreatedAt));
+        return Created($"/api/synced-activity-logs/{entry.Id}", _mapper.Map<SyncedActivityLogResponse>(entry));
     }
 
     private Guid CurrentUserId() =>

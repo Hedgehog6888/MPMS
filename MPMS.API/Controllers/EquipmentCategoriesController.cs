@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +14,12 @@ namespace MPMS.API.Controllers;
 public class EquipmentCategoriesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public EquipmentCategoriesController(ApplicationDbContext db)
+    public EquipmentCategoriesController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -24,9 +27,8 @@ public class EquipmentCategoriesController : ControllerBase
     {
         var list = await _db.EquipmentCategories
             .OrderBy(c => c.Name)
-            .Select(c => new EquipmentCategoryResponse(c.Id, c.Name))
             .ToListAsync();
-        return Ok(list);
+        return Ok(_mapper.Map<List<EquipmentCategoryResponse>>(list));
     }
 
     [HttpPost]
@@ -37,13 +39,12 @@ public class EquipmentCategoriesController : ControllerBase
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Name == normalizedName);
         if (existingByName is not null)
-            return Ok(new EquipmentCategoryResponse(existingByName.Id, existingByName.Name));
+            return Ok(_mapper.Map<EquipmentCategoryResponse>(existingByName));
 
-        var entity = new EquipmentCategory
-        {
-            Id = request.Id ?? Guid.NewGuid(),
-            Name = normalizedName
-        };
+        var entity = _mapper.Map<EquipmentCategory>(request);
+        entity.Id = request.Id ?? Guid.NewGuid();
+        entity.Name = normalizedName;
+
         try
         {
             _db.EquipmentCategories.Add(entity);
@@ -51,16 +52,16 @@ public class EquipmentCategoriesController : ControllerBase
         }
         catch (DbUpdateException)
         {
-            // Idempotent create for sync retries/races: return existing category by name.
             var existing = await _db.EquipmentCategories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Name == normalizedName);
             if (existing is not null)
-                return Ok(new EquipmentCategoryResponse(existing.Id, existing.Name));
-            return Conflict(new { message = "Категория с таким именем уже существует" });
+                return Ok(_mapper.Map<EquipmentCategoryResponse>(existing));
+
+            return Conflict(new { message = "РљР°С‚РµРіРѕСЂРёСЏ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚" });
         }
 
         return CreatedAtAction(nameof(GetAll), new { id = entity.Id },
-            new EquipmentCategoryResponse(entity.Id, entity.Name));
+            _mapper.Map<EquipmentCategoryResponse>(entity));
     }
 }

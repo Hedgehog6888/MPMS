@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +16,12 @@ namespace MPMS.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public UsersController(ApplicationDbContext db)
+    public UsersController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
 
     /// <summary>Get all users (for assignee dropdowns)</summary>
@@ -39,11 +42,9 @@ public class UsersController : ControllerBase
         var users = await query
             .OrderBy(u => u.LastName)
             .ThenBy(u => u.FirstName)
-            .Select(u => new UserResponse(u.Id, u.FirstName, u.LastName, u.Username, u.Email, u.Role.Name, u.RoleId, u.CreatedAt, u.AvatarData, u.SubRole, u.AdditionalSubRoles, u.BirthDate, u.HomeAddress,
-                u.IsBlocked, u.BlockedAt, u.BlockedReason))
             .ToListAsync();
 
-        return Ok(users);
+        return Ok(_mapper.Map<List<UserResponse>>(users));
     }
 
     /// <summary>Create user (admin only)</summary>
@@ -62,31 +63,25 @@ public class UsersController : ControllerBase
             ? request.AvatarData
             : AvatarGenerator.GenerateInitialsAvatar(fullName);
 
-        var user = new User
-        {
-            Id = request.Id ?? Guid.NewGuid(),
-            FirstName = request.FirstName.Trim(),
-            LastName = request.LastName.Trim(),
-            Username = request.Username.Trim(),
-            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            RoleId = request.RoleId,
-            SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim(),
-            AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim(),
-            BirthDate = request.BirthDate,
-            HomeAddress = string.IsNullOrWhiteSpace(request.HomeAddress) ? null : request.HomeAddress.Trim(),
-            AvatarData = avatarData,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var user = _mapper.Map<User>(request);
+        user.Id = request.Id ?? Guid.NewGuid();
+        user.FirstName = user.FirstName.Trim();
+        user.LastName = user.LastName.Trim();
+        user.Username = user.Username.Trim();
+        user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
+        user.SubRole = string.IsNullOrWhiteSpace(user.SubRole) ? null : user.SubRole.Trim();
+        user.AdditionalSubRoles = string.IsNullOrWhiteSpace(user.AdditionalSubRoles) ? null : user.AdditionalSubRoles.Trim();
+        user.HomeAddress = string.IsNullOrWhiteSpace(user.HomeAddress) ? null : user.HomeAddress.Trim();
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        user.AvatarData = avatarData;
+        user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
-        return Created($"/api/users/{user.Id}", new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
-            user.IsBlocked, user.BlockedAt, user.BlockedReason));
+        return Created($"/api/users/{user.Id}", _mapper.Map<UserResponse>(user));
     }
 
     /// <summary>Update user (admin only)</summary>
@@ -111,15 +106,14 @@ public class UsersController : ControllerBase
         if (!roleExists)
             return BadRequest(new { message = "Указанная роль не существует" });
 
-        user.FirstName = request.FirstName.Trim();
-        user.LastName = request.LastName.Trim();
-        user.Username = request.Username.Trim();
-        user.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
-        user.RoleId = request.RoleId;
-        user.SubRole = string.IsNullOrWhiteSpace(request.SubRole) ? null : request.SubRole.Trim();
-        user.AdditionalSubRoles = string.IsNullOrWhiteSpace(request.AdditionalSubRoles) ? null : request.AdditionalSubRoles.Trim();
-        user.BirthDate = request.BirthDate;
-        user.HomeAddress = string.IsNullOrWhiteSpace(request.HomeAddress) ? null : request.HomeAddress.Trim();
+        _mapper.Map(request, user);
+        user.FirstName = user.FirstName.Trim();
+        user.LastName = user.LastName.Trim();
+        user.Username = user.Username.Trim();
+        user.Email = string.IsNullOrWhiteSpace(user.Email) ? null : user.Email.Trim();
+        user.SubRole = string.IsNullOrWhiteSpace(user.SubRole) ? null : user.SubRole.Trim();
+        user.AdditionalSubRoles = string.IsNullOrWhiteSpace(user.AdditionalSubRoles) ? null : user.AdditionalSubRoles.Trim();
+        user.HomeAddress = string.IsNullOrWhiteSpace(user.HomeAddress) ? null : user.HomeAddress.Trim();
         user.UpdatedAt = DateTime.UtcNow;
 
         if (!string.IsNullOrEmpty(request.NewPassword))
@@ -144,9 +138,7 @@ public class UsersController : ControllerBase
         await _db.SaveChangesAsync();
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
-        return Ok(new UserResponse(user.Id, user.FirstName, user.LastName,
-            user.Username, user.Email, user.Role.Name, user.RoleId, user.CreatedAt, user.AvatarData, user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
-            user.IsBlocked, user.BlockedAt, user.BlockedReason));
+        return Ok(_mapper.Map<UserResponse>(user));
     }
 
     /// <summary>Upload avatar for current user or specified user (admin can upload for any user).</summary>
@@ -221,12 +213,8 @@ public class UsersController : ControllerBase
             .OrderByDescending(l => l.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(l => new ActivityLogResponse(
-                l.Id, l.UserId, l.User.FirstName + " " + l.User.LastName,
-                l.ActionType.ToString(), l.EntityType.ToString(),
-                l.EntityId, l.Description, l.CreatedAt))
             .ToListAsync();
 
-        return Ok(logs);
+        return Ok(_mapper.Map<List<ActivityLogResponse>>(logs));
     }
 }

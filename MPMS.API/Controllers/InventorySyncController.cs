@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,25 +15,13 @@ namespace MPMS.API.Controllers;
 public class InventorySyncController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IMapper _mapper;
 
-    public InventorySyncController(ApplicationDbContext db)
+    public InventorySyncController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
+        _mapper = mapper;
     }
-
-    private static MaterialStockMovementResponse StockToDto(MaterialStockMovement x) => new(
-        x.Id, x.MaterialId, x.OccurredAt, x.Delta, x.QuantityAfter,
-        x.OperationType.ToString(), x.Comment, x.UserId, x.ProjectId, x.TaskId);
-
-    private static EquipmentResponse EqToDto(Equipment e) => new(
-        e.Id, e.Name, e.Description, e.CategoryId, e.Category?.Name, e.ImagePath,
-        e.Status.ToString(), e.Condition.ToString(), e.InventoryNumber, e.CreatedAt, e.UpdatedAt,
-        e.CheckedOutProjectId, e.CheckedOutTaskId, e.IsWrittenOff, e.WrittenOffAt, e.WrittenOffComment, e.IsArchived);
-
-    private static EquipmentHistoryEntryResponse HistToDto(EquipmentHistoryEntry x) => new(
-        x.Id, x.EquipmentId, x.OccurredAt, x.EventType.ToString(),
-        x.PreviousStatus?.ToString(), x.NewStatus?.ToString(),
-        x.ProjectId, x.TaskId, x.UserId, x.Comment);
 
     [HttpGet("material-stock-movements")]
     public async Task<ActionResult<List<MaterialStockMovementResponse>>> GetAllMaterialStockMovements()
@@ -40,7 +29,7 @@ public class InventorySyncController : ControllerBase
         var list = await _db.MaterialStockMovements
             .OrderByDescending(x => x.OccurredAt)
             .ToListAsync();
-        return Ok(list.Select(StockToDto).ToList());
+        return Ok(_mapper.Map<List<MaterialStockMovementResponse>>(list));
     }
 
     [HttpGet("equipment")]
@@ -50,7 +39,7 @@ public class InventorySyncController : ControllerBase
             .Include(e => e.Category)
             .OrderBy(e => e.Name)
             .ToListAsync();
-        return Ok(list.Select(EqToDto).ToList());
+        return Ok(_mapper.Map<List<EquipmentResponse>>(list));
     }
 
     [HttpGet("equipment-history")]
@@ -59,6 +48,6 @@ public class InventorySyncController : ControllerBase
         var list = await _db.EquipmentHistoryEntries
             .OrderByDescending(x => x.OccurredAt)
             .ToListAsync();
-        return Ok(list.Select(HistToDto).ToList());
+        return Ok(_mapper.Map<List<EquipmentHistoryEntryResponse>>(list));
     }
 }
