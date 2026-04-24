@@ -172,7 +172,7 @@ public static class LocalSchemaMigrator
                 "Username"    TEXT    NOT NULL DEFAULT '',
                 "DisplayName" TEXT    NOT NULL DEFAULT '',
                 "Role"        TEXT    NOT NULL DEFAULT '',
-                "AvatarColor" TEXT    NOT NULL DEFAULT '#1B6EC2',
+                "AvatarColor" TEXT    NOT NULL DEFAULT '#0F2038',
                 "Initials"    TEXT    NOT NULL DEFAULT '?',
                 "LastLoginAt" TEXT    NOT NULL DEFAULT '0001-01-01 00:00:00'
             );
@@ -209,7 +209,7 @@ public static class LocalSchemaMigrator
                 "Id"          TEXT    NOT NULL CONSTRAINT "PK_ActivityLogs" PRIMARY KEY,
                 "UserName"    TEXT    NOT NULL DEFAULT '',
                 "UserInitials" TEXT   NOT NULL DEFAULT '?',
-                "UserColor"   TEXT    NOT NULL DEFAULT '#1B6EC2',
+                "UserColor"   TEXT    NOT NULL DEFAULT '#0F2038',
                 "ActionText"  TEXT    NOT NULL DEFAULT '',
                 "EntityType"  TEXT    NOT NULL DEFAULT '',
                 "EntityId"    TEXT    NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
@@ -265,7 +265,7 @@ public static class LocalSchemaMigrator
                 "UserId"      TEXT NOT NULL,
                 "UserName"    TEXT NOT NULL DEFAULT '',
                 "UserInitials" TEXT NOT NULL DEFAULT '?',
-                "UserColor"   TEXT NOT NULL DEFAULT '#1B6EC2',
+                "UserColor"   TEXT NOT NULL DEFAULT '#0F2038',
                 "UserRole"    TEXT NOT NULL DEFAULT '',
                 "Text"        TEXT NOT NULL DEFAULT '',
                 "CreatedAt"   TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'

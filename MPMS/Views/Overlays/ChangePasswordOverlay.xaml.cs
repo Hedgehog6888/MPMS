@@ -59,7 +59,7 @@ public partial class ChangePasswordOverlay : UserControl
                 ActorRole = auth.UserRole,
                 UserName = _userName,
                 UserInitials = AvatarHelper.GetInitials(_userName),
-                UserColor = "#1B6EC2",
+                UserColor = "#0F2038",
                 ActionType = ActivityActionKind.PasswordChanged,
                 ActionText = "Изменил пароль своего аккаунта",
                 EntityType = "User",

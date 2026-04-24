@@ -16,15 +16,14 @@ public static class AvatarHelper
 {
     private static readonly string[] PaletteColors =
     {
-        "#1B6EC2", "#C0392B", "#27AE60", "#8E44AD",
-        "#E67E22", "#16A085", "#2980B9", "#D35400",
-        "#1ABC9C", "#9B59B6", "#E74C3C", "#2ECC71"
+        "#1ABC9C", "#2ECC71", "#3498DB", "#9B59B6", "#34495E",
+        "#F1C40F", "#E67E22", "#E74C3C", "#95A5A6", "#D35400"
     };
 
     /// <summary>Returns a deterministic accent color for a given display name.</summary>
     public static string GetColorForName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name)) return "#1B6EC2";
+        if (string.IsNullOrWhiteSpace(name)) return "#34495E";
         int hash = 0;
         foreach (char c in name) hash = hash * 31 + c;
         return PaletteColors[Math.Abs(hash) % PaletteColors.Length];
@@ -54,7 +53,7 @@ public static class AvatarHelper
         {
             Color bg;
             try { bg = (Color)ColorConverter.ConvertFromString(hexColor); }
-            catch { bg = Color.FromRgb(0x1B, 0x6E, 0xC2); }
+            catch { bg = Color.FromRgb(0x34, 0x49, 0x5E); }
 
             double cx = size / 2.0;
             double cy = size / 2.0;

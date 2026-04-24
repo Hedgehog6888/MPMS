@@ -855,7 +855,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             UserId = _auth.UserId ?? Guid.Empty,
             UserName = userName,
             UserInitials = initials,
-            UserColor = "#1B6EC2",
+            UserColor = "#0F2038",
             UserRole = RoleToRussian(_auth.UserRole),
             Text = text.Trim(),
             CreatedAt = DateTime.UtcNow
@@ -901,7 +901,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ActorRole = actorRole,
             UserName = userName,
             UserInitials = initials.ToUpper(),
-            UserColor = "#1B6EC2",
+            UserColor = "#0F2038",
             ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,

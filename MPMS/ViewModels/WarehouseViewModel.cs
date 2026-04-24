@@ -922,7 +922,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             ActorRole = actorRole,
             UserName = userName,
             UserInitials = initials.ToUpper(),
-            UserColor = "#1B6EC2",
+            UserColor = "#0F2038",
             ActionType = actionType,
             ActionText = actionText,
             EntityType = entityType,

@@ -420,7 +420,7 @@ public partial class ProfilePage : UserControl
         AvatarInitials.Visibility = Visibility.Visible;
         var hexColor = AvatarHelper.GetColorForName(_user?.Name ?? "");
         try { AvatarBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hexColor)); }
-        catch { AvatarBorder.Background = new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)); }
+        catch { AvatarBorder.Background = new SolidColorBrush(Color.FromRgb(0x0F, 0x20, 0x38)); }
     }
 
     private void AvatarUpload_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -476,7 +476,7 @@ public partial class ProfilePage : UserControl
                     ActorRole   = auth.UserRole,
                     UserName    = _user.Name,
                     UserInitials = AvatarHelper.GetInitials(_user.Name),
-                    UserColor   = "#1B6EC2",
+                    UserColor   = "#0F2038",
                     ActionType  = ActivityActionKind.AvatarChanged,
                     ActionText  = "Изменил фото профиля",
                     EntityType  = "User",

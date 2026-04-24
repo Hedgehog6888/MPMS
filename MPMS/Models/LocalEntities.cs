@@ -537,7 +537,7 @@ public class LocalMessage
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)] public string UserInitials { get; set; } = "?";
-    [MaxLength(20)] public string UserColor { get; set; } = "#1B6EC2";
+    [MaxLength(20)] public string UserColor { get; set; } = "#0F2038";
     [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -586,7 +586,7 @@ public class LocalActivityLog
     [MaxLength(50)] public string? ActorRole { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)]   public string UserInitials { get; set; } = "?";
-    [MaxLength(20)]  public string UserColor { get; set; } = "#1B6EC2";
+    [MaxLength(20)]  public string UserColor { get; set; } = "#0F2038";
     [MaxLength(50)]  public string? ActionType { get; set; }
     [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
     [MaxLength(50)]  public string EntityType { get; set; } = string.Empty;
@@ -636,7 +636,7 @@ public class RecentAccount
     [MaxLength(50)]  public string Username { get; set; } = string.Empty;
     [MaxLength(100)] public string DisplayName { get; set; } = string.Empty;
     [MaxLength(50)]  public string Role { get; set; } = string.Empty;
-    [MaxLength(20)]  public string AvatarColor { get; set; } = "#1B6EC2";
+    [MaxLength(20)]  public string AvatarColor { get; set; } = "#0F2038";
     [MaxLength(5)]   public string Initials { get; set; } = "?";
     public DateTime LastLoginAt { get; set; }
 
@@ -654,7 +654,7 @@ public class RecentAccount
             "Project Manager" => "#2980B9",
             "Foreman"         => "#27AE60",
             "Worker"          => "#E67E22",
-            _                 => "#1B6EC2"
+            _                 => "#0F2038"
         };
 
         return new RecentAccount

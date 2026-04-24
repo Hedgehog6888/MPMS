@@ -306,7 +306,7 @@
                                                     Click="AssigneePeek_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Border Style="{StaticResource AvatarCircle34}"
-                                                            Background="#000000" Margin="0,0,10,0">
+                                                            Background="{StaticResource AvatarPlaceholderBrush}" Margin="0,0,10,0">
                                                         <Grid>
                                                             <Image Style="{StaticResource AvatarImage}"
                                                                    Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
@@ -331,7 +331,7 @@
                                             <StackPanel Orientation="Horizontal"
                                                         Visibility="{Binding IsUserPeekInteractive, Converter={StaticResource BoolToVisInv}}">
                                                 <Border Style="{StaticResource AvatarCircle34}"
-                                                        Background="#000000" Margin="0,0,10,0">
+                                                        Background="{StaticResource AvatarPlaceholderBrush}" Margin="0,0,10,0">
                                                     <Grid>
                                                         <Image Style="{StaticResource AvatarImage}"
                                                                Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"

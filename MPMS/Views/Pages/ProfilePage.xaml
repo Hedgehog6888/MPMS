@@ -157,7 +157,7 @@
                             <!-- Avatar circle -->
                             <Border x:Name="AvatarBorder" Style="{StaticResource AvatarCircle90}"
                                     HorizontalAlignment="Center"
-                                    Background="#1B6EC2">
+                                    Background="{StaticResource AvatarPlaceholderBrush}">
                                 <TextBlock x:Name="AvatarInitials" Text="ИИ"
                                            FontSize="30" FontWeight="Bold"
                                            Foreground="White"

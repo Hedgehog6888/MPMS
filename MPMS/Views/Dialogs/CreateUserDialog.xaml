@@ -45,7 +45,7 @@
 
                     <!-- Avatar circle preview -->
                     <Border x:Name="AvatarCircle" Width="64" Height="64" CornerRadius="32"
-                            Background="#1B6EC2" Margin="0,0,16,0">
+                            Background="{StaticResource AvatarPlaceholderBrush}" Margin="0,0,16,0">
                         <TextBlock x:Name="AvatarInitials" Text="?"
                                    FontSize="22" FontWeight="Bold" Foreground="White"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>

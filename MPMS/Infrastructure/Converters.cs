@@ -886,14 +886,14 @@ public class InitialsToBrushConverter : IValueConverter
 {
     private static readonly string[] Palette =
     {
-        "#1B6EC2", "#C0392B", "#27AE60", "#8E44AD",
-        "#E67E22", "#16A085", "#2980B9", "#D35400"
+        "#1ABC9C", "#2ECC71", "#3498DB", "#9B59B6", "#34495E",
+        "#F1C40F", "#E67E22", "#E74C3C", "#95A5A6", "#D35400"
     };
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         var s = value?.ToString() ?? "";
-        if (string.IsNullOrEmpty(s)) return new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
+        if (string.IsNullOrEmpty(s)) return new SolidColorBrush(Color.FromRgb(0x34, 0x49, 0x5E));
         int hash = 0;
         foreach (var c in s) hash = hash * 31 + c;
         var hex = Palette[Math.Abs(hash) % Palette.Length];
@@ -902,7 +902,7 @@ public class InitialsToBrushConverter : IValueConverter
             var color = (Color)ColorConverter.ConvertFromString(hex);
             return new SolidColorBrush(color);
         }
-        catch { return new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)); }
+        catch { return new SolidColorBrush(Color.FromRgb(0x34, 0x49, 0x5E)); }
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
