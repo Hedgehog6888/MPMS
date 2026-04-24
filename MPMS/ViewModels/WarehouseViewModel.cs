@@ -23,7 +23,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<MaterialCategoryFilterOption> _materialCategoryFilterOptions = [];
     [ObservableProperty] private ObservableCollection<MaterialCategoryFilterOption> _equipmentCategoryFilterOptions = [];
     [ObservableProperty] private string _searchText = string.Empty;
-    [ObservableProperty] private Guid? _selectedCategoryId;
+    [ObservableProperty] private Guid? _selectedMaterialCategoryId;
+    [ObservableProperty] private Guid? _selectedEquipmentCategoryId;
     [ObservableProperty] private string _lifecycleFilter = "Все";
     [ObservableProperty] private string _materialStockFilter = "Все";
     [ObservableProperty] private string _equipmentStatusFilter = "Все";
@@ -82,7 +83,13 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
     partial void OnSearchTextChanged(string value) => _ = LoadAsync();
 
-    partial void OnSelectedCategoryIdChanged(Guid? value)
+    partial void OnSelectedMaterialCategoryIdChanged(Guid? value)
+    {
+        if (_suppressWarehouseFilterReload) return;
+        _ = LoadAsync();
+    }
+
+    partial void OnSelectedEquipmentCategoryIdChanged(Guid? value)
     {
         if (_suppressWarehouseFilterReload) return;
         _ = LoadAsync();
@@ -104,18 +111,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
     partial void OnActiveTabChanged(string value)
     {
-        _suppressWarehouseFilterReload = true;
-        try
-        {
-            SelectedCategoryId = null;
-            MaterialStockFilter = "Все";
-            EquipmentStatusFilter = "Все";
-        }
-        finally
-        {
-            _suppressWarehouseFilterReload = false;
-        }
-
+        // Мы НЕ сбрасываем SelectedMaterialCategoryId / SelectedEquipmentCategoryId,
+        // чтобы при возвращении на вкладку фильтр сохранялся.
         _ = LoadAsync();
     }
 
@@ -123,6 +120,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
+        // Загружаем категории только если они еще не загружены или нужно обновить.
+        // Для простоты оставим обновление здесь, но добавим проверку, чтобы не перезаписывать зря
         var cats = (await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync())
             .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(g => g.OrderBy(x => x.Name).First())
@@ -139,42 +138,34 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         matFilterOpts.AddRange(cats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
+        
+        // Обновляем только если список реально изменился, чтобы не сбивать UI
+        if (MaterialCategoryFilterOptions.Count != matFilterOpts.Count)
+            MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
 
         var eqFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         eqFilterOpts.AddRange(eqCats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        EquipmentCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(eqFilterOpts);
+        
+        if (EquipmentCategoryFilterOptions.Count != eqFilterOpts.Count)
+            EquipmentCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(eqFilterOpts);
 
-        if (ActiveTab == "Materials" && SelectedCategoryId is { } mid && cats.All(c => c.Id != mid))
+        // Проверка валидности выбранных категорий
+        if (SelectedMaterialCategoryId is { } mid && cats.All(c => c.Id != mid))
         {
             _suppressWarehouseFilterReload = true;
-            try
-            {
-                SelectedCategoryId = null;
-            }
-            finally
-            {
-                _suppressWarehouseFilterReload = false;
-            }
+            try { SelectedMaterialCategoryId = null; } finally { _suppressWarehouseFilterReload = false; }
         }
-        else if (ActiveTab == "Equipment" && SelectedCategoryId is { } eid && eqCats.All(c => c.Id != eid))
+        if (SelectedEquipmentCategoryId is { } eid && eqCats.All(c => c.Id != eid))
         {
             _suppressWarehouseFilterReload = true;
-            try
-            {
-                SelectedCategoryId = null;
-            }
-            finally
-            {
-                _suppressWarehouseFilterReload = false;
-            }
+            try { SelectedEquipmentCategoryId = null; } finally { _suppressWarehouseFilterReload = false; }
         }
 
         var search = SearchHelper.Normalize(SearchText);
 
         var matQuery = db.Materials.Where(m => !m.IsArchived).AsQueryable();
-        if (SelectedCategoryId.HasValue)
-            matQuery = matQuery.Where(m => m.CategoryId == SelectedCategoryId);
+        if (SelectedMaterialCategoryId.HasValue)
+            matQuery = matQuery.Where(m => m.CategoryId == SelectedMaterialCategoryId);
         var matList = await matQuery.ToListAsync();
         if (search is not null)
             matList = matList.Where(m =>
@@ -204,8 +195,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         Materials = new ObservableCollection<LocalMaterial>(matList);
 
         var eqQuery = db.Equipments.Where(e => !e.IsArchived).AsQueryable();
-        if (SelectedCategoryId.HasValue)
-            eqQuery = eqQuery.Where(e => e.CategoryId == SelectedCategoryId);
+        if (SelectedEquipmentCategoryId.HasValue)
+            eqQuery = eqQuery.Where(e => e.CategoryId == SelectedEquipmentCategoryId);
         var eqList = await eqQuery.ToListAsync();
         if (search is not null)
             eqList = eqList.Where(e =>

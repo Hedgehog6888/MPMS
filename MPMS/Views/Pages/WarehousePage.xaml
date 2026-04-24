@@ -339,14 +339,14 @@
                         <!-- Категория: материалы -->
                         <ComboBox ItemsSource="{Binding MaterialCategoryFilterOptions}"
                                   DisplayMemberPath="Name" SelectedValuePath="Id"
-                                  SelectedValue="{Binding SelectedCategoryId}"
+                                  SelectedValue="{Binding SelectedMaterialCategoryId}"
                                   Style="{StaticResource FormCombo}"
                                   Width="160" Margin="0,0,10,0"
                                   Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
                         <!-- Категория: оборудование -->
                         <ComboBox ItemsSource="{Binding EquipmentCategoryFilterOptions}"
                                   DisplayMemberPath="Name" SelectedValuePath="Id"
-                                  SelectedValue="{Binding SelectedCategoryId}"
+                                  SelectedValue="{Binding SelectedEquipmentCategoryId}"
                                   Style="{StaticResource FormCombo}"
                                   Width="160" Margin="0,0,10,0"
                                   Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
