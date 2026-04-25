@@ -125,21 +125,76 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Image Preview -->
-                    <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="#F4F5F7" SnapsToDevicePixels="True">
+                    <!-- File Preview Area -->
+                    <Border Grid.Row="0" CornerRadius="8,8,0,0" SnapsToDevicePixels="True"
+                            Background="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}">
                         <Grid UseLayoutRounding="True">
-                            <!-- Actual Image with rounding and highest quality scaling (Fant) -->
+                            <!-- Large Icon for Documents (Visible when not an image or image data missing) -->
+                            <Viewbox Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6">
+                                <Viewbox.Style>
+                                    <Style TargetType="Viewbox">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <!-- If not an image, show icon -->
+                                            <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <!-- If image but no data, show icon -->
+                                            <DataTrigger Binding="{Binding FileData, Converter={StaticResource NullToVisInv}}" Value="Visible">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Viewbox.Style>
+                                <Canvas Width="24" Height="24">
+                                    <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+                                          StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+                                    <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+                                          StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M14 2v4a2 2 0 0 0 2 2h4"/>
+                                </Canvas>
+                            </Viewbox>
+
+                            <!-- Actual Image (Visible when it IS an image AND data is present) -->
                             <Border CornerRadius="8,8,0,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="True"/>
+                                                    <Condition Binding="{Binding FileData, Converter={StaticResource NullToVis}}" Value="Visible"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <Border.Background>
                                     <ImageBrush ImageSource="{Binding FileData, Converter={StaticResource AvatarBytesToImage}, ConverterParameter=480}" 
                                                 Stretch="UniformToFill"
                                                 RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border.Background>
                             </Border>
-
-                            <!-- Fallback Icon (shows when image data is missing) -->
-                            <Image Source="{svgc:SvgImage Source=/icons/image.svg, AppName=MPMS}" Width="32" Height="32" Opacity="0.3"
-                                   Visibility="{Binding FileData, Converter={StaticResource NullToVisInv}}"/>
+                            
+                            <!-- Extension Label for non-images (Center-Bottom) -->
+                            <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,12" Padding="6,2" CornerRadius="4"
+                                    Background="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding FileName, Converter={StaticResource FileExtensionToShortLabel}}" 
+                                           FontSize="10" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
+                            </Border>
                         </Grid>
                     </Border>
                     

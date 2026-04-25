@@ -1039,7 +1039,14 @@ public class FileTypeToIsImageConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         string? type = value?.ToString()?.ToLowerInvariant();
-        return type != null && type.StartsWith("image/");
+        if (string.IsNullOrEmpty(type)) return false;
+        
+        if (type.StartsWith("image/")) return true;
+        
+        var ext = Path.GetExtension(type);
+        if (string.IsNullOrEmpty(ext)) ext = "." + type;
+        
+        return ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".tiff" or ".heic";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -1142,6 +1149,28 @@ public class FileSizeConverter : IValueConverter
             return $"{size / (1024.0 * 1024.0):F1} МБ";
         }
         return string.Empty;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Returns a short uppercase label for a file extension (e.g. ".docx" -> "DOCX").
+/// </summary>
+public class FileExtensionToShortLabelConverter : IValueConverter
+{
+    public static readonly FileExtensionToShortLabelConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var input = value?.ToString() ?? "";
+        if (string.IsNullOrEmpty(input)) return "";
+        
+        var ext = Path.GetExtension(input);
+        if (string.IsNullOrEmpty(ext)) ext = input;
+        
+        return ext.TrimStart('.').ToUpperInvariant();
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

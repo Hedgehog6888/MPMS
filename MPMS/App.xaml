@@ -993,6 +993,8 @@
             <infra:TaskStatusToForegroundBrushConverter x:Key="TaskStatusToFgBrush"/>
             <infra:FileExtensionToBackgroundBrushConverter x:Key="FileExtensionToBackgroundBrush"/>
             <infra:FileExtensionToForegroundBrushConverter x:Key="FileExtensionToForegroundBrush"/>
+            <infra:FileTypeToIsImageConverter x:Key="FileTypeToIsImage"/>
+            <infra:FileExtensionToShortLabelConverter x:Key="FileExtensionToShortLabel"/>
 
             <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
             <Style x:Key="AvatarCircle20" TargetType="Border">
