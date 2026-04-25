@@ -6,6 +6,7 @@ public interface IAuthService
 {
     bool IsAuthenticated { get; }
     string? Token { get; }
+    string? RefreshToken { get; }
     Guid? UserId { get; }
     string? UserName { get; }
     string? Username { get; }

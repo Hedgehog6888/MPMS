@@ -19,6 +19,7 @@ public interface IApiService
 
     // Auth
     Task<LoginResult> LoginAsync(string username, string password);
+    Task<AuthResponse?> RefreshAsync(string token, string refreshToken);
     /// <summary>Текущий пользователь по JWT (GET api/auth/me).</summary>
     Task<UserResponse?> GetCurrentUserAsync();
     Task<List<RoleDto>?> GetRolesAsync();

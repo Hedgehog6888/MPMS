@@ -39,9 +39,9 @@ public class AuthController : ControllerBase
 
         if (user.IsBlocked)
             return StatusCode(StatusCodes.Status403Forbidden,
-                new { message = "РЈС‡С‘С‚РЅР°СЏ Р·Р°РїРёСЃСЊ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅР°" });
+                new { message = "Учётная запись заблокирована" });
 
-        return Ok(BuildAuthResponse(user));
+        return Ok(await BuildAuthResponseAsync(user));
     }
 
     /// <summary>Зарегистрировать нового пользователя.</summary>
@@ -49,11 +49,11 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
     {
         if (await _db.Users.AnyAsync(u => u.Username == request.Username))
-            return Conflict(new { message = "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ С‚Р°РєРёРј Р»РѕРіРёРЅРѕРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚" });
+            return Conflict(new { message = "Пользователь с таким логином уже существует" });
 
         var roleExists = await _db.Roles.AnyAsync(r => r.Id == request.RoleId);
         if (!roleExists)
-            return BadRequest(new { message = "РЈРєР°Р·Р°РЅРЅР°СЏ СЂРѕР»СЊ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚" });
+            return BadRequest(new { message = "Указанная роль не существует" });
 
         var user = _mapper.Map<User>(request);
         user.FirstName = user.FirstName.Trim();
@@ -68,7 +68,32 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
         await _db.Entry(user).Reference(u => u.Role).LoadAsync();
 
-        return Created($"/api/users/{user.Id}", BuildAuthResponse(user));
+        return Created($"/api/users/{user.Id}", await BuildAuthResponseAsync(user));
+    }
+
+    /// <summary>Обновить JWT-токен с помощью Refresh Token.</summary>
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshRequest request)
+    {
+        var principal = _jwt.GetPrincipalFromExpiredToken(request.AccessToken);
+        if (principal == null)
+            return BadRequest(new { message = "Некорректный токен доступа" });
+
+        var userIdStr = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId))
+            return BadRequest(new { message = "Некорректный токен доступа" });
+
+        var user = await _db.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            return Unauthorized(new { message = "Сессия истекла или неверный токен обновления" });
+
+        if (user.IsBlocked)
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Учётная запись заблокирована" });
+
+        return Ok(await BuildAuthResponseAsync(user));
     }
 
     /// <summary>Получить профиль текущего авторизованного пользователя.</summary>
@@ -115,7 +140,23 @@ public class AuthController : ControllerBase
         return Ok(roles);
     }
 
-    private AuthResponse BuildAuthResponse(User user) =>
-        new(user.Id, $"{user.FirstName} {user.LastName}".Trim(), user.Username, user.Role.Name,
-            _jwt.GenerateToken(user), _jwt.GetExpiryTime());
+    private async Task<AuthResponse> BuildAuthResponseAsync(User user)
+    {
+        var token = _jwt.GenerateToken(user);
+        var refreshToken = _jwt.GenerateRefreshToken();
+        
+        user.RefreshToken = refreshToken;
+        var days = int.Parse(_db.Database.GetDbConnection().Database == "MPMS" ? "7" : "7"); // Default 7 days
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        await _db.SaveChangesAsync();
+
+        return new AuthResponse(
+            user.Id,
+            $"{user.FirstName} {user.LastName}".Trim(),
+            user.Username,
+            user.Role.Name,
+            token,
+            _jwt.GetExpiryTime(),
+            refreshToken);
+    }
 }

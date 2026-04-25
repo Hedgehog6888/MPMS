@@ -33,6 +33,7 @@ public class AuthService : IAuthService
 
     public bool IsAuthenticated => _current is not null;
     public string? Token    => _current?.Token;
+    public string? RefreshToken => _current?.RefreshToken;
     public Guid?   UserId   => _current?.UserId;
     public string? UserName  => _current?.Name;
     public string? Username  => _current?.Username;
@@ -80,22 +81,32 @@ public class AuthService : IAuthService
 
     public async Task<bool> TryRefreshJwtIfNeededAsync(IApiService api)
     {
-        var hasPassword = !string.IsNullOrEmpty(_sessionPlainPassword) && !string.IsNullOrWhiteSpace(Username);
+        if (string.IsNullOrWhiteSpace(Token) || string.IsNullOrWhiteSpace(RefreshToken))
+            return false;
 
-        if (!string.IsNullOrWhiteSpace(Token))
+        // Try using Refresh Token first
+        var refreshResult = await api.RefreshAsync(Token, RefreshToken);
+        if (refreshResult != null)
         {
-            if (await api.VerifyAuthAsync())
+            var (allowed, _) = await CanUserLoginAsync(refreshResult.UserId);
+            if (allowed)
+            {
+                _current = refreshResult;
+                await PersistSessionAsync(refreshResult, _sessionPlainPassword ?? "");
                 return true;
+            }
         }
 
+        // Fallback to password if we have it
+        var hasPassword = !string.IsNullOrEmpty(_sessionPlainPassword) && !string.IsNullOrWhiteSpace(Username);
         if (!hasPassword)
             return false;
 
         var result = await api.LoginAsync(Username!.Trim(), _sessionPlainPassword!);
         if (!result.Success || result.Response is null) return false;
 
-        var (allowed, _) = await CanUserLoginAsync(result.Response.UserId);
-        if (!allowed) return false;
+        var (allowed2, _) = await CanUserLoginAsync(result.Response.UserId);
+        if (!allowed2) return false;
 
         _current = result.Response;
         await PersistSessionAsync(result.Response, _sessionPlainPassword!);
@@ -132,7 +143,7 @@ public class AuthService : IAuthService
 
         _current = new AuthResponse(
             session.UserId, session.UserName, session.Username,
-            session.UserRole, session.Token, session.ExpiresAt);
+            session.UserRole, session.Token, session.ExpiresAt, session.RefreshToken);
 
         ApplyRestoredApiUrl(session);
         _sessionPlainPassword = TryDecryptSessionPassword(session.SessionPasswordProtected);
@@ -178,7 +189,7 @@ public class AuthService : IAuthService
             if (!allowed) return (null, blockMessage);
             return (new AuthResponse(
                 session.UserId, session.UserName, session.Username,
-                session.UserRole, session.Token, session.ExpiresAt), null);
+                session.UserRole, session.Token, session.ExpiresAt, session.RefreshToken), null);
         }
 
         var localUser = await db.Users
@@ -197,7 +208,7 @@ public class AuthService : IAuthService
 
         return (new AuthResponse(
             localUser.Id, localUser.Name, localUser.Username,
-            localUser.RoleName, string.Empty, DateTime.UtcNow.AddDays(1)), null);
+            localUser.RoleName, string.Empty, DateTime.UtcNow.AddDays(1), string.Empty), null);
     }
 
     public async Task<bool> HasLocalCacheAsync(string username)
@@ -335,7 +346,7 @@ public class AuthService : IAuthService
         {
             db.AuthSessions.Add(new AuthSession
             {
-                Token = r.Token, UserId = r.UserId,
+                Token = r.Token, RefreshToken = r.RefreshToken, UserId = r.UserId,
                 UserName = r.Name, Username = r.Username,
                 UserRole = r.Role, ExpiresAt = r.ExpiresAt,
                 LocalPasswordHash = pwdHash,
@@ -347,6 +358,7 @@ public class AuthService : IAuthService
         else
         {
             existing.Token             = r.Token;
+            existing.RefreshToken      = r.RefreshToken;
             existing.UserId            = r.UserId;
             existing.UserName          = r.Name;
             existing.Username          = r.Username;

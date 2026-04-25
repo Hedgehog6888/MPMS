@@ -15,7 +15,9 @@ public record LoginResult(AuthResponse? Response, string? Error)
 }
 public record RegisterRequest(string FirstName, string LastName, string Username, string? Email, string Password, Guid RoleId);
 public record AuthResponse(Guid UserId, string Name, string Username, string Role,
-    string Token, DateTime ExpiresAt);
+    string Token, DateTime ExpiresAt, string RefreshToken);
+
+public record RefreshRequest(string AccessToken, string RefreshToken);
 public record RoleDto(Guid Id, string Name, string? Description);
 
 // ── Projects ──────────────────────────────────────────────────────────────────

@@ -22,7 +22,13 @@ public record AuthResponse(
     string Username,
     string Role,
     string Token,
-    DateTime ExpiresAt
+    DateTime ExpiresAt,
+    string RefreshToken
+);
+
+public record RefreshRequest(
+    [Required] string AccessToken,
+    [Required] string RefreshToken
 );
 
 public record ChangePasswordRequest(

@@ -50,24 +50,9 @@ public class ApiService : IApiService
 
     public async Task<bool> VerifyAuthAsync()
     {
-        try
-        {
-            AttachToken();
-            if (string.IsNullOrWhiteSpace(_auth.Token)) return false;
-            using var response = await _http.GetAsync(Api("auth/me"));
-            IsOnline = true;
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException)
-        {
-            IsOnline = false;
-            return false;
-        }
-        catch (OperationCanceledException)
-        {
-            IsOnline = false;
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(_auth.Token)) return false;
+        var response = await SendWithRetryAsync(() => _http.GetAsync(Api("auth/me")));
+        return response?.IsSuccessStatusCode ?? false;
     }
 
     // ── Auth ──────────────────────────────────────────────────────────────────
@@ -118,6 +103,24 @@ public class ApiService : IApiService
             IsOnline = false;
             return LoginResult.Offline();
         }
+    }
+
+    public async Task<AuthResponse?> RefreshAsync(string token, string refreshToken)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync(
+                Api("auth/refresh"),
+                new RefreshRequest(token, refreshToken),
+                JsonOpts);
+            IsOnline = true;
+
+            if (!response.IsSuccessStatusCode) return null;
+
+            return await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOpts);
+        }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
     }
 
     public Task<UserResponse?> GetCurrentUserAsync()
@@ -259,48 +262,35 @@ public class ApiService : IApiService
 
     public async Task<byte[]?> DownloadFileAsync(Guid id)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.GetAsync(Api($"files/{id}"));
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadAsByteArrayAsync();
-        }
-        catch (HttpRequestException) { IsOnline = false; return null; }
-        catch (OperationCanceledException) { IsOnline = false; return null; }
+        var response = await SendWithRetryAsync(() => _http.GetAsync(Api($"files/{id}")));
+        if (response == null || !response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadAsByteArrayAsync();
     }
 
     public async Task<FileDto?> UploadFileAsync(
         string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null, Guid? id = null)
     {
-        try
-        {
-            AttachToken();
-            var fileInfo = new FileInfo(filePath);
-            if (!fileInfo.Exists) return null;
+        var fileInfo = new FileInfo(filePath);
+        if (!fileInfo.Exists) return null;
 
+        var q = BuildQuery(
+            ("projectId", projectId?.ToString()),
+            ("taskId", taskId?.ToString()),
+            ("stageId", stageId?.ToString()),
+            ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null),
+            ("id", id?.ToString()));
+
+        // We can't reuse MultipartFormDataContent across retries, so we need a factory or create it inside.
+        var response = await SendWithRetryAsync(async () => {
             using var content = new MultipartFormDataContent();
             var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(GetMimeType(fileInfo.Extension));
-            
             content.Add(fileContent, "file", fileInfo.Name);
+            return await _http.PostAsync(Api($"files/upload{q}"), content);
+        });
 
-            var q = BuildQuery(
-                ("projectId", projectId?.ToString()),
-                ("taskId", taskId?.ToString()),
-                ("stageId", stageId?.ToString()),
-                ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null),
-                ("id", id?.ToString()));
-
-            var response = await _http.PostAsync(Api($"files/upload{q}"), content);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return null;
-
-            return await response.Content.ReadFromJsonAsync<FileDto>(JsonOpts);
-        }
-        catch (HttpRequestException) { IsOnline = false; return null; }
-        catch (OperationCanceledException) { IsOnline = false; return null; }
+        if (response == null || !response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<FileDto>(JsonOpts);
     }
 
     private static string GetMimeType(string extension) => extension.ToLower() switch
@@ -319,36 +309,24 @@ public class ApiService : IApiService
     {
         LastUsersPullError = null;
         var q = BuildQuery(("search", search));
+        var uri = Api($"users{q}");
+        
+        var response = await SendWithRetryAsync(() => _http.GetAsync(uri));
+        if (response == null) return null;
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            LastUsersPullError = response.StatusCode == HttpStatusCode.Unauthorized
+                ? "Список пользователей: 401 — сессия истекла."
+                : $"Список пользователей: HTTP {(int)response.StatusCode} {response.ReasonPhrase}. {TruncateForDiag(body, 500)}";
+            return null;
+        }
+
         try
         {
-            AttachToken();
-            var uri = Api($"users{q}");
-            using var response = await _http.GetAsync(uri);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                LastUsersPullError = response.StatusCode == HttpStatusCode.Unauthorized
-                    ? "Список пользователей: 401 — нет действующего JWT. Выйдите и войдите снова."
-                    : $"Список пользователей: HTTP {(int)response.StatusCode} {response.ReasonPhrase}. {TruncateForDiag(body, 500)}";
-                return null;
-            }
-
-            // Тот же путь, что у auth/me и остальных DTO — поэлементный JsonElement.Deserialize часто ломал record UserResponse.
             var list = await response.Content.ReadFromJsonAsync<List<UserResponse>>(JsonOpts);
             return list ?? [];
-        }
-        catch (HttpRequestException ex)
-        {
-            IsOnline = false;
-            LastUsersPullError = "Список пользователей: сеть — " + ex.Message;
-            return null;
-        }
-        catch (OperationCanceledException)
-        {
-            IsOnline = false;
-            LastUsersPullError = "Список пользователей: запрос отменён или таймаут.";
-            return null;
         }
         catch (JsonException ex)
         {
@@ -397,16 +375,9 @@ public class ApiService : IApiService
 
     public async Task<DiscussionMessageResponse?> PostDiscussionMessageAsync(CreateDiscussionMessageRequest request)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.PostAsJsonAsync(Api("discussion-messages"), request, JsonOpts);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<DiscussionMessageResponse>(JsonOpts);
-        }
-        catch (HttpRequestException) { IsOnline = false; return null; }
-        catch (OperationCanceledException) { IsOnline = false; return null; }
+        var response = await SendWithRetryAsync(() => _http.PostAsJsonAsync(Api("discussion-messages"), request, JsonOpts));
+        if (response == null || !response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<DiscussionMessageResponse>(JsonOpts);
     }
 
     public Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null)
@@ -419,16 +390,9 @@ public class ApiService : IApiService
 
     public async Task<SyncedActivityLogResponse?> PostSyncedActivityLogAsync(CreateSyncedActivityLogRequest request)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.PostAsJsonAsync(Api("synced-activity-logs"), request, JsonOpts);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<SyncedActivityLogResponse>(JsonOpts);
-        }
-        catch (HttpRequestException) { IsOnline = false; return null; }
-        catch (OperationCanceledException) { IsOnline = false; return null; }
+        var response = await SendWithRetryAsync(() => _http.PostAsJsonAsync(Api("synced-activity-logs"), request, JsonOpts));
+        if (response == null || !response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<SyncedActivityLogResponse>(JsonOpts);
     }
 
     public async Task<bool> ReplaceTaskAssigneesAsync(Guid taskId, ReplaceTaskAssigneesRequest request)
@@ -439,16 +403,9 @@ public class ApiService : IApiService
 
     public async Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData)
     {
-        try
-        {
-            AttachToken();
-            var request = new UploadAvatarRequest(avatarData);
-            var response = await _http.PutAsJsonAsync(Api($"users/{userId}/avatar"), request, JsonOpts);
-            IsOnline = true;
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException) { IsOnline = false; return false; }
-        catch (OperationCanceledException) { IsOnline = false; return false; }
+        var request = new UploadAvatarRequest(avatarData);
+        var response = await SendWithRetryAsync(() => _http.PutAsJsonAsync(Api($"users/{userId}/avatar"), request, JsonOpts));
+        return response?.IsSuccessStatusCode ?? false;
     }
 
     private static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response)
@@ -465,15 +422,8 @@ public class ApiService : IApiService
 
     private async Task<bool> PutNoContentAsync(string url, object body)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.PutAsJsonAsync(Api(url), body, JsonOpts);
-            IsOnline = true;
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException) { IsOnline = false; return false; }
-        catch (OperationCanceledException) { IsOnline = false; return false; }
+        var response = await SendWithRetryAsync(() => _http.PutAsJsonAsync(Api(url), body, JsonOpts));
+        return response?.IsSuccessStatusCode ?? false;
     }
 
     /// <summary>Абсолютный URI: база из <see cref="IAuthService.ApiBaseUrl"/>, путь относительно /api/.</summary>
@@ -497,62 +447,60 @@ public class ApiService : IApiService
             _http.DefaultRequestHeaders.Authorization = null;
     }
 
-    private async Task<T?> GetAsync<T>(string url)
+    private async Task<HttpResponseMessage?> SendWithRetryAsync(Func<Task<HttpResponseMessage>> requestFunc)
     {
         try
         {
             AttachToken();
-            var response = await _http.GetAsync(Api(url));
+            var response = await requestFunc();
             IsOnline = true;
-            if (!response.IsSuccessStatusCode) return default;
-            return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized && _auth.IsAuthenticated)
+            {
+                // Try refresh
+                if (await _auth.TryRefreshJwtIfNeededAsync(this))
+                {
+                    // Retry once
+                    AttachToken();
+                    response = await requestFunc();
+                }
+            }
+
+            return response;
         }
-        catch (HttpRequestException)       { IsOnline = false; return default; }
-        catch (OperationCanceledException) { IsOnline = false; return default; }
+        catch (HttpRequestException) { IsOnline = false; return null; }
+        catch (OperationCanceledException) { IsOnline = false; return null; }
+    }
+
+    private async Task<T?> GetAsync<T>(string url)
+    {
+        var response = await SendWithRetryAsync(() => _http.GetAsync(Api(url)));
+        if (response == null || !response.IsSuccessStatusCode) return default;
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
     }
 
     private async Task<T?> PostAsync<T>(string url, object body)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.PostAsJsonAsync(Api(url), body, JsonOpts);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return default;
-            return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
-        }
-        catch (HttpRequestException)       { IsOnline = false; return default; }
-        catch (OperationCanceledException) { IsOnline = false; return default; }
+        var response = await SendWithRetryAsync(() => _http.PostAsJsonAsync(Api(url), body, JsonOpts));
+        if (response == null || !response.IsSuccessStatusCode) return default;
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
     }
 
     private async Task<T?> PutAsync<T>(string url, object body)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.PutAsJsonAsync(Api(url), body, JsonOpts);
-            IsOnline = true;
-            if (!response.IsSuccessStatusCode) return default;
-            return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
-        }
-        catch (HttpRequestException)       { IsOnline = false; return default; }
-        catch (OperationCanceledException) { IsOnline = false; return default; }
+        var response = await SendWithRetryAsync(() => _http.PutAsJsonAsync(Api(url), body, JsonOpts));
+        if (response == null || !response.IsSuccessStatusCode) return default;
+        return await response.Content.ReadFromJsonAsync<T>(JsonOpts);
     }
 
     private async Task<bool> DeleteAsync(string url)
     {
-        try
-        {
-            AttachToken();
-            var response = await _http.DeleteAsync(Api(url));
-            IsOnline = true;
-            // 404 — уже удалено на сервере; для очереди синхронизации считаем успехом (идемпотентность).
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return true;
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException)       { IsOnline = false; return false; }
-        catch (OperationCanceledException) { IsOnline = false; return false; }
+        var response = await SendWithRetryAsync(() => _http.DeleteAsync(Api(url)));
+        if (response == null) return false;
+        // 404 — уже удалено на сервере; для очереди синхронизации считаем успехом (идемпотентность).
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return true;
+        return response.IsSuccessStatusCode;
     }
 
     private static string BuildQuery(params (string key, string? value)[] pairs)

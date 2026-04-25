@@ -284,7 +284,7 @@
                                     <ColumnDefinition Width="*" MinWidth="130" MaxWidth="180"/>
                                     <ColumnDefinition Width="110"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ ПРОЕКТА"   Style="{StaticResource ColHeader}"/>
+                                <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"           Style="{StaticResource ColHeader}"/>
                                 <TextBlock Grid.Column="1" Text="ЗАКАЗЧИК"           Style="{StaticResource ColHeader}"/>
                                 <TextBlock Grid.Column="2" Text="ДАТА НАЧАЛА"        Style="{StaticResource ColHeader}"/>
                                 <TextBlock Grid.Column="3" Text="ДАТА ЗАВЕРШЕНИЯ"    Style="{StaticResource ColHeader}"/>

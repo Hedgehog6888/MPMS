@@ -54,6 +54,10 @@ public class User
     [MaxLength(500)]
     public string? BlockedReason { get; set; }
 
+    [MaxLength(255)]
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiryTime { get; set; }
+
     public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
     public ICollection<ProjectMember> ProjectMemberships { get; set; } = new List<ProjectMember>();
     public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();

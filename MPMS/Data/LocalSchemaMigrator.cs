@@ -200,6 +200,8 @@ public static class LocalSchemaMigrator
     {
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"SessionPasswordProtected\" TEXT NULL;");
+        TryAlterTable(conn,
+            "ALTER TABLE \"AuthSessions\" ADD COLUMN \"RefreshToken\" TEXT NOT NULL DEFAULT '';");
     }
 
     private static void CreateActivityLogsTable(SqliteConnection conn)

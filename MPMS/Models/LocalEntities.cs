@@ -619,6 +619,8 @@ public class AuthSession
     /// <summary>DPAPI (CurrentUser) — для повторного LoginAsync и JWT после перезапуска без ввода пароля.</summary>
     public string? SessionPasswordProtected { get; set; }
 
+    public string RefreshToken { get; set; } = string.Empty;
+
     /// <summary>BCrypt hash of the last entered password — allows offline login.</summary>
     public string LocalPasswordHash { get; set; } = string.Empty;
 
