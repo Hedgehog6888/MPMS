@@ -950,6 +950,7 @@
             <infra:BoolToVisibilityConverter   x:Key="BoolToVis"/>
             <infra:BoolToVisibilityConverter   x:Key="BoolToVisInv"        Invert="True"/>
             <infra:StringMatchToBoolConverter  x:Key="StringMatchToBoolConverter"/>
+            <infra:EqualityToBoolConverter    x:Key="EqualityToBool"/>
             <infra:BoolToVisibilityConverter   x:Key="StringToVis"         IsStringMode="True"/>
             <infra:BoolToVisibilityConverter   x:Key="StringToVisInv"      IsStringMode="True" Invert="True"/>
             <infra:AvatarPathToImageSourceConverter x:Key="AvatarPathToImage"/>

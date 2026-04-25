@@ -1,0 +1,418 @@
+<UserControl x:Class="MPMS.Views.Components.Admin.AdminOverlays"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:AdminViewModel}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Components/Admin/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- ═══════════════════════════════════════════════════════════════
+             BLOCK USER OVERLAY (amber)
+        ═══════════════════════════════════════════════════════════════════ -->
+        <Grid Panel.ZIndex="100"
+              Visibility="{Binding IsBlockOverlayOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="Transparent" MouseLeftButtonDown="BlockOverlayBackdrop_Click"/>
+            <Border Background="White" Width="440"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    CornerRadius="12" BorderBrush="#DFE1E6" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border Background="#FFF8E1" CornerRadius="12,12,0,0" Padding="24,20,24,16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="40" Height="40" CornerRadius="20" Margin="0,0,14,0" VerticalAlignment="Center"
+                                        Background="#FFEFC6">
+                                    <Image Source="{svgc:SvgImage Source=/icons/block_amber.svg, AppName=MPMS}"
+                                           Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Заблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#000000"/>
+                                    <TextBlock Text="Пользователь не сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#92400E"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Command="{Binding CancelBlockOverlayCommand}"
+                                    Width="26" Height="26">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" CornerRadius="13">
+                                            <TextBlock Text="✕" FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#6B778C"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <StackPanel Margin="24,16,24,0">
+                        <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="Пользователь" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding BlockTargetName}"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Text="Причина блокировки (необязательно)" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#344563" Margin="0,0,0,6"/>
+                            <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                                    CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                                <TextBox Text="{Binding BlockReason, UpdateSourceTrigger=PropertyChanged}"
+                                         BorderThickness="0" Background="Transparent"
+                                         Foreground="#000000" FontSize="13"
+                                         Height="72" TextWrapping="Wrap" AcceptsReturn="True"
+                                         VerticalContentAlignment="Top"/>
+                            </Border>
+                            <TextBlock Text="Причина будет показана пользователю при входе."
+                                       FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Padding="24,16,24,20">
+                        <Grid>
+                            <Button HorizontalAlignment="Left" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding CancelBlockOverlayCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="White" CornerRadius="8"
+                                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Отмена" Foreground="#000000"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button HorizontalAlignment="Right" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding SubmitBlockCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="#D97706" CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Заблокировать" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#B45309"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             UNBLOCK USER OVERLAY (green)
+        ═══════════════════════════════════════════════════════════════════ -->
+        <Grid Panel.ZIndex="100"
+              Visibility="{Binding IsUnblockOverlayOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="Transparent" MouseLeftButtonDown="UnblockOverlayBackdrop_Click"/>
+            <Border Background="White" Width="440"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    CornerRadius="12" BorderBrush="#DFE1E6" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border Background="#C8E6C9" CornerRadius="12,12,0,0" Padding="24,20,24,16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="40" Height="40" CornerRadius="20" Margin="0,0,14,0" VerticalAlignment="Center"
+                                        Background="#81C784">
+                                    <Image Source="{svgc:SvgImage Source=/icons/unblock_green.svg, AppName=MPMS}"
+                                           Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Разблокировать пользователя?" FontSize="16" FontWeight="Bold" Foreground="#000000"/>
+                                    <TextBlock Text="Пользователь снова сможет войти в систему" FontSize="12" Margin="0,3,0,0" Foreground="#2E7D32"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Command="{Binding CancelUnblockOverlayCommand}"
+                                    Width="26" Height="26">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" CornerRadius="13">
+                                            <TextBlock Text="✕" FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#6B778C"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <StackPanel Margin="24,16,24,0">
+                        <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="Пользователь" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding BlockTargetName}"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <StackPanel Visibility="{Binding BlockTargetReason, Converter={StaticResource StringToVis}}">
+                            <TextBlock Text="Причина блокировки" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#344563" Margin="0,0,0,6"/>
+                            <Border Background="#F4F5F7" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+                                <TextBlock Text="{Binding BlockTargetReason}" FontSize="13" Foreground="#6B778C"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Padding="24,16,24,20">
+                        <Grid>
+                            <Button HorizontalAlignment="Left" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding CancelUnblockOverlayCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="White" CornerRadius="8"
+                                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Отмена" Foreground="#000000"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button HorizontalAlignment="Right" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding SubmitBlockCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="#00875A" CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Разблокировать" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#006B47"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             CONFIRM OVERLAY
+        ═══════════════════════════════════════════════════════════════════ -->
+        <Grid Panel.ZIndex="200"
+              Visibility="{Binding IsConfirmOverlayOpen, Converter={StaticResource BoolToVis}}">
+            <Border Background="Transparent" MouseLeftButtonDown="ConfirmOverlayBackdrop_Click"/>
+            <Border Background="White" Width="440"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    CornerRadius="12" BorderBrush="#DFE1E6" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="28" Opacity="0.18" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Border CornerRadius="12,12,0,0" Padding="24,20,24,16">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#EBF2FF"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
+                                        <Setter Property="Background" Value="#FFF5F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="40" Height="40" CornerRadius="20"
+                                        Margin="0,0,14,0" VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#DBEAFE"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
+                                                    <Setter Property="Background" Value="#FFEBE6"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="↩"/>
+                                                <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
+                                                        <Setter Property="Text" Value="⚠"/>
+                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ConfirmTitle}"
+                                               FontSize="16" FontWeight="Bold" Foreground="#000000"/>
+                                    <TextBlock FontSize="12" Margin="0,3,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Это действие нельзя отменить"/>
+                                                <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
+                                                        <Setter Property="Text" Value="Это действие необратимо"/>
+                                                        <Setter Property="Foreground" Value="#B91C1C"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Command="{Binding CancelConfirmCommand}"
+                                    Width="26" Height="26">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="Transparent" CornerRadius="13">
+                                            <TextBlock Text="✕" FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#6B778C"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <StackPanel Margin="24,16,24,0">
+                        <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,0">
+                            <TextBlock Text="{Binding ConfirmEntityName}"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#000000"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                    <Border Padding="24,16,24,20">
+                        <Grid>
+                            <Button HorizontalAlignment="Left" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Command="{Binding CancelConfirmCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" Background="White" CornerRadius="8"
+                                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <TextBlock Text="Отмена" Foreground="#000000"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button HorizontalAlignment="Right" Height="38" Padding="20,0"
+                                    FontSize="13" FontWeight="SemiBold" Cursor="Hand"
+                                    Content="{Binding ConfirmButtonText}"
+                                    Command="{Binding ExecuteConfirmCommand}">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bg" CornerRadius="8"
+                                                Padding="{TemplateBinding Padding}"
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#1D4ED8"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ConfirmIsDestructive}" Value="True">
+                                                            <Setter Property="Background" Value="#DE350B"/>
+                                                        </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ConfirmIsDestructive}" Value="False"/>
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#1E40AF"/>
+                                                        </MultiDataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding ConfirmIsDestructive}" Value="True"/>
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#BF2600"/>
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

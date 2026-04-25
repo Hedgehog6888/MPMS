@@ -1,0 +1,497 @@
+<UserControl x:Class="MPMS.Views.Components.Admin.AdminArchivePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:AdminViewModel}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Components/Admin/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Toolbar -->
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>  <!-- Sub-tabs -->
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="*"/>     <!-- Tables -->
+        </Grid.RowDefinitions>
+
+        <!-- Archive toolbar -->
+        <Border Grid.Row="0" Background="White" CornerRadius="8"
+                BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
+            <Border x:Name="ArchiveSearchBorder"
+                    Background="#F4F5F7" CornerRadius="6"
+                    Padding="10,0" Height="36"
+                    BorderThickness="1.5" BorderBrush="Transparent">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="&#xE721;"
+                               FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#6B778C"/>
+                    <Grid Grid.Column="1">
+                        <TextBlock Text="Поиск по архиву..."
+                                   Foreground="#6B778C" FontSize="12" VerticalAlignment="Center"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ArchiveSearchText}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox Text="{Binding ArchiveSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent" BorderThickness="0"
+                                 VerticalAlignment="Center" FontSize="13" Foreground="#000000"
+                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                 SelectionTextBrush="#000000"
+                                 GotFocus="ArchiveSearch_GotFocus" LostFocus="ArchiveSearch_LostFocus"/>
+                    </Grid>
+                    <Button Grid.Column="2"
+                            Visibility="{Binding ArchiveSearchText, Converter={StaticResource StringToVis}}"
+                            Style="{StaticResource IconButton}"
+                            Click="ClearArchiveSearch_Click">
+                        <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11" Foreground="#6B778C"/>
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- Archive sub-tabs -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ArchTabProjects" GroupName="ArchiveSub"
+                             Style="{StaticResource TabButton}" IsChecked="True"
+                             Click="ArchiveTab_Click" Tag="Projects">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Проекты" VerticalAlignment="Center"/>
+                        <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                            <TextBlock Text="{Binding ArchiveProjectCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="ArchTabTasks" GroupName="ArchiveSub"
+                             Style="{StaticResource TabButton}" IsChecked="False"
+                             Click="ArchiveTab_Click" Tag="Tasks">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Задачи" VerticalAlignment="Center"/>
+                        <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                            <TextBlock Text="{Binding ArchiveTaskCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="ArchTabStages" GroupName="ArchiveSub"
+                             Style="{StaticResource TabButton}" IsChecked="False"
+                             Click="ArchiveTab_Click" Tag="Stages">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Этапы" VerticalAlignment="Center"/>
+                        <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                            <TextBlock Text="{Binding ArchiveStageCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="ArchTabMaterials" GroupName="ArchiveSub"
+                             Style="{StaticResource TabButton}" IsChecked="False"
+                             Click="ArchiveTab_Click" Tag="Materials">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Материалы" VerticalAlignment="Center"/>
+                        <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                            <TextBlock Text="{Binding ArchiveMaterialCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton x:Name="ArchTabEquipment" GroupName="ArchiveSub"
+                             Style="{StaticResource TabButton}" IsChecked="False"
+                             Click="ArchiveTab_Click" Tag="Equipment">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Оборудование" VerticalAlignment="Center"/>
+                        <Border Background="#DFE1E6" CornerRadius="4" Padding="6,1" Margin="6,0,0,0">
+                            <TextBlock Text="{Binding ArchiveEquipmentCount}" FontSize="10" FontWeight="Bold" Foreground="#344563"/>
+                        </Border>
+                    </StackPanel>
+                </RadioButton>
+            </StackPanel>
+        </Border>
+
+        <!-- Archive tables -->
+        <Grid Grid.Row="4">
+            <!-- Projects -->
+            <Border x:Name="ArchProjPanel" Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="90"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Название"     Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="1" Text="Заказчик"     Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredArchivedProjects}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                    <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                            Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFBFC"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
+                                                        Command="{Binding DataContext.OpenRestoreProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                        Command="{Binding DataContext.OpenPermanentDeleteProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Tasks -->
+            <Border x:Name="ArchTaskPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="90"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Задача"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="1" Text="Проект"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredArchivedTasks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                    <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                            Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFBFC"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
+                                                        Command="{Binding DataContext.OpenRestoreTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                        Command="{Binding DataContext.OpenPermanentDeleteTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Stages -->
+            <Border x:Name="ArchStagePanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="90"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Этап"         Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="1" Text="Задача"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredArchivedStages}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                    <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                            Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFBFC"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
+                                                        Command="{Binding DataContext.OpenRestoreStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                        Command="{Binding DataContext.OpenPermanentDeleteStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Materials -->
+            <Border x:Name="ArchMaterialPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="90"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Материал"     Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="1" Text="Категория"    Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredArchivedMaterials}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                    <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                            Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFBFC"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                        Command="{Binding DataContext.OpenPermanentDeleteMaterialConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Equipment -->
+            <Border x:Name="ArchEquipmentPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
+                    BorderBrush="#DFE1E6" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                            BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="90"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Оборудование" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="1" Text="Категория"    Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="2" Text="Статус"       Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="3" Text="Дата удаления" Style="{StaticResource ThCell}"/>
+                            <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FilteredArchivedEquipment}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ArchiveRow}">
+                                    <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1"
+                                            Cursor="Hand" MouseLeftButtonDown="ArchiveRow_Click">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFBFC"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="160"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="130"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#000000" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ParentName}" FontSize="12" Foreground="#344563" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
+                                                        Command="{Binding DataContext.OpenPermanentDeleteEquipmentConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

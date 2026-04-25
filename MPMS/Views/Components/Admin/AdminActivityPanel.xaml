@@ -1,0 +1,184 @@
+<UserControl x:Class="MPMS.Views.Components.Admin.AdminActivityPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:AdminViewModel}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Views/Components/Admin/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Activity toolbar -->
+        <Border Grid.Row="0" Background="White" CornerRadius="8"
+                BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" x:Name="ActivitySearchBorder"
+                        Background="#F4F5F7" CornerRadius="6"
+                        Padding="10,0" Height="36" BorderThickness="1.5" BorderBrush="Transparent">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#6B778C"/>
+                        <Grid Grid.Column="1">
+                            <TextBlock Text="Поиск по активности..."
+                                       Foreground="#6B778C" FontSize="12" VerticalAlignment="Center"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActivitySearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding ActivitySearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0"
+                                     VerticalAlignment="Center" FontSize="13" Foreground="#000000"
+                                     SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                     SelectionTextBrush="#000000"
+                                     GotFocus="ActivitySearch_GotFocus" LostFocus="ActivitySearch_LostFocus"/>
+                        </Grid>
+                        <Button Grid.Column="2"
+                                Visibility="{Binding ActivitySearchText, Converter={StaticResource StringToVis}}"
+                                Style="{StaticResource IconButton}"
+                                Click="ClearActivitySearch_Click">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="11" Foreground="#6B778C"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                <!-- Event type filter -->
+                <ComboBox Grid.Column="2"
+                          ItemsSource="{x:Static vm:AdminViewModel.ActivityEventOptions}"
+                          SelectedItem="{Binding ActivityEventFilter}"
+                          Style="{StaticResource FormCombo}"/>
+                <!-- User filter -->
+                <ComboBox Grid.Column="4"
+                          ItemsSource="{Binding ActivityUserList}"
+                          SelectedItem="{Binding ActivityUserFilter}"
+                          Style="{StaticResource FormCombo}"/>
+                <Button Grid.Column="6"
+                        Content="Очистить журнал"
+                        Style="{StaticResource OutlineBtn}"
+                        Command="{Binding OpenClearActivityConfirmCommand}"/>
+            </Grid>
+        </Border>
+
+        <!-- Activity table + load more -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8"
+                BorderBrush="#DFE1E6" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
+                        BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Пользователь" Style="{StaticResource ThCell}"/>
+                        <TextBlock Grid.Column="1" Text="Событие"      Style="{StaticResource ThCell}"/>
+                        <TextBlock Grid.Column="2" Text="Описание"     Style="{StaticResource ThCell}"/>
+                        <TextBlock Grid.Column="3" Text="Дата и время" Style="{StaticResource ThCell}"/>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding FilteredActivityLogs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="16,10" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="130"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border Style="{StaticResource AvatarCircle28}"
+                                                    Background="{Binding UserColor}"
+                                                    Margin="0,0,8,0">
+                                                <Grid>
+                                                    <Image Style="{StaticResource AvatarImage}"
+                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                           Width="28" Height="28"
+                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Text="{Binding UserInitials}"
+                                                               FontSize="10" FontWeight="Bold" Foreground="White"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding UserName}"
+                                                       FontSize="12" FontWeight="SemiBold" Foreground="#000000"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="110"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" CornerRadius="4" Padding="6,3"
+                                                Background="{Binding ActionType, Converter={StaticResource ActionKindToBrush}}"
+                                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ActionType, Converter={StaticResource ActionKindToLabel}}"
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="White"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="2" Text="{Binding ActionText}"
+                                                   FontSize="12" Foreground="#344563"
+                                                   TextWrapping="Wrap" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yy HH:mm}'}"
+                                                   FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <!-- Load more -->
+                <Border Grid.Row="2" Padding="16,8"
+                        BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
+                        Visibility="{Binding HasMoreActivity, Converter={StaticResource BoolToVis}}">
+                    <Button Content="Загрузить ещё…"
+                            Style="{StaticResource OutlineBtn}"
+                            HorizontalAlignment="Center"
+                            Command="{Binding LoadMoreActivityCommand}"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
