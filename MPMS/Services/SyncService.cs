@@ -95,22 +95,31 @@ public class SyncService : ISyncService
         {
             _isSyncing = true;
             await PrepareSyncConnectionAsync();
+
+            await using (var dbInit = await _dbFactory.CreateDbContextAsync())
+            {
+                // Enable WAL mode for better concurrency (UI stays responsive during sync)
+                await dbInit.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+            }
+            
+            // 1. Send local changes to server
             try
             {
                 await ProcessPendingOperationsAsync();
             }
             catch (Exception ex)
             {
-                // Не блокируем pull с сервера из‑за сбоя исходящей очереди / складских ремапов
                 Debug.WriteLine($"[Sync] ProcessPendingOperations: {ex}");
             }
-            if (_api.IsOnline)
-                await _auth.TryRefreshJwtIfNeededAsync(_api);
+
+            if (!_api.IsOnline) return;
+
+            // 2. Pull latest data from server
             await PullFromServerAsync();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Sync] PullFromServer: {ex}");
+            Debug.WriteLine($"[Sync] SyncAsync Error: {ex}");
         }
         finally
         {
@@ -169,15 +178,13 @@ public class SyncService : ISyncService
             }
         }
 
-        // Пользователи: API → локальная таблица Users (источник на сервере — та же БД, что у MPMS.API)
+        // Пользователи: API → локальная таблица Users
         var users = await _api.GetUsersAsync();
         if (!_api.IsOnline) return;
         if (users is not null)
             await UserListMergeHelper.ApplyPulledUsersAsync(db, users, _auth);
 
-        // Сохранить роли и пользователей до остального pull: при ошибке в проектах/задачах/этапах
-        // иначе один общий SaveChanges в конце не выполнится — локальная таблица Users останется пустой/устаревшей.
-        await db.SaveChangesAsync();
+        // NOTE: We don't SaveChanges here anymore, as it's handled by the outer transaction in PullFromServerAsync
     }
 
     private async Task PullFromServerAsync()
@@ -185,8 +192,12 @@ public class SyncService : ISyncService
         if (!_api.IsOnline) return;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
-
-        await PullUsersAndRolesIntoLocalDbAsync(db);
+        
+        // Use a transaction to ensure database consistency (no intermediate state)
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        {
+            await PullUsersAndRolesIntoLocalDbAsync(db);
         if (!_api.IsOnline) return;
 
         await PullFilesIntoLocalDbAsync(db);
@@ -733,7 +744,15 @@ public class SyncService : ISyncService
         }
 
         await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
+    catch (Exception ex)
+    {
+        await transaction.RollbackAsync();
+        Debug.WriteLine($"[Sync] PullFromServer transaction rolled back: {ex.Message}");
+        throw;
+    }
+}
 
     // ── Send pending operations to server ─────────────────────────────────────
     private async Task ProcessPendingOperationsAsync()
@@ -758,18 +777,37 @@ public class SyncService : ISyncService
             .OrderBy(p => p.CreatedAt)
             .ToListAsync();
 
+        int consecutiveNetworkErrors = 0;
         foreach (var op in pending)
         {
+            if (!_api.IsOnline) break;
+            if (consecutiveNetworkErrors >= 3)
+            {
+                Debug.WriteLine("[Sync] Too many consecutive errors, stopping pending operations processing.");
+                break;
+            }
+
             try
             {
-                var success = await ProcessOperationAsync(op);
+                var success = await ProcessOperationAsync(db, op);
                 if (success)
+                {
                     db.PendingOperations.Remove(op);
+                    consecutiveNetworkErrors = 0;
+                }
                 else
                 {
                     op.RetryCount++;
                     if (op.RetryCount >= 5) op.IsFailed = true;
+                    consecutiveNetworkErrors++;
+                    
+                    // Small delay after a failure to let the connection "breathe"
+                    await Task.Delay(1000); 
                 }
+                
+                // Save progress after EACH operation. This ensures that if the connection 
+                // drops, we don't repeat successful operations on the next sync.
+                await db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -777,21 +815,12 @@ public class SyncService : ISyncService
                 op.RetryCount++;
                 if (op.RetryCount >= 10) op.IsFailed = true;
                 Debug.WriteLine($"[Sync] Operation {op.Id} failed: {ex.Message}");
+                await db.SaveChangesAsync();
             }
         }
 
         await PushOrphanedFilesAsync(db);
-
-        try
-        {
-            await db.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            // Someone else modified/deleted these operations already.
-            // This is okay, we just want them to be processed.
-            Debug.WriteLine("[Sync] Concurrency exception at end of ProcessPendingOperationsAsync - ignoring.");
-        }
+        await db.SaveChangesAsync();
     }
 
     private async Task PushOrphanedFilesAsync(LocalDbContext db)
@@ -1015,28 +1044,28 @@ public class SyncService : ISyncService
             db.EquipmentCategories.Remove(oldCat);
     }
 
-    private async Task<bool> ProcessOperationAsync(PendingOperation op)
+    private async Task<bool> ProcessOperationAsync(LocalDbContext db, PendingOperation op)
     {
         try
         {
             return op.EntityType switch
             {
-                "Project"     => await SyncProjectAsync(op),
-                "Task"        => await SyncTaskAsync(op),
-                "Stage"       => await SyncStageAsync(op),
-                "Material"    => await SyncMaterialAsync(op),
-                "MaterialCategory" => await SyncMaterialCategoryAsync(op),
-                "EquipmentCategory" => await SyncEquipmentCategoryAsync(op),
-                "MaterialStockMovement" => await SyncMaterialStockMovementAsync(op),
-                "Equipment" => await SyncEquipmentAsync(op),
-                "EquipmentHistory" => await SyncEquipmentHistoryAsync(op),
-                "User"        => await SyncUserAvatarAsync(op),
-                "UserProfile" => await SyncUserProfileAsync(op),
-                "SyncedActivityLog" => await SyncSyncedActivityLogAsync(op),
-                "DiscussionMessage" => await SyncDiscussionMessageAsync(op),
-                "TaskAssignees" => await SyncTaskAssigneesAsync(op),
-                "StageAssignees" => await SyncStageAssigneesAsync(op),
-                "File"        => await SyncFileAsync(op),
+                "Project"     => await SyncProjectAsync(db, op),
+                "Task"        => await SyncTaskAsync(db, op),
+                "Stage"       => await SyncStageAsync(db, op),
+                "Material"    => await SyncMaterialAsync(db, op),
+                "MaterialCategory" => await SyncMaterialCategoryAsync(db, op),
+                "EquipmentCategory" => await SyncEquipmentCategoryAsync(db, op),
+                "MaterialStockMovement" => await SyncMaterialStockMovementAsync(db, op),
+                "Equipment" => await SyncEquipmentAsync(db, op),
+                "EquipmentHistory" => await SyncEquipmentHistoryAsync(db, op),
+                "User"        => await SyncUserAvatarAsync(db, op),
+                "UserProfile" => await SyncUserProfileAsync(db, op),
+                "SyncedActivityLog" => await SyncSyncedActivityLogAsync(db, op),
+                "DiscussionMessage" => await SyncDiscussionMessageAsync(db, op),
+                "TaskAssignees" => await SyncTaskAssigneesAsync(db, op),
+                "StageAssignees" => await SyncStageAssigneesAsync(db, op),
+                "File"        => await SyncFileAsync(db, op),
                 _             => true
             };
         }
@@ -1053,7 +1082,7 @@ public class SyncService : ISyncService
         }
     }
 
-    private async Task<bool> SyncProjectAsync(PendingOperation op)
+    private async Task<bool> SyncProjectAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteProjectAsync(op.EntityId);
@@ -1065,11 +1094,10 @@ public class SyncService : ISyncService
             req = req with { Id = op.EntityId };
             var created = await _api.CreateProjectAsync(req);
             if (created is null) return false;
-            await using (var db = await _dbFactory.CreateDbContextAsync())
-            {
-                var local = await db.Projects.FindAsync(op.EntityId);
-                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
-            }
+            
+            var local = await db.Projects.FindAsync(op.EntityId);
+            if (local is not null) local.IsSynced = true;
+            
             return true;
         }
 
@@ -1077,15 +1105,14 @@ public class SyncService : ISyncService
         if (updateReq is null) return false;
         var updated = await _api.UpdateProjectAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        await using (var db2 = await _dbFactory.CreateDbContextAsync())
-        {
-            var local2 = await db2.Projects.FindAsync(op.EntityId);
-            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
-        }
+        
+        var local2 = await db.Projects.FindAsync(op.EntityId);
+        if (local2 is not null) local2.IsSynced = true;
+        
         return true;
     }
 
-    private async Task<bool> SyncTaskAsync(PendingOperation op)
+    private async Task<bool> SyncTaskAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteTaskAsync(op.EntityId);
@@ -1097,11 +1124,10 @@ public class SyncService : ISyncService
             req = req with { Id = op.EntityId };
             var created = await _api.CreateTaskAsync(req);
             if (created is null) return false;
-            await using (var db = await _dbFactory.CreateDbContextAsync())
-            {
-                var local = await db.Tasks.FindAsync(op.EntityId);
-                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
-            }
+            
+            var local = await db.Tasks.FindAsync(op.EntityId);
+            if (local is not null) local.IsSynced = true;
+            
             return true;
         }
 
@@ -1109,15 +1135,14 @@ public class SyncService : ISyncService
         if (updateReq is null) return false;
         var updated = await _api.UpdateTaskAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        await using (var db2 = await _dbFactory.CreateDbContextAsync())
-        {
-            var local2 = await db2.Tasks.FindAsync(op.EntityId);
-            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
-        }
+        
+        var local2 = await db.Tasks.FindAsync(op.EntityId);
+        if (local2 is not null) local2.IsSynced = true;
+        
         return true;
     }
 
-    private async Task<bool> SyncStageAsync(PendingOperation op)
+    private async Task<bool> SyncStageAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteStageAsync(op.EntityId);
@@ -1129,11 +1154,10 @@ public class SyncService : ISyncService
             req = req with { Id = op.EntityId };
             var created = await _api.CreateStageAsync(req);
             if (created is null) return false;
-            await using (var db = await _dbFactory.CreateDbContextAsync())
-            {
-                var local = await db.TaskStages.FindAsync(op.EntityId);
-                if (local is not null) { local.IsSynced = true; await db.SaveChangesAsync(); }
-            }
+            
+            var local = await db.TaskStages.FindAsync(op.EntityId);
+            if (local is not null) local.IsSynced = true;
+            
             return true;
         }
 
@@ -1141,15 +1165,14 @@ public class SyncService : ISyncService
         if (updateReq is null) return false;
         var updated = await _api.UpdateStageAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        await using (var db2 = await _dbFactory.CreateDbContextAsync())
-        {
-            var local2 = await db2.TaskStages.FindAsync(op.EntityId);
-            if (local2 is not null) { local2.IsSynced = true; await db2.SaveChangesAsync(); }
-        }
+        
+        var local2 = await db.TaskStages.FindAsync(op.EntityId);
+        if (local2 is not null) local2.IsSynced = true;
+        
         return true;
     }
 
-    private async Task<bool> SyncUserAvatarAsync(PendingOperation op)
+    private async Task<bool> SyncUserAvatarAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Update) return true;
         var payload = JsonSerializer.Deserialize<UploadAvatarRequest>(op.Payload, PendingOpJson);
@@ -1157,33 +1180,31 @@ public class SyncService : ISyncService
         var ok = await _api.UploadUserAvatarAsync(op.EntityId, payload.AvatarData);
         if (ok)
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
             var user = await db.Users.FindAsync(op.EntityId);
-            if (user is not null) { user.IsSynced = true; await db.SaveChangesAsync(); }
+            if (user is not null) user.IsSynced = true;
         }
         return ok;
     }
 
-    private async Task<bool> SyncUserProfileAsync(PendingOperation op)
+    private async Task<bool> SyncUserProfileAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Update) return true;
         var req = JsonSerializer.Deserialize<UpdateUserRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         var updated = await _api.UpdateUserAsync(op.EntityId, req);
         if (updated is null) return false;
-        await using var db = await _dbFactory.CreateDbContextAsync();
+        
         var user = await db.Users.FindAsync(op.EntityId);
         if (user is not null)
         {
             user.IsSynced = true;
             user.LastModifiedLocally = DateTime.UtcNow;
-            await db.SaveChangesAsync();
         }
 
         return true;
     }
 
-    private async Task<bool> SyncMaterialAsync(PendingOperation op)
+    private async Task<bool> SyncMaterialAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteMaterialAsync(op.EntityId);
@@ -1193,14 +1214,27 @@ public class SyncService : ISyncService
             var req = JsonSerializer.Deserialize<CreateMaterialRequest>(op.Payload, PendingOpJson);
             if (req is null) return false;
             req = req with { Id = op.EntityId };
-            return await _api.CreateMaterialAsync(req) is not null;
+            var created = await _api.CreateMaterialAsync(req);
+            if (created is not null)
+            {
+                var local = await db.Materials.FindAsync(op.EntityId);
+                if (local is not null) local.IsSynced = true;
+                return true;
+            }
+            return false;
         }
 
         var updateReq = JsonSerializer.Deserialize<UpdateMaterialRequest>(op.Payload, PendingOpJson);
-        return updateReq is not null && await _api.UpdateMaterialAsync(op.EntityId, updateReq) is not null;
+        if (updateReq is not null && await _api.UpdateMaterialAsync(op.EntityId, updateReq) is not null)
+        {
+            var local = await db.Materials.FindAsync(op.EntityId);
+            if (local is not null) local.IsSynced = true;
+            return true;
+        }
+        return false;
     }
 
-    private async Task<bool> SyncMaterialCategoryAsync(PendingOperation op)
+    private async Task<bool> SyncMaterialCategoryAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<CreateMaterialCategoryRequest>(op.Payload, PendingOpJson);
@@ -1209,7 +1243,7 @@ public class SyncService : ISyncService
         return await _api.CreateMaterialCategoryAsync(req) is not null;
     }
 
-    private async Task<bool> SyncEquipmentCategoryAsync(PendingOperation op)
+    private async Task<bool> SyncEquipmentCategoryAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<CreateEquipmentCategoryRequest>(op.Payload, PendingOpJson);
@@ -1218,7 +1252,7 @@ public class SyncService : ISyncService
         return await _api.CreateEquipmentCategoryAsync(req) is not null;
     }
 
-    private async Task<bool> SyncMaterialStockMovementAsync(PendingOperation op)
+    private async Task<bool> SyncMaterialStockMovementAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<RecordMaterialStockRequest>(op.Payload, PendingOpJson);
@@ -1226,7 +1260,7 @@ public class SyncService : ISyncService
         return await _api.RecordMaterialStockMovementAsync(op.EntityId, req) is not null;
     }
 
-    private async Task<bool> SyncEquipmentAsync(PendingOperation op)
+    private async Task<bool> SyncEquipmentAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteEquipmentAsync(op.EntityId);
@@ -1238,13 +1272,10 @@ public class SyncService : ISyncService
             req = req with { Id = op.EntityId };
             var created = await _api.CreateEquipmentAsync(req);
             if (created is null) return false;
-            await using var db = await _dbFactory.CreateDbContextAsync();
+            
             var local = await db.Equipments.FindAsync(op.EntityId);
-            if (local is not null)
-            {
-                local.IsSynced = true;
-                await db.SaveChangesAsync();
-            }
+            if (local is not null) local.IsSynced = true;
+            
             return true;
         }
 
@@ -1252,17 +1283,14 @@ public class SyncService : ISyncService
         if (updateReq is null) return false;
         var updated = await _api.UpdateEquipmentAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        await using var db2 = await _dbFactory.CreateDbContextAsync();
-        var local2 = await db2.Equipments.FindAsync(op.EntityId);
-        if (local2 is not null)
-        {
-            local2.IsSynced = true;
-            await db2.SaveChangesAsync();
-        }
+        
+        var local2 = await db.Equipments.FindAsync(op.EntityId);
+        if (local2 is not null) local2.IsSynced = true;
+        
         return true;
     }
 
-    private async Task<bool> SyncEquipmentHistoryAsync(PendingOperation op)
+    private async Task<bool> SyncEquipmentHistoryAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<RecordEquipmentEventRequest>(op.Payload, PendingOpJson);
@@ -1270,7 +1298,7 @@ public class SyncService : ISyncService
         return await _api.RecordEquipmentEventAsync(op.EntityId, req) is not null;
     }
 
-    private async Task<bool> SyncSyncedActivityLogAsync(PendingOperation op)
+    private async Task<bool> SyncSyncedActivityLogAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<CreateSyncedActivityLogRequest>(op.Payload, PendingOpJson);
@@ -1288,7 +1316,7 @@ public class SyncService : ISyncService
         return req with { TaskId = taskId, ProjectId = projectId };
     }
 
-    private async Task<bool> SyncDiscussionMessageAsync(PendingOperation op)
+    private async Task<bool> SyncDiscussionMessageAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType != SyncOperation.Create) return true;
         var req = JsonSerializer.Deserialize<CreateDiscussionMessageRequest>(op.Payload, PendingOpJson);
@@ -1298,32 +1326,30 @@ public class SyncService : ISyncService
         if (response is null) return false;
 
         var messageId = req.Id ?? op.EntityId;
-        await using var db = await _dbFactory.CreateDbContextAsync();
         var local = await db.Messages.FindAsync(messageId);
         if (local is not null)
         {
             local.CreatedAt = NormalizeUtcInstant(response.CreatedAt);
-            await db.SaveChangesAsync();
         }
 
         return true;
     }
 
-    private async Task<bool> SyncTaskAssigneesAsync(PendingOperation op)
+    private async Task<bool> SyncTaskAssigneesAsync(LocalDbContext db, PendingOperation op)
     {
         var req = JsonSerializer.Deserialize<ReplaceTaskAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceTaskAssigneesAsync(op.EntityId, req);
     }
 
-    private async Task<bool> SyncStageAssigneesAsync(PendingOperation op)
+    private async Task<bool> SyncStageAssigneesAsync(LocalDbContext db, PendingOperation op)
     {
         var req = JsonSerializer.Deserialize<ReplaceStageAssigneesRequest>(op.Payload, PendingOpJson);
         if (req is null) return false;
         return await _api.ReplaceStageAssigneesAsync(op.EntityId, req);
     }
 
-    private async Task<bool> SyncFileAsync(PendingOperation op)
+    private async Task<bool> SyncFileAsync(LocalDbContext db, PendingOperation op)
     {
         if (op.OperationType == SyncOperation.Delete)
             return await _api.DeleteFileAsync(op.EntityId);
@@ -1333,12 +1359,10 @@ public class SyncService : ISyncService
             var meta = JsonSerializer.Deserialize<FileDto>(op.Payload, PendingOpJson);
             if (meta is null) return false;
 
-            await using var db = await _dbFactory.CreateDbContextAsync();
             var local = await db.Files.FindAsync(op.EntityId);
-            if (local is null) return false; // Wait for it to appear/commit
-            if (local.FileData is null || local.FileData.Length == 0) return true; // Nothing to upload
+            if (local is null) return false; 
+            if (local.FileData is null || local.FileData.Length == 0) return true; 
 
-            // Create a temp file to upload
             var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_{local.FileName}");
             await File.WriteAllBytesAsync(tempPath, local.FileData);
             try
@@ -1347,9 +1371,6 @@ public class SyncService : ISyncService
                 if (uploaded is not null)
                 {
                     local.IsSynced = true;
-                    // If server assigned a different ID (unlikely but possible), we might need to update.
-                    // But here we rely on the client-generated ID being accepted or handled.
-                    await db.SaveChangesAsync();
                     return true;
                 }
                 return false;
