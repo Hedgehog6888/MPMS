@@ -53,6 +53,36 @@
             BorderBrush="{StaticResource BorderBrush}"
             BorderThickness="0,0,1,0">
         <StackPanel Margin="0,16,0,0">
+            <!-- Главная -->
+            <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Home, Mode=OneWay}"
+                         Style="{StaticResource NavButton}"
+                         Command="{Binding NavigateCommand}"
+                         CommandParameter="Home">
+                <StackPanel Orientation="Horizontal">
+                    <Image Width="20" Height="20"
+                           Margin="12,0,8,0"
+                           VerticalAlignment="Center"
+                           Source="{svgc:SvgImage Source=/icons/pathHouse.svg, AppName=MPMS}">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="Opacity" Value="0.7"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <TextBlock Text="Главная"
+                               FontSize="14"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </RadioButton>
+
             <!-- Проекты (скрыт для Работника) -->
             <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Projects, Mode=OneWay}"
                          Style="{StaticResource NavButton}"

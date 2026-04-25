@@ -18,7 +18,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private CancellationTokenSource _loadCts = new();
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
-    [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все";
 
@@ -164,10 +163,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         _allLoadedProjects = list;
         ApplyFilter();
-
-        // Load recent activity log with role-based filtering
-        var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 100, excludeAuthEvents: true, ct);
-        RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
     }
 
     private void ApplyFilter()

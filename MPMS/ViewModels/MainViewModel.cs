@@ -17,7 +17,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly IServiceProvider _sp;
     private readonly DispatcherTimer _onlineTimer;
 
-    [ObservableProperty] private string _currentPage = "Projects";
+    [ObservableProperty] private string _currentPage = "Home";
     [ObservableProperty] private bool _isSidebarExpanded = true;
     [ObservableProperty] private bool _isOnline;
     [ObservableProperty] private bool _isSyncing;
@@ -75,7 +75,7 @@ public partial class MainViewModel : ViewModelBase
         _sync.OnlineStatusChanged += OnSyncStatusChanged;
 
         _ = RefreshAvatarAsync();
-        Navigate(IsProjectsVisible ? "Projects" : "Tasks");
+        Navigate("Home");
     }
 
     private void OnOnlineTimerTick(object? sender, EventArgs e)
@@ -121,6 +121,7 @@ public partial class MainViewModel : ViewModelBase
         CurrentPage = page;
         ViewModelBase? vm = page switch
         {
+            "Home"      => _sp.GetRequiredService<HomeViewModel>(),
             "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
             "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
             "Files"     => _sp.GetRequiredService<FilesPageViewModel>(),
@@ -210,8 +211,8 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsProjectsVisible));
         OnPropertyChanged(nameof(IsAdminPanelVisible));
         _ = RefreshAvatarAsync();
-        // Workers go to Tasks page by default; Admins to Projects (or Admin panel)
-        Navigate(IsProjectsVisible ? "Projects" : "Tasks");
+        // Workers go to Home page by default
+        Navigate("Home");
     }
 
     /// <summary>Reloads the avatar from the local DB and notifies the UI (supports AvatarData bytes and legacy AvatarPath).</summary>

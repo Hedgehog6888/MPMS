@@ -63,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<IUserSettingsService, UserSettingsService>();
 
         // ── Page ViewModels ───────────────────────────────────────────────────
+        services.AddTransient<HomeViewModel>();
         services.AddTransient<ProjectsViewModel>();
         services.AddSingleton<ProjectDetailViewModel>();
         services.AddSingleton<StageEditViewModel>();
