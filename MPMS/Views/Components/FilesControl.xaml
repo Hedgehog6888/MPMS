@@ -190,13 +190,13 @@
                     </Grid.ColumnDefinitions>
 
                     <Border Grid.Column="0" Width="40" Height="40" CornerRadius="8" Margin="0,0,16,0"
-                            Background="{Binding FileType, Converter={StaticResource FileExtensionToBackgroundBrush}}">
+                            Background="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}">
                         <Viewbox Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Canvas Width="24" Height="24">
-                                <Path Stroke="{Binding FileType, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+                                <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
                                       StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       Data="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
-                                <Path Stroke="{Binding FileType, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+                                <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
                                       StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       Data="M14 2v4a2 2 0 0 0 2 2h4"/>
                             </Canvas>

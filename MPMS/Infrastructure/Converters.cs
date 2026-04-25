@@ -1055,7 +1055,22 @@ public class FileExtensionToBackgroundBrushConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var ext = (value?.ToString() ?? "").ToLower().Trim();
+        var input = (value?.ToString() ?? "").ToLower().Trim();
+        if (string.IsNullOrEmpty(input)) return new SolidColorBrush(Color.FromRgb(0xF9, 0xFA, 0xFB));
+
+        // Если это MIME-тип, пытаемся сопоставить его с расширением
+        if (input.Contains("/"))
+        {
+            if (input.Contains("wordprocessingml") || input.Contains("msword")) input = ".docx";
+            else if (input.Contains("spreadsheetml") || input.Contains("ms-excel")) input = ".xlsx";
+            else if (input.Contains("pdf")) input = ".pdf";
+            else if (input.Contains("image/png")) input = ".png";
+            else if (input.Contains("image/jpeg")) input = ".jpg";
+        }
+
+        var ext = Path.GetExtension(input);
+        if (string.IsNullOrEmpty(ext)) ext = "." + input;
+
         return ext switch
         {
             ".doc" or ".docx" => new SolidColorBrush(Color.FromRgb(0xEB, 0xF5, 0xFF)), // Blue-50
@@ -1081,7 +1096,21 @@ public class FileExtensionToForegroundBrushConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var ext = (value?.ToString() ?? "").ToLower().Trim();
+        var input = (value?.ToString() ?? "").ToLower().Trim();
+        if (string.IsNullOrEmpty(input)) return new SolidColorBrush(Color.FromRgb(0x4B, 0x55, 0x63));
+
+        if (input.Contains("/"))
+        {
+            if (input.Contains("wordprocessingml") || input.Contains("msword")) input = ".docx";
+            else if (input.Contains("spreadsheetml") || input.Contains("ms-excel")) input = ".xlsx";
+            else if (input.Contains("pdf")) input = ".pdf";
+            else if (input.Contains("image/png")) input = ".png";
+            else if (input.Contains("image/jpeg")) input = ".jpg";
+        }
+
+        var ext = Path.GetExtension(input);
+        if (string.IsNullOrEmpty(ext)) ext = "." + input;
+
         return ext switch
         {
             ".doc" or ".docx" => new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)), // Blue-600

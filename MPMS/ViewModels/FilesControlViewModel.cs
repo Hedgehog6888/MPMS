@@ -162,7 +162,8 @@ public partial class FilesControlViewModel : ViewModelBase
 
         if (!string.IsNullOrEmpty(ExtensionFilter) && ExtensionFilter != "Все")
         {
-            filtered = filtered.Where(f => f.FileType?.ToLower() == ExtensionFilter);
+            filtered = filtered.Where(f => 
+                (Path.GetExtension(f.FileName)?.TrimStart('.').ToUpper() ?? "") == ExtensionFilter);
         }
 
         DisplayedFiles.Clear();
@@ -184,7 +185,13 @@ public partial class FilesControlViewModel : ViewModelBase
             filtered = filtered.Where(f => !IsImage(f.FileName));
         }
 
-        var exts = filtered.Select(f => f.FileType?.ToLower() ?? "").Where(e => !string.IsNullOrEmpty(e)).Distinct().OrderBy(e => e).ToList();
+        var exts = filtered
+            .Select(f => Path.GetExtension(f.FileName)?.TrimStart('.').ToUpper() ?? "")
+            .Where(e => !string.IsNullOrEmpty(e))
+            .Distinct()
+            .OrderBy(e => e)
+            .ToList();
+
         var oldVal = ExtensionFilter;
         
         ExtensionFilterOptions.Clear();
