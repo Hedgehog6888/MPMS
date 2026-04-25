@@ -22,6 +22,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _statusFilter = "Все";
 
+    private List<LocalProject> _allLoadedProjects = [];
+
     public IReadOnlyList<string> StatusOptions { get; } =
         ["Все", "Планирование", "В работе", "Завершён", "Отменён", "Пометка удалить"];
 
@@ -33,8 +35,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         _auth = auth;
     }
 
-    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
-    partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+    partial void OnStatusFilterChanged(string value) => ApplyFilter();
 
     public async Task LoadAsync()
     {
@@ -108,40 +110,15 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
     private async Task LoadInternalAsync(LocalDbContext db, IQueryable<LocalProject> query, CancellationToken ct)
     {
-        var searchTerm = SearchHelper.Normalize(SearchText);
-        var statusSnapshot = StatusFilter;
-
-        if (statusSnapshot == "Пометка удалить")
-        {
-            query = query.Where(p => p.IsMarkedForDeletion);
-        }
-
-        if (statusSnapshot != "Пометка удалить" && statusSnapshot != "Все")
-        {
-            var status = statusSnapshot switch
-            {
-                "Планирование" => ProjectStatus.Planning,
-                "В работе"     => ProjectStatus.InProgress,
-                "Завершён"     => ProjectStatus.Completed,
-                "Отменён"      => ProjectStatus.Cancelled,
-                _              => (ProjectStatus?)null
-            };
-            if (status.HasValue)
-                query = query.Where(p => p.Status == status.Value && !p.IsMarkedForDeletion);
-        }
-
         var list = (await query.ToListAsync(ct)).ToList();
         ct.ThrowIfCancellationRequested();
 
-        if (searchTerm is not null)
-            list = list.Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
-                SearchHelper.ContainsIgnoreCase(p.Client, searchTerm)).ToList();
-
-        // Populate progress stats for each project (TotalTasks, CompletedTasks, InProgressTasks — как в ProjectDetailViewModel)
+        // Populate progress stats for each project
         var allTasks = await db.Tasks.ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
         var allStages = await db.TaskStages.ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
+
         foreach (var project in list)
         {
             var projTasks = allTasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToList();
@@ -161,21 +138,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyProjectMetrics(project, projTasks, projStages);
         }
 
-        // Sort: non-deleted first by status, then by progress desc, then by date
-        list = list
-            .OrderBy(p => p.IsMarkedForDeletion)
-            .ThenBy(p => p.Status switch
-            {
-                ProjectStatus.Planning    => 0,
-                ProjectStatus.InProgress  => 1,
-                ProjectStatus.Completed   => 2,
-                ProjectStatus.Cancelled   => 3,
-                _                         => 4
-            })
-            .ThenBy(p => p.ProgressPercent)
-            .ThenByDescending(p => p.CreatedAt)
-            .ToList();
-
         // Populate ManagerAvatarData/ManagerAvatarPath from Users
         var managerIds = list.Select(p => p.ManagerId).Distinct().ToList();
         if (managerIds.Count > 0)
@@ -192,8 +154,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                     if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
                     {
                         var fromFile = AvatarHelper.FileToBytes(av.AvatarPath);
-                        if (fromFile is { Length: > 0 })
-                            data = fromFile;
+                        if (fromFile is { Length: > 0 }) data = fromFile;
                     }
                     p.ManagerAvatarData = data;
                     p.ManagerAvatarPath = av.AvatarPath;
@@ -201,11 +162,62 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             }
         }
 
-        Projects = new ObservableCollection<LocalProject>(list);
+        _allLoadedProjects = list;
+        ApplyFilter();
 
         // Load recent activity log with role-based filtering
         var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 100, excludeAuthEvents: true, ct);
         RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
+    }
+
+    private void ApplyFilter()
+    {
+        var searchTerm = SearchHelper.Normalize(SearchText);
+        var statusSnapshot = StatusFilter;
+
+        var filtered = _allLoadedProjects.AsEnumerable();
+
+        if (searchTerm is not null)
+        {
+            filtered = filtered.Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
+                                           SearchHelper.ContainsIgnoreCase(p.Client, searchTerm));
+        }
+
+        // Apply status filter
+        if (statusSnapshot == "Пометка удалить")
+        {
+            filtered = filtered.Where(p => p.IsMarkedForDeletion);
+        }
+        else if (statusSnapshot != "Все")
+        {
+            var status = statusSnapshot switch
+            {
+                "Планирование" => ProjectStatus.Planning,
+                "В работе"     => ProjectStatus.InProgress,
+                "Завершён"     => ProjectStatus.Completed,
+                "Отменён"      => ProjectStatus.Cancelled,
+                _              => (ProjectStatus?)null
+            };
+            if (status.HasValue)
+                filtered = filtered.Where(p => p.Status == status.Value && !p.IsMarkedForDeletion);
+        }
+
+        // Sort: non-deleted first by status, then by progress desc, then by date
+        var sorted = filtered
+            .OrderBy(p => p.IsMarkedForDeletion)
+            .ThenBy(p => p.Status switch
+            {
+                ProjectStatus.Planning    => 0,
+                ProjectStatus.InProgress  => 1,
+                ProjectStatus.Completed   => 2,
+                ProjectStatus.Cancelled   => 3,
+                _                         => 4
+            })
+            .ThenBy(p => p.ProgressPercent)
+            .ThenByDescending(p => p.CreatedAt)
+            .ToList();
+
+        Projects = new ObservableCollection<LocalProject>(sorted);
     }
 
     public async Task SaveNewProjectAsync(CreateProjectRequest req, Guid localId)
