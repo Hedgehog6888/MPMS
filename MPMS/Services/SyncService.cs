@@ -1363,7 +1363,10 @@ public class SyncService : ISyncService
             if (local is null) return false; 
             if (local.FileData is null || local.FileData.Length == 0) return true; 
 
-            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_{local.FileName}");
+            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+            var tempPath = Path.Combine(tempDir, local.FileName);
+            
             await File.WriteAllBytesAsync(tempPath, local.FileData);
             try
             {
@@ -1377,7 +1380,7 @@ public class SyncService : ISyncService
             }
             finally
             {
-                if (File.Exists(tempPath)) File.Delete(tempPath);
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
             }
         }
 
