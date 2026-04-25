@@ -16,15 +16,11 @@ namespace MPMS.API.Controllers;
 public class FilesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
-    private readonly IConfiguration _config;
-    private readonly IWebHostEnvironment _env;
     private readonly IMapper _mapper;
 
-    public FilesController(ApplicationDbContext db, IConfiguration config, IWebHostEnvironment env, IMapper mapper)
+    public FilesController(ApplicationDbContext db, IMapper mapper)
     {
         _db = db;
-        _config = config;
-        _env = env;
         _mapper = mapper;
     }
 
@@ -45,18 +41,9 @@ public class FilesController : ControllerBase
         // if (projectId is null && taskId is null && stageId is null)
         //     return BadRequest(new { message = "Необходимо указать projectId, taskId или stageId" });
 
-        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
-        if (!Path.IsPathRooted(basePath))
-            basePath = Path.Combine(_env.ContentRootPath, basePath);
-        
-        Directory.CreateDirectory(basePath);
-
-        var ext = Path.GetExtension(file.FileName);
-        var savedName = $"{Guid.NewGuid()}{ext}";
-        var fullPath = Path.Combine(basePath, savedName);
-
-        await using (var stream = System.IO.File.Create(fullPath))
-            await file.CopyToAsync(stream);
+        using var ms = new MemoryStream();
+        await file.CopyToAsync(ms);
+        var fileContent = ms.ToArray();
 
         try
         {
@@ -64,7 +51,8 @@ public class FilesController : ControllerBase
             {
                 Id = id ?? Guid.NewGuid(),
                 FileName = file.FileName,
-                FilePath = savedName,
+                FilePath = null, // Больше не храним на диске
+                Content = fileContent,
                 FileType = file.ContentType,
                 FileSize = file.Length,
                 UploadedById = CurrentUserId(),
@@ -102,19 +90,9 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> Download(Guid id)
     {
         var file = await _db.Files.FindAsync(id);
-        if (file is null) return NotFound();
+        if (file is null || file.Content is null) return NotFound();
 
-        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
-        if (!Path.IsPathRooted(basePath))
-            basePath = Path.Combine(_env.ContentRootPath, basePath);
-            
-        var fullPath = Path.Combine(basePath, file.FilePath);
-
-        if (!System.IO.File.Exists(fullPath))
-            return NotFound(new { message = "Р¤Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ РЅР° РґРёСЃРєРµ" });
-
-        var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
-        return File(bytes, file.FileType ?? "application/octet-stream", file.FileName);
+        return File(file.Content, file.FileType ?? "application/octet-stream", file.FileName);
     }
 
     /// <summary>Получить список файлов по проекту, задаче или этапу.</summary>
@@ -147,15 +125,6 @@ public class FilesController : ControllerBase
     {
         var file = await _db.Files.FindAsync(id);
         if (file is null) return NotFound();
-
-        var basePath = _config["FileStorage:BasePath"] ?? "Uploads";
-        if (!Path.IsPathRooted(basePath))
-            basePath = Path.Combine(_env.ContentRootPath, basePath);
-            
-        var fullPath = Path.Combine(basePath, file.FilePath);
-
-        if (System.IO.File.Exists(fullPath))
-            System.IO.File.Delete(fullPath);
 
         _db.Files.Remove(file);
         await _db.SaveChangesAsync();

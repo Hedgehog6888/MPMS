@@ -9,8 +9,8 @@ public class FileAttachment
     [Required, MaxLength(255)]
     public string FileName { get; set; } = string.Empty;
 
-    [Required, MaxLength(1000)]
-    public string FilePath { get; set; } = string.Empty;
+    [MaxLength(1000)]
+    public string? FilePath { get; set; }
 
     [MaxLength(100)]
     public string? FileType { get; set; }
@@ -32,4 +32,7 @@ public class FileAttachment
     public DateTime CreatedAt { get; set; }
     
     public DateTime? OriginalCreatedAt { get; set; }
+
+    /// <summary>Содержимое файла, хранящееся в базе данных (BLOB).</summary>
+    public byte[]? Content { get; set; }
 }
