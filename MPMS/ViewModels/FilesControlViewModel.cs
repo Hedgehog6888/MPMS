@@ -296,7 +296,7 @@ public partial class FilesControlViewModel : ViewModelBase
         if (file == null) return;
         
         var owner = Application.Current.MainWindow;
-        if (!MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Файл", file.FileName))
+        if (!MPMS.Views.ConfirmDeleteDialog.Show(owner, "Файл", file.FileName))
             return;
 
         try
@@ -430,3 +430,4 @@ public partial class FilesControlViewModel : ViewModelBase
         await _sync.QueueLocalActivityLogAsync(log);
     }
 }
+

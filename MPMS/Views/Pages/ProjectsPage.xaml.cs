@@ -113,7 +113,7 @@ public partial class ProjectsPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
         var owner = Window.GetWindow(this);
-        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(
+        if (MPMS.Views.ConfirmDeleteDialog.Show(
                 owner, "Проект", project.Name,
                 "Все задачи и этапы этого проекта также будут удалены."))
             await VM.DeleteProjectCommand.ExecuteAsync(project);
@@ -125,7 +125,7 @@ public partial class ProjectsPage : UserControl
         if (!project.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", project.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", project.Name))
                 return;
         }
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(project);
@@ -145,3 +145,4 @@ public partial class ProjectsPage : UserControl
         MainVM?.NavigateToProject(project);
     }
 }
+

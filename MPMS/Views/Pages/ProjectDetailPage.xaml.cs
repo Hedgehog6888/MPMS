@@ -91,7 +91,7 @@ public partial class ProjectDetailPage : UserControl
         if (VM.Project is { IsMarkedForDeletion: false } projectToMark)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", projectToMark.Name))
+            if (owner is null || !ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", projectToMark.Name))
                 return;
         }
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(null);
@@ -241,7 +241,7 @@ public partial class ProjectDetailPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         var owner = Window.GetWindow(this);
-        if (Dialogs.ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
+        if (ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
             await VM.DeleteTaskCommand.ExecuteAsync(task);
     }
 
@@ -251,7 +251,7 @@ public partial class ProjectDetailPage : UserControl
         if (!task.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
+            if (owner is null || !ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
                 return;
         }
         await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
@@ -263,7 +263,7 @@ public partial class ProjectDetailPage : UserControl
         if (!stage.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", stage.Name))
+            if (owner is null || !ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", stage.Name))
                 return;
         }
         await VM.MarkStageForDeletionCommand.ExecuteAsync(stage);
@@ -294,7 +294,7 @@ public partial class ProjectDetailPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
         var owner = Window.GetWindow(this);
-        if (Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
+        if (ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
             await VM.DeleteStageCommand.ExecuteAsync(stage);
     }
 
@@ -630,3 +630,4 @@ public partial class ProjectDetailPage : UserControl
     }
 
 }
+

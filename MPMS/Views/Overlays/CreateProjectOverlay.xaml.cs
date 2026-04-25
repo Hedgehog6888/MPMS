@@ -314,7 +314,7 @@ public partial class CreateProjectOverlay : UserControl
             if (hasTaskAssign || hasStageAssign)
             {
                 var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-                var ok = Dialogs.ConfirmDeleteDialog.Show(owner,
+                var ok = ConfirmDeleteDialog.Show(owner,
                     "работника из проекта",
                     workerName,
                     "С этим работником связаны назначения на задачи и этапы. Они будут удалены. Продолжить?");
@@ -672,3 +672,4 @@ public sealed class ForemanPickerItem : INotifyPropertyChanged
         IsSelected = selectedForemanIds.Contains(UserId);
     }
 }
+

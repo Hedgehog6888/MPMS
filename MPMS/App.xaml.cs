@@ -6,7 +6,7 @@ using MPMS.Data;
 using MPMS.Services;
 using MPMS.ViewModels;
 using MPMS.Views;
-using MPMS.Views.Dialogs;
+
 using MPMS.Views.Pages;
 
 namespace MPMS;
@@ -67,7 +67,6 @@ public partial class App : Application
         services.AddSingleton<ProjectDetailViewModel>();
         services.AddSingleton<StageEditViewModel>();
         services.AddTransient<TasksViewModel>();
-        services.AddTransient<MaterialsViewModel>();
         services.AddTransient<WarehouseViewModel>();
         services.AddTransient<TaskDetailViewModel>();
         services.AddTransient<StagesViewModel>();
@@ -84,7 +83,6 @@ public partial class App : Application
         services.AddSingleton<MainViewModel>();
 
         // ── Dialogs ───────────────────────────────────────────────────────────
-        services.AddTransient(sp => new CreateMaterialDialog());
         services.AddTransient(sp => new ConfirmDeleteDialog());
     }
 
@@ -120,3 +118,4 @@ public partial class App : Application
         }
     }
 }
+

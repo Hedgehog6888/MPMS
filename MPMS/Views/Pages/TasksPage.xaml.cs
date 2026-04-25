@@ -50,7 +50,7 @@ public partial class TasksPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTask task || VM is null) return;
         var owner = Window.GetWindow(this);
-        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
+        if (MPMS.Views.ConfirmDeleteDialog.Show(owner, "Задача", task.Name))
             await VM.DeleteTaskCommand.ExecuteAsync(task);
     }
 
@@ -60,7 +60,7 @@ public partial class TasksPage : UserControl
         if (!task.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "задачу", task.Name))
                 return;
         }
         await VM.MarkTaskForDeletionCommand.ExecuteAsync(task);
@@ -106,3 +106,4 @@ public partial class TasksPage : UserControl
         MainWindow.Instance?.ShowDrawer(leftPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 }
+

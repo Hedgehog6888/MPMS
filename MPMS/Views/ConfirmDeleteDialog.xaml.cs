@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace MPMS.Views.Dialogs;
+namespace MPMS.Views;
 
 public partial class ConfirmDeleteDialog : Window
 {

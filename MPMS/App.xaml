@@ -1107,9 +1107,7 @@
             <DataTemplate DataType="{x:Type vm:FilesPageViewModel}">
                 <pages:FilesPage/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:MaterialsViewModel}">
-                <pages:MaterialsPage/>
-            </DataTemplate>
+
             <DataTemplate DataType="{x:Type vm:WarehouseViewModel}">
                 <pages:WarehousePage/>
             </DataTemplate>

@@ -232,7 +232,7 @@ public partial class TaskDetailOverlay : UserControl
         if (!_vm.Task.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this);
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Задачу", _vm.Task.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Задачу", _vm.Task.Name))
                 return;
         }
         await _vm.MarkTaskForDeletionCommand.ExecuteAsync(null);
@@ -393,7 +393,7 @@ public partial class TaskDetailOverlay : UserControl
         if (!stage.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this);
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", stage.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", stage.Name))
                 return;
         }
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
@@ -404,7 +404,7 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null) return;
         var owner = Window.GetWindow(this);
-        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
+        if (MPMS.Views.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
         {
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
             _onClosed?.Invoke(); // Синхронизация страницы проекта
@@ -486,3 +486,4 @@ public sealed class AssigneeDisplayItem
             : userName.Length > 0 ? userName[0].ToString().ToUpper() : "?";
     }
 }
+

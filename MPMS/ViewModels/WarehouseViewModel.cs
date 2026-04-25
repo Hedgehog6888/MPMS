@@ -943,3 +943,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         return string.IsNullOrWhiteSpace(unit) ? number : $"{number} {unit}";
     }
 }
+
+public record MaterialCategoryFilterOption(Guid? Id, string? Name);
+

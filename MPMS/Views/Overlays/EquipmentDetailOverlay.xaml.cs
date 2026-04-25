@@ -274,10 +274,11 @@ public partial class EquipmentDetailOverlay : UserControl
     {
         if (!_vm.CanDeletePermanently) return;
         var owner = Window.GetWindow(this);
-        if (!MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Оборудование", _equipment.Name))
+        if (!MPMS.Views.ConfirmDeleteDialog.Show(owner, "Оборудование", _equipment.Name))
             return;
 
         await _vm.DeleteEquipmentAsync(_equipment.Id);
         MainWindow.Instance?.HideDrawer();
     }
 }
+

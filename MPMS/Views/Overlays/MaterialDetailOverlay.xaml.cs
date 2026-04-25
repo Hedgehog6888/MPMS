@@ -188,10 +188,11 @@ public partial class MaterialDetailOverlay : UserControl
     {
         if (!_vm.CanDeletePermanently) return;
         var owner = Window.GetWindow(this);
-        if (!MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Материал", _material.Name))
+        if (!MPMS.Views.ConfirmDeleteDialog.Show(owner, "Материал", _material.Name))
             return;
 
         await _vm.DeleteMaterialAsync(_material.Id);
         MainWindow.Instance?.HideDrawer();
     }
 }
+

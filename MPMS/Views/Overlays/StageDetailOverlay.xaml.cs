@@ -378,7 +378,7 @@ public partial class StageDetailOverlay : UserControl
         if (!entity.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this);
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", entity.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "Этап", entity.Name))
                 return;
         }
 
@@ -439,3 +439,4 @@ public partial class StageDetailOverlay : UserControl
         await System.Threading.Tasks.Task.CompletedTask;
     }
 }
+

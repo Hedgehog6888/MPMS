@@ -61,7 +61,7 @@ public partial class StagesPage : UserControl
         if (!item.Stage.IsMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !MPMS.Views.Dialogs.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", item.Stage.Name))
+            if (owner is null || !MPMS.Views.ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", item.Stage.Name))
                 return;
         }
         await VM.MarkStageForDeletionCommand.ExecuteAsync(item);
@@ -72,7 +72,7 @@ public partial class StagesPage : UserControl
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
         var owner = Window.GetWindow(this);
-        if (MPMS.Views.Dialogs.ConfirmDeleteDialog.Show(owner, "Этап", item.Stage.Name))
+        if (MPMS.Views.ConfirmDeleteDialog.Show(owner, "Этап", item.Stage.Name))
             await VM.DeleteStageCommand.ExecuteAsync(item);
     }
 
@@ -199,3 +199,4 @@ public partial class StagesPage : UserControl
         MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 }
+

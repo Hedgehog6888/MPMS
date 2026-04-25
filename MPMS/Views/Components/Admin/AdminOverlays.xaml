@@ -10,7 +10,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Views/Components/Admin/AdminStyles.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/Views/Components/Admin/AdminStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
@@ -416,3 +416,4 @@
         </Grid>
     </Grid>
 </UserControl>
+
