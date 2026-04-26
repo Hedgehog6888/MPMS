@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using MPMS.Data;
 using MPMS.Services;
+using MPMS.Services.Sync;
 using MPMS.ViewModels;
 using MPMS.Views;
+using System.Text.Json;
 
 using MPMS.Views.Pages;
 
@@ -59,8 +61,19 @@ public partial class App : Application
 
         // ── Services ──────────────────────────────────────────────────────────
         services.AddSingleton<IAuthService, AuthService>();
-        services.AddSingleton<ISyncService, SyncService>();
         services.AddSingleton<IUserSettingsService, UserSettingsService>();
+
+        // Syncers
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        services.AddSingleton(jsonOptions);
+        services.AddSingleton<IEntitySyncer, ProjectSyncer>();
+        services.AddSingleton<IEntitySyncer, TaskSyncer>();
+        services.AddSingleton<IEntitySyncer, WarehouseSyncer>();
+        services.AddSingleton<IEntitySyncer, UserSyncer>();
+        services.AddSingleton<IEntitySyncer, FileSyncer>();
+        services.AddSingleton<IEntitySyncer, SocialSyncer>();
+        
+        services.AddSingleton<ISyncService, SyncCoordinator>();
 
         // ── Page ViewModels ───────────────────────────────────────────────────
         services.AddTransient<HomeViewModel>();
