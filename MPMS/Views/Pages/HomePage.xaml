@@ -199,10 +199,17 @@
 
 
 
-                <!-- ── ACTIVITY FEED ──────────────────────────────────── -->
-                <Border Background="White" CornerRadius="8"
-                        BorderBrush="#DFE1E6" BorderThickness="1"
-                        Padding="20,16" Margin="0,0,0,0">
+                <!-- ── ACTIVITY FEED SECTION ───────────────────────────────── -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60*"/>
+                        <ColumnDefinition Width="40*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 60% ACTIVITY FEED -->
+                    <Border Grid.Column="0" Background="White" CornerRadius="8"
+                            BorderBrush="#DFE1E6" BorderThickness="1"
+                            Padding="20,16">
                     <StackPanel>
                         <TextBlock Text="Последние действия"
                                    FontSize="14" FontWeight="SemiBold" Foreground="#000000"
@@ -296,7 +303,27 @@
                                    Margin="0,8,0,0"
                                    Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}"/>
                     </StackPanel>
-                </Border>
+                    </Border>
+
+                    <!-- 40% SIDE PANEL -->
+                    <Border Grid.Column="1" Background="White" CornerRadius="8"
+                            BorderBrush="#DFE1E6" BorderThickness="1"
+                            Margin="20,0,0,0" Padding="20,16">
+                        <StackPanel>
+                            <TextBlock Text="Дополнительно"
+                                       FontSize="14" FontWeight="SemiBold" Foreground="#000000"
+                                       Margin="0,0,0,2"/>
+                            <TextBlock Text="Панель для быстрой информации"
+                                       FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+
+                            <!-- Placeholder content -->
+                            <Border BorderBrush="#F4F5F7" BorderThickness="0,1,0,0" Padding="0,20">
+                                <TextBlock Text="Здесь может быть ваша статистика, быстрые ссылки или заметки."
+                                           FontSize="12" Foreground="#6B778C" TextWrapping="Wrap" TextAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
     </Grid>

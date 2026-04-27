@@ -608,10 +608,12 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
             "Project"  => ProjectBrush,
             "Task"     => TaskBrush,
             "Stage"    => StageBrush,
+            "TaskStage" => StageBrush,
             "Material" => MaterialBrush,
             "Equipment" => EquipmentBrush,
             "File"     => FileBrush,
             "Message"  => MessageBrush,
+            "User"     => DefaultBrush,
             _          => DefaultBrush
         };
 
@@ -671,6 +673,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         "Project"  => ProjectBrush,
         "Task"     => TaskBrush,
         "Stage"    => StageBrush,
+        "TaskStage" => StageBrush,
         "Material" => MaterialBrush,
         "Equipment" => EquipmentBrush,
         "File"     => FileBrush,
@@ -693,10 +696,12 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
             "Project"  => "Проект",
             "Task"     => "Задача",
             "Stage"    => "Этап",
+            "TaskStage" => "Этап",
             "Material" => "Материал",
             "Equipment" => "Оборудование",
             "File"     => "Файл",
             "Message"  => "Сообщение",
+            "User"     => "Пользователь",
             _          => "—"
         };
 
