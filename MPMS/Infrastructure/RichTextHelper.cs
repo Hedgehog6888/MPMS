@@ -67,25 +67,27 @@ public static class RichTextHelper
     // Command to handle text change
     public static void RegisterRichTextBox(RichTextBox rtb)
     {
-        rtb.TextChanged += (s, e) =>
-        {
-            if (GetIsUpdating(rtb)) return;
+        rtb.TextChanged += (s, e) => UpdateDocumentXaml(rtb);
+    }
 
-            SetIsUpdating(rtb, true);
-            try
+    public static void UpdateDocumentXaml(RichTextBox rtb)
+    {
+        if (GetIsUpdating(rtb)) return;
+
+        SetIsUpdating(rtb, true);
+        try
+        {
+            var range = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd);
+            using (var stream = new MemoryStream())
             {
-                var range = new TextRange(rtb.Document.ContentStart, rtb.Document.ContentEnd);
-                using (var stream = new MemoryStream())
-                {
-                    range.Save(stream, DataFormats.Xaml);
-                    string xaml = Encoding.UTF8.GetString(stream.ToArray());
-                    SetDocumentXaml(rtb, xaml);
-                }
+                range.Save(stream, DataFormats.Xaml);
+                string xaml = Encoding.UTF8.GetString(stream.ToArray());
+                SetDocumentXaml(rtb, xaml);
             }
-            finally
-            {
-                SetIsUpdating(rtb, false);
-            }
-        };
+        }
+        finally
+        {
+            SetIsUpdating(rtb, false);
+        }
     }
 }

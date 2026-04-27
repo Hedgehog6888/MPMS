@@ -62,7 +62,7 @@
             <Setter Property="Height" Value="28"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Margin" Value="0.5,1"/>
             <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -291,106 +291,118 @@
                     <!-- 60% ACTIVITY FEED -->
                     <Border Grid.Column="0" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
-                            Padding="20,16">
-                    <StackPanel>
-                        <TextBlock Text="Последние действия"
-                                   FontSize="14" FontWeight="SemiBold" Foreground="#000000"
-                                   Margin="0,0,0,2"/>
-                        <TextBlock Text="Недавняя активность в системе"
-                                   FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+                            Padding="20,16" Height="480">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top">
+                                <TextBlock Text="Последние действия"
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
+                                           Margin="0,0,0,2"/>
+                                <TextBlock Text="Недавняя активность в системе"
+                                           FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+                            </StackPanel>
 
-                        <!-- Activity list -->
-                        <ScrollViewer MaxHeight="400" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding RecentActivities}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,6" CornerRadius="6"
-                                            Background="#F8F9FA"
-                                            BorderBrush="#EEF0F3" BorderThickness="1">
-                                        <Grid>
-                                            <!-- Colored left accent based on action type (delete, mark, etc.) or entity type -->
-                                            <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
-                                                    Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
-                                            <Grid Margin="12,8,10,8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <!-- Avatar: из БД (AvatarData) или инициалы — EllipseGeometry для идеального круга -->
-                                                <Border Margin="0,0,10,0" VerticalAlignment="Top">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border" BasedOn="{StaticResource AvatarCircle28}">
-                                                            <Setter Property="Background" Value="{Binding UserColor, Converter={StaticResource HexToBrush}}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
-                                                                    <Setter Property="Background" Value="Transparent"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
+                            <Grid>
+                                <!-- Activity list -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" MouseWheel="PreventScrollBubbling">
+                                    <ItemsControl ItemsSource="{Binding RecentActivities}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,6" CornerRadius="6"
+                                                        Background="#F8F9FA"
+                                                        BorderBrush="#EEF0F3" BorderThickness="1">
                                                     <Grid>
-                                                        <Image Style="{StaticResource AvatarImage}"
-                                                               Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                               Width="28" Height="28"
-                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                        <TextBlock Text="{Binding UserInitials}"
-                                                                   FontSize="10" FontWeight="Bold" Foreground="White"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                        <!-- Colored left accent based on action type (delete, mark, etc.) or entity type -->
+                                                        <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
+                                                                Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
+                                                        <Grid Margin="12,8,10,8">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <!-- Avatar: из БД (AvatarData) или инициалы — EllipseGeometry для идеального круга -->
+                                                            <Border Margin="0,0,10,0" VerticalAlignment="Top">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border" BasedOn="{StaticResource AvatarCircle28}">
+                                                                        <Setter Property="Background" Value="{Binding UserColor, Converter={StaticResource HexToBrush}}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
+                                                                                <Setter Property="Background" Value="Transparent"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <Grid>
+                                                                    <Image Style="{StaticResource AvatarImage}"
+                                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                           Width="28" Height="28"
+                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                    <TextBlock Text="{Binding UserInitials}"
+                                                                               FontSize="10" FontWeight="Bold" Foreground="White"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                                </Grid>
+                                                            </Border>
+                                                            <!-- Entity badge + role badge + action text -->
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                                                    <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0"
+                                                                            Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}">
+                                                                        <TextBlock Text="{Binding EntityType, Converter={StaticResource EntityTypeToLabel}}"
+                                                                                   FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                                                                    </Border>
+                                                                    <Border CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
+                                                                            Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
+                                                                            BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
+                                                                            BorderThickness="1"
+                                                                            Visibility="{Binding ActorRole, Converter={StaticResource StringToVis}}">
+                                                                        <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
+                                                                                   FontSize="9" FontWeight="SemiBold"
+                                                                                   Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
+                                                                    </Border>
+                                                                    <TextBlock Text="{Binding UserName}"
+                                                                               FontSize="12" FontWeight="SemiBold"
+                                                                               Foreground="#000000" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding ActionText}"
+                                                                           FontSize="12" Foreground="#000000"
+                                                                           TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                            <!-- Time -->
+                                                            <TextBlock Grid.Column="2"
+                                                                       Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
+                                                                       FontSize="11" Foreground="#6B778C"
+                                                                       VerticalAlignment="Top" Margin="10,2,0,0"
+                                                                       MinWidth="45"/>
+                                                        </Grid>
                                                     </Grid>
                                                 </Border>
-                                                <!-- Entity badge + role badge + action text -->
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                                        <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0"
-                                                                Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}">
-                                                            <TextBlock Text="{Binding EntityType, Converter={StaticResource EntityTypeToLabel}}"
-                                                                       FontSize="10" FontWeight="SemiBold" Foreground="White"/>
-                                                        </Border>
-                                                        <Border CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
-                                                                Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
-                                                                BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
-                                                                BorderThickness="1"
-                                                                Visibility="{Binding ActorRole, Converter={StaticResource StringToVis}}">
-                                                            <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
-                                                                       FontSize="9" FontWeight="SemiBold"
-                                                                       Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
-                                                        </Border>
-                                                        <TextBlock Text="{Binding UserName}"
-                                                                   FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#000000" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                    <TextBlock Text="{Binding ActionText}"
-                                                               FontSize="12" Foreground="#000000"
-                                                               TextWrapping="Wrap"/>
-                                                </StackPanel>
-                                                <!-- Time -->
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
-                                                           FontSize="11" Foreground="#6B778C"
-                                                           VerticalAlignment="Top" Margin="10,2,0,0"
-                                                           MinWidth="45"/>
-                                            </Grid>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        </ScrollViewer>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
 
-                        <!-- Empty activities state -->
-                        <TextBlock Text="Действия появятся здесь после первых изменений"
-                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center"
-                                   Margin="0,8,0,0"
-                                   Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}"/>
-                    </StackPanel>
+                                <!-- Empty activities state -->
+                                <Grid Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <Image Source="{svgc:SvgImage Source=/icons/empty_activities.svg, AppName=MPMS}" 
+                                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                                        <TextBlock Text="История пуста" 
+                                                   FontSize="15" FontWeight="SemiBold" Foreground="#111111" 
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Здесь будут отображаться последние&#x0a;действия в системе" 
+                                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center" 
+                                                   Margin="0,8,0,0" LineHeight="18"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </DockPanel>
                     </Border>
 
                     <!-- 40% SIDE PANEL (My Notes) -->
                     <Border Grid.Column="1" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
-                            Margin="20,0,0,0" Padding="20,16">
+                            Margin="20,0,0,0" Padding="20,16" Height="480">
                         <Grid>
                             <!-- ── LIST VIEW ────────────────────────────────────── -->
                             <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVisInv}}">
@@ -404,54 +416,130 @@
                                     </Button>
                                 </Grid>
 
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <StackPanel>
+                                <Grid>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MouseWheel="PreventScrollBubbling">
                                         <ItemsControl ItemsSource="{Binding Notes}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Button Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}"
-                                                            Padding="0" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Margin="0,0,0,4">
-                                                        <Border BorderBrush="#F4F5F7" BorderThickness="0,0,0,1" Padding="0,10" x:Name="NoteBorder">
-                                                            <Grid>
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <StackPanel>
-                                                                    <TextBlock Text="{Binding DisplayTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
-                                                                    <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
-                                                                </StackPanel>
-                                                                <Button Grid.Column="1" Command="{Binding DataContext.DeleteNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                        CommandParameter="{Binding}"
-                                                                        Background="Transparent" BorderThickness="0" Visibility="Collapsed" x:Name="DeleteBtn" VerticalAlignment="Center">
-                                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.6"/>
-                                                                </Button>
-                                                            </Grid>
-                                                        </Border>
+                                                            Padding="0" Background="Transparent" BorderThickness="0" 
+                                                            HorizontalContentAlignment="Stretch">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Grid x:Name="Root" Background="Transparent">
+                                                                    <!-- Линия-разделитель внизу каждого слота -->
+                                                                    <Border x:Name="Separator" Height="1" Background="#EEF0F3" VerticalAlignment="Bottom" Margin="12,0"/>
+                                                                    
+                                                                    <!-- Основная плашка заметки -->
+                                                                    <Border x:Name="NoteBorder" Background="Transparent" CornerRadius="8" Padding="12,10" Margin="0,1">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            
+                                                                            <StackPanel>
+                                                                                <TextBlock Text="{Binding DisplayTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
+                                                                                <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#6B778C" Margin="0,4,0,0"/>
+                                                                            </StackPanel>
+
+                                                                            <!-- Delete Actions -->
+                                                                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                                                <!-- Trigger for Confirm State -->
+                                                                                <CheckBox x:Name="ConfirmDeleteCheck" Visibility="Collapsed"/>
+                                                                                
+                                                                                <!-- Initial Trash Button -->
+                                                                                <Button x:Name="DeleteBtn" Style="{StaticResource WhiteNoteButton}" Width="28" Height="28" Padding="0" Visibility="Collapsed" ToolTip="Удалить">
+                                                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.9"/>
+                                                                                    <Button.Triggers>
+                                                                                        <EventTrigger RoutedEvent="Button.Click">
+                                                                                            <BeginStoryboard>
+                                                                                                <Storyboard>
+                                                                                                    <BooleanAnimationUsingKeyFrames Storyboard.TargetName="ConfirmDeleteCheck" Storyboard.TargetProperty="IsChecked">
+                                                                                                        <DiscreteBooleanKeyFrame KeyTime="0" Value="True"/>
+                                                                                                    </BooleanAnimationUsingKeyFrames>
+                                                                                                </Storyboard>
+                                                                                            </BeginStoryboard>
+                                                                                        </EventTrigger>
+                                                                                    </Button.Triggers>
+                                                                                </Button>
+
+                                                                                <!-- Confirm/Cancel Group -->
+                                                                                <StackPanel x:Name="ConfirmPanel" Orientation="Horizontal" Visibility="Collapsed">
+                                                                                    <Button Command="{Binding DataContext.DeleteNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                            CommandParameter="{Binding}"
+                                                                                            Style="{StaticResource WhiteNoteButton}" Width="28" Height="28" Padding="0" ToolTip="Подтвердить">
+                                                                                        <Image Source="{svgc:SvgImage Source=/icons/note_confirm.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.9"/>
+                                                                                    </Button>
+                                                                                    <Button Style="{StaticResource WhiteNoteButton}" Width="28" Height="28" Padding="0" Margin="4,0,0,0" ToolTip="Отмена">
+                                                                                        <Image Source="{svgc:SvgImage Source=/icons/note_cancel.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.9"/>
+                                                                                        <Button.Triggers>
+                                                                                            <EventTrigger RoutedEvent="Button.Click">
+                                                                                                <BeginStoryboard>
+                                                                                                    <Storyboard>
+                                                                                                        <BooleanAnimationUsingKeyFrames Storyboard.TargetName="ConfirmDeleteCheck" Storyboard.TargetProperty="IsChecked">
+                                                                                                            <DiscreteBooleanKeyFrame KeyTime="0" Value="False"/>
+                                                                                                        </BooleanAnimationUsingKeyFrames>
+                                                                                                    </Storyboard>
+                                                                                                </BeginStoryboard>
+                                                                                            </EventTrigger>
+                                                                                        </Button.Triggers>
+                                                                                    </Button>
+                                                                                </StackPanel>
+                                                                            </Grid>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </Grid>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Panel.ZIndex" Value="10"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Background" Value="#F4F5F7"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Margin" Value="0,0"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Padding" Value="12,11"/>
+                                                                        <Setter TargetName="Separator" Property="Visibility" Value="Hidden"/>
+                                                                        <Setter TargetName="DeleteBtn" Property="Visibility" Value="Visible"/>
+                                                                    </Trigger>
+                                                                    <DataTrigger Binding="{Binding IsChecked, ElementName=ConfirmDeleteCheck}" Value="True">
+                                                                        <Setter TargetName="ConfirmPanel" Property="Visibility" Value="Visible"/>
+                                                                        <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed"/>
+                                                                        <!-- Keep the hover state visible while confirming -->
+                                                                        <Setter Property="Panel.ZIndex" Value="10"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Background" Value="#F4F5F7"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Margin" Value="0,0"/>
+                                                                        <Setter TargetName="NoteBorder" Property="Padding" Value="12,11"/>
+                                                                        <Setter TargetName="Separator" Property="Visibility" Value="Hidden"/>
+                                                                    </DataTrigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
                                                     </Button>
-                                                    <DataTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="NoteBorder" Property="Background" Value="#F8F9FA"/>
-                                                            <Setter TargetName="DeleteBtn" Property="Visibility" Value="Visible"/>
-                                                        </Trigger>
-                                                    </DataTemplate.Triggers>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                    </ScrollViewer>
 
-                                        <TextBlock Text="Заметок пока нет. Нажмите «Новая», чтобы создать первую." 
-                                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center" TextWrapping="Wrap" Margin="0,40"
-                                                   Visibility="{Binding Notes.Count, Converter={StaticResource IntToVisInv}}"/>
-                                    </StackPanel>
-                                </ScrollViewer>
+                                    <!-- Empty state -->
+                                    <Grid Visibility="{Binding Notes.Count, Converter={StaticResource IntToVisInv}}">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <Image Source="{svgc:SvgImage Source=/icons/empty_notes.svg, AppName=MPMS}" 
+                                                   Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                                            <TextBlock Text="Заметок пока нет" 
+                                                       FontSize="15" FontWeight="SemiBold" Foreground="#111111" 
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Нажмите «+» в углу, чтобы&#x0a;создать первую запись" 
+                                                       FontSize="12" Foreground="#6B778C" TextAlignment="Center" 
+                                                       Margin="0,8,0,0" LineHeight="18"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
                             </DockPanel>
 
                             <!-- ── EDITOR VIEW ──────────────────────────────────── -->
                             <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVis}}">
                                 <!-- Header -->
                                 <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
-                                    <Button Command="{Binding BackToListCommand}" Style="{StaticResource WhiteNoteButton}" HorizontalAlignment="Left" ToolTip="Назад">
+                                    <Button x:Name="BackBtn" Command="{Binding BackToListCommand}" Style="{StaticResource WhiteNoteButton}" HorizontalAlignment="Left" ToolTip="Назад">
                                         <Image Source="{svgc:SvgImage Source=/icons/back_arrow_thin.svg, AppName=MPMS}" Width="18" Height="18"/>
                                     </Button>
                                     
@@ -495,7 +583,7 @@
                                 </Grid>
 
                                 <!-- Toolbar -->
-                                                                 <Border DockPanel.Dock="Top" Background="#F8F9FA" CornerRadius="6" Padding="2" Margin="0,0,0,10" BorderBrush="#EEF0F3" BorderThickness="1">
+                                                                <Border DockPanel.Dock="Top" Background="#F8F9FA" CornerRadius="6" Padding="2" Margin="0,0,0,10" BorderBrush="#DFE1E6" BorderThickness="1" HorizontalAlignment="Center">
                                      <Border.Style>
                                          <Style TargetType="Border">
                                              <Style.Triggers>
@@ -517,14 +605,71 @@
                                         <ToggleButton x:Name="UnderlineBtn" Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Подчеркнутый (Ctrl+U)" Style="{StaticResource FormatButton}">
                                             <TextBlock Text="U" TextDecorations="Underline" FontSize="14"/>
                                         </ToggleButton>
-                                        <Border Width="1" Background="#EEF0F3" Margin="4,4"/>
+                                        <ToggleButton x:Name="StrikethroughBtn" Click="Strikethrough_Click" ToolTip="Зачеркнутый" Style="{StaticResource FormatButton}">
+                                            <Image x:Name="StrikethroughIcon" Width="14" Height="14">
+                                                 <Image.Style>
+                                                     <Style TargetType="Image">
+                                                         <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/strikethrough.svg, AppName=MPMS}"/>
+                                                         <Style.Triggers>
+                                                             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                 <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/strikethrough_white.svg, AppName=MPMS}"/>
+                                                             </DataTrigger>
+                                                         </Style.Triggers>
+                                                     </Style>
+                                                 </Image.Style>
+                                             </Image>
+                                        </ToggleButton>
+                                        <ToggleButton x:Name="HighlightBtn" Click="Highlight_Click" ToolTip="Маркер" Style="{StaticResource FormatButton}">
+                                            <Image Width="16" Height="16">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/marker.svg, AppName=MPMS}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/marker_white.svg, AppName=MPMS}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </ToggleButton>
+                                        <Border Width="1" Background="#D1D4D9" Margin="3,5"/>
                                         <ToggleButton x:Name="BulletsBtn" Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Маркированный список" Style="{StaticResource FormatButton}">
-                                            <TextBlock Text="•" FontSize="18" Margin="0,-2,0,0"/>
+                                            <Image Width="14" Height="14">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/list_bullet.svg, AppName=MPMS}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/list_bullet_white.svg, AppName=MPMS}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
                                         </ToggleButton>
                                         <ToggleButton x:Name="NumberingBtn" Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Нумерованный список" Style="{StaticResource FormatButton}">
                                             <TextBlock Text="1." FontSize="12" FontWeight="Bold"/>
                                         </ToggleButton>
-                                        <Border Width="1" Background="#EEF0F3" Margin="4,4"/>
+                                        <ToggleButton x:Name="ChecklistBtn" Click="Checklist_Click" ToolTip="Чек-лист" Style="{StaticResource FormatButton}">
+                                            <Image Width="14" Height="14">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/checkbox_check.svg, AppName=MPMS}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/checkbox_check_white.svg, AppName=MPMS}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </ToggleButton>
+                                        <Border Width="1" Background="#D1D4D9" Margin="3,5"/>
+                                        <ToggleButton x:Name="BlockquoteBtn" Click="Blockquote_Click" ToolTip="Цитата" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="“" FontSize="30" FontWeight="Bold" Margin="0,-4,0,0"/>
+                                        </ToggleButton>
+                                        <Border Width="1" Background="#D1D4D9" Margin="3,5"/>
                                         <Button Click="ClearFormatting_Click" ToolTip="Очистить форматирование" Style="{StaticResource FormatButton}">
                                             <Image Source="{svgc:SvgImage Source=/icons/eraser.svg, AppName=MPMS}" Width="16" Height="16"/>
                                         </Button>
@@ -536,16 +681,51 @@
                                              infra:RichTextHelper.DocumentXaml="{Binding CurrentNoteXaml}"
                                              Loaded="NotesRichTextBox_Loaded"
                                              SelectionChanged="NotesRTB_SelectionChanged"
-                                             BorderThickness="0" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
+                                             BorderThickness="0" AcceptsTab="True" 
+                                             VerticalScrollBarVisibility="Auto" 
+                                             MouseWheel="PreventScrollBubbling"
                                              FontSize="13" Foreground="#111111" SelectionBrush="#DFE1E6">
                                     <RichTextBox.Resources>
                                         <Style TargetType="{x:Type Paragraph}">
                                             <Setter Property="Margin" Value="0,0,0,8"/>
                                             <Setter Property="LineHeight" Value="1.4"/>
                                         </Style>
+                                        <Style TargetType="{x:Type List}">
+                                            <Setter Property="Margin" Value="25,0,0,8"/>
+                                            <Setter Property="Padding" Value="0"/>
+                                        </Style>
                                     </RichTextBox.Resources>
                                 </RichTextBox>
                             </DockPanel>
+
+                            <!-- Confirmation Overlay -->
+                            <Border Background="Transparent" CornerRadius="8" Margin="-20,-16"
+                                    Visibility="{Binding IsBackConfirmPopupOpen, Converter={StaticResource BoolToVis}}"
+                                    UseLayoutRounding="True" SnapsToDevicePixels="True"
+                                    TextOptions.TextFormattingMode="Display"
+                                    RenderOptions.ClearTypeHint="Enabled"
+                                    Panel.ZIndex="100">
+                                <Border Background="White" VerticalAlignment="Top" HorizontalAlignment="Center" 
+                                        Margin="0,80,0,0" Padding="24,20" CornerRadius="12" 
+                                        BorderBrush="#DFE1E6" BorderThickness="1" Width="260">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="15" Opacity="0.1" ShadowDepth="4" Direction="270"/>
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="Сохранить изменения?" FontSize="15" FontWeight="Bold" Foreground="#111111" Margin="0,0,0,18" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                        
+                                        <Button Command="{Binding SaveNoteAndBackCommand}" Style="{StaticResource BlackNoteButton}" 
+                                                Width="Auto" Height="38" Margin="0,0,0,8" HorizontalAlignment="Stretch">
+                                            <TextBlock Text="Сохранить" FontSize="13" FontWeight="Bold"/>
+                                        </Button>
+                                        
+                                        <Button Command="{Binding DiscardAndBackCommand}" Style="{StaticResource WhiteNoteButton}" 
+                                                Width="Auto" Height="38" HorizontalAlignment="Stretch">
+                                            <TextBlock Text="Не сохранять" FontSize="13" FontWeight="Bold"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Border>
                         </Grid>
                     </Border>
                 </Grid>

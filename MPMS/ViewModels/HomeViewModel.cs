@@ -27,6 +27,10 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private LocalNote? _selectedNote;
     [ObservableProperty] private bool _isNoteEditing;
     [ObservableProperty] private string _currentNoteXaml = string.Empty;
+    [ObservableProperty] private bool _isBackConfirmPopupOpen;
+
+    private string _originalTitle = string.Empty;
+    private string _originalXaml = string.Empty;
 
     [ObservableProperty] private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
     public string WelcomeMessage => $"Добрый день, {_auth.UserName?.Split(' ').FirstOrDefault() ?? "пользователь"}!";
@@ -66,6 +70,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
         SelectedNote = note;
         CurrentNoteXaml = "";
+        _originalTitle = "";
+        _originalXaml = "";
         IsNoteEditing = true;
     }
 
@@ -74,6 +80,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     {
         SelectedNote = note;
         CurrentNoteXaml = note.Content;
+        _originalTitle = note.Title ?? "";
+        _originalXaml = note.Content ?? "";
         IsNoteEditing = true;
     }
 
@@ -101,6 +109,11 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             }
 
             await db.SaveChangesAsync();
+            
+            // Update original values to reflect the saved state
+            _originalTitle = SelectedNote.Title ?? "";
+            _originalXaml = SelectedNote.Content ?? "";
+            
             await LoadNotesAsync();
         }
         catch (Exception ex)
@@ -137,8 +150,41 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private void BackToList()
     {
+        if (HasChanges())
+        {
+            IsBackConfirmPopupOpen = true;
+        }
+        else
+        {
+            CloseEditing();
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveNoteAndBackAsync()
+    {
+        await SaveNoteAsync();
+        CloseEditing();
+    }
+
+    [RelayCommand]
+    private void DiscardAndBack()
+    {
+        CloseEditing();
+    }
+
+    private bool HasChanges()
+    {
+        if (SelectedNote == null) return false;
+        // Compare with original values
+        return (SelectedNote.Title ?? "") != _originalTitle || (CurrentNoteXaml ?? "") != _originalXaml;
+    }
+
+    private void CloseEditing()
+    {
         IsNoteEditing = false;
         SelectedNote = null;
+        IsBackConfirmPopupOpen = false;
     }
 
     private async Task LoadNotesAsync()
