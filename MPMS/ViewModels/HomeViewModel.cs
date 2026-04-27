@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using System.Windows.Threading;
 using MPMS.Data;
@@ -21,6 +22,11 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     public ObservableCollection<LocalProject> RecentProjects { get; } = [];
     public ObservableCollection<LocalTask> MyUpcomingTasks { get; } = [];
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
+    
+    [ObservableProperty] private ObservableCollection<LocalNote> _notes = [];
+    [ObservableProperty] private LocalNote? _selectedNote;
+    [ObservableProperty] private bool _isNoteEditing;
+    [ObservableProperty] private string _currentNoteXaml = string.Empty;
 
     [ObservableProperty] private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
     public string WelcomeMessage => $"Добрый день, {_auth.UserName?.Split(' ').FirstOrDefault() ?? "пользователь"}!";
@@ -44,6 +50,108 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         };
         _clockTimer.Tick += (s, e) => CurrentTime = DateTime.Now.ToString("HH:mm:ss");
         _clockTimer.Start();
+    }
+
+    [RelayCommand]
+    private async Task CreateNoteAsync()
+    {
+        var note = new LocalNote
+        {
+            UserId = _auth.UserId ?? Guid.Empty,
+            Title = "",
+            Content = "",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        SelectedNote = note;
+        CurrentNoteXaml = "";
+        IsNoteEditing = true;
+    }
+
+    [RelayCommand]
+    private void SelectNote(LocalNote note)
+    {
+        SelectedNote = note;
+        CurrentNoteXaml = note.Content;
+        IsNoteEditing = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveNoteAsync()
+    {
+        if (SelectedNote == null) return;
+
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            
+            SelectedNote.Content = CurrentNoteXaml;
+            SelectedNote.UpdatedAt = DateTime.UtcNow;
+            SelectedNote.UserId = _auth.UserId ?? Guid.Empty;
+
+            if (SelectedNote.Id == Guid.Empty || !await db.Notes.AnyAsync(n => n.Id == SelectedNote.Id))
+            {
+                if (SelectedNote.Id == Guid.Empty) SelectedNote.Id = Guid.NewGuid();
+                db.Notes.Add(SelectedNote);
+            }
+            else
+            {
+                db.Notes.Update(SelectedNote);
+            }
+
+            await db.SaveChangesAsync();
+            await LoadNotesAsync();
+        }
+        catch (Exception ex)
+        {
+            SetError("Ошибка при сохранении заметки: " + ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteNoteAsync(LocalNote note)
+    {
+        if (note == null) return;
+
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            db.Notes.Remove(note);
+            await db.SaveChangesAsync();
+            
+            if (SelectedNote?.Id == note.Id)
+            {
+                IsNoteEditing = false;
+                SelectedNote = null;
+            }
+            
+            await LoadNotesAsync();
+        }
+        catch (Exception ex)
+        {
+            SetError("Ошибка при удалении заметки: " + ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    private void BackToList()
+    {
+        IsNoteEditing = false;
+        SelectedNote = null;
+    }
+
+    private async Task LoadNotesAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var userId = _auth.UserId;
+        
+        var notesList = await db.Notes
+            .Where(n => n.UserId == userId)
+            .OrderByDescending(n => n.UpdatedAt)
+            .ToListAsync();
+
+        Notes = new ObservableCollection<LocalNote>(notesList);
     }
 
     public async Task LoadAsync()
@@ -97,6 +205,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 100, excludeAuthEvents: true);
             RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
 
+            // 5. Notes
+            await LoadNotesAsync();
 
         }
         catch (Exception ex)

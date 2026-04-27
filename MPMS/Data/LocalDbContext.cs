@@ -43,6 +43,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalMessage>       Messages          => Set<LocalMessage>();
     public DbSet<PendingOperation>   PendingOperations => Set<PendingOperation>();
     public DbSet<DeletedUserId>     DeletedUserIds   => Set<DeletedUserId>();
+    public DbSet<LocalNote>         Notes            => Set<LocalNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

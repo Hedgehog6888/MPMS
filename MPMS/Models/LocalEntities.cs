@@ -670,3 +670,23 @@ public class RecentAccount
         };
     }
 }
+
+public class LocalNote : LocalEntity
+{
+    public Guid UserId { get; set; }
+
+    [MaxLength(200)]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Rich text content stored as XAML string.</summary>
+    public string Content { get; set; } = string.Empty;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? "Без названия" : Title;
+
+    [NotMapped]
+    public string DisplayDate => UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm");
+}

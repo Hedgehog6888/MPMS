@@ -24,7 +24,10 @@
         <infra:ProjectStatusToStringConverter x:Key="ProjectStatusToString"/>
         <infra:ProjectStatusToBrushConverter x:Key="ProjectStatusToBrush"/>
         <infra:ProgressPercentToBrushConverter x:Key="ProgressPercentToBrush"/>
+        <infra:IntGreaterThanZeroConverter x:Key="IntToVis"/>
         <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
 
         <!-- Stat Card Style -->
         <Style x:Key="StatCard" TargetType="Border">
@@ -52,6 +55,85 @@
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="FormatButton" TargetType="ButtonBase">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EEF0F3"/>
+                            </Trigger>
+                            <Trigger Property="ToggleButton.IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="ToggleButton.IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#E0E0E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NoteActionButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BlackNoteButton" TargetType="Button" BasedOn="{StaticResource NoteActionButton}">
+            <Setter Property="Background" Value="#111111"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#333333"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WhiteNoteButton" TargetType="Button" BasedOn="{StaticResource NoteActionButton}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F4F5F7"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -305,23 +387,166 @@
                     </StackPanel>
                     </Border>
 
-                    <!-- 40% SIDE PANEL -->
+                    <!-- 40% SIDE PANEL (My Notes) -->
                     <Border Grid.Column="1" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Margin="20,0,0,0" Padding="20,16">
-                        <StackPanel>
-                            <TextBlock Text="Дополнительно"
-                                       FontSize="14" FontWeight="SemiBold" Foreground="#000000"
-                                       Margin="0,0,0,2"/>
-                            <TextBlock Text="Панель для быстрой информации"
-                                       FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+                        <Grid>
+                            <!-- ── LIST VIEW ────────────────────────────────────── -->
+                            <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVisInv}}">
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Личные заметки" FontSize="14" FontWeight="SemiBold" Foreground="#000000" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Быстрые записи и идеи" FontSize="12" Foreground="#6B778C"/>
+                                    </StackPanel>
+                                    <Button Command="{Binding CreateNoteCommand}" HorizontalAlignment="Right" Style="{StaticResource BlackNoteButton}" ToolTip="Новая заметка">
+                                        <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}" Width="14" Height="14"/>
+                                    </Button>
+                                </Grid>
 
-                            <!-- Placeholder content -->
-                            <Border BorderBrush="#F4F5F7" BorderThickness="0,1,0,0" Padding="0,20">
-                                <TextBlock Text="Здесь может быть ваша статистика, быстрые ссылки или заметки."
-                                           FontSize="12" Foreground="#6B778C" TextWrapping="Wrap" TextAlignment="Center"/>
-                            </Border>
-                        </StackPanel>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <ItemsControl ItemsSource="{Binding Notes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Command="{Binding DataContext.SelectNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                            CommandParameter="{Binding}"
+                                                            Padding="0" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" Margin="0,0,0,4">
+                                                        <Border BorderBrush="#F4F5F7" BorderThickness="0,0,0,1" Padding="0,10" x:Name="NoteBorder">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding DisplayTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                                </StackPanel>
+                                                                <Button Grid.Column="1" Command="{Binding DataContext.DeleteNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        Background="Transparent" BorderThickness="0" Visibility="Collapsed" x:Name="DeleteBtn" VerticalAlignment="Center">
+                                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.6"/>
+                                                                </Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </Button>
+                                                    <DataTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="NoteBorder" Property="Background" Value="#F8F9FA"/>
+                                                            <Setter TargetName="DeleteBtn" Property="Visibility" Value="Visible"/>
+                                                        </Trigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <TextBlock Text="Заметок пока нет. Нажмите «Новая», чтобы создать первую." 
+                                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center" TextWrapping="Wrap" Margin="0,40"
+                                                   Visibility="{Binding Notes.Count, Converter={StaticResource IntToVisInv}}"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </DockPanel>
+
+                            <!-- ── EDITOR VIEW ──────────────────────────────────── -->
+                            <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVis}}">
+                                <!-- Header -->
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                                    <Button Command="{Binding BackToListCommand}" Style="{StaticResource WhiteNoteButton}" HorizontalAlignment="Left" ToolTip="Назад">
+                                        <Image Source="{svgc:SvgImage Source=/icons/back_arrow_thin.svg, AppName=MPMS}" Width="18" Height="18"/>
+                                    </Button>
+                                    
+                                    <Border Margin="38,0,40,0" Padding="0,2" BorderThickness="0,0,0,1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                        <Setter Property="BorderBrush" Value="#111111"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Grid>
+                                            <TextBlock Text="Название" FontSize="14" FontWeight="Bold" Foreground="#6B778C" 
+                                                       IsHitTestVisible="False" VerticalAlignment="Center" Opacity="0.5">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Text, ElementName=NoteTitleTextBox}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Text, ElementName=NoteTitleTextBox}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBox x:Name="NoteTitleTextBox" Text="{Binding SelectedNote.Title, UpdateSourceTrigger=PropertyChanged}" 
+                                                     FontSize="14" FontWeight="Bold" BorderThickness="0" Background="Transparent"
+                                                     VerticalAlignment="Center" MaxLength="100" SelectionBrush="#DFE1E6"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <Button Command="{Binding SaveNoteCommand}" HorizontalAlignment="Right" Style="{StaticResource WhiteNoteButton}" ToolTip="Сохранить">
+                                        <Image Source="{svgc:SvgImage Source=/icons/save_note.svg, AppName=MPMS}" Width="16" Height="16"/>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Toolbar -->
+                                                                 <Border DockPanel.Dock="Top" Background="#F8F9FA" CornerRadius="6" Padding="2" Margin="0,0,0,10" BorderBrush="#EEF0F3" BorderThickness="1">
+                                     <Border.Style>
+                                         <Style TargetType="Border">
+                                             <Style.Triggers>
+                                                 <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=NoteTitleTextBox}" Value="True">
+                                                     <Setter Property="IsEnabled" Value="False"/>
+                                                     <Setter Property="Opacity" Value="0.5"/>
+                                                 </DataTrigger>
+                                             </Style.Triggers>
+                                         </Style>
+                                     </Border.Style>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <ToggleButton x:Name="BoldBtn" Command="EditingCommands.ToggleBold" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Жирный (Ctrl+B)" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="B" FontWeight="Bold" FontSize="14"/>
+                                        </ToggleButton>
+                                        <ToggleButton x:Name="ItalicBtn" Command="EditingCommands.ToggleItalic" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Курсив (Ctrl+I)" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="I" FontStyle="Italic" FontSize="14" FontFamily="Georgia"/>
+                                        </ToggleButton>
+                                        <ToggleButton x:Name="UnderlineBtn" Command="EditingCommands.ToggleUnderline" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Подчеркнутый (Ctrl+U)" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="U" TextDecorations="Underline" FontSize="14"/>
+                                        </ToggleButton>
+                                        <Border Width="1" Background="#EEF0F3" Margin="4,4"/>
+                                        <ToggleButton x:Name="BulletsBtn" Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Маркированный список" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="•" FontSize="18" Margin="0,-2,0,0"/>
+                                        </ToggleButton>
+                                        <ToggleButton x:Name="NumberingBtn" Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=NotesRTB}" Click="FormatButton_Click" ToolTip="Нумерованный список" Style="{StaticResource FormatButton}">
+                                            <TextBlock Text="1." FontSize="12" FontWeight="Bold"/>
+                                        </ToggleButton>
+                                        <Border Width="1" Background="#EEF0F3" Margin="4,4"/>
+                                        <Button Click="ClearFormatting_Click" ToolTip="Очистить форматирование" Style="{StaticResource FormatButton}">
+                                            <Image Source="{svgc:SvgImage Source=/icons/eraser.svg, AppName=MPMS}" Width="16" Height="16"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Editor -->
+                                <RichTextBox x:Name="NotesRTB" 
+                                             infra:RichTextHelper.DocumentXaml="{Binding CurrentNoteXaml}"
+                                             Loaded="NotesRichTextBox_Loaded"
+                                             SelectionChanged="NotesRTB_SelectionChanged"
+                                             BorderThickness="0" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
+                                             FontSize="13" Foreground="#111111" SelectionBrush="#DFE1E6">
+                                    <RichTextBox.Resources>
+                                        <Style TargetType="{x:Type Paragraph}">
+                                            <Setter Property="Margin" Value="0,0,0,8"/>
+                                            <Setter Property="LineHeight" Value="1.4"/>
+                                        </Style>
+                                    </RichTextBox.Resources>
+                                </RichTextBox>
+                            </DockPanel>
+                        </Grid>
                     </Border>
                 </Grid>
             </StackPanel>
