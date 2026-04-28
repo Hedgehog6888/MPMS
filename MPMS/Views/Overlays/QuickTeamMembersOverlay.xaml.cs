@@ -22,10 +22,20 @@ public partial class QuickTeamMembersOverlay : UserControl
     private List<LocalUser> _workerUsers = [];
     private readonly HashSet<Guid> _selectedForemanIds = [];
     private readonly HashSet<Guid> _selectedWorkerIds = [];
+    private readonly System.Windows.Threading.DispatcherTimer _errorHideTimer;
 
     public QuickTeamMembersOverlay()
     {
         InitializeComponent();
+        _errorHideTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(4)
+        };
+        _errorHideTimer.Tick += (_, _) =>
+        {
+            _errorHideTimer.Stop();
+            ErrorPanel.Visibility = Visibility.Collapsed;
+        };
     }
 
     public void SetProject(Guid projectId, Func<System.Threading.Tasks.Task>? onSaved = null)
@@ -103,6 +113,7 @@ public partial class QuickTeamMembersOverlay : UserControl
         else
         {
             _selectedForemanIds.Add(item.UserId);
+            _errorHideTimer.Stop();
             ErrorPanel.Visibility = Visibility.Collapsed;
         }
 
@@ -125,6 +136,7 @@ public partial class QuickTeamMembersOverlay : UserControl
         else
         {
             _selectedWorkerIds.Add(item.UserId);
+            _errorHideTimer.Stop();
             ErrorPanel.Visibility = Visibility.Collapsed;
         }
 
@@ -228,6 +240,7 @@ public partial class QuickTeamMembersOverlay : UserControl
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        _errorHideTimer.Stop();
         ErrorPanel.Visibility = Visibility.Collapsed;
 
         if (_selectedForemanIds.Count == 0)
@@ -349,6 +362,7 @@ public partial class QuickTeamMembersOverlay : UserControl
     {
         ErrorText.Text = message;
         ErrorPanel.Visibility = Visibility.Visible;
-        MainScrollViewer.ScrollToVerticalOffset(0);
+        _errorHideTimer.Stop();
+        _errorHideTimer.Start();
     }
 }

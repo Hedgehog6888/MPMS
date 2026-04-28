@@ -135,6 +135,7 @@
 
                 <!-- Add user button -->
                 <Button Grid.Column="6" Style="{StaticResource BlackBtn}"
+                        Height="38" Padding="18,0"
                         Click="CreateUser_Click">
                     <StackPanel Orientation="Horizontal">
                         <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}"

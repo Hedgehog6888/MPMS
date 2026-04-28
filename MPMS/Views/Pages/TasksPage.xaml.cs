@@ -69,6 +69,7 @@ public partial class TasksPage : UserControl
     private void Task_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.DataContext is not LocalTask task) return;
+        if (task.EffectiveTaskMarkedForDeletion) return;
         OpenTaskDetail(task);
     }
 

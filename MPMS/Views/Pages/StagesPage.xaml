@@ -405,9 +405,18 @@
                                                                         Click="DeleteStage_Click"
                                                                         Style="{StaticResource DangerIconButton}"
                                                                         Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
-                                                                    <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                                           Width="14" Height="14"
-                                                                           VerticalAlignment="Center"/>
+                                                                    <Image Width="14" Height="14" VerticalAlignment="Center">
+                                                                        <Image.Style>
+                                                                            <Style TargetType="Image">
+                                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
+                                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Image.Style>
+                                                                    </Image>
                                                                 </Button>
                                                             </StackPanel>
                                                         </Grid>

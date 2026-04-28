@@ -27,6 +27,7 @@ public sealed class GanttTaskRow
     public string BarColorHex     { get; init; } = "#EF4444";
     /// <summary>Срок полосы: от даты начала (создание) до дедлайна, «dd.MM.yyyy — dd.MM.yyyy».</summary>
     public string BarRangeLabel   { get; init; } = "";
+    public bool   IsOverdue       { get; init; }
 }
 
 /// <summary>A single row in the Gantt chart (stage).</summary>
@@ -45,6 +46,7 @@ public sealed class GanttStageRow
     public string BarColorHex     { get; init; } = "#EF4444";
     /// <summary>Срок полосы этапа: от создания до дедлайна.</summary>
     public string BarRangeLabel   { get; init; } = "";
+    public bool   IsOverdue       { get; init; }
 }
 
 public partial class GanttViewModel : ViewModelBase, ILoadable
@@ -199,7 +201,8 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         StatusLabel  = TaskStatusLabel(t.Status),
                         StatusColor  = TaskStatusColor(t.Status),
                         BarColorHex  = ProgressToHex(t.ProgressPercent),
-                        BarRangeLabel = FormatGanttBarRangeLabel(barStart, t.DueDate)
+                        BarRangeLabel = FormatGanttBarRangeLabel(barStart, t.DueDate),
+                        IsOverdue    = t.IsOverdue
                     };
                 })
                 .Where(r => r.HasBar)
@@ -238,7 +241,8 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         StatusLabel  = StageStatusLabel(s.Status),
                         StatusColor  = StageStatusColor(s.Status),
                         BarColorHex  = StageBarColor(s.Status),
-                        BarRangeLabel = FormatGanttBarRangeLabel(stageBarStart, s.DueDate)
+                        BarRangeLabel = FormatGanttBarRangeLabel(stageBarStart, s.DueDate),
+                        IsOverdue    = s.IsOverdue
                     };
                 })
                 .Where(r => r.HasBar)

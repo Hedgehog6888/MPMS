@@ -109,8 +109,20 @@ public partial class ProjectDetailPage : UserControl
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
         // Hide editing buttons when project is marked for deletion
         EditProjectBtn.Visibility  = marked ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
-        CreateTaskQuickBtn.Visibility = marked ? Visibility.Collapsed : (_canEdit ? Visibility.Visible : Visibility.Collapsed);
-        QuickTeamBtn.Visibility = marked ? Visibility.Collapsed : (_canManageTeam ? Visibility.Visible : Visibility.Collapsed);
+
+        // Quick Actions should remain visible but disabled (as per request: ONLY IN QUICK ACTIONS IN THE PROJECT)
+        CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+        CreateTaskQuickBtn.IsEnabled  = !marked;
+        CreateTaskQuickBtn.Opacity    = marked ? 0.5 : 1.0;
+
+        QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
+        QuickTeamBtn.IsEnabled  = !marked;
+        QuickTeamBtn.Opacity    = marked ? 0.5 : 1.0;
+
+        UploadFileQuickBtn.IsEnabled = !marked;
+        UploadFileQuickBtn.Opacity   = marked ? 0.5 : 1.0;
+
+        // Other buttons still disappear as per "так и нужно"
         CreateTaskBtn.Visibility  = marked ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = marked ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         AddFileBtn.Visibility     = marked ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);

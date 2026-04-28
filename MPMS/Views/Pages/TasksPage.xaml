@@ -55,27 +55,6 @@
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <!-- Export button -->
-                    <Button Height="38" Padding="14,0" Margin="0,0,8,0"
-                            FontSize="13" Cursor="Hand">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Bg" Background="White" CornerRadius="6"
-                                        BorderBrush="#E2E8F0" BorderThickness="1"
-                                        Padding="{TemplateBinding Padding}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Экспорт" FontSize="13" Foreground="#111111" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F1F5F9"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
                     <!-- Create task button -->
                     <Button x:Name="CreateTaskBtn" Click="CreateTask_Click" Height="38" Padding="18,0"
                             FontSize="13" FontWeight="SemiBold" Cursor="Hand">
@@ -405,8 +384,18 @@
                                                             Tag="{Binding}" Click="DeleteTask_Click"
                                                             Style="{StaticResource DangerIconButton}"
                                                             Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
-                                                        <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                               Width="14" Height="14" VerticalAlignment="Center"/>
+                                                        <Image Width="14" Height="14" VerticalAlignment="Center">
+                                                            <Image.Style>
+                                                                <Style TargetType="Image">
+                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
                                                     </Button>
                                                 </StackPanel>
                                             </Grid>

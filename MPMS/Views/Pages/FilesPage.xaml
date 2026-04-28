@@ -28,7 +28,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Click="UploadFile_Click" Style="{StaticResource BlackBtn}" Height="40" Padding="20,0">
+                    <Button Click="UploadFile_Click" Style="{StaticResource BlackBtn}" Height="38" Padding="18,0">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{svgc:SvgImage Source=/icons/upload_white.svg, AppName=MPMS}" 
                                    Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>

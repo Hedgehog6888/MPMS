@@ -54,17 +54,6 @@
             </Grid>
         </Border>
 
-        <Border x:Name="ErrorPanel" Grid.Row="1" Background="#FFF0F0"
-                CornerRadius="8" Padding="14,10"
-                Margin="24,12,24,0" Visibility="Collapsed"
-                BorderBrush="#FCA5A5" BorderThickness="1">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="⚠" FontSize="13" Margin="0,0,8,0"
-                           Foreground="#DC2626" VerticalAlignment="Center"/>
-                <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#DC2626"
-                           TextWrapping="Wrap" VerticalAlignment="Center"/>
-            </StackPanel>
-        </Border>
 
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,8,24,8">
@@ -211,10 +200,26 @@
         <Border Grid.Row="3" Padding="24,14" BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">
             <Grid>
-                <Button Content="Отмена" HorizontalAlignment="Left"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="Отмена" HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
                         Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
-                <Button x:Name="SaveButton" Content="Сохранить состав"
-                        HorizontalAlignment="Right"
+                <Border x:Name="ErrorPanel" Grid.Column="1"
+                        Background="#FFF0F0" BorderBrush="#FCA5A5" BorderThickness="1"
+                        CornerRadius="8" Padding="12,5" Margin="16,0"
+                        MaxWidth="300" MinHeight="38" Visibility="Collapsed"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <Viewbox StretchDirection="DownOnly" MaxHeight="32">
+                        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="#DC2626"
+                                   TextWrapping="Wrap" TextAlignment="Center" MaxWidth="260"/>
+                    </Viewbox>
+                </Border>
+                <Button Grid.Column="2" x:Name="SaveButton" Content="Сохранить состав"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
                         Click="Save_Click" Style="{StaticResource BlackBtn}"/>
             </Grid>
         </Border>

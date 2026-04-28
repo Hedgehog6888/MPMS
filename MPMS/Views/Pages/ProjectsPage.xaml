@@ -289,18 +289,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Button.Style>
-                                                    <Image Width="16" Height="16">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
-                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/editing_black.svg, AppName=MPMS}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
+                                                    <Image Width="16" Height="16" Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"/>
                                                 </Button>
 
                                                 <!-- Mark for deletion / Unmark (Manager role) -->
