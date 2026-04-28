@@ -527,16 +527,15 @@
                                         <TextBlock Text="Ответственный менеджер" FontSize="11"
                                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                                         <StackPanel Orientation="Horizontal">
-                                            <Border Style="{StaticResource AvatarCircle28}"
+                                            <Border Style="{StaticResource AvatarCircle48}"
                                                     Background="{Binding Project.ManagerInitials, Converter={StaticResource InitialsToBrush}}"
-                                                    Margin="0,0,8,0">
+                                                    Margin="0,0,12,0">
                                                 <Grid>
                                                     <Image Style="{StaticResource AvatarImage}"
                                                            Source="{Binding Project.ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                           Width="28" Height="28"
                                                            Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
                                                     <TextBlock Text="{Binding Project.ManagerInitials}"
-                                                               Foreground="White" FontSize="10" FontWeight="Bold"
+                                                               Foreground="White" FontSize="14" FontWeight="Bold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                 </Grid>

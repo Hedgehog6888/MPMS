@@ -1060,6 +1060,15 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Style x:Key="AvatarCircle48" TargetType="Border">
+                <Setter Property="Width" Value="48"/>
+                <Setter Property="Height" Value="48"/>
+                <Setter Property="Clip">
+                    <Setter.Value>
+                        <EllipseGeometry Center="24,24" RadiusX="24" RadiusY="24"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style x:Key="AvatarCircle72" TargetType="Border">
                 <Setter Property="Width" Value="72"/>
                 <Setter Property="Height" Value="72"/>
