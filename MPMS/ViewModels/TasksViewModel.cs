@@ -28,7 +28,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<ProjectFilterOption> _projectFilterOptions = [];
 
     public IReadOnlyList<string> StatusOptions { get; } =
-        ["Все", "Запланирована", "Выполняется", "Завершена", "Пометка удалить"];
+        ["Все", "Запланирована", "Выполняется", "Завершена", "Пометка удаления"];
 
     public IReadOnlyList<string> PriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
@@ -181,7 +181,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyTaskMetrics(t, taskStages);
         }
 
-        if (StatusFilter == "Пометка удалить")
+        if (StatusFilter == "Пометка удаления")
         {
             list = list.Where(t => t.EffectiveTaskMarkedForDeletion).ToList();
         }

@@ -182,7 +182,7 @@ public class ActionKindToLabelConverter : IValueConverter
             MPMS.Models.ActivityActionKind.Created            => "Создан",
             MPMS.Models.ActivityActionKind.Updated            => "Изменён",
             MPMS.Models.ActivityActionKind.Deleted            => "Удалён",
-            MPMS.Models.ActivityActionKind.MarkedForDeletion  => "Помечен на удаление",
+            MPMS.Models.ActivityActionKind.MarkedForDeletion  => "Пометка удаления",
             MPMS.Models.ActivityActionKind.UnmarkedForDeletion => "Снята пометка",
             MPMS.Models.ActivityActionKind.Message            => "Сообщение",
             MPMS.Models.ActivityActionKind.Login              => "Вход",
@@ -210,12 +210,12 @@ public class ActionKindToBrushConverter : IValueConverter
 {
     public static readonly ActionKindToBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush BlueBrush   = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
-    private static readonly SolidColorBrush GreenBrush  = new(Color.FromRgb(0x16, 0xA3, 0x4A));
+    private static readonly SolidColorBrush BlueBrush   = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush GreenBrush  = new(Color.FromRgb(0x10, 0xB9, 0x81));
     private static readonly SolidColorBrush RedBrush    = new(Color.FromRgb(0xEF, 0x44, 0x44));
-    private static readonly SolidColorBrush OrangeBrush = new(Color.FromRgb(0xF9, 0x73, 0x16));
-    private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
-    private static readonly SolidColorBrush GrayBrush   = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+    private static readonly SolidColorBrush OrangeBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush GrayBrush   = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
@@ -256,11 +256,11 @@ public class TaskStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)),
-            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)),
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xFF, 0x8B, 0x00)),
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)),
-            _                     => new SolidColorBrush(Colors.Gray)
+            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
+            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            _                     => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -275,11 +275,11 @@ public class ProjectStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            ProjectStatus.Planning   => new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)),
-            ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)),
-            ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)),
-            ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B)),
-            _                        => new SolidColorBrush(Colors.Gray)
+            ProjectStatus.Planning   => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+            ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            _                        => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -294,11 +294,11 @@ public class PriorityToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskPriority.Low      => new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)),
-            TaskPriority.Medium   => new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)),
-            TaskPriority.High     => new SolidColorBrush(Color.FromRgb(0xFF, 0x8B, 0x00)),
-            TaskPriority.Critical => new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B)),
-            _                     => new SolidColorBrush(Colors.Gray)
+            TaskPriority.Low      => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            TaskPriority.Medium   => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+            TaskPriority.High     => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
+            TaskPriority.Critical => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            _                     => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -313,10 +313,10 @@ public class StageStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            StageStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)),
-            StageStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)),
-            StageStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)),
-            _                      => new SolidColorBrush(Colors.Gray)
+            StageStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            StageStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+            StageStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            _                      => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -351,7 +351,7 @@ public class ProjectStatusToStringConverter : IValueConverter
         => value switch
         {
             ProjectStatus.Planning   => "Планирование",
-            ProjectStatus.InProgress => "В работе",
+            ProjectStatus.InProgress => "Выполняется",
             ProjectStatus.Completed  => "Завершён",
             ProjectStatus.Cancelled  => "Отменён",
             _                        => value?.ToString() ?? ""
@@ -592,11 +592,11 @@ public class ProgressPercentToBrushConverter : IValueConverter
     {
         var pct = value is int i ? i : 0;
         return pct >= 100
-            ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
+            ? new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81))
             : pct >= 60
-                ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF))
+                ? new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6))
                 : pct >= 30
-                    ? new SolidColorBrush(Color.FromRgb(0xF9, 0x73, 0x16))
+                    ? new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B))
                     : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
     }
 
@@ -609,14 +609,14 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
 {
     public static readonly EntityTypeToAccentBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush ProjectBrush  = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
-    private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xEA, 0xB3, 0x08));
-    private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x22, 0xC5, 0x5E));
-    private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush FileBrush      = new(Color.FromRgb(0xE1, 0x1D, 0x48));
-    private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
-    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+    private static readonly SolidColorBrush ProjectBrush  = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush FileBrush      = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
+    private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
@@ -643,17 +643,17 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     public static readonly ActivityLogToAccentBrushConverter Instance = new();
 
     private static readonly SolidColorBrush DeletedBrush         = new(Color.FromRgb(0xEF, 0x44, 0x44));
-    private static readonly SolidColorBrush MarkedForDeletionBrush = new(Color.FromRgb(0xF9, 0x73, 0x16));
-    private static readonly SolidColorBrush UnmarkedBrush       = new(Color.FromRgb(0x22, 0xC5, 0x5E));
-    private static readonly SolidColorBrush CreatedBrush        = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
-    private static readonly SolidColorBrush MessageBrush        = new(Color.FromRgb(0x9C, 0x6A, 0xFE));
-    private static readonly SolidColorBrush ProjectBrush        = new(Color.FromRgb(0x1B, 0x6E, 0xC2));
-    private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xEA, 0xB3, 0x08));
-    private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x22, 0xC5, 0x5E));
-    private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x0F, 0x76, 0x8C));
-    private static readonly SolidColorBrush FileBrush           = new(Color.FromRgb(0xE1, 0x1D, 0x48));
-    private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+    private static readonly SolidColorBrush MarkedForDeletionBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush UnmarkedBrush       = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush CreatedBrush        = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush MessageBrush        = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush ProjectBrush        = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush FileBrush           = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
+    private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -857,12 +857,12 @@ public class TaskStatusToPaleBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is TaskStatus s ? s switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5)),  // pale gray
-            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),  // pale blue
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5)),  // same gray as planned
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xE3, 0xFC, 0xEF)),  // pale green
-            _                     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5))
-        } : new SolidColorBrush(Color.FromRgb(0xF1, 0xF3, 0xF5));
+            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC)),  // Slate-50
+            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),  // Blue-50
+            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),  // Amber-50
+            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),  // Green-50
+            _                     => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC))
+        } : new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC));
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -876,12 +876,12 @@ public class TaskStatusToForegroundBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is TaskStatus s ? s switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Colors.Black),
-            TaskStatus.InProgress => new SolidColorBrush(Colors.Black),
-            TaskStatus.Paused     => new SolidColorBrush(Colors.Black),
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x00, 0x66, 0x44)),  // dark green
-            _                     => new SolidColorBrush(Colors.Black)
-        } : new SolidColorBrush(Colors.Black);
+            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),  // Slate-600
+            TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)),  // Blue-600
+            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)),  // Amber-600
+            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)),  // Green-600
+            _                     => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69))
+        } : new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

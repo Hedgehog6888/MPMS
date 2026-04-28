@@ -22,7 +22,7 @@ public sealed class GanttTaskRow
     public double BarRemainder    { get; init; }
     public bool   HasBar          { get; init; }
     public string StatusLabel     { get; init; } = string.Empty;
-    public string StatusColor     { get; init; } = "#6B778C";
+    public string StatusColor     { get; init; } = "#64748B";
     /// <summary>Bar colour based on task progress % (same palette as ProgressPercentToBrushConverter).</summary>
     public string BarColorHex     { get; init; } = "#EF4444";
     /// <summary>Срок полосы: от даты начала (создание) до дедлайна, «dd.MM.yyyy — dd.MM.yyyy».</summary>
@@ -40,7 +40,7 @@ public sealed class GanttStageRow
     public bool   HasBar          { get; init; }
     public string StatusLabel     { get; init; } = string.Empty;
     /// <summary>Badge colour — original stage status palette (gray/blue/green).</summary>
-    public string StatusColor     { get; init; } = "#6B778C";
+    public string StatusColor     { get; init; } = "#64748B";
     /// <summary>Bar colour — matches task progress palette (red/blue/green).</summary>
     public string BarColorHex     { get; init; } = "#EF4444";
     /// <summary>Срок полосы этапа: от создания до дедлайна.</summary>
@@ -254,9 +254,9 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     }
 
     /// <summary>Progress-based colour matching ProgressPercentToBrushConverter.</summary>
-    private static string ProgressToHex(int pct) => pct >= 100 ? "#16A34A"
-        : pct >= 60  ? "#0082FF"
-        : pct >= 30  ? "#F97316"
+    private static string ProgressToHex(int pct) => pct >= 100 ? "#10B981"
+        : pct >= 60  ? "#3B82F6"
+        : pct >= 30  ? "#F59E0B"
         : "#EF4444";
 
     private static string TaskStatusLabel(TaskStatus s) => s switch
@@ -271,11 +271,11 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     // Colors matching TaskStatusToBrushConverter exactly
     private static string TaskStatusColor(TaskStatus s) => s switch
     {
-        TaskStatus.Planned    => "#6B778C",
-        TaskStatus.InProgress => "#0082FF",
-        TaskStatus.Paused     => "#FF8B00",
-        TaskStatus.Completed  => "#00875A",
-        _                     => "#6B778C"
+        TaskStatus.Planned    => "#64748B",
+        TaskStatus.InProgress => "#3B82F6",
+        TaskStatus.Paused     => "#F59E0B",
+        TaskStatus.Completed  => "#10B981",
+        _                     => "#64748B"
     };
 
     private static string StageStatusLabel(StageStatus s) => s switch
@@ -289,18 +289,18 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     // Badge colour — original StageStatusToBrushConverter palette
     private static string StageStatusColor(StageStatus s) => s switch
     {
-        StageStatus.Planned    => "#6B778C",
-        StageStatus.InProgress => "#0082FF",
-        StageStatus.Completed  => "#00875A",
-        _                      => "#6B778C"
+        StageStatus.Planned    => "#64748B",
+        StageStatus.InProgress => "#3B82F6",
+        StageStatus.Completed  => "#10B981",
+        _                      => "#64748B"
     };
 
     // Bar colour — same palette as task progress bars
     private static string StageBarColor(StageStatus s) => s switch
     {
         StageStatus.Planned    => "#EF4444",
-        StageStatus.InProgress => "#0082FF",
-        StageStatus.Completed  => "#16A34A",
+        StageStatus.InProgress => "#3B82F6",
+        StageStatus.Completed  => "#10B981",
         _                      => "#EF4444"
     };
 

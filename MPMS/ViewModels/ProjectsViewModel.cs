@@ -24,7 +24,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private List<LocalProject> _allLoadedProjects = [];
 
     public IReadOnlyList<string> StatusOptions { get; } =
-        ["Все", "Планирование", "В работе", "Завершён", "Отменён", "Пометка удалить"];
+        ["Все", "Планирование", "Выполняется", "Завершён", "Пометка удаления"];
 
     public ProjectsViewModel(IDbContextFactory<LocalDbContext> dbFactory,
         ISyncService sync, IAuthService auth)
@@ -179,7 +179,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         }
 
         // Apply status filter
-        if (statusSnapshot == "Пометка удалить")
+        if (statusSnapshot == "Пометка удаления")
         {
             filtered = filtered.Where(p => p.IsMarkedForDeletion);
         }
@@ -188,9 +188,8 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             var status = statusSnapshot switch
             {
                 "Планирование" => ProjectStatus.Planning,
-                "В работе"     => ProjectStatus.InProgress,
+                "Выполняется"  => ProjectStatus.InProgress,
                 "Завершён"     => ProjectStatus.Completed,
-                "Отменён"      => ProjectStatus.Cancelled,
                 _              => (ProjectStatus?)null
             };
             if (status.HasValue)

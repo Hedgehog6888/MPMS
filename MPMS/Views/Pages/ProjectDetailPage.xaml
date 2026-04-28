@@ -21,7 +21,7 @@
                                            Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                                 <Border Height="1" Background="#EBECF0" Margin="0,10,0,10"/>
                                 <TextBlock Text="ЗАДАЧА" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"/>
-                                <TextBlock Text="{Binding TaskName}" FontSize="12" Foreground="#000000"
+                                <TextBlock Text="{Binding TaskName}" FontSize="12" Foreground="#111111"
                                            TextWrapping="Wrap" Margin="0,2,0,8"/>
                                 <TextBlock Text="СТАТУС" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"/>
                                 <Border CornerRadius="4" Padding="8,4" HorizontalAlignment="Left" Margin="0,2,0,8">
@@ -30,7 +30,7 @@
                                             <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                                    <Setter Property="Background" Value="#DE350B"/>
+                                                    <Setter Property="Background" Value="#EF4444"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -50,12 +50,12 @@
                                 </Border>
                                 <TextBlock Text="ОПИСАНИЕ" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"
                                            Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
-                                <TextBlock Text="{Binding Stage.Description}" FontSize="12" Foreground="#000000"
+                                <TextBlock Text="{Binding Stage.Description}" FontSize="12" Foreground="#111111"
                                            TextWrapping="Wrap" Margin="0,2,0,8"
                                            Visibility="{Binding Stage.Description, Converter={StaticResource StringToVis}}"/>
                                 <TextBlock Text="ИСПОЛНИТЕЛЬ" FontSize="10" FontWeight="SemiBold" Foreground="#8993A4"
                                            Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
-                                <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="12" Foreground="#000000"
+                                <TextBlock Text="{Binding Stage.AssignedUserName}" FontSize="12" Foreground="#111111"
                                            TextWrapping="Wrap" Margin="0,2,0,8"
                                            Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"/>
                                 <TextBlock Text="{Binding Stage.StageInheritedDeletionHint}" FontSize="11"
@@ -65,9 +65,9 @@
                                 <TextBlock Text="ВРЕМЕННЫЕ МЕТКИ" FontSize="10" FontWeight="SemiBold"
                                            Foreground="#8993A4" Margin="0,0,0,6"/>
                                 <TextBlock Text="{Binding Stage.CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Создан: {0:dd.MM.yyyy HH\:mm}}"
-                                           FontSize="11" Foreground="#6B778C"/>
+                                           FontSize="11" Foreground="#64748B"/>
                                 <TextBlock Text="{Binding Stage.UpdatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Последнее обновление: {0:dd.MM.yyyy HH\:mm}}"
-                                           FontSize="11" Foreground="#6B778C" Margin="0,4,0,0"/>
+                                           FontSize="11" Foreground="#64748B" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
                     </ToolTip>
@@ -82,11 +82,11 @@
                         <EventSetter Event="PreviewMouseLeftButtonUp" Handler="StageKanbanCard_MouseUp"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                <Setter Property="BorderBrush" Value="#DE350B"/>
-                                <Setter Property="Background" Value="#FFF5F5"/>
+                                <Setter Property="BorderBrush" Value="#EF4444"/>
+                                <Setter Property="Background" Value="#FEF2F2"/>
                             </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="#000000"/>
+                                <Setter Property="BorderBrush" Value="#111111"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -124,7 +124,7 @@
                                     <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                            <Setter Property="Background" Value="#DE350B"/>
+                                            <Setter Property="Background" Value="#EF4444"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -247,7 +247,7 @@
                                     <Setter Property="Background" Value="{Binding Project.Status, Converter={StaticResource ProjectStatusToBrush}}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Project.IsMarkedForDeletion}" Value="True">
-                                            <Setter Property="Background" Value="#DE350B"/>
+                                            <Setter Property="Background" Value="#EF4444"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -285,15 +285,15 @@
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bg" Background="White" CornerRadius="6"
-                                        BorderBrush="#DE350B" BorderThickness="1"
+                                        BorderBrush="#EF4444" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}">
                                     <TextBlock x:Name="MarkBtnText" Text="Пометить к удалению"
-                                               Foreground="#DE350B" FontSize="13"
+                                               Foreground="#EF4444" FontSize="13"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#FFF5F5"/>
+                                        <Setter TargetName="Bg" Property="Background" Value="#FEF2F2"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -568,7 +568,7 @@
                                 <!-- Foreman section -->
                                 <StackPanel Margin="0,0,0,16">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                        <Border Width="4" Height="14" CornerRadius="2" Background="#000000" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="ПРОРАБ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -642,7 +642,7 @@
                                 <!-- Workers section -->
                                 <StackPanel Margin="0,0,0,16">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                        <Border Width="4" Height="14" CornerRadius="2" Background="#000000" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="РАБОТНИКИ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
@@ -779,9 +779,9 @@
                                     Margin="0,0,0,16">
                                 <StackPanel>
                                     <TextBlock Text="Статистика" FontSize="14" FontWeight="SemiBold"
-                                               Foreground="#000000" Margin="0,0,0,4"/>
+                                               Foreground="#111111" Margin="0,0,0,4"/>
                                     <TextBlock Text="Распределение по статусам"
-                                               FontSize="12" Foreground="#6B778C" Margin="0,0,0,16"/>
+                                               FontSize="12" Foreground="#64748B" Margin="0,0,0,16"/>
 
                                     <!-- Donut charts -->
                                     <Grid Margin="0,0,0,16">
@@ -793,36 +793,48 @@
 
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="Задачи" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="#000000" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                            <controls:DonutChart
-                                                Segments="{Binding TaskStatsSegments}"
-                                                Width="140" Height="140"
-                                                HorizontalAlignment="Center"/>
+                                                       Foreground="#111111" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                            <Grid Width="140" Height="140" HorizontalAlignment="Center">
+                                                <controls:DonutChart
+                                                    Segments="{Binding TaskStatsSegments}"
+                                                    Width="140" Height="140"
+                                                    HorizontalAlignment="Center"/>
+                                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                            Visibility="{Binding TotalTasks, Converter={StaticResource IntToVisInv}}">
+                                                    <TextBlock Text="Задач нет" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2">
                                             <TextBlock Text="Этапы" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="#000000" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                            <controls:DonutChart
-                                                Segments="{Binding StageStatsSegments}"
-                                                Width="140" Height="140"
-                                                HorizontalAlignment="Center"/>
+                                                        Foreground="#111111" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                            <Grid Width="140" Height="140" HorizontalAlignment="Center">
+                                                <controls:DonutChart
+                                                    Segments="{Binding StageStatsSegments}"
+                                                    Width="140" Height="140"
+                                                    HorizontalAlignment="Center"/>
+                                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                            Visibility="{Binding TotalStagesCount, Converter={StaticResource IntToVisInv}}">
+                                                    <TextBlock Text="Этапов нет" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </StackPanel>
                                     </Grid>
 
                                     <!-- Legend -->
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <Border Width="10" Height="10" CornerRadius="2" Background="#EAB308" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="В процессе" FontSize="12" Foreground="#6B778C" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                            <Border Width="10" Height="10" CornerRadius="2" Background="#22C55E" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Завершено" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <Border Width="10" Height="10" CornerRadius="2" Background="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="В процессе" FontSize="12" Foreground="#64748B" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <Border Width="10" Height="10" CornerRadius="2" Background="#10B981" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Завершено" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                            <Border Width="10" Height="10" CornerRadius="2" Background="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Запланировано" FontSize="12" Foreground="#6B778C" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                            <Border Width="10" Height="10" CornerRadius="2" Background="#64748B" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Запланировано" FontSize="12" Foreground="#64748B" Margin="0,0,12,0" VerticalAlignment="Center"/>
                                             <Border Width="10" Height="10" CornerRadius="2" Background="#EF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Просрочено" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Просрочено" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -838,15 +850,15 @@
                                             <Border Background="#F8F9FA" CornerRadius="8" Padding="12,10">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="{Binding TotalTasks}" FontSize="28" FontWeight="Bold"
-                                                               Foreground="#000000" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Всего задачь" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                               Foreground="#111111" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Всего задач" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
-                                            <Border Background="#E8F5E9" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
+                                            <Border Background="#ECFDF5" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="{Binding CompletedTasksCount}" FontSize="28" FontWeight="Bold"
-                                                               Foreground="#22C55E" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Завершено задачь" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                               Foreground="#10B981" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Завершено задач" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
@@ -855,15 +867,15 @@
                                             <Border Background="#F8F9FA" CornerRadius="8" Padding="12,10">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="{Binding TotalStagesCount}" FontSize="28" FontWeight="Bold"
-                                                               Foreground="#000000" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Всего этапов" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                               Foreground="#111111" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Всего этапов" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
-                                            <Border Background="#E8F5E9" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
+                                            <Border Background="#ECFDF5" CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
                                                 <StackPanel HorizontalAlignment="Center">
                                                     <TextBlock Text="{Binding CompletedStagesCount}" FontSize="28" FontWeight="Bold"
-                                                               Foreground="#22C55E" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Завершено этапов" FontSize="11" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                                               Foreground="#10B981" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="Завершено этапов" FontSize="11" Foreground="#64748B" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
                                         </StackPanel>
@@ -1096,8 +1108,8 @@
                                                     <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#DE350B"/>
-                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                            <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter Property="BorderBrush" Value="#000000"/>
@@ -1163,7 +1175,7 @@
                                                             <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                                    <Setter Property="Background" Value="#DE350B"/>
+                                                                    <Setter Property="Background" Value="#EF4444"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -1433,8 +1445,8 @@
                                             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="#DE350B"/>
-                                                    <Setter Property="Background" Value="#FFF5F5"/>
+                                                    <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                    <Setter Property="Background" Value="#FEF2F2"/>
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="BorderBrush" Value="#000000"/>
@@ -1538,7 +1550,7 @@
                                                     <Setter Property="Background" Value="{Binding Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
-                                                            <Setter Property="Background" Value="#DE350B"/>
+                                                            <Setter Property="Background" Value="#EF4444"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -1683,7 +1695,7 @@
                                 </Grid.RowDefinitions>
                                 <Border Grid.Row="0" Background="#FFEBEE" Padding="14,10" CornerRadius="8,8,0,0">
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="8" Height="8" CornerRadius="4" Background="#DE350B" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <Border Width="8" Height="8" CornerRadius="4" Background="#EF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="Пометка удаления" FontSize="12" FontWeight="SemiBold" Foreground="#B71C1C"/>
                                         <Border CornerRadius="10" Background="#FFCDD2" Padding="6,1" Margin="8,0,0,0">
                                             <TextBlock Text="{Binding FilteredMarkedStages.Count}" FontSize="11" Foreground="#B71C1C"/>

@@ -7,9 +7,6 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
 
     <UserControl.Resources>
-        <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
-        <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
-
         <Style x:Key="NavBtn" TargetType="Button">
             <Setter Property="Width"           Value="30"/>
             <Setter Property="Height"          Value="30"/>
@@ -24,7 +21,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                <Setter TargetName="Bg" Property="Background" Value="#F1F5F9"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -33,7 +30,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#F4F5F7">
+    <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -49,9 +46,9 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Диаграмма Ганта" FontSize="22" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock Text="Диаграмма Ганта" FontSize="22" FontWeight="Bold" Foreground="#0F172A"/>
                     <TextBlock Text="Временная шкала задач и этапов проекта"
-                               FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
+                               FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
 
                 <!-- "Сегодня" + month nav — same layout as Calendar header -->
@@ -61,14 +58,14 @@
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bg" Background="White" CornerRadius="6"
-                                        BorderBrush="#DFE1E6" BorderThickness="1"
+                                        BorderBrush="#E2E8F0" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}">
                                     <TextBlock Text="Сегодня" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="#000000" VerticalAlignment="Center"/>
+                                               Foreground="#0F172A" VerticalAlignment="Center"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                        <Setter TargetName="Bg" Property="Background" Value="#F1F5F9"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -76,21 +73,21 @@
                     </Button>
 
                     <Border Background="White" CornerRadius="8"
-                            BorderBrush="#DFE1E6" BorderThickness="1">
+                            BorderBrush="#E2E8F0" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Button Style="{StaticResource NavBtn}"
                                     Command="{Binding PreviousMonthCommand}">
-                                <Path Data="M7,2 L2,8 L7,14" Stroke="#374151" StrokeThickness="2"
+                                <Path Data="M7,2 L2,8 L7,14" Stroke="#475569" StrokeThickness="2"
                                       StrokeLineJoin="Round" StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" Stretch="None"/>
                             </Button>
                             <TextBlock Text="{Binding MonthTitle}"
                                        FontSize="13" FontWeight="SemiBold"
-                                       Foreground="#000000" VerticalAlignment="Center"
+                                       Foreground="#0F172A" VerticalAlignment="Center"
                                        MinWidth="165" TextAlignment="Center"/>
                             <Button Style="{StaticResource NavBtn}"
                                     Command="{Binding NextMonthCommand}">
-                                <Path Data="M2,2 L7,8 L2,14" Stroke="#374151" StrokeThickness="2"
+                                <Path Data="M2,2 L7,8 L2,14" Stroke="#475569" StrokeThickness="2"
                                       StrokeLineJoin="Round" StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round" Stretch="None"/>
                             </Button>
@@ -112,7 +109,7 @@
 
         <!-- ── GANTT BODY ────────────────────────────────────────────── -->
         <Border Grid.Row="2" Background="White" Margin="16,8,16,16"
-                CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
+                CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1"
                 ClipToBounds="True">
             <Grid>
 
@@ -124,17 +121,17 @@
                     </Grid.RowDefinitions>
 
                     <!-- Header row -->
-                    <Border Grid.Row="0" Background="#F9FAFB"
-                            BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+                    <Border Grid.Row="0" Background="#F8FAFC"
+                            BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="260"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
+                            <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                     Padding="16,8">
                                 <TextBlock Text="Задача" FontSize="11" FontWeight="SemiBold"
-                                           Foreground="#6B778C"/>
+                                           Foreground="#64748B"/>
                             </Border>
                             <ItemsControl Grid.Column="1" ItemsSource="{Binding DayHeaders}">
                                 <ItemsControl.ItemsPanel>
@@ -144,13 +141,13 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:GanttDayHeader}">
-                                        <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
+                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                                 Padding="0,6">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -160,10 +157,10 @@
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="#6B778C"/>
+                                                        <Setter Property="Foreground" Value="#64748B"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                                <Setter Property="Foreground" Value="#EF4444"/>
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -191,7 +188,7 @@
                                                 <Setter Property="Background" Value="White"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#F9FAFB"/>
+                                                        <Setter Property="Background" Value="#F8FAFC"/>
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -220,7 +217,7 @@
                                                         <TextBlock Grid.Column="0"
                                                                    Text="{Binding Task.Name}"
                                                                    FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#000000"
+                                                                   Foreground="#0F172A"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Grid.Column="1" CornerRadius="4"
@@ -240,7 +237,7 @@
                                                                Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
                                                                Opacity="0.6"/>
                                                         <TextBlock Text="{Binding Task.ProjectName}"
-                                                                   FontSize="10" Foreground="#6B778C"
+                                                                   FontSize="10" Foreground="#64748B"
                                                                    TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
                                                     <!-- Due date -->
@@ -270,7 +267,7 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border BorderBrush="#F3F4F6" BorderThickness="0,0,1,0"/>
+                                                            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,1,0"/>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
@@ -328,7 +325,7 @@
                                 Visibility="{Binding TaskRows.Count, Converter={StaticResource NullToVisInv}}">
                         <TextBlock Text="Нет задач для отображения"
                                    FontSize="14" FontWeight="SemiBold"
-                                   Foreground="#97A0AF" HorizontalAlignment="Center"/>
+                                   Foreground="#64748B" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
 
@@ -340,17 +337,17 @@
                     </Grid.RowDefinitions>
 
                     <!-- Header row -->
-                    <Border Grid.Row="0" Background="#F9FAFB"
-                            BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+                    <Border Grid.Row="0" Background="#F8FAFC"
+                            BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="260"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
+                            <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                     Padding="16,8">
                                 <TextBlock Text="Этап" FontSize="11" FontWeight="SemiBold"
-                                           Foreground="#6B778C"/>
+                                           Foreground="#64748B"/>
                             </Border>
                             <ItemsControl Grid.Column="1" ItemsSource="{Binding DayHeaders}">
                                 <ItemsControl.ItemsPanel>
@@ -360,13 +357,13 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:GanttDayHeader}">
-                                        <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,0"
+                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                                 Padding="0,6">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -376,10 +373,10 @@
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="#6B778C"/>
+                                                        <Setter Property="Foreground" Value="#64748B"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                                                <Setter Property="Foreground" Value="#EF4444"/>
+                                                                <Setter Property="Foreground" Value="#DC2626"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -407,7 +404,7 @@
                                                 <Setter Property="Background" Value="White"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#F9FAFB"/>
+                                                        <Setter Property="Background" Value="#F8FAFC"/>
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -436,7 +433,7 @@
                                                         <TextBlock Grid.Column="0"
                                                                    Text="{Binding Stage.Stage.Name}"
                                                                    FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#000000"
+                                                                   Foreground="#0F172A"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
                                                         <Border Grid.Column="1" CornerRadius="4"
@@ -456,7 +453,7 @@
                                                                Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
                                                                Opacity="0.6"/>
                                                         <TextBlock Text="{Binding Stage.TaskName}"
-                                                                   FontSize="10" Foreground="#6B778C"
+                                                                   FontSize="10" Foreground="#64748B"
                                                                    MaxWidth="80"
                                                                    TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Text=" · " FontSize="10" Foreground="#9CA3AF"/>
@@ -485,7 +482,7 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Border BorderBrush="#F3F4F6" BorderThickness="0,0,1,0"/>
+                                                            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,1,0"/>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>

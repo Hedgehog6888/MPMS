@@ -36,14 +36,14 @@
         <Style x:Key="ColHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Foreground" Value="#64748B"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
         <!-- Cell text style -->
         <Style x:Key="CellText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
@@ -51,14 +51,14 @@
         <!-- Secondary cell text -->
         <Style x:Key="CellTextSec" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Foreground" Value="#64748B"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
         
     </UserControl.Resources>
 
-    <Grid Background="#F4F5F7">
+    <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header bar -->
             <RowDefinition Height="*"/>    <!-- Content -->
@@ -73,9 +73,9 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <TextBlock Text="Проекты" FontSize="24" FontWeight="Bold"
-                               Foreground="#000000"/>
+                               Foreground="#111111"/>
                     <TextBlock Text="Управление монтажными проектами"
-                               FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
+                               FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <!-- Create button -->
                 <Button x:Name="CreateProjectBtn" Grid.Column="1" Click="CreateProject_Click"
@@ -134,11 +134,11 @@
                                                 </Setter>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                        <Setter Property="BorderBrush" Value="#DE350B"/>
-                                                        <Setter Property="Background" Value="#FFF5F5"/>
+                                                        <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                        <Setter Property="Background" Value="#FEF2F2"/>
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="BorderBrush" Value="#222222"/>
+                                                        <Setter Property="BorderBrush" Value="#111111"/>
                                                         <Setter Property="BorderThickness" Value="1.5"/>
                                                         <Setter Property="Background" Value="#F8F9FA"/>
                                                         <Setter Property="Effect">
@@ -184,30 +184,32 @@
                                                                Foreground="#111111"
                                                                TextTrimming="CharacterEllipsis"/>
                                                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                        <Image Source="{svgc:SvgImage Source=/icons/client.svg, AppName=MPMS}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding Client}" FontSize="12" Foreground="#6B778C" VerticalAlignment="Center"/>
+                                                        <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding Client}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
                                                     </StackPanel>
+
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right">
-                                                    <Border CornerRadius="6" Padding="10,5">
+                                                    <Border CornerRadius="6" Padding="10,5" MinWidth="85">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                        <Setter Property="Background" Value="#DE350B"/>
+                                                                        <Setter Property="Background" Value="#EF4444"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Border.Style>
-                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="White">
+                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="White" 
+                                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Setter Property="Text" Value="{Binding Status, Converter={StaticResource ProjectStatusToString}}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                            <Setter Property="Text" Value="ПОМЕТКА УДАЛЕНИЯ"/>
+                                                                            <Setter Property="Text" Value="Пометка удаления"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -239,30 +241,30 @@
                                                                    Source="{Binding ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
                                                                    Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
                                                             <TextBlock Text="{Binding ManagerInitials}" FontSize="14" FontWeight="Bold" 
-                                                                       Foreground="#6B778C" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                        Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                         </Grid>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding ManagerName}" FontSize="14" FontWeight="SemiBold" Foreground="#111111"/>
-                                                        <TextBlock Text="Менеджер проекта" FontSize="11" Foreground="#6B778C"/>
+                                                        <TextBlock Text="Менеджер проекта" FontSize="11" Foreground="#64748B"/>
                                                     </StackPanel>
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                    <TextBlock FontSize="12" Foreground="#6B778C" HorizontalAlignment="Right">
+                                                    <TextBlock FontSize="12" Foreground="#64748B" HorizontalAlignment="Right">
                                                         <Run Text="{Binding StartDate, Converter={StaticResource DateOnlyToString}}"/>
                                                         <Run Text=" — "/>
                                                         <Run Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"/>
                                                     </TextBlock>
-                                                    <TextBlock Text="Период реализации" FontSize="10" Foreground="#6B778C" HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="Период реализации" FontSize="10" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                             </Grid>
 
                                             <!-- Row 3: Progress -->
                                             <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
                                                 <Grid Margin="0,0,0,8">
-                                                    <TextBlock Text="ПРОГРЕСС" FontSize="10" FontWeight="Bold" Foreground="#6B778C"/>
+                                                    <TextBlock Text="ПРОГРЕСС" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
                                                     <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}" 
                                                                FontSize="13" FontWeight="Bold" Foreground="#111111" HorizontalAlignment="Right"/>
                                                 </Grid>
@@ -388,7 +390,7 @@
                             <TextBlock Text="Проекты не найдены" FontSize="16" FontWeight="SemiBold"
                                        Foreground="#111111" HorizontalAlignment="Center"/>
                             <TextBlock Text="Создайте первый проект или измените параметры фильтрации"
-                                       FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                       FontSize="13" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>

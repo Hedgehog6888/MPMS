@@ -42,7 +42,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<TaskFilterOption> _taskFilterOptions = [];
 
     public List<string> StatusOptions { get; } =
-        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
+        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удаления"];
 
     public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
     {
@@ -237,7 +237,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         if (TaskFilter.HasValue)
             query = query.Where(s => s.TaskId == TaskFilter.Value);
 
-        if (StatusFilter == "Пометка удалить")
+        if (StatusFilter == "Пометка удаления")
         {
             query = query.Where(s => s.Stage.EffectiveMarkedForDeletion);
         }

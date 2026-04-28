@@ -263,7 +263,7 @@
                     <!-- Left side: Greeting and Date -->
                     <StackPanel VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding WelcomeMessage}" FontSize="28" FontWeight="Bold" Foreground="#111111"/>
-                        <TextBlock Text="{Binding CurrentDateText}" FontSize="14" Foreground="#6B778C" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding CurrentDateText}" FontSize="14" Foreground="#64748B" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Right side: Clock (aligned with date row) -->
@@ -288,7 +288,7 @@
                                     
                                     <Border Style="{StaticResource TooltipContentSection}">
                                         <StackPanel>
-                                            <TextBlock Text="ДЕТАЛИЗАЦИЯ ПО СТАТУСАМ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <TextBlock Text="ДЕТАЛИЗАЦИЯ ПО СТАТУСАМ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                             <Border Style="{StaticResource TooltipInfoBlock}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
@@ -301,21 +301,21 @@
                                                         <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
 
-                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#00875A" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Завершено:" FontSize="11" Foreground="#172B4D"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card1Completed}" FontWeight="Bold" FontSize="11" Foreground="#00875A" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#10B981" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Завершено:" FontSize="11" Foreground="#333333"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card1Completed}" FontWeight="Bold" FontSize="11" Foreground="#10B981" HorizontalAlignment="Right"/>
 
-                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#0052CC" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="В работе:" FontSize="11" Foreground="#172B4D" Margin="0,6"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card1InProgress}" FontWeight="Bold" FontSize="11" Foreground="#0052CC" Margin="0,6" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#3B82F6" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Выполняется:" FontSize="11" Foreground="#333333" Margin="0,6"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card1InProgress}" FontWeight="Bold" FontSize="11" Foreground="#3B82F6" Margin="0,6" HorizontalAlignment="Right"/>
 
-                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#6B778C" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Запланировано:" FontSize="11" Foreground="#172B4D"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card1Planned}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Запланировано:" FontSize="11" Foreground="#333333"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card1Planned}" FontWeight="Bold" FontSize="11" Foreground="#333333" HorizontalAlignment="Right"/>
                                                 </Grid>
                                             </Border>
                                             <Border Margin="0,12,0,0" Padding="0,12,0,0" BorderBrush="#F4F5F7" BorderThickness="0,1,0,0">
-                                                <TextBlock Text="{Binding Card1Total, StringFormat='ВСЕГО ОБЪЕКТОВ: {0}'}" FontSize="10" FontWeight="Bold" Foreground="#172B4D"/>
+                                                <TextBlock Text="{Binding Card1Total, StringFormat='ВСЕГО ОБЪЕКТОВ: {0}'}" FontSize="10" FontWeight="Bold" Foreground="#333333"/>
                                             </Border>
                                         </StackPanel>
                                     </Border>
@@ -328,7 +328,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,2,0,4">
                                     <TextBlock Text="{Binding Card1Value}" Style="{StaticResource BentoValue}"/>
                                 </StackPanel>
-                                <TextBlock Text="{Binding Card1SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+                                <TextBlock Text="{Binding Card1SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
                                 
                                 <!-- Segmented Progress Line (Styled as project SlimPB with non-distorted rounding) -->
                                 <ProgressBar Value="100" Maximum="100" Height="6" 
@@ -336,12 +336,12 @@
                                              Template="{StaticResource SlimPB}">
                                     <ProgressBar.Foreground>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#00875A" Offset="0"/>
-                                            <GradientStop Color="#00875A" Offset="{Binding Card1DoneOffset}"/>
-                                            <GradientStop Color="#0082FF" Offset="{Binding Card1DoneOffset}"/>
-                                            <GradientStop Color="#0082FF" Offset="{Binding Card1InProgressOffset}"/>
-                                            <GradientStop Color="#D1D4D9" Offset="{Binding Card1InProgressOffset}"/>
-                                            <GradientStop Color="#D1D4D9" Offset="1.0"/>
+                                            <GradientStop Color="#10B981" Offset="0"/>
+                                            <GradientStop Color="#10B981" Offset="{Binding Card1DoneOffset}"/>
+                                            <GradientStop Color="#3B82F6" Offset="{Binding Card1DoneOffset}"/>
+                                            <GradientStop Color="#3B82F6" Offset="{Binding Card1InProgressOffset}"/>
+                                            <GradientStop Color="#CBD5E1" Offset="{Binding Card1InProgressOffset}"/>
+                                            <GradientStop Color="#CBD5E1" Offset="1.0"/>
                                         </LinearGradientBrush>
                                     </ProgressBar.Foreground>
                                 </ProgressBar>
@@ -365,9 +365,9 @@
                                     </Border>
                                     <Border Style="{StaticResource TooltipContentSection}">
                                         <StackPanel>
-                                            <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                             <Border Style="{StaticResource TooltipInfoBlock}">
-                                                <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#172B4D" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#333333" TextWrapping="Wrap"/>
                                             </Border>
                                         </StackPanel>
                                     </Border>
@@ -378,7 +378,7 @@
                             <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
                                 <TextBlock Text="{Binding Card2Title}" Style="{StaticResource BentoTitle}"/>
                                 <TextBlock Text="{Binding Card2Value}" Style="{StaticResource BentoValue}" FontSize="18" TextTrimming="CharacterEllipsis" MaxWidth="160" HorizontalAlignment="Left" Margin="0,2,0,4"/>
-                                <TextBlock Text="{Binding Card2SubValue}" FontSize="11" Foreground="#6B778C"/>
+                                <TextBlock Text="{Binding Card2SubValue}" FontSize="11" Foreground="#64748B"/>
                             </StackPanel>
                             <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
                                 <Image Source="{svgc:SvgImage Source=/icons/time_purple.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
@@ -399,7 +399,7 @@
                                     </Border>
                                     <Border Style="{StaticResource TooltipContentSection}">
                                         <StackPanel>
-                                            <TextBlock Text="РАСПРЕДЕЛЕНИЕ ПО УРОВНЯМ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <TextBlock Text="РАСПРЕДЕЛЕНИЕ ПО УРОВНЯМ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                             <Border Style="{StaticResource TooltipInfoBlock}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
@@ -412,17 +412,17 @@
                                                         <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
 
-                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#DE350B" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Критический уровень:" FontSize="11" Foreground="#172B4D"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#DE350B" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#EF4444" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Критический уровень:" FontSize="11" Foreground="#333333"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right"/>
 
-                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#FF8B00" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Высокий приоритет:" FontSize="11" Foreground="#172B4D" Margin="0,6"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" Margin="0,6" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Высокий приоритет:" FontSize="11" Foreground="#333333" Margin="0,6"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#333333" Margin="0,6" HorizontalAlignment="Right"/>
 
-                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#6B778C" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Прочие замечания:" FontSize="11" Foreground="#172B4D"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Прочие замечания:" FontSize="11" Foreground="#333333"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#333333" HorizontalAlignment="Right"/>
                                                 </Grid>
                                             </Border>
                                         </StackPanel>
@@ -439,14 +439,14 @@
                                             <Style TargetType="TextBlock" BasedOn="{StaticResource BentoValue}">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
-                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                        <Setter Property="Foreground" Value="#EF4444"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
                                 </StackPanel>
-                                <TextBlock Text="{Binding Card3SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+                                <TextBlock Text="{Binding Card3SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
 
                                 <!-- Risk Breakdown Line (Styled as project SlimPB with non-distorted rounding) -->
                                 <ProgressBar Value="100" Maximum="100" Height="6" 
@@ -454,12 +454,12 @@
                                              Template="{StaticResource SlimPB}">
                                     <ProgressBar.Foreground>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#DE350B" Offset="0"/>
-                                            <GradientStop Color="#DE350B" Offset="{Binding Card3Offset1}"/>
-                                            <GradientStop Color="#FF8B00" Offset="{Binding Card3Offset1}"/>
-                                            <GradientStop Color="#FF8B00" Offset="{Binding Card3Offset2}"/>
-                                            <GradientStop Color="#6B778C" Offset="{Binding Card3Offset2}"/>
-                                            <GradientStop Color="#6B778C" Offset="1.0"/>
+                                            <GradientStop Color="#EF4444" Offset="0"/>
+                                            <GradientStop Color="#EF4444" Offset="{Binding Card3Offset1}"/>
+                                            <GradientStop Color="#F59E0B" Offset="{Binding Card3Offset1}"/>
+                                            <GradientStop Color="#F59E0B" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#64748B" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#64748B" Offset="1.0"/>
                                         </LinearGradientBrush>
                                     </ProgressBar.Foreground>
                                 </ProgressBar>
@@ -504,15 +504,15 @@
                                     </Border>
                                     <Border Style="{StaticResource TooltipContentSection}">
                                         <StackPanel>
-                                            <TextBlock Text="ПАРАМЕТРЫ СЕТИ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <TextBlock Text="ПАРАМЕТРЫ СЕТИ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                             <Border Style="{StaticResource TooltipInfoBlock}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Синхронизация:" FontSize="11" Foreground="#6B778C"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding LastSyncTime}" FontSize="11" FontWeight="SemiBold" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="Синхронизация:" FontSize="11" Foreground="#64748B"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding LastSyncTime}" FontSize="11" FontWeight="SemiBold" Foreground="#333333" HorizontalAlignment="Right"/>
                                                 </Grid>
                                             </Border>
                                             <Border Margin="0,12,0,0" Padding="0,12,0,0" BorderBrush="#F4F5F7" BorderThickness="0,1,0,0">
@@ -520,16 +520,16 @@
                                                     <Ellipse Width="8" Height="8" Margin="0,0,8,0">
                                                         <Ellipse.Style>
                                                             <Style TargetType="Ellipse">
-                                                                <Setter Property="Fill" Value="#00875A"/>
+                                                                <Setter Property="Fill" Value="#10B981"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                                        <Setter Property="Fill" Value="#DE350B"/>
+                                                                        <Setter Property="Fill" Value="#EF4444"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Ellipse.Style>
                                                     </Ellipse>
-                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#172B4D">
+                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#333333">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="СИСТЕМА ОНЛАЙН"/>
@@ -555,10 +555,10 @@
                                     <Ellipse Width="8" Height="8" Margin="0,0,8,6" VerticalAlignment="Center">
                                         <Ellipse.Style>
                                             <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="#36B37E"/>
+                                                <Setter Property="Fill" Value="#10B981"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsOnline}" Value="False">
-                                                        <Setter Property="Fill" Value="#FF8B00"/>
+                                                        <Setter Property="Fill" Value="#F59E0B"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -566,7 +566,7 @@
                                     </Ellipse>
                                     <TextBlock Text="{Binding Card4Value}" Style="{StaticResource BentoValue}" FontSize="18"/>
                                 </StackPanel>
-                                <TextBlock Text="{Binding Card4SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+                                <TextBlock Text="{Binding Card4SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
                             </StackPanel>
                             <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
                                 <Image Source="{svgc:SvgImage Source=/icons/sync_status_ok.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
@@ -591,7 +591,7 @@
                                            FontSize="14" FontWeight="SemiBold" Foreground="#000000"
                                            Margin="0,0,0,2"/>
                                 <TextBlock Text="Недавняя активность в системе"
-                                           FontSize="12" Foreground="#6B778C" Margin="0,0,0,14"/>
+                                           FontSize="12" Foreground="#64748B" Margin="0,0,0,14"/>
                             </StackPanel>
 
                             <Grid>
@@ -664,7 +664,7 @@
                                                             <!-- Time -->
                                                             <TextBlock Grid.Column="2"
                                                                        Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
-                                                                       FontSize="11" Foreground="#6B778C"
+                                                                       FontSize="11" Foreground="#64748B"
                                                                        VerticalAlignment="Top" Margin="10,2,0,0"
                                                                        MinWidth="40"/>
                                                         </Grid>
@@ -684,7 +684,7 @@
                                                    FontSize="15" FontWeight="SemiBold" Foreground="#111111" 
                                                    HorizontalAlignment="Center"/>
                                         <TextBlock Text="Здесь будут отображаться последние&#x0a;действия в системе" 
-                                                   FontSize="12" Foreground="#6B778C" TextAlignment="Center" 
+                                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
                                                    Margin="0,8,0,0" LineHeight="18"/>
                                     </StackPanel>
                                 </Grid>
@@ -705,8 +705,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Личные заметки" FontSize="14" FontWeight="SemiBold" Foreground="#000000" Margin="0,0,0,2"/>
-                                        <TextBlock Text="Быстрые записи и идеи" FontSize="12" Foreground="#6B778C"/>
+                                        <TextBlock Text="Личные заметки" FontSize="14" FontWeight="SemiBold" Foreground="#111111" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Быстрые записи и идеи" FontSize="12" Foreground="#64748B"/>
                                     </StackPanel>
                                     <Button Grid.Column="1" Command="{Binding CreateNoteCommand}" HorizontalAlignment="Right" Style="{StaticResource BlackNoteButton}" ToolTip="Новая заметка">
                                         <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}" Width="14" Height="14"/>
@@ -738,7 +738,7 @@
                                                                             
                                                                             <StackPanel>
                                                                                 <TextBlock Text="{Binding DisplayTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
-                                                                                <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#6B778C" Margin="0,4,0,0"/>
+                                                                                <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#64748B" Margin="0,4,0,0"/>
                                                                             </StackPanel>
 
                                                                             <!-- Delete Actions -->
@@ -822,10 +822,10 @@
                                             <Image Source="{svgc:SvgImage Source=/icons/empty_notes.svg, AppName=MPMS}" 
                                                    Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
                                             <TextBlock Text="Заметок пока нет" 
-                                                       FontSize="15" FontWeight="SemiBold" Foreground="#111111" 
+                                                       FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
                                                        HorizontalAlignment="Center"/>
                                             <TextBlock Text="Нажмите «+» в углу, чтобы&#x0a;создать первую запись" 
-                                                       FontSize="12" Foreground="#6B778C" TextAlignment="Center" 
+                                                       FontSize="12" Foreground="#64748B" TextAlignment="Center" 
                                                        Margin="0,8,0,0" LineHeight="18"/>
                                         </StackPanel>
                                     </Grid>
@@ -852,7 +852,7 @@
                                             </Style>
                                         </Border.Style>
                                         <Grid>
-                                            <TextBlock Text="Название" FontSize="14" FontWeight="Bold" Foreground="#6B778C" 
+                                            <TextBlock Text="Название" FontSize="14" FontWeight="Bold" Foreground="#64748B" 
                                                        IsHitTestVisible="False" VerticalAlignment="Center" Opacity="0.5">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -981,7 +981,7 @@
                                              BorderThickness="0" AcceptsTab="True" 
                                              VerticalScrollBarVisibility="Auto" 
                                              MouseWheel="PreventScrollBubbling"
-                                             FontSize="13" Foreground="#111111" SelectionBrush="#DFE1E6">
+                                             FontSize="13" Foreground="#0F172A" SelectionBrush="#DFE1E6">
                                     <RichTextBox.Resources>
                                         <Style TargetType="{x:Type Paragraph}">
                                             <Setter Property="Margin" Value="0,0,0,8"/>

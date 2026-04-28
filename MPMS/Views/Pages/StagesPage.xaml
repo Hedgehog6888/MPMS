@@ -16,7 +16,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="#F4F5F7">
+    <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -30,9 +30,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
                     <TextBlock Text="Все этапы задач проектов"
-                               FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
+                               FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <Button x:Name="CreateStageBtn" Grid.Column="1"
                         Click="CreateStage_Click"
@@ -99,22 +99,22 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*" MinWidth="0"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#0C66E4"
+                                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#2563EB"
                                                                     VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
                                                             <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
                                                                        Text="Проект"/>
                                                             <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#000000"
+                                                                       FontWeight="SemiBold" Foreground="#111111"
                                                                        TextTrimming="CharacterEllipsis" MaxWidth="240"
                                                                        Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
                                                             <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#C1C7D0" Margin="0,0,6,0" Text="·"/>
+                                                                       Foreground="#CBD5E1" Margin="0,0,6,0" Text="·"/>
                                                             <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,4,0"
+                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,4,0"
                                                                        Text="Задача"/>
                                                             <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#000000"
+                                                                       FontWeight="SemiBold" Foreground="#111111"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Text="{Binding TaskName, Mode=OneWay}"/>
                                                         </Grid>
@@ -126,13 +126,13 @@
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*" MinWidth="0"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#97A0AF"
+                                                            <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#64748B"
                                                                     VerticalAlignment="Center" Margin="0,0,8,0" Height="12"/>
                                                             <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
                                                                        Text="Задача"/>
                                                             <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#000000"
+                                                                       FontWeight="SemiBold" Foreground="#111111"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Text="{Binding TaskName, Mode=OneWay}"/>
                                                         </Grid>
@@ -177,11 +177,11 @@
                                                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                                                        <Setter Property="BorderBrush" Value="#DE350B"/>
-                                                                        <Setter Property="Background" Value="#FFF5F5"/>
+                                                                        <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                                        <Setter Property="Background" Value="#FEF2F2"/>
                                                                     </DataTrigger>
                                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="BorderBrush" Value="#000000"/>
+                                                                        <Setter Property="BorderBrush" Value="#111111"/>
                                                                     </Trigger>
                                                                     <EventTrigger RoutedEvent="Loaded">
                                                                         <BeginStoryboard>
@@ -273,12 +273,13 @@
                                                                         <Setter Property="Background" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToBrush}}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
-                                                                                <Setter Property="Background" Value="#DE350B"/>
+                                                                                <Setter Property="Background" Value="#EF4444"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </Border.Style>
-                                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White">
+                                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
                                                                     <TextBlock.Style>
                                                                         <Style TargetType="TextBlock">
                                                                             <Setter Property="Text" Value="{Binding Stage.Status, Converter={StaticResource StageStatusToString}}"/>
@@ -428,9 +429,9 @@
                                     Visibility="{Binding ProjectStageGroups.Count, Converter={StaticResource IntToVisInv}}">
                             <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}" Width="48" Height="48" HorizontalAlignment="Center" Opacity="0.4"/>
                             <TextBlock Text="Этапы не найдены" FontSize="15" FontWeight="SemiBold"
-                                       Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>
+                                       Foreground="#64748B" HorizontalAlignment="Center" Margin="0,12,0,6"/>
                             <TextBlock Text="Создайте первый этап или измените фильтры"
-                                       FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                       FontSize="13" Foreground="#64748B" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                 </StackPanel>
@@ -454,7 +455,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
+                    <Border Grid.Column="0" Background="#F8FAFC" CornerRadius="6"
                             Padding="10,0" Height="36" Margin="0,0,12,0"
                             BorderThickness="1.5" BorderBrush="Transparent">
                         <Grid>
@@ -466,10 +467,10 @@
                             <TextBlock Grid.Column="0" Text="&#xE721;"
                                        FontFamily="Segoe MDL2 Assets"
                                        FontSize="14" VerticalAlignment="Center"
-                                       Margin="0,0,8,0" Foreground="#6B778C"/>
+                                       Margin="0,0,8,0" Foreground="#64748B"/>
                             <Grid Grid.Column="1" Margin="0,0,4,0">
                                 <TextBlock Text="Поиск по этапу, задаче или проекту..."
-                                           Foreground="#6B778C" FontSize="12"
+                                           Foreground="#64748B" FontSize="12"
                                            VerticalAlignment="Center"
                                            IsHitTestVisible="False">
                                     <TextBlock.Style>
@@ -486,9 +487,9 @@
                                 <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                          Background="Transparent" BorderThickness="0"
                                          VerticalAlignment="Center" FontSize="13"
-                                         Foreground="#000000"
+                                         Foreground="#111111"
                                          SelectionBrush="{StaticResource NeutralSelectionBrush}"
-                                         SelectionTextBrush="#000000"
+                                         SelectionTextBrush="#111111"
                                          GotFocus="SearchBox_GotFocus"
                                          LostFocus="SearchBox_LostFocus"/>
                             </Grid>
@@ -497,7 +498,7 @@
                                     Width="20" Height="20" Margin="0,0,0,0"
                                     Style="{StaticResource IconButton}">
                                 <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
-                                           FontSize="11" Foreground="#6B778C"/>
+                                           FontSize="11" Foreground="#64748B"/>
                             </Button>
                         </Grid>
                     </Border>

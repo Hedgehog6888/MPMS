@@ -45,9 +45,6 @@ public class DonutChart : Canvas
     {
         base.OnRender(dc);
 
-        var segs = Segments;
-        if (segs is null || segs.Count == 0) return;
-
         double w = ActualWidth;
         double h = ActualHeight;
         if (w <= 0 || h <= 0) return;
@@ -56,8 +53,15 @@ public class DonutChart : Canvas
         double innerRadius = outerRadius * InnerRadiusRatio;
         var center = new Point(w / 2.0, h / 2.0);
 
-        double total = segs.Sum(s => s.Value);
-        if (total <= 0) return;
+        var segs = Segments;
+        double total = segs?.Sum(s => s.Value) ?? 0;
+
+        if (segs is null || segs.Count == 0 || total <= 0)
+        {
+            var geometry = CreateDonutSlice(center, outerRadius, innerRadius, 0, 359.99);
+            dc.DrawGeometry(new SolidColorBrush(Color.FromRgb(241, 245, 249)), null, geometry);
+            return;
+        }
 
         double startAngle = -90.0; // start from top
 

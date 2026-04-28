@@ -14,7 +14,7 @@
         </Style>
 
         <Style x:Key="DangerBtn" TargetType="Button">
-            <Setter Property="Background"      Value="#DE350B"/>
+            <Setter Property="Background"      Value="#EF4444"/>
             <Setter Property="Foreground"      Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="20,9"/>
@@ -30,7 +30,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#BF2600"/>
+                                <Setter Property="Background" Value="#DC2626"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.6"/>
@@ -50,18 +50,18 @@
         </Grid.RowDefinitions>
 
         <!-- Header (like ConfirmDeleteDialog) -->
-        <Border Grid.Row="0" Background="#FFF5F5" Padding="24,20,24,16">
+        <Border Grid.Row="0" Background="#FEF2F2" Padding="24,20,24,16">
             <Grid>
                 <StackPanel Orientation="Horizontal">
-                    <Border Width="44" Height="44" CornerRadius="22" Background="#FFEBE6"
+                    <Border Width="44" Height="44" CornerRadius="22" Background="#FEF2F2"
                             Margin="0,0,16,0" VerticalAlignment="Center">
                         <TextBlock Text="⚠" FontSize="20" HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" Foreground="#DE350B"/>
+                                   VerticalAlignment="Center" Foreground="#EF4444"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock x:Name="TitleLabel" FontSize="18" FontWeight="Bold" Foreground="#000000"/>
                         <TextBlock Text="Это действие нельзя отменить"
-                                   FontSize="12" Foreground="#DE350B" Margin="0,3,0,0"/>
+                                   FontSize="12" Foreground="#EF4444" Margin="0,3,0,0"/>
                     </StackPanel>
                 </StackPanel>
                 <Button HorizontalAlignment="Right" VerticalAlignment="Top"

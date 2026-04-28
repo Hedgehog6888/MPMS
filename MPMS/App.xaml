@@ -9,22 +9,22 @@
         <ResourceDictionary>
 
             <!-- ── Palette ─────────────────────────────────────────────── -->
-            <Color x:Key="PrimaryColor">#1B6EC2</Color>
-            <Color x:Key="PrimaryDarkColor">#1557A0</Color>
-            <Color x:Key="SidebarColor">#0F2038</Color>
-            <Color x:Key="SidebarHoverColor">#1A3A5C</Color>
-            <Color x:Key="SidebarActiveColor">#1B6EC2</Color>
-            <Color x:Key="SidebarNavActiveColor">#E3F2FD</Color>
+            <Color x:Key="PrimaryColor">#2563EB</Color>
+            <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
+            <Color x:Key="SidebarColor">#111111</Color>
+            <Color x:Key="SidebarHoverColor">#333333</Color>
+            <Color x:Key="SidebarActiveColor">#2563EB</Color>
+            <Color x:Key="SidebarNavActiveColor">#EFF6FF</Color>
             <Color x:Key="TopBarColor">#FFFFFF</Color>
-            <Color x:Key="BackgroundColor">#F4F5F7</Color>
+            <Color x:Key="BackgroundColor">#F8FAFC</Color>
             <Color x:Key="CardColor">#FFFFFF</Color>
-            <Color x:Key="TextPrimaryColor">#000000</Color>
-            <Color x:Key="TextSecondaryColor">#6B778C</Color>
-            <Color x:Key="BorderColor">#DFE1E6</Color>
-            <Color x:Key="SuccessColor">#00875A</Color>
-            <Color x:Key="DangerColor">#DE350B</Color>
-            <Color x:Key="WarningColor">#FF8B00</Color>
-            <Color x:Key="AvatarPlaceholderColor">#0F2038</Color>
+            <Color x:Key="TextPrimaryColor">#111111</Color>
+            <Color x:Key="TextSecondaryColor">#64748B</Color>
+            <Color x:Key="BorderColor">#E2E8F0</Color>
+            <Color x:Key="SuccessColor">#10B981</Color>
+            <Color x:Key="DangerColor">#EF4444</Color>
+            <Color x:Key="WarningColor">#F59E0B</Color>
+            <Color x:Key="AvatarPlaceholderColor">#333333</Color>
 
             <SolidColorBrush x:Key="PrimaryBrush"          Color="{StaticResource PrimaryColor}"/>
             <SolidColorBrush x:Key="PrimaryDarkBrush"      Color="{StaticResource PrimaryDarkColor}"/>

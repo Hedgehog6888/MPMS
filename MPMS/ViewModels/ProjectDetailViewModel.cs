@@ -33,7 +33,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _taskPriorityFilter = "Все";
 
     public IReadOnlyList<string> TaskStatusOptions { get; } =
-        ["Все", "Запланирована", "Выполняется", "Завершена", "Пометка удалить"];
+        ["Все", "Запланирована", "Выполняется", "Завершена", "Пометка удаления"];
 
     public IReadOnlyList<string> TaskPriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
@@ -49,7 +49,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<TaskFilterOption> _stageTaskFilterOptions = [];
 
     public List<string> StageStatusOptions { get; } =
-        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удалить"];
+        ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удаления"];
 
     // ─── UI state and other entities ──────────────────────────────────────────
     [ObservableProperty] private string _activeTab = "Tasks";
@@ -307,10 +307,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         int plannedCount = tasks.Count(t => !t.EffectiveTaskMarkedForDeletion && !t.IsArchived && t.Status == TaskStatus.Planned);
         TaskStatsSegments = new List<DonutSegment>
         {
-            new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
-            new() { Label = "В процессе",   Value = InProgressTasksCount, Color = Color.FromRgb(0xEA, 0xB3, 0x08) },
+            new() { Label = "Завершено",    Value = CompletedTasksCount,  Color = Color.FromRgb(0x10, 0xB9, 0x81) },
+            new() { Label = "В процессе",   Value = InProgressTasksCount, Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
             new() { Label = "Просрочено",   Value = OverdueTasksCount,    Color = Color.FromRgb(0xEF, 0x44, 0x44) },
-            new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
+            new() { Label = "Запланировано",Value = plannedCount,          Color = Color.FromRgb(0x64, 0x74, 0x8B) },
         };
 
         var activeStages = stages.Where(s => !s.EffectiveMarkedForDeletion).ToList();
@@ -322,10 +322,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         StageStatsSegments = new List<DonutSegment>
         {
-            new() { Label = "Завершено",    Value = CompletedStagesCount,  Color = Color.FromRgb(0x22, 0xC5, 0x5E) },
-            new() { Label = "В процессе",   Value = InProgressStagesCount, Color = Color.FromRgb(0xEA, 0xB3, 0x08) },
+            new() { Label = "Завершено",    Value = CompletedStagesCount,  Color = Color.FromRgb(0x10, 0xB9, 0x81) },
+            new() { Label = "В процессе",   Value = InProgressStagesCount, Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
             new() { Label = "Просрочено",   Value = OverdueStagesCount,    Color = Color.FromRgb(0xEF, 0x44, 0x44) },
-            new() { Label = "Запланировано",Value = plannedStagesCount,     Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
+            new() { Label = "Запланировано",Value = plannedStagesCount,     Color = Color.FromRgb(0x64, 0x74, 0x8B) },
         };
 
         // Populate TaskName and AssignedUserAvatarData for each stage
@@ -435,7 +435,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 SearchHelper.ContainsIgnoreCase(t.Name, taskTerm) ||
                 SearchHelper.ContainsIgnoreCase(t.Description, taskTerm));
 
-        if (TaskStatusFilter == "Пометка удалить")
+        if (TaskStatusFilter == "Пометка удаления")
         {
             query = query.Where(t => t.EffectiveTaskMarkedForDeletion);
         }
@@ -497,7 +497,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (StageTaskFilter.HasValue)
             query = query.Where(s => s.TaskId == StageTaskFilter.Value);
 
-        if (StageStatusFilter == "Пометка удалить")
+        if (StageStatusFilter == "Пометка удаления")
         {
             query = query.Where(s => s.EffectiveMarkedForDeletion);
         }

@@ -8,7 +8,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              xmlns:controls="clr-namespace:MPMS.Controls"
              mc:Ignorable="d"
-             Background="#F4F5F7"
+             Background="#F8FAFC"
              d:DataContext="{d:DesignInstance Type=vm:WarehouseViewModel}"
              d:DesignHeight="800" d:DesignWidth="1100">
 
@@ -21,13 +21,13 @@
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
             <Setter Property="Padding" Value="16,12"/>
-            <Setter Property="BorderBrush" Value="#DFE1E6"/>
-            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8F9FA"/>
-                    <Setter Property="BorderBrush" Value="#000000"/>
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -48,8 +48,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Склад" FontSize="24" FontWeight="Bold" Foreground="#000000"/>
-                    <TextBlock FontSize="13" Foreground="#6B778C" Margin="0,3,0,0">
+                    <TextBlock Text="Склад" FontSize="24" FontWeight="Bold" Foreground="#0F172A"/>
+                    <TextBlock FontSize="13" Foreground="#64748B" Margin="0,3,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text" Value="{Binding Materials.Count, StringFormat='Материалов: {0}'}"/>
@@ -69,7 +69,7 @@
                         Height="38" Padding="18,0" Cursor="Hand">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bg" Background="#111111" CornerRadius="6"
+                            <Border x:Name="Bg" Background="#0F172A" CornerRadius="6"
                                     Padding="{TemplateBinding Padding}">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
@@ -78,7 +78,7 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                                    <Setter TargetName="Bg" Property="Background" Value="#334155"/>
                                 </Trigger>
                                 <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
                                     <Setter TargetName="AddBtnText" Property="Text" Value="Добавить оборудование"/>
@@ -147,46 +147,46 @@
 
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                             <TextBlock Text="{Binding CategoryName}" FontSize="11"
-                                                       Foreground="#6B778C"
+                                                       Foreground="#64748B"
                                                        Margin="0,2,0,0"
                                                        Visibility="{Binding CategoryName, Converter={StaticResource StringToVis}}"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="Инв. номер" FontSize="11"
-                                                       Foreground="#6B778C"/>
+                                                       Foreground="#64748B"/>
                                             <TextBlock Text="{Binding InventoryNumber, FallbackValue='—'}" FontSize="13"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                             <TextBlock Text="Ед. изм." FontSize="11"
-                                                       Foreground="#6B778C"/>
+                                                       Foreground="#64748B"/>
                                             <TextBlock Text="{Binding Unit, FallbackValue='—'}" FontSize="13"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="3" VerticalAlignment="Center">
                                             <TextBlock Text="Количество" FontSize="11"
-                                                       Foreground="#6B778C"/>
+                                                       Foreground="#64748B"/>
                                             <TextBlock Text="{Binding Quantity}" FontSize="13"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                         </StackPanel>
 
                                         <Border Grid.Column="4" VerticalAlignment="Center" Margin="8,0">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#E3FCEF"/>
+                                                    <Setter Property="Background" Value="#ECFDF5"/>
                                                     <Setter Property="CornerRadius" Value="4"/>
                                                     <Setter Property="Padding" Value="8,3"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Quantity}" Value="0">
-                                                            <Setter Property="Background" Value="#FFF4E5"/>
+                                                            <Setter Property="Background" Value="#FFFBEB"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
-                                                            <Setter Property="Background" Value="#F4F5F7"/>
+                                                            <Setter Property="Background" Value="#F8FAFC"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -195,15 +195,15 @@
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Text" Value="В наличии"/>
-                                                        <Setter Property="Foreground" Value="#00875A"/>
+                                                        <Setter Property="Foreground" Value="#059669"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Quantity}" Value="0">
                                                                 <Setter Property="Text" Value="Нет в наличии"/>
-                                                                <Setter Property="Foreground" Value="#FF8B00"/>
+                                                                <Setter Property="Foreground" Value="#D97706"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
                                                                 <Setter Property="Text" Value="Списано"/>
-                                                                <Setter Property="Foreground" Value="#6B778C"/>
+                                                                <Setter Property="Foreground" Value="#64748B"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -212,7 +212,7 @@
                                         </Border>
 
                                         <TextBlock Grid.Column="5" Text="›" FontSize="18"
-                                                   Foreground="#6B778C"
+                                                   Foreground="#64748B"
                                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </Grid>
                                 </Border>
@@ -256,44 +256,44 @@
 
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                             <TextBlock Text="{Binding CategoryName}" FontSize="11"
-                                                       Foreground="#6B778C"
+                                                       Foreground="#64748B"
                                                        Margin="0,2,0,0"
                                                        Visibility="{Binding CategoryName, Converter={StaticResource StringToVis}}"/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="Инв. номер" FontSize="11"
-                                                       Foreground="#6B778C"/>
+                                                       Foreground="#64748B"/>
                                             <TextBlock Text="{Binding InventoryNumber, FallbackValue='—'}" FontSize="13"
-                                                       Foreground="#000000"/>
+                                                       Foreground="#0F172A"/>
                                         </StackPanel>
 
                                         <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#E3FCEF"/>
+                                                    <Setter Property="Background" Value="#ECFDF5"/>
                                                     <Setter Property="CornerRadius" Value="4"/>
                                                     <Setter Property="Padding" Value="8,3"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Status}" Value="Unavailable">
-                                                            <Setter Property="Background" Value="#FFEBE6"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="3">
-                                                            <Setter Property="Background" Value="#FFEBE6"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="InUse">
-                                                            <Setter Property="Background" Value="#FFF4E5"/>
+                                                            <Setter Property="Background" Value="#FFFBEB"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="CheckedOut">
-                                                            <Setter Property="Background" Value="#FFF4E5"/>
+                                                            <Setter Property="Background" Value="#FFFBEB"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Status}" Value="Retired">
-                                                            <Setter Property="Background" Value="#F4F5F7"/>
+                                                            <Setter Property="Background" Value="#F8FAFC"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsWrittenOff}" Value="True">
-                                                            <Setter Property="Background" Value="#F4F5F7"/>
+                                                            <Setter Property="Background" Value="#F8FAFC"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -315,7 +315,7 @@
                                         </Border>
 
                                         <TextBlock Grid.Column="3" Text="›" FontSize="18"
-                                                   Foreground="#6B778C"
+                                                   Foreground="#64748B"
                                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </Grid>
                                 </Border>

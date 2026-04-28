@@ -11,7 +11,7 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8F9FA"/>
+                    <Setter Property="Background" Value="#F1F5F9"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -30,13 +30,13 @@
         <Style x:Key="ColHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Foreground" Value="#64748B"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
     </UserControl.Resources>
 
-    <Grid Background="#F4F5F7">
+    <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header bar -->
             <RowDefinition Height="*"/>    <!-- Content -->
@@ -50,9 +50,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Задачи" FontSize="24" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock Text="Задачи" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
                     <TextBlock Text="Управление всеми задачами"
-                               FontSize="13" Foreground="#6B778C" Margin="0,3,0,0"/>
+                               FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Export button -->
@@ -61,16 +61,16 @@
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bg" Background="White" CornerRadius="6"
-                                        BorderBrush="#DFE1E6" BorderThickness="1"
+                                        BorderBrush="#E2E8F0" BorderThickness="1"
                                         Padding="{TemplateBinding Padding}">
                                     <StackPanel Orientation="Horizontal">
                                         <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Экспорт" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Экспорт" FontSize="13" Foreground="#111111" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                        <Setter TargetName="Bg" Property="Background" Value="#F1F5F9"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -123,13 +123,13 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*" MinWidth="0"/>
                                                 </Grid.ColumnDefinitions>
-                                                <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#0C66E4"
+                                                <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#2563EB"
                                                         VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
                                                 <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                           Foreground="#97A0AF" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                           Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
                                                            Text="Проект"/>
                                                 <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                           FontWeight="SemiBold" Foreground="#000000"
+                                                           FontWeight="SemiBold" Foreground="#111111"
                                                            TextTrimming="CharacterEllipsis"
                                                            Text="{Binding ProjectName, Mode=OneWay}"/>
                                             </Grid>
@@ -171,11 +171,11 @@
                                                     <Setter Property="BorderBrush" Value="#DFE1E6"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#DE350B"/>
-                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                            <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                            <Setter Property="Background" Value="#FEF2F2"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#000000"/>
+                                                            <Setter Property="BorderBrush" Value="#111111"/>
                                                         </Trigger>
                                                         <EventTrigger RoutedEvent="Loaded">
                                                             <BeginStoryboard>
@@ -206,7 +206,7 @@
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="{Binding Name}"
                                                                    FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#000000"
+                                                                   Foreground="#111111"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
                                                         <!-- Overdue indicator -->
@@ -218,7 +218,7 @@
                                                         </Border>
                                                     </StackPanel>
                                                     <TextBlock Text="{Binding Description}"
-                                                               FontSize="11" Foreground="#6B778C"
+                                                               FontSize="11" Foreground="#64748B"
                                                                TextTrimming="CharacterEllipsis"
                                                                Margin="0,2,0,0"
                                                                Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
@@ -245,7 +245,7 @@
                                                         </Grid>
                                                     </Border>
                                                     <TextBlock Text="{Binding AssignedUserName}"
-                                                               FontSize="12" Foreground="#000000"
+                                                               FontSize="12" Foreground="#111111"
                                                                VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
@@ -270,7 +270,7 @@
                                                            VerticalAlignment="Center"
                                                            Opacity="0.5"/>
                                                     <TextBlock Text="{Binding DueDate, Converter={StaticResource DateOnlyToString}}"
-                                                               FontSize="12" Foreground="#000000"
+                                                               FontSize="12" Foreground="#111111"
                                                                VerticalAlignment="Center"/>
                                                 </StackPanel>
 
@@ -284,13 +284,14 @@
                                                             <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
-                                                                    <Setter Property="Background" Value="#DE350B"/>
+                                                                    <Setter Property="Background" Value="#EF4444"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
                                                     <TextBlock Foreground="White"
-                                                               FontSize="11" FontWeight="SemiBold">
+                                                               FontSize="11" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
@@ -307,7 +308,7 @@
                                                 <!-- Stage count -->
                                                 <TextBlock Grid.Column="5"
                                                            Text="{Binding TotalStages, Converter={StaticResource StageCountToString}}"
-                                                           FontSize="12" Foreground="#6B778C"
+                                                           FontSize="12" Foreground="#64748B"
                                                            VerticalAlignment="Center"/>
 
                                                 <!-- Progress -->
@@ -319,7 +320,7 @@
                                                                  Margin="0,0,0,4"
                                                                  Template="{StaticResource SlimPB}"/>
                                                     <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
-                                                               FontSize="11" Foreground="#6B778C"/>
+                                                               FontSize="11" Foreground="#64748B"/>
                                                 </StackPanel>
 
                                                 <!-- Action buttons -->
@@ -424,9 +425,9 @@
                                 <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}"
                                        Width="48" Height="48" HorizontalAlignment="Center" Opacity="0.4"/>
                                 <TextBlock Text="Задачи не найдены" FontSize="15" FontWeight="SemiBold"
-                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,12,0,6"/>
+                                           Foreground="#64748B" HorizontalAlignment="Center" Margin="0,12,0,6"/>
                                 <TextBlock Text="Создайте первую задачу или измените фильтры"
-                                           FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center"/>
+                                           FontSize="13" Foreground="#64748B" HorizontalAlignment="Center"/>
                             </StackPanel>
 
                 </StackPanel>
