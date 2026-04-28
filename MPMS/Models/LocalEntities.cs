@@ -116,6 +116,11 @@ public class LocalProject : LocalEntity
     /// <summary>Manager avatar from Users — populated when loading for display.</summary>
     [NotMapped] public byte[]? ManagerAvatarData { get; set; }
     [NotMapped] public string? ManagerAvatarPath { get; set; }
+
+    [NotMapped]
+    public bool IsOverdue => EndDate.HasValue
+        && EndDate < DateOnly.FromDateTime(DateTime.Today)
+        && Status != ProjectStatus.Completed;
 }
 
 public class LocalTask : LocalEntity

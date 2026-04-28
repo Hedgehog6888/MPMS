@@ -6,6 +6,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <DataTemplate x:Key="StageKanbanCardTemplate">
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,6" BorderThickness="1.5">
                 <Border.ToolTip>
@@ -105,9 +106,17 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"
-                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <TextBlock Text="{Binding Stage.Name}" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"
+                                       VerticalAlignment="Center"/>
+                            <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                    Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                    Visibility="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                           Foreground="#DC2626"/>
+                            </Border>
+                        </StackPanel>
                         <Border Grid.Column="1" CornerRadius="4" Padding="6,3" Margin="0,0,4,0"
                                 VerticalAlignment="Top" MaxWidth="104">
                             <Border.Style>
@@ -229,9 +238,9 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
+                    <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="Bold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
                         <Border CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
                             <Border.Style>
                                 <Style TargetType="Border">
@@ -258,8 +267,16 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Border>
+                        
+                        <Border CornerRadius="4" Padding="6,2" Margin="12,0,0,0"
+                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Project.IsOverdue, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                       Foreground="#DC2626"/>
+                        </Border>
                     </StackPanel>
-                </StackPanel>
+                    </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Mark project for deletion (Manager only) -->
                     <Button x:Name="MarkProjectBtn" Click="MarkProject_Click"
@@ -1107,10 +1124,18 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="#DC2626"/>
+                                                        </Border>
+                                                    </StackPanel>
                                                     <TextBlock Text="{Binding AssignedUserName}"
                                                                FontSize="11" Margin="0,2,0,0"
                                                                Foreground="{StaticResource TextSecondaryBrush}"
@@ -1435,9 +1460,17 @@
                                         </Grid.ColumnDefinitions>
                                         <!-- Name + description -->
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       TextTrimming="CharacterEllipsis"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                                        Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                        Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="#DC2626"/>
+                                                </Border>
+                                            </StackPanel>
                                             <TextBlock Text="{Binding Description}" FontSize="11"
                                                        Foreground="{StaticResource TextSecondaryBrush}"
                                                        Margin="0,2,0,0" TextTrimming="CharacterEllipsis"

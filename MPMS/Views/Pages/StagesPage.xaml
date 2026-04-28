@@ -206,10 +206,18 @@
 
                                                             <!-- Name + description -->
                                                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                                                <TextBlock Text="{Binding Stage.Name}"
-                                                                           FontSize="13" FontWeight="SemiBold"
-                                                                           Foreground="{StaticResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis"/>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding Stage.Name}"
+                                                                               FontSize="13" FontWeight="SemiBold"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                                               TextTrimming="CharacterEllipsis"/>
+                                                                    <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                                                                            Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                                            Visibility="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                                        <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                                                                   Foreground="#DC2626"/>
+                                                                    </Border>
+                                                                </StackPanel>
                                                                 <TextBlock Text="{Binding Stage.Description}"
                                                                            FontSize="11"
                                                                            Foreground="{StaticResource TextSecondaryBrush}"
