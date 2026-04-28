@@ -432,6 +432,22 @@ public class DateOnlyToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Converts int to GridLength with Star unit (e.g. 5 -> 5*). Returns 0* if value is 0 or invalid.</summary>
+public class IntToStarGridLengthConverter : IValueConverter
+{
+    public static readonly IntToStarGridLengthConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int i && i > 0) return new GridLength(i, GridUnitType.Star);
+        // Small non-zero value to avoid Grid collapse/error if all are zero
+        return new GridLength(0.0001, GridUnitType.Star);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Converts int to bool: true if value > 0.</summary>
 public class IntGreaterThanZeroConverter : IValueConverter
 {

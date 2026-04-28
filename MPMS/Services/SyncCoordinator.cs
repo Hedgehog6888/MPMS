@@ -14,6 +14,7 @@ public interface ISyncService
     bool IsSyncing { get; }
     bool IsOnline  { get; }
     event EventHandler<bool>? OnlineStatusChanged;
+    DateTime? LastSyncTime { get; }
     Task SyncAsync();
     Task QueueOperationAsync(string entityType, Guid entityId,
         SyncOperation operation, object payload);
@@ -37,8 +38,11 @@ public class SyncCoordinator : ISyncService
     private readonly SemaphoreSlim _syncGate = new(1, 1);
     private bool _isSyncing;
 
+    private DateTime? _lastSyncTime;
+
     public bool IsSyncing => _isSyncing;
     public bool IsOnline  => _api.IsOnline;
+    public DateTime? LastSyncTime => _lastSyncTime;
     public event EventHandler<bool>? OnlineStatusChanged;
 
     public SyncCoordinator(
@@ -64,12 +68,19 @@ public class SyncCoordinator : ISyncService
 
     public async Task SyncAsync()
     {
-        if (!_auth.IsAuthenticated) return;
+        await PrepareSyncConnectionAsync();
+
+        if (!_auth.IsAuthenticated)
+        {
+            OnlineStatusChanged?.Invoke(this, _api.IsOnline);
+            return;
+        }
+
         await _syncGate.WaitAsync();
         try
         {
             _isSyncing = true;
-            await PrepareSyncConnectionAsync();
+            // Connection already prepared above
 
             await using (var dbInit = await _dbFactory.CreateDbContextAsync())
             {
@@ -98,6 +109,10 @@ public class SyncCoordinator : ISyncService
         finally
         {
             _isSyncing = false;
+            if (_api.IsOnline)
+            {
+                _lastSyncTime = DateTime.Now;
+            }
             OnlineStatusChanged?.Invoke(this, _api.IsOnline);
             _syncGate.Release();
         }

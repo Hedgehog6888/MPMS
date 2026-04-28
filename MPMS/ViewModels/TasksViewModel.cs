@@ -420,6 +420,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         task.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
+        await RecalcProjectStatusAsync(db, task.ProjectId);
         var syncReq = req with
         {
             IsMarkedForDeletion = task.IsMarkedForDeletion,

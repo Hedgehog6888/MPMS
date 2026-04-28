@@ -28,6 +28,7 @@
         <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
+        <infra:IntToStarGridLengthConverter x:Key="IntToStar"/>
 
         <!-- Stat Card Style -->
         <Style x:Key="StatCard" TargetType="Border">
@@ -135,14 +136,130 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Premium Bento Card Styles -->
+        <Style x:Key="BentoCardStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="20,18"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#FFFFFF"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20" Opacity="0.08" ShadowDepth="4" Direction="270"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                    <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect BlurRadius="25" Opacity="0.12" ShadowDepth="6" Direction="270"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BentoTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+
+        <Style x:Key="BentoValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#111111"/>
+        </Style>
+
+        <Style x:Key="BentoIconContainer" TargetType="Border">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <!-- Slim ProgressBar template from projects -->
+        <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
+            <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                <Border x:Name="PART_Track" CornerRadius="3">
+                    <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Left" CornerRadius="3"/>
+                </Border>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Premium Tooltip Style (Matching Sync Popup) -->
+        <Style x:Key="PremiumTooltip" TargetType="ToolTip">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" Opacity="0.12" ShadowDepth="4" Direction="270"/>
+                            </Border.Effect>
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TooltipHeaderSection" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10,10,0,0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Background" Value="#F8F9FA"/>
+        </Style>
+
+        <Style x:Key="TooltipHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="TooltipDesc" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="TooltipContentSection" TargetType="Border">
+            <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <Style x:Key="TooltipInfoBlock" TargetType="Border">
+            <Setter Property="Background" Value="#F4F5F7"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="#F4F5F7">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="32,24,32,20">
-                
+        <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Stretch">
+            <Grid Margin="32,24,32,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
                 <!-- ── WELCOME BANNER ───────────────────────────────────── -->
-                <Grid Margin="0,0,0,8">
+                <Grid Grid.Row="0" Margin="0,0,0,12">
                     <!-- Left side: Greeting and Date -->
                     <StackPanel VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding WelcomeMessage}" FontSize="28" FontWeight="Bold" Foreground="#111111"/>
@@ -154,135 +271,311 @@
                                HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
                 </Grid>
 
-                <!-- ── STATS ROW ────────────────────────────────────────── -->
-                <UniformGrid Columns="4" Margin="0,0,0,16">
-                    <!-- Active Projects -->
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Border Background="#E3F2FD" CornerRadius="8" Width="40" Height="40" HorizontalAlignment="Left">
-                                    <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}" Width="20" Height="20"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="Проекты в работе" Style="{StaticResource StatTitle}"/>
-                            <TextBlock Text="{Binding ActiveProjectsCount}" Style="{StaticResource StatValue}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- My Tasks -->
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Border Background="#E8F5E9" CornerRadius="8" Width="40" Height="40" HorizontalAlignment="Left">
-                                    <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}" Width="20" Height="20"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="Мои задачи" Style="{StaticResource StatTitle}"/>
-                            <TextBlock Text="{Binding MyTasksCount}" Style="{StaticResource StatValue}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Deadlines -->
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Border Background="#FFF3E0" CornerRadius="8" Width="40" Height="40" HorizontalAlignment="Left">
-                                    <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}" Width="20" Height="20"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="Дедлайны (24ч)" Style="{StaticResource StatTitle}"/>
-                            <TextBlock Text="{Binding UpcomingDeadlinesCount}" Style="{StaticResource StatValue}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Files -->
-                    <Border Style="{StaticResource StatCard}" Margin="0">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Border Background="#F3E5F5" CornerRadius="8" Width="40" Height="40" HorizontalAlignment="Left">
-                                    <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="20" Height="20"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock Text="Всего файлов" Style="{StaticResource StatTitle}"/>
-                            <TextBlock Text="{Binding TotalFilesCount}" Style="{StaticResource StatValue}"/>
-                        </StackPanel>
-                    </Border>
-                </UniformGrid>
-
-                <Grid Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="350"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- ── RECENT PROJECTS ──────────────────────────────────── -->
-                    <StackPanel Grid.Column="0" Margin="0,0,24,0">
-                        <TextBlock Text="Последние проекты" FontSize="18" FontWeight="Bold" Foreground="#111111" Margin="0,0,0,16"/>
-                        <ItemsControl ItemsSource="{Binding RecentProjects}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Columns="2"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="White" CornerRadius="12" Padding="16" Margin="0,0,12,12"
-                                            BorderBrush="#DFE1E6" BorderThickness="1">
+                <!-- ── ROLE-AWARE STATS PULSE ───────────────────────────── -->
+                <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
+                    <!-- Card 1: Status Line -->
+                    <Border Style="{StaticResource BentoCardStyle}" Background="White">
+                        <Border.ToolTip>
+                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                                <StackPanel Width="280">
+                                    <!-- Header matching Sync Popup -->
+                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#EFF6FF">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding Client}" FontSize="13" Foreground="#6B778C" Margin="0,2,0,8"/>
-                                            
-                                            <Grid Margin="0,8,0,0">
-                                                <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}" Maximum="100" Height="6" Background="#F4F5F7"
-                                                           Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}, Mode=OneWay}"/>
-                                            </Grid>
-                                            <Grid Margin="0,4,0,0">
-                                                <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}% выполнено'}" FontSize="11" Foreground="#6B778C"/>
-                                                <TextBlock Text="{Binding Status, Converter={StaticResource ProjectStatusToString}}" 
-                                                           FontSize="11" FontWeight="SemiBold" Foreground="#1B6EC2" HorizontalAlignment="Right"/>
-                                            </Grid>
+                                            <TextBlock Text="{Binding Card1TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
+                                            <TextBlock Text="{Binding Card1TooltipDesc}" Style="{StaticResource TooltipDesc}"/>
                                         </StackPanel>
                                     </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                                    
+                                    <Border Style="{StaticResource TooltipContentSection}">
+                                        <StackPanel>
+                                            <TextBlock Text="ДЕТАЛИЗАЦИЯ ПО СТАТУСАМ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <Border Style="{StaticResource TooltipInfoBlock}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
-                    <!-- ── MY UPCOMING TASKS ────────────────────────────────── -->
-                    <Border Grid.Column="1" Background="White" CornerRadius="12" Padding="20" BorderBrush="#DFE1E6" BorderThickness="1">
-                        <StackPanel>
-                            <TextBlock Text="Ближайшие задачи" FontSize="16" FontWeight="Bold" Foreground="#111111" Margin="0,0,0,16"/>
-                            <ItemsControl ItemsSource="{Binding MyUpcomingTasks}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="0,8" BorderBrush="#F4F5F7" BorderThickness="0,0,0,1">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#111111" TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding ProjectName}" FontSize="11" Foreground="#6B778C"/>
-                                                </StackPanel>
-                                                <Border Grid.Column="1" Background="#FFF3E0" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding DueDate, Converter={StaticResource DateOnlyToString}}" FontSize="10" FontWeight="Bold" Foreground="#E65100"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <TextBlock Text="На сегодня задач нет 🎉" FontSize="13" Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,20"
-                                       Visibility="{Binding MyUpcomingTasks.Count, Converter={StaticResource IntToVisInv}}"/>
-                        </StackPanel>
+                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#00875A" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Завершено:" FontSize="11" Foreground="#172B4D"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card1Completed}" FontWeight="Bold" FontSize="11" Foreground="#00875A" HorizontalAlignment="Right"/>
+
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#0052CC" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="В работе:" FontSize="11" Foreground="#172B4D" Margin="0,6"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card1InProgress}" FontWeight="Bold" FontSize="11" Foreground="#0052CC" Margin="0,6" HorizontalAlignment="Right"/>
+
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#6B778C" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Запланировано:" FontSize="11" Foreground="#172B4D"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card1Planned}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </Border>
+                                            <Border Margin="0,12,0,0" Padding="0,12,0,0" BorderBrush="#F4F5F7" BorderThickness="0,1,0,0">
+                                                <TextBlock Text="{Binding Card1Total, StringFormat='ВСЕГО ОБЪЕКТОВ: {0}'}" FontSize="10" FontWeight="Bold" Foreground="#172B4D"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ToolTip>
+                        </Border.ToolTip>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Card1Title}" Style="{StaticResource BentoTitle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,4">
+                                    <TextBlock Text="{Binding Card1Value}" Style="{StaticResource BentoValue}"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Card1SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+                                
+                                <!-- Segmented Progress Line (Styled as project SlimPB with non-distorted rounding) -->
+                                <ProgressBar Value="100" Maximum="100" Height="6" 
+                                             Background="#E9ECEF" Margin="0,8,0,0"
+                                             Template="{StaticResource SlimPB}">
+                                    <ProgressBar.Foreground>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#00875A" Offset="0"/>
+                                            <GradientStop Color="#00875A" Offset="{Binding Card1DoneOffset}"/>
+                                            <GradientStop Color="#0082FF" Offset="{Binding Card1DoneOffset}"/>
+                                            <GradientStop Color="#0082FF" Offset="{Binding Card1InProgressOffset}"/>
+                                            <GradientStop Color="#D1D4D9" Offset="{Binding Card1InProgressOffset}"/>
+                                            <GradientStop Color="#D1D4D9" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </ProgressBar.Foreground>
+                                </ProgressBar>
+                            </StackPanel>
+                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
+                                <Image Source="{svgc:SvgImage Source=/icons/list_blue.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            </Border>
+                        </Grid>
                     </Border>
-                </Grid>
 
+                    <!-- Card 2: Next Action -->
+                    <Border Style="{StaticResource BentoCardStyle}" Background="White">
+                        <Border.ToolTip>
+                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                                <StackPanel Width="280">
+                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#F5F3FF">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Card2TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
+                                            <TextBlock Text="{Binding Card2TooltipDesc}" Style="{StaticResource TooltipDesc}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource TooltipContentSection}">
+                                        <StackPanel>
+                                            <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <Border Style="{StaticResource TooltipInfoBlock}">
+                                                <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#172B4D" TextWrapping="Wrap"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ToolTip>
+                        </Border.ToolTip>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Card2Title}" Style="{StaticResource BentoTitle}"/>
+                                <TextBlock Text="{Binding Card2Value}" Style="{StaticResource BentoValue}" FontSize="18" TextTrimming="CharacterEllipsis" MaxWidth="160" HorizontalAlignment="Left" Margin="0,2,0,4"/>
+                                <TextBlock Text="{Binding Card2SubValue}" FontSize="11" Foreground="#6B778C"/>
+                            </StackPanel>
+                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
+                                <Image Source="{svgc:SvgImage Source=/icons/time_purple.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            </Border>
+                        </Grid>
+                    </Border>
 
+                    <!-- Card 3: Attention Required -->
+                    <Border Style="{StaticResource BentoCardStyle}" Background="White">
+                        <Border.ToolTip>
+                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                                <StackPanel Width="280">
+                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#FFF1F0">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Card3TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
+                                            <TextBlock Text="{Binding Card3TooltipDesc}" Style="{StaticResource TooltipDesc}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource TooltipContentSection}">
+                                        <StackPanel>
+                                            <TextBlock Text="РАСПРЕДЕЛЕНИЕ ПО УРОВНЯМ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <Border Style="{StaticResource TooltipInfoBlock}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
 
+                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#DE350B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Критический уровень:" FontSize="11" Foreground="#172B4D"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#DE350B" HorizontalAlignment="Right"/>
+
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#FF8B00" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Высокий приоритет:" FontSize="11" Foreground="#172B4D" Margin="0,6"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" Margin="0,6" HorizontalAlignment="Right"/>
+
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#6B778C" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Прочие замечания:" FontSize="11" Foreground="#172B4D"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ToolTip>
+                        </Border.ToolTip>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Card3Title}" Style="{StaticResource BentoTitle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,4">
+                                    <TextBlock Text="{Binding Card3Value}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource BentoValue}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
+                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Card3SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+
+                                <!-- Risk Breakdown Line (Styled as project SlimPB with non-distorted rounding) -->
+                                <ProgressBar Value="100" Maximum="100" Height="6" 
+                                             Background="#E9ECEF" Margin="0,8,0,0"
+                                             Template="{StaticResource SlimPB}">
+                                    <ProgressBar.Foreground>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#DE350B" Offset="0"/>
+                                            <GradientStop Color="#DE350B" Offset="{Binding Card3Offset1}"/>
+                                            <GradientStop Color="#FF8B00" Offset="{Binding Card3Offset1}"/>
+                                            <GradientStop Color="#FF8B00" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#6B778C" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#6B778C" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </ProgressBar.Foreground>
+                                </ProgressBar>
+                            </StackPanel>
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource BentoIconContainer}">
+                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
+                                                <Setter Property="Background" Value="#FFEBE6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Image Source="{svgc:SvgImage Source=/icons/sync_warning.svg, AppName=MPMS}" Width="20" Height="20">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Opacity" Value="0.7"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Card 4: System Status -->
+                    <Border Style="{StaticResource BentoCardStyle}" Background="White" Margin="0,0,0,0">
+                        <Border.ToolTip>
+                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                                <StackPanel Width="280">
+                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#F0FDF4">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Card4TooltipHeader}" Style="{StaticResource TooltipHeader}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Card4TooltipDesc}" Style="{StaticResource TooltipDesc}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource TooltipContentSection}">
+                                        <StackPanel>
+                                            <TextBlock Text="ПАРАМЕТРЫ СЕТИ" FontSize="10" FontWeight="Bold" Foreground="#6B778C" Margin="0,0,0,8"/>
+                                            <Border Style="{StaticResource TooltipInfoBlock}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Синхронизация:" FontSize="11" Foreground="#6B778C"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding LastSyncTime}" FontSize="11" FontWeight="SemiBold" Foreground="#172B4D" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </Border>
+                                            <Border Margin="0,12,0,0" Padding="0,12,0,0" BorderBrush="#F4F5F7" BorderThickness="0,1,0,0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="8" Height="8" Margin="0,0,8,0">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="#00875A"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                                        <Setter Property="Fill" Value="#DE350B"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#172B4D">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="СИСТЕМА ОНЛАЙН"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                                        <Setter Property="Text" Value="АВТОНОМНЫЙ РЕЖИМ"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ToolTip>
+                        </Border.ToolTip>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
+                                <TextBlock Text="{Binding Card4Title}" Style="{StaticResource BentoTitle}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,4">
+                                    <Ellipse Width="8" Height="8" Margin="0,0,8,6" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#36B37E"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOnline}" Value="False">
+                                                        <Setter Property="Fill" Value="#FF8B00"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding Card4Value}" Style="{StaticResource BentoValue}" FontSize="18"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Card4SubValue}" FontSize="11" Foreground="#6B778C" Opacity="0.7"/>
+                            </StackPanel>
+                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
+                                <Image Source="{svgc:SvgImage Source=/icons/sync_status_ok.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </UniformGrid>
                 <!-- ── ACTIVITY FEED SECTION ───────────────────────────────── -->
-                <Grid>
+                <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="60*"/>
                         <ColumnDefinition Width="40*"/>
@@ -291,7 +584,7 @@
                     <!-- 60% ACTIVITY FEED -->
                     <Border Grid.Column="0" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
-                            Padding="20,16" Height="480">
+                            Padding="16,12" MinHeight="400">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Top">
                                 <TextBlock Text="Последние действия"
@@ -314,7 +607,7 @@
                                                         <!-- Colored left accent based on action type (delete, mark, etc.) or entity type -->
                                                         <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
                                                                 Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
-                                                        <Grid Margin="12,8,10,8">
+                                                        <Grid Margin="10,6,8,6">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
@@ -355,7 +648,7 @@
                                                                             Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
                                                                             BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
                                                                             BorderThickness="1"
-                                                                            Visibility="{Binding ActorRole, Converter={StaticResource StringToVis}}">
+                                                                            Visibility="{Binding ActorRole, Converter={StaticResource NullToVis}}">
                                                                         <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
                                                                                    FontSize="9" FontWeight="SemiBold"
                                                                                    Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
@@ -373,7 +666,7 @@
                                                                        Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
                                                                        FontSize="11" Foreground="#6B778C"
                                                                        VerticalAlignment="Top" Margin="10,2,0,0"
-                                                                       MinWidth="45"/>
+                                                                       MinWidth="40"/>
                                                         </Grid>
                                                     </Grid>
                                                 </Border>
@@ -402,16 +695,20 @@
                     <!-- 40% SIDE PANEL (My Notes) -->
                     <Border Grid.Column="1" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
-                            Margin="20,0,0,0" Padding="20,16" Height="480">
+                            Margin="16,0,0,0" Padding="16,12" MinHeight="400">
                         <Grid>
                             <!-- ── LIST VIEW ────────────────────────────────────── -->
                             <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVisInv}}">
                                 <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
-                                    <StackPanel>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
                                         <TextBlock Text="Личные заметки" FontSize="14" FontWeight="SemiBold" Foreground="#000000" Margin="0,0,0,2"/>
                                         <TextBlock Text="Быстрые записи и идеи" FontSize="12" Foreground="#6B778C"/>
                                     </StackPanel>
-                                    <Button Command="{Binding CreateNoteCommand}" HorizontalAlignment="Right" Style="{StaticResource BlackNoteButton}" ToolTip="Новая заметка">
+                                    <Button Grid.Column="1" Command="{Binding CreateNoteCommand}" HorizontalAlignment="Right" Style="{StaticResource BlackNoteButton}" ToolTip="Новая заметка">
                                         <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}" Width="14" Height="14"/>
                                     </Button>
                                 </Grid>
@@ -729,7 +1026,7 @@
                         </Grid>
                     </Border>
                 </Grid>
-            </StackPanel>
+            </Grid>
         </ScrollViewer>
     </Grid>
 </UserControl>
