@@ -70,14 +70,24 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     
     [ObservableProperty] private string _lastSyncTime = "Только что";
     [ObservableProperty] private bool _isOnline = true;
+    [ObservableProperty] private bool _isAdmin;
     
     // Detailed Tooltip Properties
     [ObservableProperty] private string _card1TooltipHeader = "Обзор нагрузки";
     [ObservableProperty] private string _card1TooltipDesc = "Текущее распределение объектов по статусам";
     [ObservableProperty] private string _card2TooltipHeader = "Ближайшее";
     [ObservableProperty] private string _card2TooltipDesc = "Самая приоритетная задача по срокам";
+    [ObservableProperty] private int _card2Total;
+    [ObservableProperty] private int _card2Segment1;
+    [ObservableProperty] private int _card2Segment2;
+    [ObservableProperty] private int _card2Segment3;
+    
     [ObservableProperty] private string _card3TooltipHeader = "Зона риска";
     [ObservableProperty] private string _card3TooltipDesc = "Объекты, требующие немедленного внимания";
+    [ObservableProperty] private string _card3Segment1Label = "Критический уровень";
+    [ObservableProperty] private string _card3Segment2Label = "Высокий приоритет";
+    [ObservableProperty] private string _card3Segment3Label = "Прочие замечания";
+    
     [ObservableProperty] private string _card4TooltipHeader = "Статус системы";
     [ObservableProperty] private string _card4TooltipDesc = "Техническое состояние и синхронизация";
 
@@ -305,7 +315,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             var role = _auth.UserRole;
 
             // Normalize role for comparison
-            bool isAdmin = role is "Admin" or "Administrator" or "Админ";
+            IsAdmin = role is "Admin" or "Administrator" or "Админ";
             bool isManager = role is "Project Manager" or "ProjectManager" or "Менеджер" or "Менеджер проектов";
             bool isForeman = role is "Foreman" or "Прораб";
             bool isWorker = role is "Worker" or "Работник";
@@ -467,6 +477,10 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 Card3Segment2 = overdueStagesCount;
                 Card3Segment3 = 0;
                 Card3Total = Card3Value;
+
+                Card3Segment1Label = "Просроченные задачи:";
+                Card3Segment2Label = "Просроченные этапы:";
+                Card3Segment3Label = "";
                 
                 if (Card3Total > 0)
                 {
@@ -499,8 +513,14 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                                    t.AssignedUserId == null && 
                                                                    !t.IsMarkedForDeletion && !t.IsArchived);
                     Card3Value = overdueStagesCount + overdueTasksCount + unassigned;
+                    Card3Segment1 = overdueTasksCount;
+                    Card3Segment2 = overdueStagesCount;
                     Card3Segment3 = unassigned;
                     Card3Total = Card3Value;
+
+                    Card3Segment1Label = "Просроченные задачи:";
+                    Card3Segment2Label = "Просроченные этапы:";
+                    Card3Segment3Label = "Без ответственного:";
                     
                     if (Card3Total > 0)
                     {
@@ -525,7 +545,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     }
                 }
             }
-            else if (isManager || isAdmin)
+            else if (isManager || IsAdmin)
             {
                 Card1Title = "Обзор нагрузки";
                 var query = db.Projects.Where(p => !p.IsMarkedForDeletion && !p.IsArchived);
@@ -610,12 +630,22 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 }
                 else // Admin
                 {
-                    Card2Title = "Пользователи";
-                    var totalUsers = await db.Users.CountAsync();
-                    Card2Value = totalUsers.ToString();
-                    Card2SubValue = GetPlural(totalUsers, "пользователь", "пользователя", "пользователей");
+                    Card2Title = "На удаление";
+                    var projectsMarked = await db.Projects.CountAsync(p => p.IsMarkedForDeletion);
+                    var tasksMarked = await db.Tasks.CountAsync(t => t.IsMarkedForDeletion);
+                    var stagesMarked = await db.TaskStages.CountAsync(s => s.IsMarkedForDeletion);
+                    var totalMarked = projectsMarked + tasksMarked + stagesMarked;
+
+                    Card2Value = GetPlural(totalMarked, "объект", "объекта", "объектов");
+                    Card2SubValue = "ожидают подтверждения";
                     
-                    Card2TooltipDesc = $"Всего в системе зарегистрировано {totalUsers} чел. Вы можете управлять их ролями и доступом в панели администрирования.";
+                    Card2Segment1 = projectsMarked;
+                    Card2Segment2 = tasksMarked;
+                    Card2Segment3 = stagesMarked;
+                    Card2Total = totalMarked;
+
+                    Card2TooltipHeader = "Объекты на удаление";
+                    Card2TooltipDesc = "Список объектов, ожидающих подтверждения администратора для окончательного удаления.";
                 }
 
                 // Card 3: Attention (Risk Zone)
@@ -643,6 +673,10 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card3Segment2 = overdueTasksInProj;
                     Card3Segment3 = overdueStagesInProj;
                     Card3Total = Card3Value;
+
+                    Card3Segment1Label = "Просроченные проекты:";
+                    Card3Segment2Label = "Просроченные задачи:";
+                    Card3Segment3Label = "Просроченные этапы:";
                     
                     if (Card3Total > 0)
                     {
@@ -668,11 +702,9 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 }
                 else // Admin
                 {
-                    // Check for failed sync operations in PendingOperations table
-                    int failedSyncs = await db.PendingOperations.CountAsync(o => o.IsFailed);
-                    int blockedUsers = await db.Users.CountAsync(u => u.IsBlocked);
-                    
                     // Global overdue counts for admin (only in active projects/tasks)
+                    int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && p.Status != ProjectStatus.Completed && p.EndDate < today);
+
                     int globalOverdueTasks = await (from t in db.Tasks
                                                    join p in db.Projects on t.ProjectId equals p.Id
                                                    where t.Status != Models.TaskStatus.Completed
@@ -691,11 +723,15 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                        && !p.IsArchived
                                                     select s.Id).CountAsync();
                     
-                    Card3Value = failedSyncs + blockedUsers + globalOverdueTasks + globalOverdueStages;
-                    Card3Segment1 = failedSyncs + globalOverdueTasks;
-                    Card3Segment2 = globalOverdueStages;
-                    Card3Segment3 = blockedUsers;
+                    Card3Value = globalOverdueProjects + globalOverdueTasks + globalOverdueStages;
+                    Card3Segment1 = globalOverdueProjects;
+                    Card3Segment2 = globalOverdueTasks;
+                    Card3Segment3 = globalOverdueStages;
                     Card3Total = Card3Value;
+
+                    Card3Segment1Label = "Просроченные проекты:";
+                    Card3Segment2Label = "Просроченные задачи:";
+                    Card3Segment3Label = "Просроченные этапы:";
                     
                     if (Card3Total > 0)
                     {
@@ -710,13 +746,13 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     
                     if (Card3Value == 0)
                     {
-                        Card3SubValue = "Система работает штатно";
-                        Card3TooltipDesc = "Технических ошибок не обнаружено, все показатели в норме.";
+                        Card3SubValue = "Проблем не обнаружено";
+                        Card3TooltipDesc = "Все проекты в системе выполняются согласно графику.";
                     }
                     else
                     {
-                        Card3SubValue = $"{failedSyncs} ош., {globalOverdueTasks} зад., {globalOverdueStages} эт. в риске";
-                        Card3TooltipDesc = "Обнаружены системные инциденты или глобальные задержки:";
+                        Card3SubValue = $"{globalOverdueProjects} пр., {globalOverdueTasks} зад., {globalOverdueStages} эт. в риске";
+                        Card3TooltipDesc = "Обнаружены глобальные задержки в проектах организации:";
                     }
                 }
             }

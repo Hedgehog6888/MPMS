@@ -139,27 +139,13 @@
 
         <!-- Premium Bento Card Styles -->
         <Style x:Key="BentoCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="16"/>
             <Setter Property="Padding" Value="20,18"/>
             <Setter Property="Margin" Value="0,0,16,0"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#FFFFFF"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="20" Opacity="0.08" ShadowDepth="4" Direction="270"/>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F8F9FA"/>
-                    <Setter Property="BorderBrush" Value="#DFE1E6"/>
-                    <Setter Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect BlurRadius="25" Opacity="0.12" ShadowDepth="6" Direction="270"/>
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="ClipToBounds" Value="True"/>
         </Style>
 
         <Style x:Key="BentoTitle" TargetType="TextBlock">
@@ -177,11 +163,36 @@
         </Style>
 
         <Style x:Key="BentoIconContainer" TargetType="Border">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="42"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <Style x:Key="BentoGlow" TargetType="Border">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="-20,-18,-20,-18"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Opacity" Value="0.3"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.5"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.3" Duration="0:0:0.8"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Slim ProgressBar template from projects -->
@@ -346,30 +357,82 @@
                                     </ProgressBar.Foreground>
                                 </ProgressBar>
                             </StackPanel>
-                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
-                                <Image Source="{svgc:SvgImage Source=/icons/list_blue.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            <Border Style="{StaticResource BentoGlow}">
+                                <Border.Background>
+                                    <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                        <GradientStop Color="#503B82F6" Offset="0"/>
+                                        <GradientStop Color="Transparent" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <Border Style="{StaticResource BentoIconContainer}">
+                                <Image Source="{svgc:SvgImage Source=/icons/list_blue.svg, AppName=MPMS}" Width="24" Height="24" Opacity="0.8"/>
                             </Border>
                         </Grid>
                     </Border>
 
-                    <!-- Card 2: Next Action -->
+                    <!-- Card 2: Next Action / Deletion (Admin) -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
                                 <StackPanel Width="280">
-                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#F5F3FF">
+                                    <Border>
+                                        <Border.Style>
+                                            <Style TargetType="Border" BasedOn="{StaticResource TooltipHeaderSection}">
+                                                <Setter Property="Background" Value="#F5F3FF"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsAdmin}" Value="True">
+                                                        <Setter Property="Background" Value="#FFF1F0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+
                                         <StackPanel>
                                             <TextBlock Text="{Binding Card2TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
                                             <TextBlock Text="{Binding Card2TooltipDesc}" Style="{StaticResource TooltipDesc}"/>
                                         </StackPanel>
                                     </Border>
                                     <Border Style="{StaticResource TooltipContentSection}">
-                                        <StackPanel>
-                                            <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
-                                            <Border Style="{StaticResource TooltipInfoBlock}">
-                                                <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#333333" TextWrapping="Wrap"/>
-                                            </Border>
-                                        </StackPanel>
+                                        <Grid>
+                                            <!-- Standard Next Action -->
+                                            <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisInv}}">
+                                                <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
+                                                <Border Style="{StaticResource TooltipInfoBlock}">
+                                                    <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#333333" TextWrapping="Wrap"/>
+                                                </Border>
+                                            </StackPanel>
+                                            
+                                            <!-- Admin Deletion Breakdown -->
+                                            <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="ДЕТАЛИЗАЦИЯ ПО ТИПАМ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
+                                                <Border Style="{StaticResource TooltipInfoBlock}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#EF4444" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Проекты:" FontSize="11" Foreground="#333333"/>
+                                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card2Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right"/>
+
+                                                        <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Задачи:" FontSize="11" Foreground="#333333" Margin="0,6"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card2Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F59E0B" Margin="0,6" HorizontalAlignment="Right"/>
+
+                                                        <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Этапы:" FontSize="11" Foreground="#333333"/>
+                                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card2Segment3}" FontWeight="Bold" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </StackPanel>
                             </ToolTip>
@@ -377,11 +440,77 @@
                         <Grid>
                             <StackPanel VerticalAlignment="Top" Margin="0,2,0,0">
                                 <TextBlock Text="{Binding Card2Title}" Style="{StaticResource BentoTitle}"/>
-                                <TextBlock Text="{Binding Card2Value}" Style="{StaticResource BentoValue}" FontSize="18" TextTrimming="CharacterEllipsis" MaxWidth="160" HorizontalAlignment="Left" Margin="0,2,0,4"/>
+                                <TextBlock Text="{Binding Card2Value}" TextTrimming="CharacterEllipsis" MaxWidth="160" HorizontalAlignment="Left" Margin="0,2,0,4">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource BentoValue}">
+                                            <Setter Property="FontSize" Value="18"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsAdmin}" Value="True">
+                                                    <Setter Property="FontSize" Value="24"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <TextBlock Text="{Binding Card2SubValue}" FontSize="11" Foreground="#64748B"/>
                             </StackPanel>
-                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
-                                <Image Source="{svgc:SvgImage Source=/icons/time_purple.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            <Border>
+                                <Border.Style>
+                                    <Style TargetType="Border" BasedOn="{StaticResource BentoGlow}">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                                    <GradientStop Color="#508B5CF6" Offset="0"/>
+                                                    <GradientStop Color="Transparent" Offset="1"/>
+                                                </RadialGradientBrush>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAdmin}" Value="True">
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                                            <GradientStop Color="#50EF4444" Offset="0"/>
+                                                            <GradientStop Color="Transparent" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                            <!-- Explicitly re-add hover trigger since BasedOn might not merge triggers correctly in some XAML contexts -->
+                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.3" Duration="0:0:0.8"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                            <Border Style="{StaticResource BentoIconContainer}">
+                                <Image Width="24" Height="24" Opacity="0.8">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/time_purple.svg, AppName=MPMS}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsAdmin}" Value="True">
+                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
                             </Border>
                         </Grid>
                     </Border>
@@ -391,7 +520,7 @@
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
                                 <StackPanel Width="280">
-                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#FFF1F0">
+                                    <Border Style="{StaticResource TooltipHeaderSection}" Background="#FFFBEB">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Card3TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
                                             <TextBlock Text="{Binding Card3TooltipDesc}" Style="{StaticResource TooltipDesc}"/>
@@ -412,17 +541,17 @@
                                                         <RowDefinition Height="Auto"/>
                                                     </Grid.RowDefinitions>
 
-                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#EF4444" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Критический уровень:" FontSize="11" Foreground="#333333"/>
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="0" Width="8" Height="8" Fill="#EF4444" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment1Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1Label}" FontSize="11" Foreground="#333333" Visibility="{Binding Card3Segment1Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right" Visibility="{Binding Card3Segment1Label, Converter={StaticResource NullToVis}}"/>
 
-                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="Высокий приоритет:" FontSize="11" Foreground="#333333" Margin="0,6"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#333333" Margin="0,6" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2Label}" FontSize="11" Foreground="#333333" Margin="0,6" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F59E0B" Margin="0,6" HorizontalAlignment="Right" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
 
-                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="Прочие замечания:" FontSize="11" Foreground="#333333"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#333333" HorizontalAlignment="Right"/>
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3Label}" FontSize="11" Foreground="#333333" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
                                                 </Grid>
                                             </Border>
                                         </StackPanel>
@@ -466,19 +595,52 @@
                             </StackPanel>
                             <Border>
                                 <Border.Style>
-                                    <Style TargetType="Border" BasedOn="{StaticResource BentoIconContainer}">
-                                        <Setter Property="Background" Value="#F4F5F7"/>
+                                    <Style TargetType="Border" BasedOn="{StaticResource BentoGlow}">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                                    <GradientStop Color="#50F59E0B" Offset="0"/>
+                                                    <GradientStop Color="Transparent" Offset="1"/>
+                                                </RadialGradientBrush>
+                                            </Setter.Value>
+                                        </Setter>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
-                                                <Setter Property="Background" Value="#FFEBE6"/>
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                                            <GradientStop Color="#50EF4444" Offset="0"/>
+                                                            <GradientStop Color="Transparent" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                            <!-- Explicitly re-add hover trigger -->
+                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.5"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.3" Duration="0:0:0.8"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
-                                <Image Source="{svgc:SvgImage Source=/icons/sync_warning.svg, AppName=MPMS}" Width="20" Height="20">
+                            </Border>
+                            <Border Style="{StaticResource BentoIconContainer}">
+                                <Image Source="{svgc:SvgImage Source=/icons/sync_warning.svg, AppName=MPMS}" Width="24" Height="24">
                                     <Image.Style>
                                         <Style TargetType="Image">
-                                            <Setter Property="Opacity" Value="0.7"/>
+                                            <Setter Property="Opacity" Value="0.8"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Card3Value, Converter={StaticResource IntToVis}}" Value="Visible">
                                                     <Setter Property="Opacity" Value="1"/>
@@ -568,8 +730,16 @@
                                 </StackPanel>
                                 <TextBlock Text="{Binding Card4SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
                             </StackPanel>
-                            <Border Style="{StaticResource BentoIconContainer}" Background="#F4F5F7">
-                                <Image Source="{svgc:SvgImage Source=/icons/sync_status_ok.svg, AppName=MPMS}" Width="20" Height="20" Opacity="0.7"/>
+                            <Border Style="{StaticResource BentoGlow}">
+                                <Border.Background>
+                                    <RadialGradientBrush Center="1,0" GradientOrigin="1,0" RadiusX="1.2" RadiusY="1.5">
+                                        <GradientStop Color="#5010B981" Offset="0"/>
+                                        <GradientStop Color="Transparent" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <Border Style="{StaticResource BentoIconContainer}">
+                                <Image Source="{svgc:SvgImage Source=/icons/sync_status_ok.svg, AppName=MPMS}" Width="24" Height="24" Opacity="0.8"/>
                             </Border>
                         </Grid>
                     </Border>
