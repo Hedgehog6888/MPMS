@@ -2,7 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-             xmlns:controls="clr-namespace:MPMS.Controls">
+             xmlns:controls="clr-namespace:MPMS.Controls"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
 
     <UserControl.Resources>
         <!-- Row hover style -->
@@ -411,12 +413,14 @@
                             <!-- Empty state -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                         Visibility="{Binding TaskGroups.Count, Converter={StaticResource IntToVisInv}}">
-                                <Image Source="{svgc:SvgImage Source=/icons/check.svg, AppName=MPMS}"
-                                       Width="48" Height="48" HorizontalAlignment="Center" Opacity="0.4"/>
-                                <TextBlock Text="Задачи не найдены" FontSize="15" FontWeight="SemiBold"
-                                           Foreground="#64748B" HorizontalAlignment="Center" Margin="0,12,0,6"/>
-                                <TextBlock Text="Создайте первую задачу или измените фильтры"
-                                           FontSize="13" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}" 
+                                       Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                                <TextBlock Text="Задачи не найдены" 
+                                           FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Создайте первую задачу" 
+                                           FontSize="12" Foreground="#64748B" TextAlignment="Center" 
+                                           Margin="0,8,0,0" LineHeight="18"/>
                             </StackPanel>
 
                 </StackPanel>

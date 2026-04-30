@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:components="clr-namespace:MPMS.Views.Components"
-             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -996,7 +998,7 @@
                             <!-- Search -->
                             <Border Grid.Column="0"
                                     Background="#F4F5F7" CornerRadius="6"
-                                    Padding="10,0" Height="36" Margin="0,0,10,0"
+                                    Padding="10,0,2,0" Height="36" Margin="0,0,10,0"
                                     BorderThickness="1.5" BorderBrush="Transparent"
                                     VerticalAlignment="Center" HorizontalAlignment="Stretch">
                                 <Grid>
@@ -1022,11 +1024,17 @@
                                                         <DataTrigger Binding="{Binding TaskSearchText}" Value="">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding TaskSearchText}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=TaskSearchBox}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                        <TextBox Text="{Binding TaskSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox x:Name="TaskSearchBox" Text="{Binding TaskSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
                                                  Foreground="#000000"
@@ -1037,7 +1045,8 @@
                                     </Grid>
                                     <Button Grid.Column="2" Click="ClearTaskSearch_Click"
                                             Visibility="{Binding TaskSearchText, Converter={StaticResource StringToVis}}"
-                                            Width="20" Height="20" Margin="0,0,0,0"
+                                            Width="24" Height="24" Margin="0,0,0,0"
+                                            Padding="0"
                                             Style="{StaticResource IconButton}">
                                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                    FontSize="11" Foreground="#6B778C"/>
@@ -1071,6 +1080,15 @@
                             <!-- Column headers - BorderThickness matches item rows to ensure alignment -->
                             <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                                     BorderThickness="1.5" BorderBrush="Transparent">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FilteredTasks.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1319,6 +1337,19 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            
+                            <!-- Empty state -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                        Visibility="{Binding FilteredTasks.Count, Converter={StaticResource IntToVisInv}}">
+                                <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}" 
+                                       Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                                <TextBlock Text="Задачи не найдены" 
+                                           FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Создайте первую задачу для этого проекта" 
+                                           FontSize="12" Foreground="#64748B" TextAlignment="Center" 
+                                           Margin="0,8,0,0" LineHeight="18"/>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -1344,7 +1375,7 @@
 
                             <!-- Search -->
                             <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
-                                    Padding="10,0" Height="36" Margin="0,0,12,0"
+                                    Padding="10,0,2,0" Height="36" Margin="0,0,12,0"
                                     BorderThickness="1.5" BorderBrush="Transparent"
                                     VerticalAlignment="Center" HorizontalAlignment="Stretch">
                                 <Grid>
@@ -1369,11 +1400,17 @@
                                                         <DataTrigger Binding="{Binding StageSearchText}" Value="">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding StageSearchText}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=StageSearchBox}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                        <TextBox Text="{Binding StageSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox x:Name="StageSearchBox" Text="{Binding StageSearchText, UpdateSourceTrigger=PropertyChanged}"
                                                  Background="Transparent" BorderThickness="0"
                                                  VerticalAlignment="Center" FontSize="13"
                                                  Foreground="#000000"
@@ -1384,7 +1421,8 @@
                                     </Grid>
                                     <Button Grid.Column="2" Click="ClearStageSearch_Click"
                                             Visibility="{Binding StageSearchText, Converter={StaticResource StringToVis}}"
-                                            Width="20" Height="20" Margin="0,0,0,0"
+                                            Width="24" Height="24" Margin="0,0,0,0"
+                                            Padding="0"
                                             Style="{StaticResource IconButton}">
                                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                                    FontSize="11" Foreground="#6B778C"/>
@@ -1419,6 +1457,15 @@
                     <!-- Column headers -->
                     <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                             BorderThickness="1.5" BorderBrush="Transparent">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilteredStages.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -1681,14 +1728,15 @@
                     </ItemsControl>
                     <!-- Empty state -->
                     <StackPanel Visibility="{Binding FilteredStages.Count, Converter={StaticResource IntToVisInv}}"
-                                HorizontalAlignment="Center" Margin="0,40,0,0">
+                                HorizontalAlignment="Center" Margin="0,40,0,40">
                         <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}"
-                               Width="48" Height="48" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.4"/>
-                        <TextBlock Text="Этапы не найдены" FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Создайте задачи и добавьте к ним этапы" FontSize="13"
-                                   Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
-                                   Margin="0,6,0,0"/>
+                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                        <TextBlock Text="Этапы не найдены" 
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Создайте первый этап" 
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
+                                   Margin="0,8,0,0" LineHeight="18"/>
                     </StackPanel>
                     </StackPanel>
                     </ScrollViewer>

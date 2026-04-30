@@ -114,10 +114,7 @@ public partial class StagesPage : UserControl
     private static readonly SolidColorBrush _normalBrush = new(Colors.Transparent);
     private static readonly SolidColorBrush _focusBg = new(Colors.White);
     private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
-    private static readonly System.Windows.Media.Effects.DropShadowEffect _focusShadow = new()
-    {
-        Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
-    };
+
 
     private static Border? FindSearchBorder(DependencyObject element)
     {
@@ -136,7 +133,6 @@ public partial class StagesPage : UserControl
         {
             border.BorderBrush = _focusBrush;
             border.Background = _focusBg;
-            border.Effect = _focusShadow;
         }
     }
 

@@ -5,9 +5,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              xmlns:controls="clr-namespace:MPMS.Controls"
              UseLayoutRounding="True"
-             SnapsToDevicePixels="True"
-             TextOptions.TextFormattingMode="Display"
-             RenderOptions.ClearTypeHint="Enabled">
+             SnapsToDevicePixels="True">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -119,14 +117,14 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border x:Name="CardBorder" CornerRadius="16" Margin="8"
-                                            Padding="24" BorderThickness="1"
+                                            Padding="24" BorderThickness="1.5"
                                             Cursor="Hand" MouseLeftButtonDown="ProjectRow_Click"
                                             Background="White"
-                                            SnapsToDevicePixels="False"
-                                            UseLayoutRounding="False">
+                                            SnapsToDevicePixels="True"
+                                            UseLayoutRounding="True">
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                <Setter Property="BorderBrush" Value="#DFE1E6"/>
                                                 <Setter Property="Effect">
                                                     <Setter.Value>
                                                         <DropShadowEffect BlurRadius="12" Opacity="0.06" ShadowDepth="2" Direction="270" RenderingBias="Quality"/>
@@ -139,7 +137,6 @@
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="BorderBrush" Value="#111111"/>
-                                                        <Setter Property="BorderThickness" Value="1.5"/>
                                                         <Setter Property="Background" Value="#F8F9FA"/>
                                                         <Setter Property="Effect">
                                                             <Setter.Value>
@@ -372,16 +369,18 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                    <Grid Visibility="{Binding Projects.Count, Converter={StaticResource IntToVisInv}}" Margin="0,60,0,0">
-                        <StackPanel HorizontalAlignment="Center">
-                            <Image Source="{svgc:SvgImage Source=/icons/empty_activities.svg, AppName=MPMS}" 
-                                   Width="64" Height="64" Opacity="0.1" Margin="0,0,0,20"/>
-                            <TextBlock Text="Проекты не найдены" FontSize="16" FontWeight="SemiBold"
-                                       Foreground="#111111" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Создайте первый проект или измените параметры фильтрации"
-                                       FontSize="13" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                        </StackPanel>
-                    </Grid>
+                    <!-- Empty state -->
+                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                Visibility="{Binding Projects.Count, Converter={StaticResource IntToVisInv}}">
+                        <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}" 
+                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                        <TextBlock Text="Проекты не найдены" 
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Создайте первый проект" 
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
+                                   Margin="0,8,0,0" LineHeight="18"/>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 

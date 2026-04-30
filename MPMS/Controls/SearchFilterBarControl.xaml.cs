@@ -94,10 +94,7 @@ public partial class SearchFilterBarControl : UserControl
     private static readonly SolidColorBrush _normalBorderBrush = new(Colors.Transparent);
     private static readonly SolidColorBrush _focusBg  = new(Colors.White);
     private static readonly SolidColorBrush _normalBg  = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
-    private static readonly DropShadowEffect _focusShadow = new()
-    {
-        Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
-    };
+
 
     // ── Ctor ─────────────────────────────────────────────────────────
 
@@ -122,7 +119,6 @@ public partial class SearchFilterBarControl : UserControl
     {
         SearchBorder.BorderBrush = _focusBorderBrush;
         SearchBorder.Background  = _focusBg;
-        SearchBorder.Effect      = _focusShadow;
     }
 
     private void SearchBox_LostFocus(object sender, RoutedEventArgs e)

@@ -4,7 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             x:Name="Root">
+             x:Name="Root"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
     <!--
         Переиспользуемая плавающая панель поиска с опциональными фильтрами.
 
@@ -44,14 +46,7 @@
         <Border.Style>
             <Style TargetType="Border">
                 <Style.Triggers>
-                    <!-- Тень только когда IsFloating=True -->
-                    <DataTrigger Binding="{Binding IsFloating, ElementName=Root}" Value="True">
-                        <Setter Property="Effect">
-                            <Setter.Value>
-                                <DropShadowEffect BlurRadius="12" Opacity="0.14" ShadowDepth="2" Direction="270"/>
-                            </Setter.Value>
-                        </Setter>
-                    </DataTrigger>
+
                 </Style.Triggers>
             </Style>
         </Border.Style>
@@ -68,7 +63,7 @@
             <Border x:Name="SearchBorder"
                     Grid.Column="0"
                     Background="#F4F5F7" CornerRadius="6"
-                    Padding="10,0" Height="36" Margin="0,0,10,0"
+                    Padding="10,0,2,0" Height="36" Margin="0,0,10,0"
                     BorderThickness="1.5" BorderBrush="Transparent"
                     VerticalAlignment="Center" HorizontalAlignment="Stretch">
                 <Grid>
@@ -98,6 +93,12 @@
                                         <DataTrigger Binding="{Binding SearchText, ElementName=Root}" Value="">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding SearchText, ElementName=Root}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=SearchBox}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </TextBlock.Style>
@@ -118,7 +119,7 @@
                     <Button Grid.Column="2"
                             Click="ClearSearch_Click"
                             Visibility="{Binding SearchText, ElementName=Root, Converter={StaticResource StringToVis}}"
-                            Width="20" Height="20"
+                            Width="24" Height="24" Padding="0"
                             Style="{StaticResource IconButton}">
                         <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
                                    FontSize="11" Foreground="#6B778C"/>

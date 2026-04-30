@@ -48,6 +48,9 @@ public partial class FilesControlViewModel : ViewModelBase
     public ObservableCollection<LocalFile> AllFiles { get; } = new();
     public ObservableCollection<LocalFile> DisplayedFiles { get; } = new();
 
+    public int ImagesCount => AllFiles.Count(f => IsImage(f.FileName));
+    public int DocumentsCount => AllFiles.Count(f => !IsImage(f.FileName));
+
     private Guid? _projectId;
 
     public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
@@ -131,6 +134,8 @@ public partial class FilesControlViewModel : ViewModelBase
 
             UpdateExtensionFilterOptions();
             ApplyFilters();
+            OnPropertyChanged(nameof(ImagesCount));
+            OnPropertyChanged(nameof(DocumentsCount));
         }
         finally
         {

@@ -5,7 +5,7 @@
   <path d="M8 12h13"></path>
   <path d="M8 18h13"></path>
   <path d="M8 6h13"></path>
-  <circle cx="3.5" cy="5.5" r="1.5"></circle>
-  <circle cx="3.5" cy="11.5" r="1.5"></circle>
-  <circle cx="3.5" cy="17.5" r="1.5"></circle>
+  <circle cx="3.5" cy="5.5" r="1.5" fill="currentColor"></circle>
+  <circle cx="3.5" cy="11.5" r="1.5" fill="currentColor"></circle>
+  <circle cx="3.5" cy="17.5" r="1.5" fill="currentColor"></circle>
 </svg>

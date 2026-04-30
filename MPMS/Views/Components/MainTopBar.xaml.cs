@@ -100,18 +100,12 @@ namespace MPMS.Views.Components
         {
             SearchBorder.BorderBrush = _searchFocusBrush;
             SearchBorder.Background = _searchFocusBg;
-            SearchBorder.Effect = new System.Windows.Media.Effects.DropShadowEffect
-            {
-                Color = Colors.Black,
-                BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
-            };
         }
 
         private void GlobalSearch_LostFocus(object sender, RoutedEventArgs e)
         {
             SearchBorder.BorderBrush = _searchNormalBrush;
             SearchBorder.Background = _searchNormalBg;
-            SearchBorder.Effect = null;
         }
 
         private void GlobalSearch_TextChanged(object sender, TextChangedEventArgs e)

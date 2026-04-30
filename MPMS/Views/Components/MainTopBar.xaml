@@ -69,7 +69,7 @@
             <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
                 <Border x:Name="SearchBorder"
                         Background="#F4F5F7"
-                        CornerRadius="6" Padding="10,0"
+                        CornerRadius="6" Padding="10,0,2,0"
                         Width="520"
                         Height="36"
                         BorderThickness="1.5" BorderBrush="Transparent">
@@ -96,6 +96,12 @@
                                             <DataTrigger Binding="{Binding SearchText}" Value="">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding SearchText}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=GlobalSearchBox}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </TextBlock.Style>
@@ -116,7 +122,7 @@
                         <Button Grid.Column="2" x:Name="ClearSearchBtn"
                                 Click="ClearSearch_Click"
                                 Visibility="Collapsed"
-                                Width="20" Height="20" Margin="4,0,0,0"
+                                Width="24" Height="24" Padding="0" Margin="4,0,0,0"
                                 Style="{StaticResource IconButton}">
                             <TextBlock Text="✕" FontSize="11" Foreground="#6B778C"/>
                         </Button>

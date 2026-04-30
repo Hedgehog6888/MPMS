@@ -587,10 +587,7 @@ public partial class ProjectDetailPage : UserControl
     private static readonly SolidColorBrush SearchNormalBrush = new(Colors.Transparent);
     private static readonly SolidColorBrush SearchFocusBg = new(Colors.White);
     private static readonly SolidColorBrush SearchNormalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
-    private static readonly System.Windows.Media.Effects.DropShadowEffect SearchFocusShadow = new()
-    {
-        Color = Colors.Black, BlurRadius = 6, Opacity = 0.10, ShadowDepth = 0
-    };
+
 
     private static Border? FindParentBorder(DependencyObject element)
     {
@@ -612,7 +609,6 @@ public partial class ProjectDetailPage : UserControl
             {
                 border.BorderBrush = SearchFocusBrush;
                 border.Background = SearchFocusBg;
-                border.Effect = SearchFocusShadow;
             }
         }
     }

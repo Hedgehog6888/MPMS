@@ -1169,8 +1169,6 @@
                             <Border Background="Transparent" CornerRadius="8" Margin="-20,-16"
                                     Visibility="{Binding IsBackConfirmPopupOpen, Converter={StaticResource BoolToVis}}"
                                     UseLayoutRounding="True" SnapsToDevicePixels="True"
-                                    TextOptions.TextFormattingMode="Display"
-                                    RenderOptions.ClearTypeHint="Enabled"
                                     Panel.ZIndex="100">
                                 <Border Background="White" VerticalAlignment="Top" HorizontalAlignment="Center" 
                                         Margin="0,80,0,0" Padding="24,20" CornerRadius="12" 

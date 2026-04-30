@@ -8,7 +8,9 @@
         Height="768" Width="1280"
         MinHeight="768" MinWidth="1280"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        Background="{StaticResource BackgroundBrush}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <Window.Resources>
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>

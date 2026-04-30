@@ -23,8 +23,18 @@
                 <StackPanel>
                     <TextBlock Text="Файлы" FontSize="24" FontWeight="Bold" 
                                Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBlock Text="Управляйте всеми загруженными файлами проекта" FontSize="14" 
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                    <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding FilesControlVM.ImagesCount, StringFormat='Изображений: {0}'}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.CurrentTab}" Value="Documents">
+                                        <Setter Property="Text" Value="{Binding FilesControlVM.DocumentsCount, StringFormat='Документов: {0}'}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -32,7 +42,18 @@
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{svgc:SvgImage Source=/icons/upload_white.svg, AppName=MPMS}" 
                                    Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Загрузить файл" VerticalAlignment="Center"/>
+                            <TextBlock VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Загрузить изображение"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FilesControlVM.CurrentTab}" Value="Documents">
+                                                <Setter Property="Text" Value="Загрузить документ"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Button>
                 </StackPanel>
