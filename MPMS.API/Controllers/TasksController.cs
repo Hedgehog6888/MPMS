@@ -241,7 +241,7 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>Добавить зависимость между задачами для диаграммы Ганта.</summary>
+    /// <summary>Добавить зависимость между задачами для Таймлайна.</summary>
     [HttpPost("{id:guid}/dependencies")]
     public async Task<IActionResult> AddDependency(Guid id, [FromBody] AddTaskDependencyRequest request)
     {

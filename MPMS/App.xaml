@@ -1137,8 +1137,8 @@
             <DataTemplate DataType="{x:Type vm:CalendarViewModel}">
                 <pages:CalendarPage/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:GanttViewModel}">
-                <pages:GanttPage/>
+            <DataTemplate DataType="{x:Type vm:TimelineViewModel}">
+                <pages:TimelinePage/>
             </DataTemplate>
 
         </ResourceDictionary>

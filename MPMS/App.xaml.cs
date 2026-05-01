@@ -87,7 +87,7 @@ public partial class App : Application
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<AdminViewModel>();
         services.AddTransient<CalendarViewModel>();
-        services.AddTransient<GanttViewModel>();
+        services.AddTransient<TimelineViewModel>();
         services.AddTransient<FilesPageViewModel>();
 
         // ── Windows ───────────────────────────────────────────────────────────

@@ -126,7 +126,7 @@ public partial class MainViewModel : ViewModelBase
             "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
             "Files"     => _sp.GetRequiredService<FilesPageViewModel>(),
             "Calendar"  => _sp.GetRequiredService<CalendarViewModel>(),
-            "Gantt"     => _sp.GetRequiredService<GanttViewModel>(),
+            "Timeline"     => _sp.GetRequiredService<TimelineViewModel>(),
             "Warehouse" => _sp.GetRequiredService<WarehouseViewModel>(),
             "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
             "Profile"   => _sp.GetRequiredService<ProfileViewModel>(),

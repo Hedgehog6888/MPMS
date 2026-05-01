@@ -887,7 +887,7 @@ public class TaskStatusToForegroundBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a 0–1 double fraction to a Star GridLength for proportional Gantt bar columns.</summary>
+/// <summary>Converts a 0–1 double fraction to a Star GridLength for proportional Timeline bar columns.</summary>
 public class FractionToGridLengthConverter : IValueConverter
 {
     public static readonly FractionToGridLengthConverter Instance = new();

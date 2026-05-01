@@ -52,7 +52,7 @@
             </Grid>
         </Border>
 
-        <!-- Tabs (как на Gantt / детали проекта) -->
+        <!-- Tabs (как на Таймлайне / детали проекта) -->
         <Border x:Name="TabsBorder" Grid.Row="1" Background="White" Padding="24,12,24,0"
                 Visibility="Collapsed">
             <Border Background="White" CornerRadius="8"

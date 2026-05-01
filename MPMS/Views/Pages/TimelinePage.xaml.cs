@@ -14,11 +14,11 @@ using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
 
-public partial class GanttPage : UserControl
+public partial class TimelinePage : UserControl
 {
-    private GanttViewModel? _vm;
+    private TimelineViewModel? _vm;
 
-    public GanttPage()
+    public TimelinePage()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
@@ -31,26 +31,26 @@ public partial class GanttPage : UserControl
         if (_vm is not null)
             _vm.PropertyChanged -= OnVmPropertyChanged;
 
-        _vm = DataContext as GanttViewModel;
+        _vm = DataContext as TimelineViewModel;
 
         if (_vm is not null)
         {
             _vm.PropertyChanged += OnVmPropertyChanged;
-            GanttTabBar.SelectedTab = _vm.ActiveTab == "Stages" ? "Stages" : "Tasks";
+            TimelineTabBar.SelectedTab = _vm.ActiveTab == "Stages" ? "Stages" : "Tasks";
             UpdateTabVisibility();
         }
     }
 
     private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(GanttViewModel.TodayFraction)
-                           or nameof(GanttViewModel.TaskRows)
-                           or nameof(GanttViewModel.StageRows)
-                           or nameof(GanttViewModel.DayHeaders))
+        if (e.PropertyName is nameof(TimelineViewModel.TodayFraction)
+                           or nameof(TimelineViewModel.TaskRows)
+                           or nameof(TimelineViewModel.StageRows)
+                           or nameof(TimelineViewModel.DayHeaders))
             Dispatcher.BeginInvoke(DrawTodayLine);
     }
 
-    private void GanttTab_SelectedTabChanged(object? sender, string tag)
+    private void TimelineTab_SelectedTabChanged(object? sender, string tag)
     {
         if (_vm is not null) _vm.ActiveTab = tag;
         UpdateTabVisibility();
@@ -123,12 +123,12 @@ public partial class GanttPage : UserControl
 
     private void TaskRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not GanttTaskRow row) return;
+        if (sender is not FrameworkElement fe || fe.Tag is not TimelineTaskRow row) return;
         e.Handled = true;
         _ = OpenTaskRowDetailAsync(row);
     }
 
-    private async Task OpenTaskRowDetailAsync(GanttTaskRow row)
+    private async Task OpenTaskRowDetailAsync(TimelineTaskRow row)
     {
         var tasksVm = App.Services.GetRequiredService<TasksViewModel>();
         ProjectSummaryPanel? projectPanel = null;
@@ -166,12 +166,12 @@ public partial class GanttPage : UserControl
 
     private void StageRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not GanttStageRow row) return;
+        if (sender is not FrameworkElement fe || fe.Tag is not TimelineStageRow row) return;
         e.Handled = true;
         OpenStageRowDetail(row);
     }
 
-    private void OpenStageRowDetail(GanttStageRow row)
+    private void OpenStageRowDetail(TimelineStageRow row)
     {
         if (row.ParentTask is null) return;
 

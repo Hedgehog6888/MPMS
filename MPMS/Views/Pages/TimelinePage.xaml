@@ -1,4 +1,4 @@
-<UserControl x:Class="MPMS.Views.Pages.GanttPage"
+<UserControl x:Class="MPMS.Views.Pages.TimelinePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:MPMS.Controls"
@@ -46,7 +46,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Диаграмма Ганта" FontSize="22" FontWeight="Bold" Foreground="#0F172A"/>
+                    <TextBlock Text="Таймлайн" FontSize="22" FontWeight="Bold" Foreground="#0F172A"/>
                     <TextBlock Text="Временная шкала задач и этапов проекта"
                                FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
@@ -99,15 +99,15 @@
 
         <!-- ── TABS ROW ─────────────────────────────────────────────── -->
         <Border Grid.Row="1" Background="Transparent" Padding="16,0">
-            <controls:TabBarControl x:Name="GanttTabBar"
-                                    GroupName="GanttTabs"
-                                    SelectedTabChanged="GanttTab_SelectedTabChanged">
+            <controls:TabBarControl x:Name="TimelineTabBar"
+                                    GroupName="TimelineTabs"
+                                    SelectedTabChanged="TimelineTab_SelectedTabChanged">
                 <controls:TabItemModel Text="Задачи" Tag="Tasks"/>
                 <controls:TabItemModel Text="Этапы"  Tag="Stages"/>
             </controls:TabBarControl>
         </Border>
 
-        <!-- ── GANTT BODY ────────────────────────────────────────────── -->
+        <!-- ── TIMELINE BODY ────────────────────────────────────────────── -->
         <Border Grid.Row="2" Background="White" Margin="16,8,16,16"
                 CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1"
                 ClipToBounds="True">
@@ -140,7 +140,7 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:GanttDayHeader}">
+                                    <DataTemplate DataType="{x:Type vm:TimelineDayHeader}">
                                         <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                                 Padding="0,6">
                                             <Border.Style>
@@ -178,7 +178,7 @@
                                   HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding TaskRows}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:GanttTaskRow}">
+                                <DataTemplate DataType="{x:Type vm:TimelineTaskRow}">
                                     <Border x:Name="RowBorder"
                                             BorderBrush="#F3F4F6" BorderThickness="0,0,0,1"
                                             Cursor="Hand" Tag="{Binding}"
@@ -362,7 +362,7 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:GanttDayHeader}">
+                                    <DataTemplate DataType="{x:Type vm:TimelineDayHeader}">
                                         <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
                                                 Padding="0,6">
                                             <Border.Style>
@@ -400,7 +400,7 @@
                                   HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding StageRows}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:GanttStageRow}">
+                                <DataTemplate DataType="{x:Type vm:TimelineStageRow}">
                                     <Border x:Name="StageRowBorder"
                                             BorderBrush="#F3F4F6" BorderThickness="0,0,0,1"
                                             Cursor="Hand" Tag="{Binding}"

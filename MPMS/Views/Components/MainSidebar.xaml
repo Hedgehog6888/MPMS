@@ -175,16 +175,16 @@
             </RadioButton>
 
 
-            <!-- Gantt -->
-            <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Gantt, Mode=OneWay}"
+            <!-- Timeline -->
+            <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Timeline, Mode=OneWay}"
                          Style="{StaticResource NavButton}"
                          Command="{Binding NavigateCommand}"
-                         CommandParameter="Gantt">
+                         CommandParameter="Timeline">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="20" Height="20"
                            Margin="12,0,8,0"
                            VerticalAlignment="Center"
-                           Source="{svgc:SvgImage Source=/icons/gantt.svg, AppName=MPMS}">
+                           Source="{svgc:SvgImage Source=/icons/timeline.svg, AppName=MPMS}">
                         <Image.Style>
                             <Style TargetType="Image">
                                 <Setter Property="Opacity" Value="0.7"/>
@@ -199,7 +199,7 @@
                             </Style>
                         </Image.Style>
                     </Image>
-                    <TextBlock Text="Gantt"
+                    <TextBlock Text="Таймлайн"
                                FontSize="14"
                                VerticalAlignment="Center"/>
                 </StackPanel>

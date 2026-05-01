@@ -10,8 +10,8 @@ using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.ViewModels;
 
-/// <summary>A single row in the Gantt chart (task).</summary>
-public sealed class GanttTaskRow
+/// <summary>A single row in the Timeline chart (task).</summary>
+public sealed class TimelineTaskRow
 {
     public LocalTask Task         { get; init; } = null!;
     /// <summary>0–1 fraction: gap before bar.</summary>
@@ -30,8 +30,8 @@ public sealed class GanttTaskRow
     public bool   IsOverdue       { get; init; }
 }
 
-/// <summary>A single row in the Gantt chart (stage).</summary>
-public sealed class GanttStageRow
+/// <summary>A single row in the Timeline chart (stage).</summary>
+public sealed class TimelineStageRow
 {
     public StageItem  Stage       { get; init; } = null!;
     public LocalTask? ParentTask  { get; init; }
@@ -49,7 +49,7 @@ public sealed class GanttStageRow
     public bool   IsOverdue       { get; init; }
 }
 
-public partial class GanttViewModel : ViewModelBase, ILoadable
+public partial class TimelineViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
@@ -58,14 +58,14 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _monthTitle    = string.Empty;
     [ObservableProperty] private string _activeTab     = "Tasks";
 
-    [ObservableProperty] private ObservableCollection<GanttTaskRow>  _taskRows  = [];
-    [ObservableProperty] private ObservableCollection<GanttStageRow> _stageRows = [];
-    [ObservableProperty] private ObservableCollection<GanttDayHeader> _dayHeaders = [];
+    [ObservableProperty] private ObservableCollection<TimelineTaskRow>  _taskRows  = [];
+    [ObservableProperty] private ObservableCollection<TimelineStageRow> _stageRows = [];
+    [ObservableProperty] private ObservableCollection<TimelineDayHeader> _dayHeaders = [];
 
     /// <summary>0–1 fraction for the "today" vertical line (–1 = not in current month).</summary>
     [ObservableProperty] private double _todayFraction = -1;
 
-    public GanttViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
+    public TimelineViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _auth      = auth;
@@ -162,18 +162,18 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
 
             // Day headers
             var ci      = new CultureInfo("ru-RU");
-            var headers = new List<GanttDayHeader>();
+            var headers = new List<TimelineDayHeader>();
             for (int d = 0; d < daysCount; d++)
             {
                 var day = start.AddDays(d);
-                headers.Add(new GanttDayHeader
+                headers.Add(new TimelineDayHeader
                 {
                     DayNumber = day.Day.ToString(),
                     DayName   = day.ToString("ddd", ci),
                     IsToday   = day.Date == today.Date
                 });
             }
-            DayHeaders = new ObservableCollection<GanttDayHeader>(headers);
+            DayHeaders = new ObservableCollection<TimelineDayHeader>(headers);
 
             // Today fraction
             TodayFraction = today >= start && today <= end
@@ -191,7 +191,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         barStart, t.DueDate,
                         start, end, totalDays,
                         out var hasBar, out var left, out var width);
-                    return new GanttTaskRow
+                    return new TimelineTaskRow
                     {
                         Task         = t,
                         HasBar       = hasBar,
@@ -201,7 +201,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         StatusLabel  = TaskStatusLabel(t.Status),
                         StatusColor  = TaskStatusColor(t.Status),
                         BarColorHex  = ProgressToHex(t.ProgressPercent),
-                        BarRangeLabel = FormatGanttBarRangeLabel(barStart, t.DueDate),
+                        BarRangeLabel = FormatTimelineBarRangeLabel(barStart, t.DueDate),
                         IsOverdue    = t.IsOverdue
                     };
                 })
@@ -209,7 +209,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                 .OrderBy(r => r.Task.CreatedAt)
                 .ThenBy(r => r.Task.Name)
                 .ToList();
-            TaskRows = new ObservableCollection<GanttTaskRow>(taskRows);
+            TaskRows = new ObservableCollection<TimelineTaskRow>(taskRows);
 
             // Build stage rows — только если полоса попадает в месяц; порядок по дате создания этапа
             var stageRows = stageList
@@ -230,7 +230,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         stageBarStart, s.DueDate,
                         start, end, totalDays,
                         out var hasBar, out var left, out var width);
-                    return new GanttStageRow
+                    return new TimelineStageRow
                     {
                         Stage        = item,
                         ParentTask   = parentTask,
@@ -241,7 +241,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                         StatusLabel  = StageStatusLabel(s.Status),
                         StatusColor  = StageStatusColor(s.Status),
                         BarColorHex  = StageBarColor(s.Status),
-                        BarRangeLabel = FormatGanttBarRangeLabel(stageBarStart, s.DueDate),
+                        BarRangeLabel = FormatTimelineBarRangeLabel(stageBarStart, s.DueDate),
                         IsOverdue    = s.IsOverdue
                     };
                 })
@@ -249,7 +249,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
                 .OrderBy(r => r.Stage.Stage.CreatedAt)
                 .ThenBy(r => r.Stage.Stage.Name)
                 .ToList();
-            StageRows = new ObservableCollection<GanttStageRow>(stageRows);
+            StageRows = new ObservableCollection<TimelineStageRow>(stageRows);
         }
         finally
         {
@@ -309,7 +309,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     };
 
     /// <summary>Текст «с — по» для подсказки на полосе (та же логика, что у отрезка на шкале).</summary>
-    private static string FormatGanttBarRangeLabel(DateOnly barStart, DateOnly? dueDate)
+    private static string FormatTimelineBarRangeLabel(DateOnly barStart, DateOnly? dueDate)
     {
         if (!dueDate.HasValue) return "";
         var endDate = dueDate.Value;
@@ -319,7 +319,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
         return $"{startDate:dd.MM.yyyy} — {endDate:dd.MM.yyyy}";
     }
 
-    /// <summary>Календарная дата создания сущности для шкалы Ганта (UTC → локальная).</summary>
+    /// <summary>Календарная дата создания сущности для шкалы Таймлайна (UTC → локальная).</summary>
     private static DateOnly DateOnlyFromCreatedAt(DateTime createdAt)
     {
         var dt = createdAt.Kind == DateTimeKind.Utc
@@ -355,7 +355,7 @@ public partial class GanttViewModel : ViewModelBase, ILoadable
     }
 }
 
-public sealed class GanttDayHeader
+public sealed class TimelineDayHeader
 {
     public string DayNumber { get; init; } = string.Empty;
     public string DayName   { get; init; } = string.Empty;
