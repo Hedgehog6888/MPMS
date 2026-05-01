@@ -173,5 +173,11 @@
                 </Border>
             </Border>
         </Grid>
+
+        <!-- ═══════ PHOTO VIEWER LAYER (только область контента) ══════════ -->
+        <ContentPresenter x:Name="PhotoViewerLayer"
+                          Grid.Row="1" Grid.Column="1"
+                          Panel.ZIndex="300"
+                          Visibility="Collapsed"/>
     </Grid>
 </Window>

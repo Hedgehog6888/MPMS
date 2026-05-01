@@ -333,12 +333,83 @@ public partial class FilesControlViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenFile(LocalFile file)
+    private async Task OpenFile(LocalFile file)
     {
         if (file == null) return;
-        
-        // Согласно фидбеку: "Смотри откррыватся будут в специально оверлее программы, это будет реализованно чуть позже"
-        MessageBox.Show("Открытие файла будет реализовано в специальном оверлее чуть позже.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+
+        // Image files — open in PhotoViewerOverlay
+        if (IsImage(file.FileName))
+        {
+            // If file exists on disk, open directly
+            if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
+            {
+                MainWindow.Instance?.ShowPhotoViewer(file.FilePath);
+                return;
+            }
+
+            // Otherwise extract from FileData to temp and open
+            if (file.FileData != null && file.FileData.Length > 0)
+            {
+                var ext = Path.GetExtension(file.FileName);
+                var tmp = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}{ext}");
+                try
+                {
+                    await File.WriteAllBytesAsync(tmp, file.FileData);
+                    MainWindow.Instance?.ShowPhotoViewer(tmp);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии: {ex.Message}", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                return;
+            }
+
+            // Fetch from server if online
+            if (_api.IsOnline)
+            {
+                IsLoading = true;
+                try
+                {
+                    var data = await _api.DownloadFileAsync(file.Id);
+                    if (data != null)
+                    {
+                        var ext = Path.GetExtension(file.FileName);
+                        var tmp = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}{ext}");
+                        await File.WriteAllBytesAsync(tmp, data);
+                        MainWindow.Instance?.ShowPhotoViewer(tmp);
+                    }
+                }
+                catch { }
+                finally { IsLoading = false; }
+            }
+            else
+            {
+                MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        else
+        {
+            // Non-image: open with system default app if path exists
+            if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = file.FilePath,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            }
+            else
+            {
+                MessageBox.Show("Открытие файлов данного типа пока не поддерживается в приложении.",
+                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
 
     [RelayCommand]

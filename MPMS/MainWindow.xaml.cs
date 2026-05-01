@@ -329,6 +329,27 @@ public partial class MainWindow : Window
         host.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
     }
 
+    public void ShowPhotoViewer(string filePath)
+    {
+        var viewer = new Views.Overlays.PhotoViewerOverlay(filePath);
+        PhotoViewerLayer.Content = viewer;
+        PhotoViewerLayer.Visibility = Visibility.Visible;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    public void HidePhotoViewer()
+    {
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(160));
+        fadeOut.Completed += (_, _) =>
+        {
+            PhotoViewerLayer.Visibility = Visibility.Collapsed;
+            PhotoViewerLayer.Content = null;
+        };
+        PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+    }
+
     private void Backdrop_Click(object sender, MouseButtonEventArgs e)
         => HideDrawer();
 }
