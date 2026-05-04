@@ -59,6 +59,7 @@ public partial class PhotoViewerOverlay : UserControl
         Color.FromRgb(0x00,0x00,0xFF), Color.FromRgb(0x1E,0x90,0xFF),
         Color.FromRgb(0x00,0xCE,0xD1), Color.FromRgb(0xFF,0xFF,0xFF),
         Color.FromRgb(0xC0,0xC0,0xC0), Color.FromRgb(0x40,0x40,0x40),
+        Color.FromRgb(0xFF,0x69,0xB4), Color.FromRgb(0x8A,0x2B,0xE2),
     ];
 
     public PhotoViewerOverlay(string filePath)
@@ -72,7 +73,30 @@ public partial class PhotoViewerOverlay : UserControl
         FileNameBox.Text = System.IO.Path.GetFileNameWithoutExtension(_fileName);
         UpdateZoomDisplay();
         // Fit after first layout pass (viewport size is available)
-        Loaded += (_, _) => FitImageToViewport();
+        Loaded += (_, _) =>
+        {
+            FitImageToViewport();
+            SyncDrawToolIcons();
+        };
+        // Handle Escape key to deactivate tools
+        KeyDown += PhotoViewerOverlay_KeyDown;
+    }
+
+    private void PhotoViewerOverlay_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            if (_drawingActive)
+            {
+                DeactivateTool();
+                e.Handled = true;
+            }
+            else if (_cropMode)
+            {
+                CancelCrop_Click(sender, e);
+                e.Handled = true;
+            }
+        }
     }
 
     // ── Image loading ──────────────────────────────────────────────────────
@@ -123,13 +147,48 @@ public partial class PhotoViewerOverlay : UserControl
 
         ResolutionText.Text    = $"{_source.PixelWidth} × {_source.PixelHeight}";
         FileSizeText.Text      = sizeStr;
-        ResolutionDetail.Text  = $"{_source.PixelWidth} x {_source.PixelHeight}  {sizeStr}";
 
         var info = new FileInfo(_filePath);
-        CreatedText.Text  = info.CreationTime.ToString("d MMMM yyyy г.",
+        CreatedText.Text  = info.CreationTime.ToString("d MMMM yyyy г. HH:mm",
             new System.Globalization.CultureInfo("ru-RU"));
-        ModifiedText.Text = info.LastWriteTime.ToString("HH:mm");
-        PathText.Text     = _filePath;
+        ModifiedText.Text = info.LastWriteTime.ToString("d MMMM yyyy г. HH:mm",
+            new System.Globalization.CultureInfo("ru-RU"));
+
+        // Read EXIF camera info
+        CameraText.Text = GetCameraInfo();
+    }
+
+    private string GetCameraInfo()
+    {
+        try
+        {
+            using var fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read);
+            var decoder = BitmapDecoder.Create(fs, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+            if (decoder.Frames[0].Metadata == null) return "—";
+
+            var metadata = (BitmapMetadata)decoder.Frames[0].Metadata;
+            string camera = "";
+            string model = "";
+
+            if (metadata.ContainsQuery("System.Photo.CameraManufacturer"))
+                camera = metadata.GetQuery("System.Photo.CameraManufacturer")?.ToString() ?? "";
+
+            if (metadata.ContainsQuery("System.Photo.CameraModel"))
+                model = metadata.GetQuery("System.Photo.CameraModel")?.ToString() ?? "";
+
+            if (!string.IsNullOrEmpty(camera) && !string.IsNullOrEmpty(model))
+                return $"{camera} {model}";
+            else if (!string.IsNullOrEmpty(model))
+                return model;
+            else if (!string.IsNullOrEmpty(camera))
+                return camera;
+
+            return "—";
+        }
+        catch
+        {
+            return "—";
+        }
     }
 
     // ── Fit to viewport ────────────────────────────────────────────────────
@@ -193,6 +252,13 @@ public partial class PhotoViewerOverlay : UserControl
 
     // ── File name ──────────────────────────────────────────────────────────
     private void FileNameBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _hasUnsavedChanges = true;
+        if (SaveBtn != null) SaveBtn.IsEnabled = true;
+    }
+
+    // ── Description ────────────────────────────────────────────────────────
+    private void DescriptionBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _hasUnsavedChanges = true;
         if (SaveBtn != null) SaveBtn.IsEnabled = true;
@@ -309,24 +375,44 @@ public partial class PhotoViewerOverlay : UserControl
     // ── Print ──────────────────────────────────────────────────────────────
     private void Print_Click(object sender, RoutedEventArgs e)
     {
-        var pd = new System.Windows.Controls.PrintDialog();
-        if (pd.ShowDialog() == true)
+        try
         {
-            var img = new Image
+            var psi = new System.Diagnostics.ProcessStartInfo(_filePath)
             {
-                Source = _source,
-                Stretch = Stretch.Uniform,
-                Width = pd.PrintableAreaWidth,
-                Height = pd.PrintableAreaHeight
+                Verb = "print",
+                UseShellExecute = true
             };
-            pd.PrintVisual(img, _fileName);
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка печати: {ex.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
     // ── Drawing tool selection ─────────────────────────────────────────────
-    private void SelectPencil_Click(object sender, RoutedEventArgs e) => ActivateTool(DrawTool.Pencil);
-    private void SelectMarker_Click(object sender, RoutedEventArgs e) => ActivateTool(DrawTool.Marker);
-    private void SelectEraser_Click(object sender, RoutedEventArgs e) => ActivateTool(DrawTool.Eraser);
+    private void SelectPencil_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentTool == DrawTool.Pencil && _drawingActive)
+            DeactivateTool();
+        else
+            ActivateTool(DrawTool.Pencil);
+    }
+    private void SelectMarker_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentTool == DrawTool.Marker && _drawingActive)
+            DeactivateTool();
+        else
+            ActivateTool(DrawTool.Marker);
+    }
+    private void SelectEraser_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentTool == DrawTool.Eraser && _drawingActive)
+            DeactivateTool();
+        else
+            ActivateTool(DrawTool.Eraser);
+    }
 
     private void ActivateTool(DrawTool tool)
     {
@@ -334,22 +420,57 @@ public partial class PhotoViewerOverlay : UserControl
         _currentTool = tool;
         DrawCanvas.Cursor = Cursors.Cross;
         UpdateToolHighlight();
+        SyncDrawToolIcons();
     }
 
     private void DeactivateTool()
     {
         _drawingActive = false;
         DrawCanvas.Cursor = Cursors.Hand;
-        PencilBtn.Tag = null;
-        MarkerBtn.Tag = null;
-        EraserBtn.Tag = null;
+        UpdateToolHighlight();
+        SyncDrawToolIcons();
     }
 
     private void UpdateToolHighlight()
     {
-        PencilBtn.Tag = _currentTool == DrawTool.Pencil ? "active" : null;
-        MarkerBtn.Tag = _currentTool == DrawTool.Marker ? "active" : null;
-        EraserBtn.Tag = _currentTool == DrawTool.Eraser ? "active" : null;
+        var pencilBtn = FindName("PencilBtn") as RadioButton;
+        var markerBtn = FindName("MarkerBtn") as RadioButton;
+        var eraserBtn = FindName("EraserBtn") as RadioButton;
+
+        if (pencilBtn != null) pencilBtn.IsChecked = (_drawingActive && _currentTool == DrawTool.Pencil);
+        if (markerBtn != null) markerBtn.IsChecked = (_drawingActive && _currentTool == DrawTool.Marker);
+        if (eraserBtn != null) eraserBtn.IsChecked = (_drawingActive && _currentTool == DrawTool.Eraser);
+    }
+
+    private void SyncDrawToolIcons()
+    {
+        // Не вызывать из Checked/Unchecked радиокнопки: при IsChecked из XAML событие идёт до IComponentConnector для Image.
+        var pencilBtn = FindName("PencilBtn") as RadioButton;
+        var markerBtn = FindName("MarkerBtn") as RadioButton;
+        var eraserBtn = FindName("EraserBtn") as RadioButton;
+        var pencilIconDark = FindName("PencilIconDark") as Image;
+        var pencilIconLight = FindName("PencilIconLight") as Image;
+        var markerIconDark = FindName("MarkerIconDark") as Image;
+        var markerIconLight = FindName("MarkerIconLight") as Image;
+        var eraserIconDark = FindName("EraserIconDark") as Image;
+        var eraserIconLight = FindName("EraserIconLight") as Image;
+
+        if (pencilBtn is null || pencilIconDark is null || pencilIconLight is null
+            || markerBtn is null || markerIconDark is null || markerIconLight is null
+            || eraserBtn is null || eraserIconDark is null || eraserIconLight is null)
+            return;
+
+        bool pencilOn = pencilBtn.IsChecked == true;
+        pencilIconDark.Visibility = pencilOn ? Visibility.Collapsed : Visibility.Visible;
+        pencilIconLight.Visibility = pencilOn ? Visibility.Visible : Visibility.Collapsed;
+
+        bool markerOn = markerBtn.IsChecked == true;
+        markerIconDark.Visibility = markerOn ? Visibility.Collapsed : Visibility.Visible;
+        markerIconLight.Visibility = markerOn ? Visibility.Visible : Visibility.Collapsed;
+
+        bool eraserOn = eraserBtn.IsChecked == true;
+        eraserIconDark.Visibility = eraserOn ? Visibility.Collapsed : Visibility.Visible;
+        eraserIconLight.Visibility = eraserOn ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void BrushSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -380,7 +501,7 @@ public partial class PhotoViewerOverlay : UserControl
             _currentStroke = new Polyline
             {
                 Stroke = _currentTool == DrawTool.Eraser
-                    ? new SolidColorBrush(Color.FromRgb(26, 28, 34)) // bg colour
+                    ? new SolidColorBrush(Color.FromRgb(244, 245, 247)) // bg colour (#F4F5F7)
                     : new SolidColorBrush(_currentColor),
                 StrokeThickness = _currentTool == DrawTool.Marker ? _brushSize * 3 : _brushSize,
                 StrokeLineJoin = PenLineJoin.Round,
@@ -474,17 +595,27 @@ public partial class PhotoViewerOverlay : UserControl
                 Width = 24, Height = 24,
                 CornerRadius = new CornerRadius(12),
                 Background = new SolidColorBrush(color),
-                Margin = new Thickness(2),
+                Margin = new Thickness(1),
                 Cursor = Cursors.Hand,
-                BorderBrush = new SolidColorBrush(Colors.Gray),
+                BorderThickness = new Thickness(1),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
             };
             var c = color;
             border.MouseLeftButtonDown += (_, _) =>
             {
+                // Animate shrink
+                border.Width = 20;
+                border.Height = 20;
                 _currentColor = c;
                 HighlightSelectedColor(border);
                 // Auto-activate pencil on colour pick
                 if (!_drawingActive) ActivateTool(DrawTool.Pencil);
+            };
+            border.MouseLeftButtonUp += (_, _) =>
+            {
+                // Animate back to normal
+                border.Width = 24;
+                border.Height = 24;
             };
             ColorPalettePanel.Children.Add(border);
         }
@@ -500,9 +631,12 @@ public partial class PhotoViewerOverlay : UserControl
     private void HighlightSelectedColor(Border selected)
     {
         foreach (Border b in ColorPalettePanel.Children.OfType<Border>())
-            b.BorderThickness = new Thickness(0);
+        {
+            b.BorderThickness = new Thickness(1);
+            b.BorderBrush = new SolidColorBrush(Color.FromRgb(200, 200, 200));
+        }
         selected.BorderThickness = new Thickness(2);
-        selected.BorderBrush = new SolidColorBrush(Colors.White);
+        selected.BorderBrush = new SolidColorBrush(Colors.Black);
     }
 
     // ── Crop Mode ──────────────────────────────────────────────────────────

@@ -1,69 +1,32 @@
 <UserControl x:Class="MPMS.Views.Overlays.PhotoViewerOverlay"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              Background="Transparent">
 
     <UserControl.Resources>
 
-        <!-- Dark icon button for viewer -->
+        <!-- Light icon button style matching app design -->
         <Style x:Key="ViewerIconBtn" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#B0B8C8"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="7"/>
+            <Setter Property="Padding" Value="8"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#2A2D35"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.35"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Active tool button -->
-        <Style x:Key="DrawToolBtn" TargetType="Button" BasedOn="{StaticResource ViewerIconBtn}">
-            <Style.Triggers>
-                <Trigger Property="Tag" Value="active">
-                    <Setter Property="Background" Value="#2563EB"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Save button in info panel -->
-        <Style x:Key="SaveInfoBtn" TargetType="Button">
-            <Setter Property="Background" Value="#2563EB"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="5"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1D4ED8"/>
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4"/>
@@ -74,21 +37,73 @@
             </Setter>
         </Style>
 
-        <!-- Close ✕ circle button -->
-        <Style x:Key="CloseCircleBtn" TargetType="Button">
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="28"/>
+        <!-- View Toggle RadioButton with borders for inactive state -->
+        <Style x:Key="DrawToolToggleButton" TargetType="RadioButton">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#111111"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <!-- Save button (black style) -->
+        <Style x:Key="SaveInfoBtn" TargetType="Button">
+            <Setter Property="Background" Value="#111111"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" Background="#2A2D35" CornerRadius="14">
-                            <TextBlock Text="✕" FontSize="12" Foreground="#9AA3B0"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg" Property="Background" Value="#3A3D45"/>
+                                <Setter Property="Background" Value="#333333"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -96,7 +111,30 @@
             </Setter>
         </Style>
 
-        <!-- Zoom slider -->
+        <!-- Close circle button (light style) -->
+        <Style x:Key="CloseCircleBtn" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                            <Image Source="{svgc:SvgImage Source=/icons/close.svg, AppName=MPMS}" 
+                                   Width="16" Height="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Light zoom slider -->
         <Style x:Key="ZoomSliderStyle" TargetType="Slider">
             <Setter Property="Template">
                 <Setter.Value>
@@ -107,7 +145,7 @@
                                     <RepeatButton Command="Slider.DecreaseLarge">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Background="#2563EB" Height="3" CornerRadius="1.5"/>
+                                                <Border Background="#111111" Height="3" CornerRadius="1.5"/>
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
@@ -118,7 +156,7 @@
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border Width="14" Height="14" Background="White"
                                                         CornerRadius="7"
-                                                        BorderBrush="#2563EB" BorderThickness="2"/>
+                                                        BorderBrush="#111111" BorderThickness="2"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -127,7 +165,7 @@
                                     <RepeatButton Command="Slider.IncreaseLarge">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Background="#3A3D45" Height="3" CornerRadius="1.5"/>
+                                                <Border Background="#E8E9EC" Height="3" CornerRadius="1.5"/>
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
@@ -139,7 +177,7 @@
             </Setter>
         </Style>
 
-        <!-- Info row label -->
+        <!-- Info row label (light theme) -->
         <Style x:Key="InfoLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Foreground" Value="#6B778C"/>
@@ -147,14 +185,14 @@
         </Style>
         <Style x:Key="InfoValue" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#D0D6E0"/>
+            <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
     </UserControl.Resources>
 
-    <!-- Root: full overlay dark background -->
-    <Grid Background="#1A1C22">
+    <!-- Root: full overlay light background -->
+    <Grid Background="#FFFFFF">
         <Grid.ColumnDefinitions>
             <!-- Main image area -->
             <ColumnDefinition Width="*"/>
@@ -174,7 +212,7 @@
 
             <!-- Viewport -->
             <Grid x:Name="ViewportGrid"
-                  Background="#1A1C22"
+                  Background="#F4F5F7"
                   ClipToBounds="True"
                   SizeChanged="ViewportGrid_SizeChanged">
 
@@ -248,8 +286,8 @@
         <!-- RIGHT: Info panel                                           -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <Border Grid.Column="1" Grid.Row="0"
-                Background="#1E2028"
-                BorderBrush="#2A2D35" BorderThickness="1,0,0,0">
+                Background="White"
+                BorderBrush="#E8E9EC" BorderThickness="1,0,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
@@ -265,7 +303,7 @@
                         <!-- Header: title + close + save -->
                         <Grid Margin="0,0,0,16">
                             <TextBlock Text="Сведения" FontSize="15" FontWeight="SemiBold"
-                                       Foreground="White" VerticalAlignment="Center"/>
+                                       Foreground="#111111" VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button x:Name="SaveBtn" Content="Сохранить"
                                         Style="{StaticResource SaveInfoBtn}"
@@ -277,7 +315,7 @@
                         </Grid>
 
                         <!-- File name editable -->
-                        <Border Background="#252830" BorderBrush="#2A2D35" BorderThickness="1"
+                        <Border Background="#F4F5F7" BorderBrush="#E8E9EC" BorderThickness="1"
                                 CornerRadius="6" Margin="0,0,0,12">
                             <Grid Margin="10,8">
                                 <Grid.ColumnDefinitions>
@@ -286,14 +324,12 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="FileNameBox"
                                          Background="Transparent"
-                                         Foreground="White"
+                                         Foreground="#111111"
                                          BorderThickness="0"
                                          FontSize="13"
-                                         CaretBrush="White"
-                                         SelectionBrush="#2563EB"
+                                         CaretBrush="#111111"
+                                         SelectionBrush="#111111"
                                          TextChanged="FileNameBox_TextChanged"/>
-                                <TextBlock Grid.Column="1" Text="✎" Foreground="#6B778C"
-                                           FontSize="13" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
@@ -303,7 +339,7 @@
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="📅" FontSize="13" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/created.svg, AppName=MPMS}" Width="16" Height="16" Opacity="0.6" VerticalAlignment="Top"/>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                 <TextBlock Style="{StaticResource InfoLabel}" Text="Создано"/>
                                 <TextBlock x:Name="CreatedText" Style="{StaticResource InfoValue}"/>
@@ -316,7 +352,7 @@
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="🕐" FontSize="13" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/modified.svg, AppName=MPMS}" Width="16" Height="16" Opacity="0.6" VerticalAlignment="Top"/>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                 <TextBlock Style="{StaticResource InfoLabel}" Text="Изменено"/>
                                 <TextBlock x:Name="ModifiedText" Style="{StaticResource InfoValue}"/>
@@ -324,55 +360,52 @@
                         </Grid>
 
                         <!-- Divider -->
-                        <Border Height="1" Background="#2A2D35" Margin="0,4,0,12"/>
+                        <Border Height="1" Background="#E8E9EC" Margin="0,4,0,12"/>
 
-                        <!-- Size info -->
+                        <!-- Description editable -->
+                        <Border Background="#F4F5F7" BorderBrush="#E8E9EC" BorderThickness="1"
+                                CornerRadius="6" Margin="0,0,0,12">
+                            <Grid Margin="10,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="DescriptionBox"
+                                         Background="Transparent"
+                                         Foreground="#111111"
+                                         BorderThickness="0"
+                                         FontSize="13"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="True"
+                                         MinHeight="60"
+                                         VerticalScrollBarVisibility="Auto"
+                                         CaretBrush="#111111"
+                                         SelectionBrush="#111111"
+                                         TextChanged="DescriptionBox_TextChanged"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Camera/Device info -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="📐" FontSize="13" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                            <Image Source="{svgc:SvgImage Source=/icons/camera.svg, AppName=MPMS}" Width="16" Height="16" Opacity="0.6" VerticalAlignment="Top"/>
                             <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource InfoLabel}" Text="Сведения о размере"/>
-                                <TextBlock x:Name="ResolutionDetail" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Style="{StaticResource InfoLabel}" Text="Камера/Устройство"/>
+                                <TextBlock x:Name="CameraText" Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
-                        <!-- Source -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="🔗" FontSize="13" VerticalAlignment="Top" Margin="0,1,0,0"/>
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource InfoLabel}" Text="Источник"/>
-                                <TextBlock Text="Этот компьютер" Style="{StaticResource InfoValue}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- File path -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="📁" FontSize="13" VerticalAlignment="Top" Margin="0,1,0,0"/>
-                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                <TextBlock Style="{StaticResource InfoLabel}" Text="Путь к файлу"/>
-                                <TextBlock x:Name="PathText" Style="{StaticResource InfoValue}"
-                                           FontSize="11"/>
-                            </StackPanel>
-                        </Grid>
 
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- ─── Drawing tools panel ──────────────────────────────── -->
                 <Border Grid.Row="1" x:Name="DrawingToolsPanel"
-                        Background="#16181F"
-                        BorderBrush="#2A2D35" BorderThickness="0,1,0,0"
+                        Background="#F8F9FA"
+                        BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                         Padding="10,10">
                     <StackPanel>
                         <!-- Row 1: Brush size slider -->
@@ -388,36 +421,63 @@
                                     ValueChanged="BrushSizeSlider_ValueChanged"/>
                             <TextBlock x:Name="BrushSizeLabel" Text="3"
                                        Grid.Column="1"
-                                       Foreground="White" FontSize="11"
+                                       Foreground="#111111" FontSize="11"
                                        VerticalAlignment="Center" Margin="8,0,0,0" Width="14"/>
                         </Grid>
                         <!-- Row 2: Color palette -->
-                        <WrapPanel x:Name="ColorPalettePanel"
-                                   Orientation="Horizontal" Margin="0,0,0,8"/>
+                        <UniformGrid x:Name="ColorPalettePanel"
+                                   Rows="2" Columns="8" Margin="0,0,0,8"/>
                         <!-- Row 3: Tools + Undo/Redo -->
                         <Grid>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                <Button x:Name="PencilBtn" Style="{StaticResource DrawToolBtn}"
-                                        ToolTip="Карандаш" Click="SelectPencil_Click" Margin="0,0,2,0">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE70F;" FontSize="16"/>
-                                </Button>
-                                <Button x:Name="MarkerBtn" Style="{StaticResource DrawToolBtn}"
-                                        ToolTip="Маркер" Click="SelectMarker_Click" Margin="0,0,2,0">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEDAE;" FontSize="16"/>
-                                </Button>
-                                <Button x:Name="EraserBtn" Style="{StaticResource DrawToolBtn}"
-                                        ToolTip="Ластик" Click="SelectEraser_Click">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE75C;" FontSize="16"/>
-                                </Button>
+                                <RadioButton x:Name="PencilBtn" Tag="Pencil" GroupName="DrawTools"
+                                             Style="{StaticResource DrawToolToggleButton}"
+                                             ToolTip="Карандаш" Click="SelectPencil_Click" Margin="0,0,2,0">
+                                    <Grid Width="20" Height="20">
+                                        <Image x:Name="PencilIconDark" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/pencil.svg, AppName=MPMS}"
+                                               Visibility="Collapsed"/>
+                                        <Image x:Name="PencilIconLight" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/pencil_white.svg, AppName=MPMS}"/>
+                                    </Grid>
+                                </RadioButton>
+                                <RadioButton x:Name="MarkerBtn" Tag="Marker" GroupName="DrawTools"
+                                             Style="{StaticResource DrawToolToggleButton}"
+                                             ToolTip="Маркер" Click="SelectMarker_Click" Margin="0,0,2,0">
+                                    <Grid Width="20" Height="20">
+                                        <Image x:Name="MarkerIconDark" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/marker.svg, AppName=MPMS}"/>
+                                        <Image x:Name="MarkerIconLight" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/marker_white.svg, AppName=MPMS}"
+                                               Visibility="Collapsed"/>
+                                    </Grid>
+                                </RadioButton>
+                                <RadioButton x:Name="EraserBtn" Tag="Eraser" GroupName="DrawTools"
+                                             Style="{StaticResource DrawToolToggleButton}"
+                                             ToolTip="Ластик" Click="SelectEraser_Click">
+                                    <Grid Width="20" Height="20">
+                                        <Image x:Name="EraserIconDark" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/eraser.svg, AppName=MPMS}"/>
+                                        <Image x:Name="EraserIconLight" Width="18" Height="18"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                               Source="{svgc:SvgImage Source=/icons/eraser_white.svg, AppName=MPMS}"
+                                               Visibility="Collapsed"/>
+                                    </Grid>
+                                </RadioButton>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Style="{StaticResource ViewerIconBtn}" ToolTip="Отменить"
                                         Click="Undo_Click">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7A7;" FontSize="16"/>
+                                    <Image Source="{svgc:SvgImage Source=/icons/undo.svg, AppName=MPMS}" Width="16" Height="16"/>
                                 </Button>
                                 <Button Style="{StaticResource ViewerIconBtn}" ToolTip="Повторить"
                                         Click="Redo_Click">
-                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7A6;" FontSize="16"/>
+                                    <Image Source="{svgc:SvgImage Source=/icons/redo.svg, AppName=MPMS}" Width="16" Height="16"/>
                                 </Button>
                             </StackPanel>
                         </Grid>
@@ -426,15 +486,15 @@
 
                 <!-- ─── Crop tools panel ─────────────────────────────────── -->
                 <Border Grid.Row="2" x:Name="CropToolsPanel"
-                        Background="#16181F"
-                        BorderBrush="#2A2D35" BorderThickness="0,1,0,0"
+                        Background="#F8F9FA"
+                        BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                         Padding="10,8"
                         Visibility="Collapsed">
                     <Grid>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                             <Button Style="{StaticResource ViewerIconBtn}" Click="ResetCrop_Click"
                                     ToolTip="Сбросить" Margin="0,0,4,0">
-                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE777;" FontSize="15"/>
+                                <Image Source="{svgc:SvgImage Source=/icons/undo.svg, AppName=MPMS}" Width="16" Height="16"/>
                             </Button>
                             <TextBlock Text="Свободно" Foreground="#6B778C" FontSize="12"
                                        VerticalAlignment="Center" Margin="8,0"/>
@@ -442,17 +502,22 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Content="Отмена" Click="CancelCrop_Click"
                                     Style="{StaticResource ViewerIconBtn}"
-                                    Foreground="#9AA3B0" Margin="0,0,6,0" Padding="10,6"/>
+                                    Margin="0,0,6,0" Padding="10,6"/>
                             <Button Content="Применить" Click="ApplyCrop_Click"
-                                    Background="#2563EB" Foreground="White"
+                                    Background="#111111" Foreground="White"
                                     BorderThickness="0" Padding="10,6"
                                     FontSize="12" FontWeight="SemiBold" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}"
-                                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                CornerRadius="6" Padding="{TemplateBinding Padding}">
                                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#333333"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -467,8 +532,8 @@
         <!-- BOTTOM BAR                                                  -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         <Border Grid.Row="1" Grid.ColumnSpan="2"
-                Background="#16181F"
-                BorderBrush="#2A2D35" BorderThickness="0,1,0,0"
+                Background="White"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Padding="16,0">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -482,15 +547,15 @@
 
                 <!-- Left info -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7C5;"
-                               Foreground="#6B778C" FontSize="13"
-                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <Image Source="{svgc:SvgImage Source=/icons/dimensions.svg, AppName=MPMS}" 
+                           Width="16" Height="16" Opacity="0.6"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock x:Name="ResolutionText" Text="— × —"
                                Foreground="#6B778C" FontSize="12"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7EF;"
-                               Foreground="#6B778C" FontSize="13"
-                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <Image Source="{svgc:SvgImage Source=/icons/file_size.svg, AppName=MPMS}" 
+                           Width="16" Height="16" Opacity="0.6"
+                           VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock x:Name="FileSizeText" Text="—"
                                Foreground="#6B778C" FontSize="12"
                                VerticalAlignment="Center"/>
@@ -500,8 +565,8 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
                     <!-- Zoom out -->
-                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomOut_Click" Padding="5">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE71F;" FontSize="14"/>
+                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomOut_Click" Width="36" Height="36" Padding="0">
+                        <Image Source="{svgc:SvgImage Source=/icons/zoom_out.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                     <!-- Zoom slider -->
                     <Slider x:Name="ZoomSlider"
@@ -510,26 +575,26 @@
                             Style="{StaticResource ZoomSliderStyle}"
                             ValueChanged="ZoomSlider_ValueChanged"/>
                     <!-- Zoom in -->
-                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomIn_Click" Padding="5">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8A3;" FontSize="14"/>
+                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomIn_Click" Width="36" Height="36" Padding="0">
+                        <Image Source="{svgc:SvgImage Source=/icons/zoom_in.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                     <!-- Zoom text -->
-                    <TextBlock x:Name="ZoomText" Text="100 %" Foreground="#9AA3B0"
+                    <TextBlock x:Name="ZoomText" Text="100 %" Foreground="#6B778C"
                                FontSize="12" VerticalAlignment="Center" Margin="8,0,20,0" Width="46"/>
 
                     <!-- Separator -->
-                    <Border Width="1" Background="#2A2D35" Margin="0,10" Height="20"/>
+                    <Border Width="1" Background="#E8E9EC" Margin="0,10" Height="20"/>
 
                     <!-- Print -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="Print_Click"
-                            ToolTip="Печать" Margin="12,0,4,0">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE749;" FontSize="16"/>
+                            ToolTip="Печать" Margin="12,0,4,0" Width="36" Height="36" Padding="0">
+                        <Image Source="{svgc:SvgImage Source=/icons/print.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
 
                     <!-- Crop/Markup toggle -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="ToggleCrop_Click"
-                            ToolTip="Разметка / Обрезка" Margin="4,0,0,0">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7A8;" FontSize="16"/>
+                            ToolTip="Разметка / Обрезка" Margin="4,0,0,0" Width="36" Height="36" Padding="0">
+                        <Image Source="{svgc:SvgImage Source=/icons/crop.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                 </StackPanel>
 
@@ -537,11 +602,11 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCCW_Click"
                             ToolTip="Повернуть влево" Margin="0,0,2,0">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE935;" FontSize="17"/>
+                        <Image Source="{svgc:SvgImage Source=/icons/rotate_left.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCW_Click"
                             ToolTip="Повернуть вправо">
-                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE934;" FontSize="17"/>
+                        <Image Source="{svgc:SvgImage Source=/icons/rotate_right.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                 </StackPanel>
             </Grid>
