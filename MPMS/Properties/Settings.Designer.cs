@@ -26,5 +26,20 @@ namespace MPMS.Properties
                 return defaultInstance;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("#1E90FF")]
+        public string PhotoViewerBrushColor
+        {
+            get
+            {
+                return ((string)(this["PhotoViewerBrushColor"]));
+            }
+            set
+            {
+                this["PhotoViewerBrushColor"] = value;
+            }
+        }
     }
 }

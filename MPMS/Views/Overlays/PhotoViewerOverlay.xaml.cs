@@ -40,6 +40,7 @@ public partial class PhotoViewerOverlay : UserControl
     private Polyline? _currentStroke;
     private readonly Stack<UIElement> _undoStack = new();
     private readonly Stack<UIElement> _redoStack = new();
+    private Point? _lastEraserPoint;
 
     // ── Crop ───────────────────────────────────────────────────────────────
     private bool _cropMode = false;
@@ -418,7 +419,8 @@ public partial class PhotoViewerOverlay : UserControl
     {
         _drawingActive = true;
         _currentTool = tool;
-        DrawCanvas.Cursor = Cursors.Cross;
+        DrawCanvas.Cursor = Cursors.None;
+        UpdateCursorCircle();
         UpdateToolHighlight();
         SyncDrawToolIcons();
     }
@@ -427,6 +429,7 @@ public partial class PhotoViewerOverlay : UserControl
     {
         _drawingActive = false;
         DrawCanvas.Cursor = Cursors.Hand;
+        CursorCircle.Visibility = Visibility.Collapsed;
         UpdateToolHighlight();
         SyncDrawToolIcons();
     }
@@ -478,6 +481,41 @@ public partial class PhotoViewerOverlay : UserControl
         _brushSize = e.NewValue;
         if (BrushSizeLabel != null)
             BrushSizeLabel.Text = ((int)_brushSize).ToString();
+        UpdateCursorCircle();
+    }
+
+    private void UpdateCursorCircle()
+    {
+        if (!_drawingActive) return;
+
+        double size = _currentTool switch
+        {
+            DrawTool.Marker => _brushSize * 3,
+            DrawTool.Eraser => FixedEraserSize, // Fixed large eraser size
+            _ => _brushSize
+        };
+        size = Math.Max(size, 8); // Minimum visible size for cursor circle
+        CursorCircle.Width = size;
+        CursorCircle.Height = size;
+        CursorCircle.Visibility = Visibility.Visible;
+    }
+
+    private void DrawCanvas_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (_drawingActive)
+        {
+            DrawCanvas.Cursor = Cursors.None;
+            CursorCircle.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void DrawCanvas_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (_drawingActive)
+        {
+            DrawCanvas.Cursor = Cursors.Hand;
+            CursorCircle.Visibility = Visibility.Collapsed;
+        }
     }
 
     // ── Mouse events on DrawCanvas ─────────────────────────────────────────
@@ -493,26 +531,37 @@ public partial class PhotoViewerOverlay : UserControl
 
         if (_drawingActive)
         {
-            // Start drawing stroke
-            _isDrawing = true;
-            _redoStack.Clear();
-            var pos = e.GetPosition(DrawCanvas);
-
-            _currentStroke = new Polyline
+            if (_currentTool == DrawTool.Eraser)
             {
-                Stroke = _currentTool == DrawTool.Eraser
-                    ? new SolidColorBrush(Color.FromRgb(244, 245, 247)) // bg colour (#F4F5F7)
-                    : new SolidColorBrush(_currentColor),
-                StrokeThickness = _currentTool == DrawTool.Marker ? _brushSize * 3 : _brushSize,
-                StrokeLineJoin = PenLineJoin.Round,
-                StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round,
-                Opacity = _currentTool == DrawTool.Marker ? 0.5 : 1.0,
-            };
-            _currentStroke.Points.Add(pos);
-            DrawCanvas.Children.Add(_currentStroke);
-            DrawCanvas.CaptureMouse();
-            e.Handled = true;
+                // Eraser: start erasing
+                _isDrawing = true;
+                _redoStack.Clear();
+                _lastEraserPoint = e.GetPosition(DrawCanvas);
+                EraseAtPoint(_lastEraserPoint.Value);
+                DrawCanvas.CaptureMouse();
+                e.Handled = true;
+            }
+            else
+            {
+                // Pencil/Marker: start drawing stroke
+                _isDrawing = true;
+                _redoStack.Clear();
+                var pos = e.GetPosition(DrawCanvas);
+
+                _currentStroke = new Polyline
+                {
+                    Stroke = new SolidColorBrush(_currentColor),
+                    StrokeThickness = _currentTool == DrawTool.Marker ? _brushSize * 3 : _brushSize,
+                    StrokeLineJoin = PenLineJoin.Round,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
+                    Opacity = _currentTool == DrawTool.Marker ? 0.5 : 1.0,
+                };
+                _currentStroke.Points.Add(pos);
+                DrawCanvas.Children.Add(_currentStroke);
+                DrawCanvas.CaptureMouse();
+                e.Handled = true;
+            }
         }
         else
         {
@@ -531,9 +580,27 @@ public partial class PhotoViewerOverlay : UserControl
     {
         if (_cropMode) { CropCanvas_MouseMove(sender, e); return; }
 
-        if (_isDrawing && _currentStroke != null)
+        // Update cursor circle position
+        if (_drawingActive && CursorCircle != null)
         {
-            _currentStroke.Points.Add(e.GetPosition(DrawCanvas));
+            var pos = e.GetPosition(DrawCanvas);
+            double size = CursorCircle.Width;
+            Canvas.SetLeft(CursorCircle, pos.X - size / 2);
+            Canvas.SetTop(CursorCircle, pos.Y - size / 2);
+        }
+
+        if (_isDrawing)
+        {
+            if (_currentTool == DrawTool.Eraser && _lastEraserPoint.HasValue)
+            {
+                var currentPoint = e.GetPosition(DrawCanvas);
+                EraseAlongLine(_lastEraserPoint.Value, currentPoint);
+                _lastEraserPoint = currentPoint;
+            }
+            else if (_currentStroke != null)
+            {
+                _currentStroke.Points.Add(e.GetPosition(DrawCanvas));
+            }
         }
         else if (_isPanning)
         {
@@ -552,7 +619,12 @@ public partial class PhotoViewerOverlay : UserControl
         {
             _isDrawing = false;
             DrawCanvas.ReleaseMouseCapture();
-            if (_currentStroke != null)
+            if (_currentTool == DrawTool.Eraser)
+            {
+                _lastEraserPoint = null;
+                MarkDirty();
+            }
+            else if (_currentStroke != null)
             {
                 _undoStack.Push(_currentStroke);
                 MarkDirty();
@@ -565,6 +637,145 @@ public partial class PhotoViewerOverlay : UserControl
             DrawCanvas.ReleaseMouseCapture();
             DrawCanvas.Cursor = _drawingActive ? Cursors.Cross : Cursors.Hand;
         }
+    }
+
+    // ── Eraser logic ───────────────────────────────────────────────────────
+    private const double FixedEraserSize = 50; // Fixed large eraser size
+
+    private void EraseAtPoint(Point point)
+    {
+        double eraserSize = FixedEraserSize;
+        double eraserRadius = eraserSize / 2;
+        var eraserRect = new Rect(point.X - eraserRadius, point.Y - eraserRadius, eraserSize, eraserSize);
+
+        var strokesToProcess = new List<Polyline>();
+        foreach (Polyline stroke in DrawCanvas.Children.OfType<Polyline>())
+        {
+            if (StrokeIntersectsEraser(stroke, eraserRect, eraserRadius))
+            {
+                strokesToProcess.Add(stroke);
+            }
+        }
+
+        foreach (var stroke in strokesToProcess)
+        {
+            var newStrokes = SplitStrokeByEraser(stroke, eraserRect, eraserRadius);
+            DrawCanvas.Children.Remove(stroke);
+            foreach (var newStroke in newStrokes)
+            {
+                if (newStroke.Points.Count > 1)
+                    DrawCanvas.Children.Add(newStroke);
+            }
+        }
+    }
+
+    private void EraseAlongLine(Point start, Point end)
+    {
+        double eraserSize = FixedEraserSize;
+        double eraserRadius = eraserSize / 2;
+        var distance = Math.Sqrt(Math.Pow(end.X - start.X, 2) + Math.Pow(end.Y - start.Y, 2));
+        if (distance < 1) return;
+
+        int steps = Math.Min((int)Math.Ceiling(distance / (eraserRadius * 0.3)), 15); // More steps for smoother erasing
+        for (int i = 0; i <= steps; i++)
+        {
+            double t = i / (double)steps;
+            Point point = new Point(start.X + (end.X - start.X) * t, start.Y + (end.Y - start.Y) * t);
+            EraseAtPoint(point);
+        }
+    }
+
+    private bool StrokeIntersectsEraser(Polyline stroke, Rect eraserRect, double eraserRadius)
+    {
+        foreach (Point pt in stroke.Points)
+        {
+            if (eraserRect.Contains(pt))
+                return true;
+        }
+
+        // Check line segments
+        for (int i = 0; i < stroke.Points.Count - 1; i++)
+        {
+            Point p1 = stroke.Points[i];
+            Point p2 = stroke.Points[i + 1];
+            if (LineIntersectsCircle(p1, p2, eraserRect, eraserRadius))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool LineIntersectsCircle(Point p1, Point p2, Rect eraserRect, double radius)
+    {
+        Point circleCenter = new Point(eraserRect.X + radius, eraserRect.Y + radius);
+
+        double dx = p2.X - p1.X;
+        double dy = p2.Y - p1.Y;
+        double fx = p1.X - circleCenter.X;
+        double fy = p1.Y - circleCenter.Y;
+
+        double a = dx * dx + dy * dy;
+        double b = 2 * (fx * dx + fy * dy);
+        double c = fx * fx + fy * fy - radius * radius;
+
+        double discriminant = b * b - 4 * a * c;
+
+        if (discriminant < 0)
+            return false;
+
+        discriminant = Math.Sqrt(discriminant);
+        double t1 = (-b - discriminant) / (2 * a);
+        double t2 = (-b + discriminant) / (2 * a);
+
+        if ((t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1))
+            return true;
+
+        return false;
+    }
+
+    private List<Polyline> SplitStrokeByEraser(Polyline stroke, Rect eraserRect, double eraserRadius)
+    {
+        var result = new List<Polyline>();
+        var currentSegment = new PointCollection();
+
+        foreach (Point pt in stroke.Points)
+        {
+            if (eraserRect.Contains(pt))
+            {
+                // Point is inside eraser - end current segment
+                if (currentSegment.Count > 1)
+                {
+                    result.Add(CreateStrokeFromPoints(currentSegment, stroke));
+                }
+                currentSegment = new PointCollection();
+            }
+            else
+            {
+                currentSegment.Add(pt);
+            }
+        }
+
+        // Add remaining segment
+        if (currentSegment.Count > 1)
+        {
+            result.Add(CreateStrokeFromPoints(currentSegment, stroke));
+        }
+
+        return result;
+    }
+
+    private Polyline CreateStrokeFromPoints(PointCollection points, Polyline originalStroke)
+    {
+        return new Polyline
+        {
+            Points = points,
+            Stroke = originalStroke.Stroke,
+            StrokeThickness = originalStroke.StrokeThickness,
+            StrokeLineJoin = originalStroke.StrokeLineJoin,
+            StrokeStartLineCap = originalStroke.StrokeStartLineCap,
+            StrokeEndLineCap = originalStroke.StrokeEndLineCap,
+            Opacity = originalStroke.Opacity
+        };
     }
 
     // ── Undo / Redo ────────────────────────────────────────────────────────
@@ -608,6 +819,7 @@ public partial class PhotoViewerOverlay : UserControl
                 border.Height = 20;
                 _currentColor = c;
                 HighlightSelectedColor(border);
+                SaveBrushColor(c);
                 // Auto-activate pencil on colour pick
                 if (!_drawingActive) ActivateTool(DrawTool.Pencil);
             };
@@ -619,7 +831,48 @@ public partial class PhotoViewerOverlay : UserControl
             };
             ColorPalettePanel.Children.Add(border);
         }
-        SelectColorByIndex(9); // default blue
+
+        // Load saved color
+        LoadSavedBrushColor();
+    }
+
+    private void SaveBrushColor(Color color)
+    {
+        try
+        {
+            var colorString = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            MPMS.Properties.Settings.Default.PhotoViewerBrushColor = colorString;
+            MPMS.Properties.Settings.Default.Save();
+        }
+        catch { }
+    }
+
+    private void LoadSavedBrushColor()
+    {
+        try
+        {
+            var savedColor = MPMS.Properties.Settings.Default.PhotoViewerBrushColor;
+            if (!string.IsNullOrEmpty(savedColor))
+            {
+                var color = (Color)ColorConverter.ConvertFromString(savedColor);
+                _currentColor = color;
+
+                // Find and highlight the matching color in palette
+                for (int i = 0; i < Palette.Length; i++)
+                {
+                    if (Palette[i].R == color.R && Palette[i].G == color.G && Palette[i].B == color.B)
+                    {
+                        SelectColorByIndex(i);
+                        return;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Fallback to default blue
+            SelectColorByIndex(9);
+        }
     }
 
     private void SelectColorByIndex(int idx)

@@ -221,7 +221,8 @@
 
                     <!-- Scale + Rotate + Pan applied here -->
                     <Grid x:Name="ImageContainer"
-                          RenderTransformOrigin="0.5,0.5">
+                          RenderTransformOrigin="0.5,0.5"
+                          ClipToBounds="True">
                         <Grid.RenderTransform>
                             <TransformGroup>
                                 <ScaleTransform x:Name="ImgScale" ScaleX="1" ScaleY="1"/>
@@ -243,7 +244,22 @@
                                 MouseLeftButtonDown="DrawCanvas_MouseDown"
                                 MouseMove="DrawCanvas_MouseMove"
                                 MouseLeftButtonUp="DrawCanvas_MouseUp"
-                                MouseWheel="DrawCanvas_MouseWheel">
+                                MouseWheel="DrawCanvas_MouseWheel"
+                                MouseEnter="DrawCanvas_MouseEnter"
+                                MouseLeave="DrawCanvas_MouseLeave">
+
+                            <!-- Custom cursor circle for drawing tools -->
+                            <Ellipse x:Name="CursorCircle"
+                                     Stroke="White"
+                                     StrokeThickness="3"
+                                     Fill="Transparent"
+                                     IsHitTestVisible="False"
+                                     Visibility="Collapsed"
+                                     Panel.ZIndex="9999">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="2" ShadowDepth="0" Opacity="0.8"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
 
                             <!-- Crop overlay -->
                             <Grid x:Name="CropOverlayGrid" Visibility="Collapsed"
