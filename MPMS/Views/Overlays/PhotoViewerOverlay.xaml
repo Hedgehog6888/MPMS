@@ -406,29 +406,10 @@
                 <Border Grid.Row="1" x:Name="DrawingToolsPanel"
                         Background="#F8F9FA"
                         BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
-                        Padding="10,10">
+                        Padding="12,10">
                     <StackPanel>
-                        <!-- Row 1: Brush size slider -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="BrushSizeSlider"
-                                    Minimum="1" Maximum="30" Value="3"
-                                    VerticalAlignment="Center"
-                                    Style="{StaticResource ZoomSliderStyle}"
-                                    ValueChanged="BrushSizeSlider_ValueChanged"/>
-                            <TextBlock x:Name="BrushSizeLabel" Text="3"
-                                       Grid.Column="1"
-                                       Foreground="#111111" FontSize="11"
-                                       VerticalAlignment="Center" Margin="8,0,0,0" Width="14"/>
-                        </Grid>
-                        <!-- Row 2: Color palette -->
-                        <UniformGrid x:Name="ColorPalettePanel"
-                                   Rows="2" Columns="8" Margin="0,0,0,8"/>
-                        <!-- Row 3: Tools + Undo/Redo -->
-                        <Grid>
+                        <!-- Row 1: Drawing tools (left) + Undo/Redo (right) -->
+                        <Grid Margin="0,0,0,10">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                 <RadioButton x:Name="PencilBtn" Tag="Pencil" GroupName="DrawTools"
                                              Style="{StaticResource DrawToolToggleButton}"
@@ -472,15 +453,37 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Style="{StaticResource ViewerIconBtn}" ToolTip="Отменить"
-                                        Click="Undo_Click">
+                                        Click="Undo_Click" Width="32" Height="32" Padding="0">
                                     <Image Source="{svgc:SvgImage Source=/icons/undo.svg, AppName=MPMS}" Width="16" Height="16"/>
                                 </Button>
                                 <Button Style="{StaticResource ViewerIconBtn}" ToolTip="Повторить"
-                                        Click="Redo_Click">
+                                        Click="Redo_Click" Width="32" Height="32" Padding="0" Margin="2,0,0,0">
                                     <Image Source="{svgc:SvgImage Source=/icons/redo.svg, AppName=MPMS}" Width="16" Height="16"/>
                                 </Button>
                             </StackPanel>
                         </Grid>
+                        <!-- Row 2: Brush size slider -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Размер кисти" Foreground="#6B778C" FontSize="11" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Slider x:Name="BrushSizeSlider" Grid.Column="1"
+                                    Minimum="1" Maximum="30" Value="3"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource ZoomSliderStyle}"
+                                    ValueChanged="BrushSizeSlider_ValueChanged"/>
+                            <TextBlock x:Name="BrushSizeLabel" Text="3"
+                                       Grid.Column="2"
+                                       Foreground="#111111" FontSize="11"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" Width="16"/>
+                        </Grid>
+                        <!-- Row 3: Color palette -->
+                        <UniformGrid x:Name="ColorPalettePanel"
+                                   Rows="2" Columns="8"/>
                     </StackPanel>
                 </Border>
 
@@ -539,9 +542,9 @@
                 <Grid.ColumnDefinitions>
                     <!-- Left: resolution + size -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Center: zoom + print + crop -->
+                    <!-- Center: zoom controls -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Right: rotate buttons -->
+                    <!-- Right: action buttons (print, crop, rotate) -->
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -552,7 +555,7 @@
                            VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock x:Name="ResolutionText" Text="— × —"
                                Foreground="#6B778C" FontSize="12"
-                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                               VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <Image Source="{svgc:SvgImage Source=/icons/file_size.svg, AppName=MPMS}" 
                            Width="16" Height="16" Opacity="0.6"
                            VerticalAlignment="Center" Margin="0,0,6,0"/>
@@ -561,51 +564,56 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Center: zoom slider + label + print + crop -->
+                <!-- Center: zoom controls only -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
                     <!-- Zoom out -->
-                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomOut_Click" Width="36" Height="36" Padding="0">
+                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomOut_Click" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/zoom_out.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                     <!-- Zoom slider -->
                     <Slider x:Name="ZoomSlider"
                             Minimum="10" Maximum="500" Value="100"
-                            Width="120" VerticalAlignment="Center" Margin="4,0"
+                            Width="140" VerticalAlignment="Center" Margin="6,0"
                             Style="{StaticResource ZoomSliderStyle}"
                             ValueChanged="ZoomSlider_ValueChanged"/>
                     <!-- Zoom in -->
-                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomIn_Click" Width="36" Height="36" Padding="0">
+                    <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomIn_Click" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/zoom_in.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                     <!-- Zoom text -->
                     <TextBlock x:Name="ZoomText" Text="100 %" Foreground="#6B778C"
-                               FontSize="12" VerticalAlignment="Center" Margin="8,0,20,0" Width="46"/>
+                               FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" Width="46"/>
+                </StackPanel>
 
+                <!-- Right: action buttons with separator -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Separator -->
                     <Border Width="1" Background="#E8E9EC" Margin="0,10" Height="20"/>
-
+                    
                     <!-- Print -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="Print_Click"
-                            ToolTip="Печать" Margin="12,0,4,0" Width="36" Height="36" Padding="0">
+                            ToolTip="Печать" Margin="12,0,4,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/print.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
 
                     <!-- Crop/Markup toggle -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="ToggleCrop_Click"
-                            ToolTip="Разметка / Обрезка" Margin="4,0,0,0" Width="36" Height="36" Padding="0">
+                            ToolTip="Разметка / Обрезка" Margin="0,0,4,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/crop.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
-                </StackPanel>
 
-                <!-- Right: rotate -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Rotate separator -->
+                    <Border Width="1" Background="#E8E9EC" Margin="0,10" Height="20"/>
+
+                    <!-- Rotate CCW -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCCW_Click"
-                            ToolTip="Повернуть влево" Margin="0,0,2,0">
+                            ToolTip="Повернуть влево" Margin="8,0,2,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/rotate_left.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
+                    <!-- Rotate CW -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCW_Click"
-                            ToolTip="Повернуть вправо">
+                            ToolTip="Повернуть вправо" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/rotate_right.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
                 </StackPanel>
