@@ -18,6 +18,7 @@ public partial class PhotoViewerOverlay : UserControl
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
     private bool _hasUnsavedChanges;
+    private bool _hasImageChanges;
 
     // ── Zoom / Pan ─────────────────────────────────────────────────────────
     private double _zoomFactor = 1.0;
@@ -46,9 +47,12 @@ public partial class PhotoViewerOverlay : UserControl
     private bool _cropMode = false;
     private bool _isDraggingCrop = false;
     private Rect _cropRect = new(50, 50, 400, 300);
-    private enum CropHandle { None, TL, TR, BL, BR, Move }
+    private enum CropHandle { None, Move, New, TL, T, TR, R, BR, B, BL, L }
     private CropHandle _cropDragHandle = CropHandle.None;
-    private Point _cropDragLast;
+    private Point _cropDragStart;
+    private Rect _cropStartRect;
+    private enum AspectRatio { Free, Original, Square, Ratio_9_16, Ratio_16_9, Ratio_4_5, Ratio_5_4, Ratio_3_4, Ratio_4_3, Ratio_1_1, Ratio_3_2 }
+    private AspectRatio _currentAspectRatio = AspectRatio.Free;
 
     // ── Color palette ──────────────────────────────────────────────────────
     private static readonly Color[] Palette =
@@ -97,6 +101,11 @@ public partial class PhotoViewerOverlay : UserControl
                 CancelCrop_Click(sender, e);
                 e.Handled = true;
             }
+        }
+        else if (e.Key == Key.Enter && _cropMode)
+        {
+            ApplyCrop_Click(sender, e);
+            e.Handled = true;
         }
     }
 
@@ -274,10 +283,17 @@ public partial class PhotoViewerOverlay : UserControl
             var newName = FileNameBox.Text.Trim();
             if (string.IsNullOrEmpty(newName)) return;
             var newPath = System.IO.Path.Combine(dir, newName + ext);
-            if (newPath != _filePath) File.Move(_filePath, newPath);
+            if (!string.Equals(newPath, _filePath, StringComparison.OrdinalIgnoreCase)) File.Move(_filePath, newPath);
             _filePath = newPath;
+            _fileName = System.IO.Path.GetFileName(_filePath);
+            if (_hasImageChanges)
+            {
+                SaveEditedImageToFile(_filePath);
+                _hasImageChanges = false;
+            }
             _hasUnsavedChanges = false;
             SaveBtn.IsEnabled = false;
+            UpdateFileInfo();
         }
         catch (Exception ex)
         {
@@ -370,6 +386,7 @@ public partial class PhotoViewerOverlay : UserControl
     private void MarkDirty()
     {
         _hasUnsavedChanges = true;
+        _hasImageChanges = true;
         if (SaveBtn != null) SaveBtn.IsEnabled = true;
     }
 
@@ -895,30 +912,48 @@ public partial class PhotoViewerOverlay : UserControl
     // ── Crop Mode ──────────────────────────────────────────────────────────
     private void ToggleCrop_Click(object sender, RoutedEventArgs e)
     {
-        _cropMode = !_cropMode;
-        CropOverlayGrid.Visibility = _cropMode ? Visibility.Visible : Visibility.Collapsed;
-        DrawingToolsPanel.Visibility = _cropMode ? Visibility.Collapsed : Visibility.Visible;
-        CropToolsPanel.Visibility = _cropMode ? Visibility.Visible : Visibility.Collapsed;
         if (_cropMode)
+            CancelCrop_Click(sender, e);
+        else
+            EnterCropMode();
+    }
+
+    private void EnterCropMode()
+    {
+        _cropMode = true;
+        _isDraggingCrop = false;
+        _cropDragHandle = CropHandle.None;
+        DeactivateTool();
+        CropOverlayGrid.Visibility = Visibility.Visible;
+        DrawingToolsPanel.Visibility = Visibility.Collapsed;
+        CropToolsPanel.Visibility = Visibility.Visible;
+        DrawCanvas.Cursor = Cursors.Cross;
+        // No aspect ratio constraint by default
+        _currentAspectRatio = AspectRatio.Free;
+        // Uncheck all aspect ratio buttons
+        foreach (var buttonName in new[] { "Aspect9_16", "Aspect16_9", "Aspect4_5", "Aspect5_4", "Aspect3_4", "Aspect4_3", "Aspect1_1", "Aspect3_2" })
         {
-            DeactivateTool();
-            InitCropRect();
-            UpdateCropVisuals();
+            var btn = FindName(buttonName) as RadioButton;
+            if (btn != null) btn.IsChecked = false;
         }
+        InitCropRect();
+        UpdateCropVisuals();
     }
 
     private void InitCropRect()
     {
-        double w = DrawCanvas.ActualWidth;
-        double h = DrawCanvas.ActualHeight;
-        _cropRect = new Rect(w * 0.1, h * 0.1, w * 0.8, h * 0.8);
+        var bounds = GetCropBounds();
+        _cropRect = new Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        ClampCropRect();
+        UpdateCropVisuals();
     }
 
     private void UpdateCropVisuals()
     {
         if (CropOverlayGrid.Visibility != Visibility.Visible) return;
-        double w = DrawCanvas.ActualWidth;
-        double h = DrawCanvas.ActualHeight;
+        var bounds = GetCropBounds();
+        double w = bounds.Width;
+        double h = bounds.Height;
 
         DimTop.Height = _cropRect.Top; DimTop.Width = w;
         Canvas.SetLeft(DimTop, 0); Canvas.SetTop(DimTop, 0);
@@ -935,92 +970,673 @@ public partial class PhotoViewerOverlay : UserControl
         Canvas.SetLeft(CropBorder, _cropRect.Left); Canvas.SetTop(CropBorder, _cropRect.Top);
         CropBorder.Width = _cropRect.Width; CropBorder.Height = _cropRect.Height;
 
-        PlaceCropHandle(HandleTL, _cropRect.Left - 5, _cropRect.Top - 5);
-        PlaceCropHandle(HandleTR, _cropRect.Right - 5, _cropRect.Top - 5);
-        PlaceCropHandle(HandleBL, _cropRect.Left - 5, _cropRect.Bottom - 5);
-        PlaceCropHandle(HandleBR, _cropRect.Right - 5, _cropRect.Bottom - 5);
+        double x1 = _cropRect.Left + _cropRect.Width / 3.0;
+        double x2 = _cropRect.Left + _cropRect.Width * 2.0 / 3.0;
+        double y1 = _cropRect.Top + _cropRect.Height / 3.0;
+        double y2 = _cropRect.Top + _cropRect.Height * 2.0 / 3.0;
 
-        CropSizeText.Text = $"{(int)_cropRect.Width} × {(int)_cropRect.Height}";
+        SetCropLine(CropGridV1, x1, _cropRect.Top, x1, _cropRect.Bottom);
+        SetCropLine(CropGridV2, x2, _cropRect.Top, x2, _cropRect.Bottom);
+        SetCropLine(CropGridH1, _cropRect.Left, y1, _cropRect.Right, y1);
+        SetCropLine(CropGridH2, _cropRect.Left, y2, _cropRect.Right, y2);
+
+        PlaceCropHandle(HandleTL, _cropRect.Left, _cropRect.Top);
+        PlaceCropHandle(HandleT, _cropRect.Left + _cropRect.Width / 2.0, _cropRect.Top);
+        PlaceCropHandle(HandleTR, _cropRect.Right, _cropRect.Top);
+        PlaceCropHandle(HandleR, _cropRect.Right, _cropRect.Top + _cropRect.Height / 2.0);
+        PlaceCropHandle(HandleBR, _cropRect.Right, _cropRect.Bottom);
+        PlaceCropHandle(HandleB, _cropRect.Left + _cropRect.Width / 2.0, _cropRect.Bottom);
+        PlaceCropHandle(HandleBL, _cropRect.Left, _cropRect.Bottom);
+        PlaceCropHandle(HandleL, _cropRect.Left, _cropRect.Top + _cropRect.Height / 2.0);
+
+        CropPanelSizeText.Text = $"{(int)_cropRect.Width} × {(int)_cropRect.Height}";
     }
 
-    private static void PlaceCropHandle(UIElement el, double x, double y)
+    private static void SetCropLine(Line line, double x1, double y1, double x2, double y2)
     {
-        Canvas.SetLeft(el, x); Canvas.SetTop(el, y);
+        line.X1 = x1; line.Y1 = y1; line.X2 = x2; line.Y2 = y2;
+    }
+
+    private static void PlaceCropHandle(FrameworkElement el, double x, double y)
+    {
+        const double half = 16.0;
+        Canvas.SetLeft(el, x - half);
+        Canvas.SetTop(el, y - half);
     }
 
     private void CropCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
         var pos = e.GetPosition(DrawCanvas);
         _cropDragHandle = GetCropHandle(pos);
-        _cropDragLast = pos;
+        if (_cropDragHandle == CropHandle.None)
+        {
+            var bounds = GetCropBounds();
+            if (!bounds.Contains(pos)) return;
+            _cropDragHandle = CropHandle.New;
+            _cropRect = new Rect(pos.X, pos.Y, 1, 1);
+            UpdateCropVisuals();
+        }
+
+        _cropDragStart = pos;
+        _cropStartRect = _cropRect;
         _isDraggingCrop = true;
         DrawCanvas.CaptureMouse();
+        DrawCanvas.Cursor = GetCursorForCropHandle(_cropDragHandle);
+        e.Handled = true;
     }
 
     private void CropCanvas_MouseMove(object sender, MouseEventArgs e)
     {
-        if (!_isDraggingCrop) return;
         var pos = e.GetPosition(DrawCanvas);
-        double dx = pos.X - _cropDragLast.X, dy = pos.Y - _cropDragLast.Y;
-
-        _cropRect = _cropDragHandle switch
+        if (!_isDraggingCrop)
         {
-            CropHandle.Move => new Rect(_cropRect.X + dx, _cropRect.Y + dy, _cropRect.Width, _cropRect.Height),
-            CropHandle.TL   => new Rect(_cropRect.X + dx, _cropRect.Y + dy, _cropRect.Width - dx, _cropRect.Height - dy),
-            CropHandle.TR   => new Rect(_cropRect.X, _cropRect.Y + dy, _cropRect.Width + dx, _cropRect.Height - dy),
-            CropHandle.BL   => new Rect(_cropRect.X + dx, _cropRect.Y, _cropRect.Width - dx, _cropRect.Height + dy),
-            CropHandle.BR   => new Rect(_cropRect.X, _cropRect.Y, _cropRect.Width + dx, _cropRect.Height + dy),
-            _               => _cropRect
-        };
+            DrawCanvas.Cursor = GetCursorForCropHandle(GetCropHandle(pos));
+            return;
+        }
 
+        _cropRect = BuildCropRect(_cropDragHandle, _cropStartRect, _cropDragStart, pos);
         ClampCropRect();
-        _cropDragLast = pos;
         UpdateCropVisuals();
+        e.Handled = true;
     }
 
     private void CropCanvas_MouseUp(object sender, MouseButtonEventArgs e)
     {
         _isDraggingCrop = false;
+        _cropDragHandle = CropHandle.None;
         DrawCanvas.ReleaseMouseCapture();
+        DrawCanvas.Cursor = GetCursorForCropHandle(GetCropHandle(e.GetPosition(DrawCanvas)));
+        e.Handled = true;
     }
 
     private CropHandle GetCropHandle(Point p)
     {
-        const double hit = 18;
-        if (IsNear(p, _cropRect.TopLeft, hit))     return CropHandle.TL;
-        if (IsNear(p, _cropRect.TopRight, hit))    return CropHandle.TR;
-        if (IsNear(p, _cropRect.BottomLeft, hit))  return CropHandle.BL;
+        const double hit = 18.0;
+        if (IsNear(p, _cropRect.TopLeft, hit)) return CropHandle.TL;
+        if (IsNear(p, new Point(_cropRect.Left + _cropRect.Width / 2.0, _cropRect.Top), hit)) return CropHandle.T;
+        if (IsNear(p, _cropRect.TopRight, hit)) return CropHandle.TR;
+        if (IsNear(p, new Point(_cropRect.Right, _cropRect.Top + _cropRect.Height / 2.0), hit)) return CropHandle.R;
         if (IsNear(p, _cropRect.BottomRight, hit)) return CropHandle.BR;
-        if (_cropRect.Contains(p))                 return CropHandle.Move;
+        if (IsNear(p, new Point(_cropRect.Left + _cropRect.Width / 2.0, _cropRect.Bottom), hit)) return CropHandle.B;
+        if (IsNear(p, _cropRect.BottomLeft, hit)) return CropHandle.BL;
+        if (IsNear(p, new Point(_cropRect.Left, _cropRect.Top + _cropRect.Height / 2.0), hit)) return CropHandle.L;
+        if (IsNearHorizontalEdge(p, _cropRect.Top, hit)) return CropHandle.T;
+        if (IsNearVerticalEdge(p, _cropRect.Right, hit)) return CropHandle.R;
+        if (IsNearHorizontalEdge(p, _cropRect.Bottom, hit)) return CropHandle.B;
+        if (IsNearVerticalEdge(p, _cropRect.Left, hit)) return CropHandle.L;
+        if (_cropRect.Contains(p)) return CropHandle.Move;
         return CropHandle.None;
     }
 
     private static bool IsNear(Point a, Point b, double d)
         => Math.Abs(a.X - b.X) < d && Math.Abs(a.Y - b.Y) < d;
 
+    private bool IsNearHorizontalEdge(Point p, double y, double d)
+        => p.X >= _cropRect.Left && p.X <= _cropRect.Right && Math.Abs(p.Y - y) < d;
+
+    private bool IsNearVerticalEdge(Point p, double x, double d)
+        => p.Y >= _cropRect.Top && p.Y <= _cropRect.Bottom && Math.Abs(p.X - x) < d;
+
+    private Cursor GetCursorForCropHandle(CropHandle handle) => handle switch
+    {
+        CropHandle.TL or CropHandle.BR => Cursors.SizeNWSE,
+        CropHandle.TR or CropHandle.BL => Cursors.SizeNESW,
+        CropHandle.T or CropHandle.B => Cursors.SizeNS,
+        CropHandle.L or CropHandle.R => Cursors.SizeWE,
+        CropHandle.Move => Cursors.SizeAll,
+        CropHandle.New => Cursors.Cross,
+        _ => Cursors.Cross
+    };
+
+    private Rect BuildCropRect(CropHandle handle, Rect startRect, Point startPoint, Point currentPoint)
+    {
+        var bounds = GetCropBounds();
+        currentPoint = ClampPoint(currentPoint, bounds);
+        const double min = 48.0;
+
+        if (handle == CropHandle.New)
+        {
+            double left = Math.Min(startPoint.X, currentPoint.X);
+            double top = Math.Min(startPoint.Y, currentPoint.Y);
+            double right = Math.Max(startPoint.X, currentPoint.X);
+            double bottom = Math.Max(startPoint.Y, currentPoint.Y);
+            
+            // Apply aspect ratio constraint if not Free
+            if (_currentAspectRatio != AspectRatio.Free)
+            {
+                double targetRatio = GetTargetAspectRatio();
+                double width = right - left;
+                double height = bottom - top;
+                
+                if (width / height > targetRatio)
+                {
+                    // Width is too large, adjust height
+                    double newHeight = width / targetRatio;
+                    if (currentPoint.Y < startPoint.Y)
+                        top = bottom - newHeight;
+                    else
+                        bottom = top + newHeight;
+                }
+                else
+                {
+                    // Height is too large, adjust width
+                    double newWidth = height * targetRatio;
+                    if (currentPoint.X < startPoint.X)
+                        left = right - newWidth;
+                    else
+                        right = left + newWidth;
+                }
+            }
+            
+            if (right - left < min)
+            {
+                if (currentPoint.X < startPoint.X) left = Math.Max(bounds.Left, right - min);
+                else right = Math.Min(bounds.Right, left + min);
+            }
+            if (bottom - top < min)
+            {
+                if (currentPoint.Y < startPoint.Y) top = Math.Max(bounds.Top, bottom - min);
+                else bottom = Math.Min(bounds.Bottom, top + min);
+            }
+            return new Rect(left, top, Math.Max(min, right - left), Math.Max(min, bottom - top));
+        }
+
+        double dx = currentPoint.X - startPoint.X;
+        double dy = currentPoint.Y - startPoint.Y;
+        double l = startRect.Left;
+        double t = startRect.Top;
+        double r = startRect.Right;
+        double b = startRect.Bottom;
+
+        if (handle == CropHandle.Move)
+        {
+            double x = Math.Clamp(startRect.X + dx, bounds.Left, bounds.Right - startRect.Width);
+            double y = Math.Clamp(startRect.Y + dy, bounds.Top, bounds.Bottom - startRect.Height);
+            return new Rect(x, y, startRect.Width, startRect.Height);
+        }
+
+        if (handle is CropHandle.TL or CropHandle.L or CropHandle.BL) l += dx;
+        if (handle is CropHandle.TR or CropHandle.R or CropHandle.BR) r += dx;
+        if (handle is CropHandle.TL or CropHandle.T or CropHandle.TR) t += dy;
+        if (handle is CropHandle.BL or CropHandle.B or CropHandle.BR) b += dy;
+
+        if (handle is CropHandle.TL or CropHandle.L or CropHandle.BL) l = Math.Clamp(l, bounds.Left, r - min);
+        if (handle is CropHandle.TR or CropHandle.R or CropHandle.BR) r = Math.Clamp(r, l + min, bounds.Right);
+        if (handle is CropHandle.TL or CropHandle.T or CropHandle.TR) t = Math.Clamp(t, bounds.Top, b - min);
+        if (handle is CropHandle.BL or CropHandle.B or CropHandle.BR) b = Math.Clamp(b, t + min, bounds.Bottom);
+
+        // Apply aspect ratio constraint for resize handles
+        if (_currentAspectRatio != AspectRatio.Free && handle != CropHandle.Move)
+        {
+            double targetRatio = GetTargetAspectRatio();
+            double width = r - l;
+            double height = b - t;
+            double currentRatio = width / height;
+            
+            // Adjust based on which handle is being dragged
+            if (handle is CropHandle.TL or CropHandle.TR or CropHandle.T)
+            {
+                // Top handles - adjust width based on height change
+                double newWidth = height * targetRatio;
+                if (handle is CropHandle.TL)
+                    l = r - newWidth;
+                else
+                    r = l + newWidth;
+            }
+            else if (handle is CropHandle.BL or CropHandle.BR or CropHandle.B)
+            {
+                // Bottom handles - adjust width based on height change
+                double newWidth = height * targetRatio;
+                if (handle is CropHandle.BL)
+                    l = r - newWidth;
+                else
+                    r = l + newWidth;
+            }
+            else if (handle is CropHandle.TL or CropHandle.BL or CropHandle.L)
+            {
+                // Left handles - adjust height based on width change
+                double newHeight = width / targetRatio;
+                if (handle is CropHandle.TL)
+                    t = b - newHeight;
+                else
+                    b = t + newHeight;
+            }
+            else if (handle is CropHandle.TR or CropHandle.BR or CropHandle.R)
+            {
+                // Right handles - adjust height based on width change
+                double newHeight = width / targetRatio;
+                if (handle is CropHandle.TR)
+                    t = b - newHeight;
+                else
+                    b = t + newHeight;
+            }
+            
+            // Re-clamp after aspect ratio adjustment
+            l = Math.Clamp(l, bounds.Left, r - min);
+            r = Math.Clamp(r, l + min, bounds.Right);
+            t = Math.Clamp(t, bounds.Top, b - min);
+            b = Math.Clamp(b, t + min, bounds.Bottom);
+        }
+
+        return new Rect(l, t, r - l, b - t);
+    }
+
+    private static Point ClampPoint(Point point, Rect bounds)
+        => new(Math.Clamp(point.X, bounds.Left, bounds.Right), Math.Clamp(point.Y, bounds.Top, bounds.Bottom));
+
+    private double GetTargetAspectRatio()
+    {
+        if (_source == null) return 1.0;
+        
+        return _currentAspectRatio switch
+        {
+            AspectRatio.Free => 0, // 0 means no constraint
+            AspectRatio.Original => (double)_source.PixelWidth / _source.PixelHeight,
+            AspectRatio.Square => 1.0,
+            AspectRatio.Ratio_9_16 => 9.0 / 16.0,
+            AspectRatio.Ratio_16_9 => 16.0 / 9.0,
+            AspectRatio.Ratio_4_5 => 4.0 / 5.0,
+            AspectRatio.Ratio_5_4 => 5.0 / 4.0,
+            AspectRatio.Ratio_3_4 => 3.0 / 4.0,
+            AspectRatio.Ratio_4_3 => 4.0 / 3.0,
+            AspectRatio.Ratio_1_1 => 1.0,
+            AspectRatio.Ratio_3_2 => 3.0 / 2.0,
+            _ => 0
+        };
+    }
+
+    private void AspectRatioButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton btn && btn.Tag is string tag)
+        {
+            _currentAspectRatio = tag switch
+            {
+                "Free" => AspectRatio.Free,
+                "Original" => AspectRatio.Original,
+                "Square" => AspectRatio.Square,
+                "9:16" => AspectRatio.Ratio_9_16,
+                "16:9" => AspectRatio.Ratio_16_9,
+                "4:5" => AspectRatio.Ratio_4_5,
+                "5:4" => AspectRatio.Ratio_5_4,
+                "3:4" => AspectRatio.Ratio_3_4,
+                "4:3" => AspectRatio.Ratio_4_3,
+                "1:1" => AspectRatio.Ratio_1_1,
+                "3:2" => AspectRatio.Ratio_3_2,
+                _ => AspectRatio.Free
+            };
+
+            // If not Free, adjust current crop rect to match aspect ratio
+            if (_currentAspectRatio != AspectRatio.Free && _cropMode)
+            {
+                AdjustCropRectToAspectRatio();
+                UpdateCropVisuals();
+            }
+        }
+    }
+
+    private void AdjustCropRectToAspectRatio()
+    {
+        var bounds = GetCropBounds();
+        double targetRatio = GetTargetAspectRatio();
+        if (targetRatio <= 0) return;
+
+        double currentRatio = _cropRect.Width / _cropRect.Height;
+        double centerX = _cropRect.X + _cropRect.Width / 2;
+        double centerY = _cropRect.Y + _cropRect.Height / 2;
+
+        double newWidth, newHeight;
+
+        if (currentRatio > targetRatio)
+        {
+            // Current is wider, adjust width
+            newHeight = _cropRect.Height;
+            newWidth = newHeight * targetRatio;
+        }
+        else
+        {
+            // Current is taller, adjust height
+            newWidth = _cropRect.Width;
+            newHeight = newWidth / targetRatio;
+        }
+
+        // Clamp to bounds
+        newWidth = Math.Clamp(newWidth, 48, bounds.Width);
+        newHeight = Math.Clamp(newHeight, 48, bounds.Height);
+
+        // Recalculate to maintain aspect ratio after clamping
+        if (newWidth / newHeight > targetRatio)
+            newWidth = newHeight * targetRatio;
+        else
+            newHeight = newWidth / targetRatio;
+
+        // Center the new rect
+        double newX = Math.Clamp(centerX - newWidth / 2, bounds.Left, bounds.Right - newWidth);
+        double newY = Math.Clamp(centerY - newHeight / 2, bounds.Top, bounds.Bottom - newHeight);
+
+        _cropRect = new Rect(newX, newY, newWidth, newHeight);
+    }
+
     private void ClampCropRect()
     {
-        double w = Math.Max(40, _cropRect.Width);
-        double h = Math.Max(40, _cropRect.Height);
-        double x = Math.Max(0, Math.Min(DrawCanvas.ActualWidth - w, _cropRect.X));
-        double y = Math.Max(0, Math.Min(DrawCanvas.ActualHeight - h, _cropRect.Y));
+        var bounds = GetCropBounds();
+        const double min = 48.0;
+        double w = Math.Clamp(_cropRect.Width, Math.Min(min, bounds.Width), bounds.Width);
+        double h = Math.Clamp(_cropRect.Height, Math.Min(min, bounds.Height), bounds.Height);
+        double x = Math.Clamp(_cropRect.X, bounds.Left, bounds.Right - w);
+        double y = Math.Clamp(_cropRect.Y, bounds.Top, bounds.Bottom - h);
         _cropRect = new Rect(x, y, w, h);
     }
 
-    private void ApplyCrop_Click(object sender, RoutedEventArgs e) => ToggleCrop_Click(sender, e);
+    private Rect GetCropBounds()
+    {
+        double w = DrawCanvas.ActualWidth > 1 ? DrawCanvas.ActualWidth : (_source?.PixelWidth ?? 1);
+        double h = DrawCanvas.ActualHeight > 1 ? DrawCanvas.ActualHeight : (_source?.PixelHeight ?? 1);
+        return new Rect(0, 0, Math.Max(1, w), Math.Max(1, h));
+    }
+
+    private void ApplyCrop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_source is null) return;
+
+        try
+        {
+            ClampCropRect();
+            var cropArea = _cropRect;
+            var cropPixels = GetCropPixelRect();
+            if (cropPixels.Width < 1 || cropPixels.Height < 1) return;
+
+            var cropped = new CroppedBitmap(_source, cropPixels);
+            cropped.Freeze();
+
+            CropDrawings(cropArea);
+            ApplySourceBitmap(cropped);
+            ExitCropMode();
+            MarkDirty();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Не удалось обрезать изображение: {ex.Message}", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
 
     private void CancelCrop_Click(object sender, RoutedEventArgs e)
     {
+        ExitCropMode();
+    }
+
+    private void ExitCropMode()
+    {
         _cropMode = false;
+        _isDraggingCrop = false;
+        _cropDragHandle = CropHandle.None;
         CropOverlayGrid.Visibility = Visibility.Collapsed;
         DrawingToolsPanel.Visibility = Visibility.Visible;
         CropToolsPanel.Visibility = Visibility.Collapsed;
+        DrawCanvas.ReleaseMouseCapture();
+        DrawCanvas.Cursor = _drawingActive ? Cursors.None : Cursors.Hand;
     }
 
-    private void ResetCrop_Click(object sender, RoutedEventArgs e) => InitCropRect();
+    private void ResetCrop_Click(object sender, RoutedEventArgs e)
+    {
+        InitCropRect();
+        UpdateCropVisuals();
+    }
 
     private void DrawCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (_cropMode) UpdateCropVisuals();
+    }
+
+    private Int32Rect GetCropPixelRect()
+    {
+        if (_source is null) return new Int32Rect(0, 0, 0, 0);
+
+        var bounds = GetCropBounds();
+        double scaleX = _source.PixelWidth / bounds.Width;
+        double scaleY = _source.PixelHeight / bounds.Height;
+
+        int x = (int)Math.Floor(_cropRect.Left * scaleX);
+        int y = (int)Math.Floor(_cropRect.Top * scaleY);
+        int right = (int)Math.Ceiling(_cropRect.Right * scaleX);
+        int bottom = (int)Math.Ceiling(_cropRect.Bottom * scaleY);
+
+        x = Math.Clamp(x, 0, Math.Max(0, _source.PixelWidth - 1));
+        y = Math.Clamp(y, 0, Math.Max(0, _source.PixelHeight - 1));
+        right = Math.Clamp(right, x + 1, _source.PixelWidth);
+        bottom = Math.Clamp(bottom, y + 1, _source.PixelHeight);
+
+        return new Int32Rect(x, y, right - x, bottom - y);
+    }
+
+    private void CropDrawings(Rect cropArea)
+    {
+        foreach (var stroke in DrawCanvas.Children.OfType<Polyline>().ToList())
+        {
+            if (stroke.Points.Count == 0)
+            {
+                DrawCanvas.Children.Remove(stroke);
+                continue;
+            }
+
+            var bounds = GetPointBounds(stroke.Points);
+            if (!bounds.IntersectsWith(cropArea))
+            {
+                DrawCanvas.Children.Remove(stroke);
+                continue;
+            }
+
+            var shifted = new PointCollection();
+            foreach (Point point in stroke.Points)
+                shifted.Add(new Point(point.X - cropArea.X, point.Y - cropArea.Y));
+            stroke.Points = shifted;
+        }
+
+        _undoStack.Clear();
+        _redoStack.Clear();
+    }
+
+    private static Rect GetPointBounds(PointCollection points)
+    {
+        double minX = double.PositiveInfinity;
+        double minY = double.PositiveInfinity;
+        double maxX = double.NegativeInfinity;
+        double maxY = double.NegativeInfinity;
+
+        foreach (Point point in points)
+        {
+            minX = Math.Min(minX, point.X);
+            minY = Math.Min(minY, point.Y);
+            maxX = Math.Max(maxX, point.X);
+            maxY = Math.Max(maxY, point.Y);
+        }
+
+        return new Rect(new Point(minX, minY), new Point(maxX, maxY));
+    }
+
+    private void ApplySourceBitmap(BitmapSource bitmap, bool clearDrawings = false, bool resetRotation = false)
+    {
+        if (clearDrawings)
+            ClearDrawingStrokes();
+
+        if (resetRotation)
+            _rotationAngle = 0;
+
+        _source = bitmap;
+        MainImage.Source = bitmap;
+        MainImage.Width = bitmap.PixelWidth;
+        MainImage.Height = bitmap.PixelHeight;
+        ImageContainer.Width = bitmap.PixelWidth;
+        ImageContainer.Height = bitmap.PixelHeight;
+        DrawCanvas.Width = bitmap.PixelWidth;
+        DrawCanvas.Height = bitmap.PixelHeight;
+        _viewportReady = false;
+        FitImageToViewport();
+        UpdateZoomDisplay();
+        UpdateFileInfo();
+    }
+
+    private void ClearDrawingStrokes()
+    {
+        foreach (var stroke in DrawCanvas.Children.OfType<Polyline>().ToList())
+            DrawCanvas.Children.Remove(stroke);
+        _undoStack.Clear();
+        _redoStack.Clear();
+        _currentStroke = null;
+    }
+
+    private void SaveEditedImageToFile(string path)
+    {
+        bool flatten = RequiresOpaqueBackground(path);
+        var rendered = RenderEditedBitmap(flatten);
+        SaveBitmapToFile(path, rendered);
+        ApplySourceBitmap(rendered, clearDrawings: true, resetRotation: true);
+    }
+
+    private BitmapSource RenderEditedBitmap(bool flatten)
+    {
+        if (_source is null) throw new InvalidOperationException("No source image");
+
+        var baseBitmap = RenderImageAndDrawings(flatten);
+        int angle = NormalizeAngle(_rotationAngle);
+        return angle == 0 ? baseBitmap : RenderRotatedBitmap(baseBitmap, angle, flatten);
+    }
+
+    private BitmapSource RenderImageAndDrawings(bool flatten)
+    {
+        if (_source is null) throw new InvalidOperationException("No source image");
+
+        int width = Math.Max(1, _source.PixelWidth);
+        int height = Math.Max(1, _source.PixelHeight);
+        var rtb = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        var visual = new DrawingVisual();
+
+        using (var dc = visual.RenderOpen())
+        {
+            if (flatten)
+                dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
+
+            dc.DrawImage(_source, new Rect(0, 0, width, height));
+
+            foreach (var stroke in DrawCanvas.Children.OfType<Polyline>())
+                DrawPolyline(dc, stroke);
+        }
+
+        rtb.Render(visual);
+        rtb.Freeze();
+        return rtb;
+    }
+
+    private static void DrawPolyline(DrawingContext dc, Polyline stroke)
+    {
+        if (stroke.Stroke is null || stroke.Points.Count == 0) return;
+
+        var brush = stroke.Stroke.CloneCurrentValue();
+        var pen = new Pen(brush, stroke.StrokeThickness)
+        {
+            StartLineCap = stroke.StrokeStartLineCap,
+            EndLineCap = stroke.StrokeEndLineCap,
+            LineJoin = stroke.StrokeLineJoin
+        };
+
+        dc.PushOpacity(stroke.Opacity);
+        if (stroke.Points.Count == 1)
+        {
+            double radius = Math.Max(1, stroke.StrokeThickness / 2.0);
+            dc.DrawEllipse(brush, null, stroke.Points[0], radius, radius);
+        }
+        else
+        {
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                ctx.BeginFigure(stroke.Points[0], false, false);
+                ctx.PolyLineTo(stroke.Points.Skip(1).ToArray(), true, true);
+            }
+            geometry.Freeze();
+            dc.DrawGeometry(null, pen, geometry);
+        }
+        dc.Pop();
+    }
+
+    private static BitmapSource RenderRotatedBitmap(BitmapSource bitmap, int angle, bool flatten)
+    {
+        int width = angle is 90 or 270 ? bitmap.PixelHeight : bitmap.PixelWidth;
+        int height = angle is 90 or 270 ? bitmap.PixelWidth : bitmap.PixelHeight;
+        var rtb = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        var visual = new DrawingVisual();
+
+        using (var dc = visual.RenderOpen())
+        {
+            if (flatten)
+                dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, width, height));
+
+            dc.PushTransform(new TranslateTransform(width / 2.0, height / 2.0));
+            dc.PushTransform(new RotateTransform(angle));
+            dc.DrawImage(bitmap, new Rect(-bitmap.PixelWidth / 2.0, -bitmap.PixelHeight / 2.0,
+                                          bitmap.PixelWidth, bitmap.PixelHeight));
+            dc.Pop();
+            dc.Pop();
+        }
+
+        rtb.Render(visual);
+        rtb.Freeze();
+        return rtb;
+    }
+
+    private static int NormalizeAngle(double angle)
+    {
+        int normalized = ((int)Math.Round(angle) % 360 + 360) % 360;
+        return normalized switch
+        {
+            >= 45 and < 135 => 90,
+            >= 135 and < 225 => 180,
+            >= 225 and < 315 => 270,
+            _ => 0
+        };
+    }
+
+    private static bool RequiresOpaqueBackground(string path)
+    {
+        string ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+        return ext is ".jpg" or ".jpeg" or ".bmp" or ".gif";
+    }
+
+    private static void SaveBitmapToFile(string path, BitmapSource bitmap)
+    {
+        var encoder = CreateBitmapEncoder(path);
+        BitmapSource frameSource = RequiresOpaqueBackground(path)
+            ? ConvertBitmapFormat(bitmap, PixelFormats.Bgr24)
+            : bitmap;
+
+        encoder.Frames.Add(BitmapFrame.Create(frameSource));
+        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+        encoder.Save(fs);
+    }
+
+    private static BitmapSource ConvertBitmapFormat(BitmapSource bitmap, PixelFormat format)
+    {
+        var converted = new FormatConvertedBitmap();
+        converted.BeginInit();
+        converted.Source = bitmap;
+        converted.DestinationFormat = format;
+        converted.EndInit();
+        converted.Freeze();
+        return converted;
+    }
+
+    private static BitmapEncoder CreateBitmapEncoder(string path)
+    {
+        string ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+        return ext switch
+        {
+            ".jpg" or ".jpeg" => new JpegBitmapEncoder { QualityLevel = 92 },
+            ".png" => new PngBitmapEncoder(),
+            ".bmp" => new BmpBitmapEncoder(),
+            ".gif" => new GifBitmapEncoder(),
+            ".tif" or ".tiff" => new TiffBitmapEncoder(),
+            ".webp" => throw new NotSupportedException("Сохранение WEBP пока не поддерживается."),
+            _ => new PngBitmapEncoder()
+        };
     }
 }

@@ -44,8 +44,52 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="#111111"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="36"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#111111"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bg" Property="Background" Value="#333333"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Aspect ratio button style (square like undo/redo buttons) -->
+        <Style x:Key="AspectRatioButton" TargetType="RadioButton">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
@@ -189,6 +233,22 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <Style x:Key="CropHandleVisual" TargetType="Border">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#111111"/>
+            <Setter Property="BorderThickness" Value="3"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" BlurRadius="12" ShadowDepth="0" Opacity="0.7"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
 
     <!-- Root: full overlay light background -->
@@ -197,7 +257,7 @@
             <!-- Main image area -->
             <ColumnDefinition Width="*"/>
             <!-- Info panel -->
-            <ColumnDefinition Width="270"/>
+            <ColumnDefinition Width="290"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -262,35 +322,38 @@
                             </Ellipse>
 
                             <!-- Crop overlay -->
-                            <Grid x:Name="CropOverlayGrid" Visibility="Collapsed"
-                                  Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
-                                  Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}">
-                                <Rectangle x:Name="DimTop"    Fill="#99000000" IsHitTestVisible="False"/>
-                                <Rectangle x:Name="DimBottom" Fill="#99000000" IsHitTestVisible="False"/>
-                                <Rectangle x:Name="DimLeft"   Fill="#99000000" IsHitTestVisible="False"/>
-                                <Rectangle x:Name="DimRight"  Fill="#99000000" IsHitTestVisible="False"/>
+                            <Canvas x:Name="CropOverlayGrid" Visibility="Collapsed"
+                                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}"
+                                    Panel.ZIndex="9000"
+                                    IsHitTestVisible="False">
+                                <Rectangle x:Name="DimTop"    Fill="#A6000000" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="DimBottom" Fill="#A6000000" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="DimLeft"   Fill="#A6000000" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="DimRight"  Fill="#A6000000" IsHitTestVisible="False"/>
 
                                 <Border x:Name="CropBorder"
-                                        BorderBrush="White" BorderThickness="1.5"
+                                        BorderBrush="White" BorderThickness="4"
                                         Background="Transparent" IsHitTestVisible="False">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="Black" BlurRadius="8" Opacity="0.5" ShadowDepth="0"/>
+                                        <DropShadowEffect Color="Black" BlurRadius="12" Opacity="0.6" ShadowDepth="0"/>
                                     </Border.Effect>
                                 </Border>
 
-                                <Border x:Name="HandleTL" Width="10" Height="10" Background="White" CornerRadius="2" IsHitTestVisible="False"/>
-                                <Border x:Name="HandleTR" Width="10" Height="10" Background="White" CornerRadius="2" IsHitTestVisible="False"/>
-                                <Border x:Name="HandleBL" Width="10" Height="10" Background="White" CornerRadius="2" IsHitTestVisible="False"/>
-                                <Border x:Name="HandleBR" Width="10" Height="10" Background="White" CornerRadius="2" IsHitTestVisible="False"/>
+                                <Line x:Name="CropGridV1" Stroke="#CCFFFFFF" StrokeThickness="1" IsHitTestVisible="False"/>
+                                <Line x:Name="CropGridV2" Stroke="#CCFFFFFF" StrokeThickness="1" IsHitTestVisible="False"/>
+                                <Line x:Name="CropGridH1" Stroke="#CCFFFFFF" StrokeThickness="1" IsHitTestVisible="False"/>
+                                <Line x:Name="CropGridH2" Stroke="#CCFFFFFF" StrokeThickness="1" IsHitTestVisible="False"/>
 
-                                <TextBlock x:Name="CropSizeText"
-                                           Foreground="White" FontSize="11"
-                                           Background="#88000000" Padding="4,2"
-                                           IsHitTestVisible="False"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Bottom"
-                                           Margin="0,0,0,8"/>
-                            </Grid>
+                                <Border x:Name="HandleTL" Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleT"  Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleTR" Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleR"  Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleBR" Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleB"  Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleBL" Style="{StaticResource CropHandleVisual}"/>
+                                <Border x:Name="HandleL"  Style="{StaticResource CropHandleVisual}"/>
+                            </Canvas>
                         </Canvas>
                     </Grid>
                 </Canvas>
@@ -507,24 +570,72 @@
                 <Border Grid.Row="2" x:Name="CropToolsPanel"
                         Background="#F8F9FA"
                         BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
-                        Padding="10,8"
+                        Padding="12,10"
                         Visibility="Collapsed">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <StackPanel>
+                        <!-- Header: Size + Reset -->
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock x:Name="CropPanelSizeText" Text="— × —" Foreground="#111111" FontSize="14" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
                             <Button Style="{StaticResource ViewerIconBtn}" Click="ResetCrop_Click"
-                                    ToolTip="Сбросить" Margin="0,0,4,0">
+                                    ToolTip="Сбросить" HorizontalAlignment="Right" Width="32" Height="32" Padding="0">
                                 <Image Source="{svgc:SvgImage Source=/icons/undo.svg, AppName=MPMS}" Width="16" Height="16"/>
                             </Button>
-                            <TextBlock Text="Свободно" Foreground="#6B778C" FontSize="12"
-                                       VerticalAlignment="Center" Margin="8,0"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Content="Отмена" Click="CancelCrop_Click"
+                        </Grid>
+
+                        <!-- Aspect ratio buttons - better organized -->
+                        <TextBlock Text="Соотношение сторон" Foreground="#6B778C" FontSize="11" Margin="0,0,0,8"/>
+                        <UniformGrid Rows="2" Columns="6" Margin="0,0,0,12">
+                            <RadioButton Content="1:1" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="1:1"/>
+                            <RadioButton Content="4:3" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="4:3"/>
+                            <RadioButton Content="3:4" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="3:4"/>
+                            <RadioButton Content="16:9" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="16:9"/>
+                            <RadioButton Content="9:16" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="9:16"/>
+                            <RadioButton Content="3:2" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="3:2"/>
+                            <RadioButton Content="2:3" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="2:3"/>
+                            <RadioButton Content="5:4" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="5:4"/>
+                            <RadioButton Content="4:5" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="4:5"/>
+                            <RadioButton Content="5:7" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="5:7"/>
+                            <RadioButton Content="7:5" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="7:5"/>
+                            <RadioButton Content="16:10" GroupName="AspectRatio"
+                                         Style="{StaticResource AspectRatioButton}" Margin="2"
+                                         Click="AspectRatioButton_Click" Tag="16:10"/>
+                        </UniformGrid>
+
+                        <!-- Cancel + Apply buttons - full width -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Отмена" Click="CancelCrop_Click"
                                     Style="{StaticResource ViewerIconBtn}"
-                                    Margin="0,0,6,0" Padding="10,6"/>
-                            <Button Content="Применить" Click="ApplyCrop_Click"
+                                    Margin="0,0,4,0" Padding="0,8"/>
+                            <Button Grid.Column="1" Content="Применить" Click="ApplyCrop_Click"
                                     Background="#111111" Foreground="White"
-                                    BorderThickness="0" Padding="10,6"
+                                    BorderThickness="0" Padding="0,8"
                                     FontSize="12" FontWeight="SemiBold" Cursor="Hand">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
@@ -540,8 +651,8 @@
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
-                        </StackPanel>
-                    </Grid>
+                        </Grid>
+                    </StackPanel>
                 </Border>
 
             </Grid>
