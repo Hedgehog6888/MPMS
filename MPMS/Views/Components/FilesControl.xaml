@@ -17,6 +17,7 @@
         <infrastructure:FileSizeConverter x:Key="FileSizeConverter" />
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVis" />
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True" />
+        <infrastructure:FileTypeToIsDocumentConverter x:Key="FileTypeToIsDocument" />
                 
         <!-- Style for the circular delete button that appears on hover -->
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
@@ -28,9 +29,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" 
-                                Background="{TemplateBinding Background}" 
-                                CornerRadius="6" 
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
                                 Opacity="0.95">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
@@ -67,9 +68,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bg" 
-                                Background="{TemplateBinding Background}" 
-                                CornerRadius="6" 
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
                                 Opacity="0.95">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
@@ -93,6 +94,49 @@
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
                     <Setter Property="Visibility" Value="Visible"/>
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style for the circular view button that appears on hover -->
+        <Style x:Key="CircularViewButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Opacity="0.95">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
+                                <Setter TargetName="Bg" Property="Opacity" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
+                        <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsDocument}}" Value="Visible"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible"/>
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -202,13 +246,20 @@
                     
                     <!-- Actions Overlay (visible on hover) -->
                     <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" Margin="6">
+                        <Button ToolTip="Просмотр"
+                                Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                Style="{StaticResource CircularViewButtonStyle}"
+                                Margin="0,0,6,0">
+                            <Image Source="{svgc:SvgImage Source=/icons/view.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+                        </Button>
+
                         <Button ToolTip="Скачать"
                                 Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Style="{StaticResource CircularDownloadButtonStyle}"
                                 Margin="0,0,6,0">
                             <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
                         </Button>
-                        
+
                         <Button ToolTip="Удалить"
                                 Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Style="{StaticResource CircularDeleteButtonStyle}">
@@ -279,6 +330,28 @@
                                VerticalAlignment="Center" Margin="0,0,24,0"/>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button ToolTip="Просмотр"
+                                Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                Margin="0,0,8,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
+                                                <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsDocument}}" Value="Visible"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Image Source="{svgc:SvgImage Source=/icons/view.svg, AppName=MPMS}"
+                                   Width="14" Height="14"
+                                   VerticalAlignment="Center" Opacity="0.9"/>
+                        </Button>
+
                         <Button ToolTip="Скачать"
                                 Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Style="{StaticResource IconButton}"

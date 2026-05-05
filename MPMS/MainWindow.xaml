@@ -179,5 +179,11 @@
                           Grid.Row="1" Grid.Column="1"
                           Panel.ZIndex="300"
                           Visibility="Collapsed"/>
+
+        <!-- ═══════ DOCUMENT VIEWER LAYER (только область контента) ════════ -->
+        <ContentPresenter x:Name="DocumentViewerLayer"
+                          Grid.Row="1" Grid.Column="1"
+                          Panel.ZIndex="300"
+                          Visibility="Collapsed"/>
     </Grid>
 </Window>

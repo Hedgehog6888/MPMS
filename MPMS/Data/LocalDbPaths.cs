@@ -70,3 +70,44 @@ public static class MpmsImagesPaths
         return originalPath;
     }
 }
+
+/// <summary>
+/// Управление путями к папке документов MPMS.
+/// Все редактируемые документы хранятся в Documents/MPMS/documents
+/// </summary>
+public static class MpmsDocumentPaths
+{
+    public static string GetDocumentsDirectory()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MPMS",
+            "documents");
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    public static string GetDocumentFilePath(Guid fileId, string fileName)
+    {
+        return Path.Combine(GetDocumentsDirectory(), $"{fileId}{Path.GetExtension(fileName)}");
+    }
+
+    /// <summary>
+    /// Копирует файл в папку MPMS/documents, если он там еще не существует
+    /// </summary>
+    public static string EnsureDocumentCopy(Guid fileId, string originalPath, string fileName)
+    {
+        var targetPath = GetDocumentFilePath(fileId, fileName);
+
+        if (File.Exists(targetPath))
+            return targetPath;
+
+        if (File.Exists(originalPath))
+        {
+            File.Copy(originalPath, targetPath);
+            return targetPath;
+        }
+
+        return originalPath;
+    }
+}

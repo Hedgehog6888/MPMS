@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     public static MainWindow? Instance { get; private set; }
 
     private bool _photoViewerWasVisible = false;
+    private bool _documentViewerWasVisible = false;
 
     /// <summary>Ширина drawer только карточки задачи или этапа (без левой панели).</summary>
     public const double TaskOrStageDetailDrawerWidth = 700;
@@ -368,6 +369,44 @@ public partial class MainWindow : Window
         if (_photoViewerWasVisible && PhotoViewerLayer.Content != null)
         {
             PhotoViewerLayer.Visibility = Visibility.Visible;
+        }
+    }
+
+    public void ShowDocumentViewer(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
+    {
+        var viewer = new Views.Overlays.DocumentViewerOverlay(filePath, displayFileName, description, savedFileHandler);
+        DocumentViewerLayer.Content = viewer;
+        DocumentViewerLayer.Visibility = Visibility.Visible;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        DocumentViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    public void HideDocumentViewer()
+    {
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(160));
+        fadeOut.Completed += (_, _) =>
+        {
+            DocumentViewerLayer.Visibility = Visibility.Collapsed;
+            DocumentViewerLayer.Content = null;
+        };
+        DocumentViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+    }
+
+    public void HideDocumentViewerTemporarily()
+    {
+        if (DocumentViewerLayer.Visibility == Visibility.Visible)
+        {
+            _documentViewerWasVisible = true;
+            DocumentViewerLayer.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    public void RestoreDocumentViewerVisibility()
+    {
+        if (_documentViewerWasVisible && DocumentViewerLayer.Content != null)
+        {
+            DocumentViewerLayer.Visibility = Visibility.Visible;
         }
     }
 

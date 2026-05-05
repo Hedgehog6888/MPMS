@@ -248,6 +248,9 @@ public partial class FilesControlViewModel : ViewModelBase
     private async Task ProcessFilesInternalAsync(IEnumerable<string> filePaths)
     {
         IsLoading = true;
+        var successfullyUploaded = 0;
+        var skippedFiles = new List<string>();
+        
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
@@ -257,7 +260,18 @@ public partial class FilesControlViewModel : ViewModelBase
                 if (!File.Exists(filePath)) continue;
                 
                 var fileInfo = new FileInfo(filePath);
-                byte[] fileData = await File.ReadAllBytesAsync(filePath);
+                byte[] fileData;
+                
+                try
+                {
+                    fileData = await File.ReadAllBytesAsync(filePath);
+                }
+                catch (IOException ioEx) when (ioEx.Message.Contains("being used by another process") || 
+                                               ioEx.Message.Contains("used by another process"))
+                {
+                    skippedFiles.Add(fileInfo.Name);
+                    continue;
+                }
 
                 var newFile = new LocalFile
                 {
@@ -285,10 +299,26 @@ public partial class FilesControlViewModel : ViewModelBase
 
                 var logText = _projectId.HasValue ? $"Загружен файл «{newFile.FileName}» в проект" : $"Загружен файл «{newFile.FileName}»";
                 await LogActivityAsync(db, logText, "File", newFile.Id, ActivityActionKind.Created);
+                
+                successfullyUploaded++;
             }
 
             await LoadFilesAsync();
-            ShowSuccessToast(filePaths.Count() == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
+            
+            if (skippedFiles.Count > 0)
+            {
+                var skippedList = string.Join("\n• ", skippedFiles);
+                MessageBox.Show(
+                    $"Следующие файлы не были загружены, так как они открыты в другой программе:\n\n• {skippedList}\n\nЗакройте файлы и попробуйте снова.",
+                    "Файлы пропущены", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Warning);
+            }
+            
+            if (successfullyUploaded > 0)
+            {
+                ShowSuccessToast(successfullyUploaded == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
+            }
         }
         catch (Exception ex)
         {
@@ -337,84 +367,174 @@ public partial class FilesControlViewModel : ViewModelBase
     {
         if (file == null) return;
 
-        // Image files — open in PhotoViewerOverlay
-        if (IsImage(file.FileName))
+        string filePath = string.Empty;
+
+        // If file exists on disk, use it
+        if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
         {
-            // If file exists on disk, copy to MPMS/images and open copy
-            if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
+            filePath = file.FilePath;
+        }
+        // Otherwise extract from FileData to temp
+        else if (file.FileData != null && file.FileData.Length > 0)
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_open_{file.Id}");
+            Directory.CreateDirectory(tempDir);
+            filePath = Path.Combine(tempDir, file.FileName);
+            await File.WriteAllBytesAsync(filePath, file.FileData);
+        }
+        // Fetch from server if online
+        else if (_api.IsOnline)
+        {
+            IsLoading = true;
+            try
             {
-                var mpmsPath = MpmsImagesPaths.EnsureImageCopy(file.Id, file.FilePath, file.FileName);
-                MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
-                    (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
-                return;
-            }
-
-            // Otherwise extract from FileData to MPMS/images and open
-            if (file.FileData != null && file.FileData.Length > 0)
-            {
-                var mpmsPath = MpmsImagesPaths.GetImageFilePath(file.Id, file.FileName);
-                try
+                var data = await _api.DownloadFileAsync(file.Id);
+                if (data != null)
                 {
-                    Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
-                    await File.WriteAllBytesAsync(mpmsPath, file.FileData);
-                    MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
-                        (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
+                    file.FileData = data;
+                    var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_open_{file.Id}");
+                    Directory.CreateDirectory(tempDir);
+                    filePath = Path.Combine(tempDir, file.FileName);
+                    await File.WriteAllBytesAsync(filePath, data);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка при открытии: {ex.Message}", "Ошибка",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-                return;
             }
-
-            // Fetch from server if online
-            if (_api.IsOnline)
+            catch (Exception ex)
             {
-                IsLoading = true;
-                try
-                {
-                    var data = await _api.DownloadFileAsync(file.Id);
-                    if (data != null)
-                    {
-                        file.FileData = data;
-                        var mpmsPath = MpmsImagesPaths.GetImageFilePath(file.Id, file.FileName);
-                        Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
-                        await File.WriteAllBytesAsync(mpmsPath, data);
-                        MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
-                            (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
-                    }
-                }
-                catch { }
-                finally { IsLoading = false; }
-            }
-            else
-            {
-                MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка",
+                MessageBox.Show($"Ошибка при загрузке файла: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            finally { IsLoading = false; }
+        }
+
+        if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии файла: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         else
         {
-            // Non-image: open with system default app if path exists
-            if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
-            {
-                try
-                {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = file.FilePath,
-                        UseShellExecute = true
-                    });
-                }
-                catch { }
-            }
-            else
-            {
-                MessageBox.Show("Открытие файлов данного типа пока не поддерживается в приложении.",
-                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenDocumentViewer(LocalFile file)
+    {
+        if (file == null) return;
+
+        // Check if it's a supported document type
+        var ext = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
+        bool isDocument = ext == ".txt" || ext == ".csv" || ext == ".log" || ext == ".json" || ext == ".xml" ||
+                        ext == ".md" || ext == ".html" || ext == ".htm" ||
+                        ext == ".doc" || ext == ".docx" || ext == ".docm" || ext == ".dot" || ext == ".dotx" ||
+                        ext == ".xls" || ext == ".xlsx" || ext == ".xlsm" || ext == ".xlsb";
+
+        if (!isDocument)
+        {
+            MessageBox.Show("Этот тип файла не поддерживается для просмотра в приложении.", "Информация",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        string docPath = string.Empty;
+
+        // If file exists on disk, copy to MPMS/documents and open copy
+        if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
+        {
+            var mpmsPath = MpmsDocumentPaths.EnsureDocumentCopy(file.Id, file.FilePath, file.FileName);
+            docPath = mpmsPath;
+        }
+        // Otherwise extract from FileData to MPMS/documents
+        else if (file.FileData != null && file.FileData.Length > 0)
+        {
+            docPath = await EnsureDocumentFileAsync(file);
+        }
+        // Fetch from server if online
+        else if (_api.IsOnline)
+        {
+            IsLoading = true;
+            try
+            {
+                var data = await _api.DownloadFileAsync(file.Id);
+                if (data != null)
+                {
+                    file.FileData = data;
+                    docPath = await EnsureDocumentFileAsync(file);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке файла: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally { IsLoading = false; }
+        }
+
+        if (!string.IsNullOrEmpty(docPath) && File.Exists(docPath))
+        {
+            MainWindow.Instance?.ShowDocumentViewer(docPath, file.FileName, file.Description,
+                (savedPath, savedFileName, savedDescription) => SaveEditedDocumentAsync(file.Id, savedPath, savedFileName, savedDescription, docPath));
+        }
+        else
+        {
+            MessageBox.Show("Не удалось загрузить файл для просмотра.", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async Task<string> EnsureDocumentFileAsync(LocalFile file)
+    {
+        var mpmsPath = MpmsDocumentPaths.GetDocumentFilePath(file.Id, file.FileName);
+        if (File.Exists(mpmsPath))
+            return mpmsPath;
+
+        if (file.FileData != null && file.FileData.Length > 0)
+        {
+            Directory.CreateDirectory(MpmsDocumentPaths.GetDocumentsDirectory());
+            await File.WriteAllBytesAsync(mpmsPath, file.FileData);
+            return mpmsPath;
+        }
+
+        return string.Empty;
+    }
+
+    private async Task SaveEditedDocumentAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string mpmsPath)
+    {
+        if (!File.Exists(savedPath)) return;
+
+        var fileInfo = new FileInfo(savedPath);
+        var fileData = await File.ReadAllBytesAsync(savedPath);
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var dbFile = await db.Files.FindAsync(fileId);
+        if (dbFile is null) return;
+
+        dbFile.FileName = savedFileName;
+        dbFile.FileType = fileInfo.Extension;
+        dbFile.FileSize = fileInfo.Length;
+        dbFile.FileData = fileData;
+        dbFile.Description = savedDescription;
+        // Always update FilePath to point to MPMS/documents copy, never to original path
+        dbFile.FilePath = mpmsPath;
+        dbFile.IsSynced = false;
+        dbFile.LastModifiedLocally = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        await LoadFilesAsync();
+        ShowSuccessToast("Документ сохранен");
     }
 
     private async Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string mpmsPath)

@@ -1074,6 +1074,30 @@ public class FileTypeToIsImageConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Returns Visibility.Visible if file is a supported document type for DocumentViewerOverlay.</summary>
+public class FileTypeToIsDocumentConverter : IValueConverter
+{
+    public static readonly FileTypeToIsDocumentConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        string? fileName = value?.ToString()?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(fileName)) return Visibility.Collapsed;
+
+        var ext = Path.GetExtension(fileName);
+        if (string.IsNullOrEmpty(ext)) return Visibility.Collapsed;
+
+        bool isDocument = ext is ".txt" or ".csv" or ".log" or ".json" or ".xml" or ".md" or ".html" or ".htm" or
+                          ".doc" or ".docx" or ".docm" or ".dot" or ".dotx" or
+                          ".xls" or ".xlsx" or ".xlsm" or ".xlsb";
+
+        return isDocument ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>
 /// Returns a background SolidColorBrush based on file extension.
 /// </summary>

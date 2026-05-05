@@ -1,0 +1,268 @@
+<UserControl x:Class="MPMS.Views.Overlays.DocumentViewerOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             Background="Transparent">
+
+    <UserControl.Resources>
+
+        <!-- Light icon button style matching app design -->
+        <Style x:Key="ViewerIconBtn" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Save button (black style) -->
+        <Style x:Key="SaveInfoBtn" TargetType="Button">
+            <Setter Property="Background" Value="#111111"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#333333"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Close circle button (light style) -->
+        <Style x:Key="CloseCircleBtn" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                            <Image Source="{svgc:SvgImage Source=/icons/close.svg, AppName=MPMS}" 
+                                   Width="16" Height="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Light zoom slider -->
+        <Style x:Key="ZoomSliderStyle" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="#111111" Height="3" CornerRadius="1.5"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Width="14" Height="14" Background="White"
+                                                        CornerRadius="7"
+                                                        BorderBrush="#111111" BorderThickness="2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="#E8E9EC" Height="3" CornerRadius="1.5"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Info row label (light theme) -->
+        <Style x:Key="InfoLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+        <Style x:Key="InfoValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <!-- Thumbnail item style -->
+        <Style x:Key="ThumbnailItem" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E8E9EC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+    </UserControl.Resources>
+
+    <!-- Root: full overlay light background -->
+    <Grid Background="#FFFFFF">
+        <Grid.ColumnDefinitions>
+            <!-- Main document area -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <!-- Bottom toolbar -->
+            <RowDefinition Height="48"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- Document viewport                                              -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Column="0" Grid.Row="0" Background="#F4F5F7">
+            <ScrollViewer x:Name="DocumentScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto"
+                          Focusable="False">
+                <StackPanel x:Name="DocumentContainer" Margin="16" HorizontalAlignment="Center">
+                    <!-- FlowDocumentScrollViewer for Excel documents -->
+                    <Border x:Name="ExcelDocumentBorder"
+                            Background="White"
+                            BorderBrush="#E8E9EC"
+                            BorderThickness="1"
+                            Width="794"
+                            Margin="0,0,0,16"
+                            Effect="{x:Null}"
+                            Visibility="Collapsed">
+                        <FlowDocumentScrollViewer x:Name="FlowDocumentScrollViewer"
+                                                   Zoom="100"
+                                                   IsToolBarVisible="False"
+                                                   Background="White"
+                                                   BorderThickness="0"
+                                                   Padding="16">
+                            <FlowDocument x:Name="DocumentContent"
+                                         FontFamily="Segoe UI"
+                                         FontSize="14"
+                                         TextAlignment="Left"
+                                         PageWidth="794"
+                                         PageHeight="1123"
+                                         PagePadding="48"/>
+                        </FlowDocumentScrollViewer>
+                    </Border>
+
+                    <!-- Pages container for text and Word documents -->
+                    <ItemsControl x:Name="PagesContainer" Visibility="Collapsed"/>
+
+                    <!-- Fallback for unsupported formats -->
+                    <Border x:Name="FallbackCard"
+                            Background="White"
+                            BorderBrush="#E8E9EC"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="32"
+                            Visibility="Collapsed"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="⚠" FontSize="48" HorizontalAlignment="Center" Foreground="#6B778C"/>
+                            <TextBlock Text="Формат не поддерживается"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="#111111"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,16,0,8"/>
+                            <TextBlock x:Name="FallbackMessage"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       Foreground="#6B778C"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- BOTTOM: Toolbar                                                -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Column="0" Grid.Row="1"
+                Background="White"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0">
+            <Grid Margin="16,0">
+                <!-- Document name -->
+                <TextBlock x:Name="DocumentNameText"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="#111111"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <!-- Right side: open in app/download/close -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="OpenInAppBtn" Style="{StaticResource ViewerIconBtn}" Margin="0,0,8,0" Padding="12,6" Click="OpenInApp_Click">
+                        <TextBlock x:Name="OpenInAppBtnText" Text="Открыть" FontSize="12" FontWeight="SemiBold"/>
+                    </Button>
+                    <Button x:Name="DownloadBtn" Style="{StaticResource ViewerIconBtn}" Margin="0,0,8,0" Click="Download_Click">
+                        <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="16" Height="16"/>
+                    </Button>
+                    <Button x:Name="CloseBtn" Style="{StaticResource ViewerIconBtn}" Click="Close_Click">
+                        <Image Source="{svgc:SvgImage Source=/icons/close.svg, AppName=MPMS}" Width="16" Height="16"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</UserControl>

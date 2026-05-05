@@ -143,14 +143,16 @@ public partial class MainViewModel : ViewModelBase
         // Refresh sync counts when navigating
         _ = RefreshSyncCountsAsync();
 
-        // Show/hide PhotoViewerLayer based on current page
+        // Show/hide PhotoViewerLayer and DocumentViewerLayer based on current page
         if (page == "Files")
         {
             MainWindow.Instance?.RestorePhotoViewerVisibility();
+            MainWindow.Instance?.RestoreDocumentViewerVisibility();
         }
         else
         {
             MainWindow.Instance?.HidePhotoViewerTemporarily();
+            MainWindow.Instance?.HideDocumentViewerTemporarily();
         }
     }
 
@@ -163,6 +165,7 @@ public partial class MainViewModel : ViewModelBase
         CurrentPageViewModel = vm;
 
         MainWindow.Instance?.HidePhotoViewerTemporarily();
+        MainWindow.Instance?.HideDocumentViewerTemporarily();
     }
 
     /// <summary>Встроенный редактор этапа (полноэкранная страница, как карточка проекта).</summary>
@@ -173,6 +176,7 @@ public partial class MainViewModel : ViewModelBase
         _ = vm.LoadAsync();
 
         MainWindow.Instance?.HidePhotoViewerTemporarily();
+        MainWindow.Instance?.HideDocumentViewerTemporarily();
     }
 
     [RelayCommand]
