@@ -24,6 +24,8 @@ public partial class MainWindow : Window
 {
     public static MainWindow? Instance { get; private set; }
 
+    private bool _photoViewerWasVisible = false;
+
     /// <summary>Ширина drawer только карточки задачи или этапа (без левой панели).</summary>
     public const double TaskOrStageDetailDrawerWidth = 700;
 
@@ -342,6 +344,7 @@ public partial class MainWindow : Window
 
     public void HidePhotoViewer()
     {
+        _photoViewerWasVisible = false;
         var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(160));
         fadeOut.Completed += (_, _) =>
         {
@@ -349,6 +352,23 @@ public partial class MainWindow : Window
             PhotoViewerLayer.Content = null;
         };
         PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+    }
+
+    public void HidePhotoViewerTemporarily()
+    {
+        if (PhotoViewerLayer.Visibility == Visibility.Visible)
+        {
+            _photoViewerWasVisible = true;
+            PhotoViewerLayer.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    public void RestorePhotoViewerVisibility()
+    {
+        if (_photoViewerWasVisible && PhotoViewerLayer.Content != null)
+        {
+            PhotoViewerLayer.Visibility = Visibility.Visible;
+        }
     }
 
     private void Backdrop_Click(object sender, MouseButtonEventArgs e)

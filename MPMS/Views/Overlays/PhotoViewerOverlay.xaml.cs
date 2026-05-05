@@ -1021,6 +1021,17 @@ public partial class PhotoViewerOverlay : UserControl
         PlaceCropHandle(HandleBL, _cropRect.Left, _cropRect.Bottom);
         PlaceCropHandle(HandleL, _cropRect.Left, _cropRect.Top + _cropRect.Height / 2.0);
 
+        // Apply inverse scale to handles to keep them fixed size on screen
+        double inverseScale = 1.0 / _zoomFactor;
+        HandleTLScale.ScaleX = inverseScale; HandleTLScale.ScaleY = inverseScale;
+        HandleTScale.ScaleX = inverseScale; HandleTScale.ScaleY = inverseScale;
+        HandleTRScale.ScaleX = inverseScale; HandleTRScale.ScaleY = inverseScale;
+        HandleRScale.ScaleX = inverseScale; HandleRScale.ScaleY = inverseScale;
+        HandleBRScale.ScaleX = inverseScale; HandleBRScale.ScaleY = inverseScale;
+        HandleBScale.ScaleX = inverseScale; HandleBScale.ScaleY = inverseScale;
+        HandleBLScale.ScaleX = inverseScale; HandleBLScale.ScaleY = inverseScale;
+        HandleLScale.ScaleX = inverseScale; HandleLScale.ScaleY = inverseScale;
+
         CropPanelSizeText.Text = $"{(int)_cropRect.Width} × {(int)_cropRect.Height}";
     }
 
@@ -1031,7 +1042,7 @@ public partial class PhotoViewerOverlay : UserControl
 
     private static void PlaceCropHandle(FrameworkElement el, double x, double y)
     {
-        const double half = 16.0;
+        const double half = 10.0;
         Canvas.SetLeft(el, x - half);
         Canvas.SetTop(el, y - half);
     }
@@ -1054,6 +1065,19 @@ public partial class PhotoViewerOverlay : UserControl
         _isDraggingCrop = true;
         DrawCanvas.CaptureMouse();
         DrawCanvas.Cursor = GetCursorForCropHandle(_cropDragHandle);
+
+        // Reset aspect ratio when manually adjusting crop
+        if (_currentAspectRatio != AspectRatio.Free)
+        {
+            _currentAspectRatio = AspectRatio.Free;
+            // Uncheck all aspect ratio buttons
+            foreach (var buttonName in new[] { "Aspect9_16", "Aspect16_9", "Aspect4_5", "Aspect5_4", "Aspect3_4", "Aspect4_3", "Aspect1_1", "Aspect3_2" })
+            {
+                var btn = FindName(buttonName) as RadioButton;
+                if (btn != null) btn.IsChecked = false;
+            }
+        }
+
         e.Handled = true;
     }
 
@@ -1312,36 +1336,39 @@ public partial class PhotoViewerOverlay : UserControl
         double targetRatio = GetTargetAspectRatio();
         if (targetRatio <= 0) return;
 
-        double currentRatio = _cropRect.Width / _cropRect.Height;
-        double centerX = _cropRect.X + _cropRect.Width / 2;
-        double centerY = _cropRect.Y + _cropRect.Height / 2;
-
+        // Calculate the maximum possible size for the target aspect ratio within bounds
         double newWidth, newHeight;
 
-        if (currentRatio > targetRatio)
+        // Try fitting by width first
+        newWidth = bounds.Width;
+        newHeight = newWidth / targetRatio;
+
+        // If height exceeds bounds, fit by height instead
+        if (newHeight > bounds.Height)
         {
-            // Current is wider, adjust width
-            newHeight = _cropRect.Height;
+            newHeight = bounds.Height;
             newWidth = newHeight * targetRatio;
         }
-        else
+
+        // Apply minimum size constraint
+        const double minSize = 48.0;
+        if (newWidth < minSize || newHeight < minSize)
         {
-            // Current is taller, adjust height
-            newWidth = _cropRect.Width;
-            newHeight = newWidth / targetRatio;
+            if (targetRatio >= 1)
+            {
+                newWidth = minSize;
+                newHeight = minSize / targetRatio;
+            }
+            else
+            {
+                newHeight = minSize;
+                newWidth = minSize * targetRatio;
+            }
         }
 
-        // Clamp to bounds
-        newWidth = Math.Clamp(newWidth, 48, bounds.Width);
-        newHeight = Math.Clamp(newHeight, 48, bounds.Height);
-
-        // Recalculate to maintain aspect ratio after clamping
-        if (newWidth / newHeight > targetRatio)
-            newWidth = newHeight * targetRatio;
-        else
-            newHeight = newWidth / targetRatio;
-
-        // Center the new rect
+        // Center the new rect in bounds
+        double centerX = bounds.X + bounds.Width / 2;
+        double centerY = bounds.Y + bounds.Height / 2;
         double newX = Math.Clamp(centerX - newWidth / 2, bounds.Left, bounds.Right - newWidth);
         double newY = Math.Clamp(centerY - newHeight / 2, bounds.Top, bounds.Bottom - newHeight);
 
