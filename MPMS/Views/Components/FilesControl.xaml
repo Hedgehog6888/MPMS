@@ -225,7 +225,7 @@
                                    Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
                         <TextBlock Text="{Binding StageName, StringFormat=Э: \{0\}}" FontSize="10" Foreground="#00875A" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
-                        <TextBlock Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Загружен: dd.MM.yyyy HH\:mm}" 
+                        <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Изменен: dd.MM.yyyy HH\:mm}" 
                                    FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -266,7 +266,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding UploadedByName}" FontSize="13" Foreground="#6B778C"/>
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C"/>
-                            <TextBlock Text="{Binding CreatedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" 
+                            <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" 
                                        FontSize="13" Foreground="#6B778C"/>
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
                             <TextBlock Text="{Binding ProjectName, StringFormat=Проект: \{0\}}" FontSize="13" Foreground="#0052CC" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>

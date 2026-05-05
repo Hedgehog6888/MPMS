@@ -343,19 +343,22 @@ public partial class FilesControlViewModel : ViewModelBase
             // If file exists on disk, open directly
             if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
             {
-                MainWindow.Instance?.ShowPhotoViewer(file.FilePath);
+                MainWindow.Instance?.ShowPhotoViewer(file.FilePath, file.FileName, file.Description,
+                    (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, true));
                 return;
             }
 
             // Otherwise extract from FileData to temp and open
             if (file.FileData != null && file.FileData.Length > 0)
             {
-                var ext = Path.GetExtension(file.FileName);
-                var tmp = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}{ext}");
+                var tmpDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
+                var tmp = Path.Combine(tmpDir, file.FileName);
                 try
                 {
+                    Directory.CreateDirectory(tmpDir);
                     await File.WriteAllBytesAsync(tmp, file.FileData);
-                    MainWindow.Instance?.ShowPhotoViewer(tmp);
+                    MainWindow.Instance?.ShowPhotoViewer(tmp, file.FileName, file.Description,
+                        (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, false));
                 }
                 catch (Exception ex)
                 {
@@ -374,10 +377,13 @@ public partial class FilesControlViewModel : ViewModelBase
                     var data = await _api.DownloadFileAsync(file.Id);
                     if (data != null)
                     {
-                        var ext = Path.GetExtension(file.FileName);
-                        var tmp = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}{ext}");
+                        file.FileData = data;
+                        var tmpDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
+                        var tmp = Path.Combine(tmpDir, file.FileName);
+                        Directory.CreateDirectory(tmpDir);
                         await File.WriteAllBytesAsync(tmp, data);
-                        MainWindow.Instance?.ShowPhotoViewer(tmp);
+                        MainWindow.Instance?.ShowPhotoViewer(tmp, file.FileName, file.Description,
+                            (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, false));
                     }
                 }
                 catch { }
@@ -410,6 +416,32 @@ public partial class FilesControlViewModel : ViewModelBase
                     "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
+    }
+
+    private async Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, bool updateFilePath)
+    {
+        if (!File.Exists(savedPath)) return;
+
+        var fileInfo = new FileInfo(savedPath);
+        var fileData = await File.ReadAllBytesAsync(savedPath);
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var dbFile = await db.Files.FindAsync(fileId);
+        if (dbFile is null) return;
+
+        dbFile.FileName = savedFileName;
+        dbFile.FileType = fileInfo.Extension;
+        dbFile.FileSize = fileInfo.Length;
+        dbFile.FileData = fileData;
+        dbFile.Description = savedDescription;
+        if (updateFilePath)
+            dbFile.FilePath = savedPath;
+        dbFile.IsSynced = false;
+        dbFile.LastModifiedLocally = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        await LoadFilesAsync();
+        ShowSuccessToast("Фото сохранено");
     }
 
     [RelayCommand]

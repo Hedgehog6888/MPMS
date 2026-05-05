@@ -249,6 +249,47 @@
             </Setter>
         </Style>
 
+        <!-- Note button styles (same as in HomePage) -->
+        <Style x:Key="NoteActionButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="{TemplateBinding Background}" CornerRadius="6" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BlackNoteButton" TargetType="Button" BasedOn="{StaticResource NoteActionButton}">
+            <Setter Property="Background" Value="#111111"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#333333"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WhiteNoteButton" TargetType="Button" BasedOn="{StaticResource NoteActionButton}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F4F5F7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </UserControl.Resources>
 
     <!-- Root: full overlay light background -->
@@ -745,6 +786,35 @@
                     </Button>
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <!-- Confirmation Overlay -->
+        <Border x:Name="ConfirmPopupBorder" Background="Transparent" CornerRadius="8" Margin="0"
+                Visibility="Collapsed"
+                UseLayoutRounding="True" SnapsToDevicePixels="True"
+                Panel.ZIndex="100">
+            <Border Background="White" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Padding="24,20" CornerRadius="12"
+                    BorderBrush="#DFE1E6" BorderThickness="1" Width="260">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="15" Opacity="0.1" ShadowDepth="4" Direction="270"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Сохранить изменения?" FontSize="15" FontWeight="Bold" Foreground="#111111" Margin="0,0,0,18" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                    <Button x:Name="ConfirmSaveBtn" Style="{StaticResource BlackNoteButton}"
+                            Width="Auto" Height="38" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                            Click="ConfirmSave_Click">
+                        <TextBlock Text="Сохранить" FontSize="13" FontWeight="Bold"/>
+                    </Button>
+
+                    <Button x:Name="ConfirmDiscardBtn" Style="{StaticResource WhiteNoteButton}"
+                            Width="Auto" Height="38" HorizontalAlignment="Stretch"
+                            Click="ConfirmDiscard_Click">
+                        <TextBlock Text="Не сохранять" FontSize="13" FontWeight="Bold"/>
+                    </Button>
+                </StackPanel>
+            </Border>
         </Border>
 
     </Grid>

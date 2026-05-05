@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -17,8 +18,10 @@ public partial class PhotoViewerOverlay : UserControl
     private BitmapSource? _source;
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
+    private string? _description;
     private bool _hasUnsavedChanges;
     private bool _hasImageChanges;
+    private readonly Func<string, string, string?, Task>? _savedFileHandler;
 
     // ── Zoom / Pan ─────────────────────────────────────────────────────────
     private double _zoomFactor = 1.0;
@@ -67,16 +70,20 @@ public partial class PhotoViewerOverlay : UserControl
         Color.FromRgb(0xFF,0x69,0xB4), Color.FromRgb(0x8A,0x2B,0xE2),
     ];
 
-    public PhotoViewerOverlay(string filePath)
+    public PhotoViewerOverlay(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
     {
         InitializeComponent();
         _filePath = filePath;
-        _fileName = System.IO.Path.GetFileName(filePath);
+        _fileName = string.IsNullOrWhiteSpace(displayFileName) ? System.IO.Path.GetFileName(filePath) : displayFileName;
+        _description = description;
+        _savedFileHandler = savedFileHandler;
         LoadImage(filePath);
         BuildColorPalette();
         UpdateFileInfo();
         FileNameBox.Text = System.IO.Path.GetFileNameWithoutExtension(_fileName);
+        DescriptionBox.Text = _description ?? string.Empty;
         UpdateZoomDisplay();
+        _hasUnsavedChanges = false;
         // Fit after first layout pass (viewport size is available)
         Loaded += (_, _) =>
         {
@@ -258,7 +265,29 @@ public partial class PhotoViewerOverlay : UserControl
 
     // ── Close ──────────────────────────────────────────────────────────────
     private void Close_Click(object sender, RoutedEventArgs e)
-        => MainWindow.Instance?.HidePhotoViewer();
+    {
+        if (_hasUnsavedChanges)
+        {
+            ConfirmPopupBorder.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            MainWindow.Instance?.HidePhotoViewer();
+        }
+    }
+
+    private void ConfirmSave_Click(object sender, RoutedEventArgs e)
+    {
+        Save_Click(sender, e);
+        ConfirmPopupBorder.Visibility = Visibility.Collapsed;
+        MainWindow.Instance?.HidePhotoViewer();
+    }
+
+    private void ConfirmDiscard_Click(object sender, RoutedEventArgs e)
+    {
+        ConfirmPopupBorder.Visibility = Visibility.Collapsed;
+        MainWindow.Instance?.HidePhotoViewer();
+    }
 
     // ── File name ──────────────────────────────────────────────────────────
     private void FileNameBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -274,7 +303,7 @@ public partial class PhotoViewerOverlay : UserControl
         if (SaveBtn != null) SaveBtn.IsEnabled = true;
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private async void Save_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -291,6 +320,9 @@ public partial class PhotoViewerOverlay : UserControl
                 SaveEditedImageToFile(_filePath);
                 _hasImageChanges = false;
             }
+            _description = DescriptionBox.Text?.Trim();
+            if (_savedFileHandler is not null)
+                await _savedFileHandler(_filePath, _fileName, _description);
             _hasUnsavedChanges = false;
             SaveBtn.IsEnabled = false;
             UpdateFileInfo();

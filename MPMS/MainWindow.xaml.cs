@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -329,9 +330,9 @@ public partial class MainWindow : Window
         host.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
     }
 
-    public void ShowPhotoViewer(string filePath)
+    public void ShowPhotoViewer(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
     {
-        var viewer = new Views.Overlays.PhotoViewerOverlay(filePath);
+        var viewer = new Views.Overlays.PhotoViewerOverlay(filePath, displayFileName, description, savedFileHandler);
         PhotoViewerLayer.Content = viewer;
         PhotoViewerLayer.Visibility = Visibility.Visible;
 

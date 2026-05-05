@@ -428,6 +428,7 @@ public class LocalFile : LocalEntity
     public Guid? StageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? OriginalCreatedAt { get; set; }
+    public string? Description { get; set; }
     
     [NotMapped] public string? ProjectName { get; set; }
     [NotMapped] public string? StageName { get; set; }
