@@ -29,3 +29,44 @@ public static class LocalDbPaths
         return Path.Combine(dir, "mpms_local.db");
     }
 }
+
+/// <summary>
+/// Управление путями к папке изображений MPMS.
+/// Все редактируемые изображения хранятся в Documents/MPMS/images
+/// </summary>
+public static class MpmsImagesPaths
+{
+    public static string GetImagesDirectory()
+    {
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MPMS",
+            "images");
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    public static string GetImageFilePath(Guid fileId, string fileName)
+    {
+        return Path.Combine(GetImagesDirectory(), $"{fileId}{Path.GetExtension(fileName)}");
+    }
+
+    /// <summary>
+    /// Копирует файл в папку MPMS/images, если он там еще не существует
+    /// </summary>
+    public static string EnsureImageCopy(Guid fileId, string originalPath, string fileName)
+    {
+        var targetPath = GetImageFilePath(fileId, fileName);
+
+        if (File.Exists(targetPath))
+            return targetPath;
+
+        if (File.Exists(originalPath))
+        {
+            File.Copy(originalPath, targetPath);
+            return targetPath;
+        }
+
+        return originalPath;
+    }
+}

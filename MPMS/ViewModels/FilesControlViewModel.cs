@@ -340,25 +340,25 @@ public partial class FilesControlViewModel : ViewModelBase
         // Image files — open in PhotoViewerOverlay
         if (IsImage(file.FileName))
         {
-            // If file exists on disk, open directly
+            // If file exists on disk, copy to MPMS/images and open copy
             if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
             {
-                MainWindow.Instance?.ShowPhotoViewer(file.FilePath, file.FileName, file.Description,
-                    (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, true));
+                var mpmsPath = MpmsImagesPaths.EnsureImageCopy(file.Id, file.FilePath, file.FileName);
+                MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
+                    (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
                 return;
             }
 
-            // Otherwise extract from FileData to temp and open
+            // Otherwise extract from FileData to MPMS/images and open
             if (file.FileData != null && file.FileData.Length > 0)
             {
-                var tmpDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
-                var tmp = Path.Combine(tmpDir, file.FileName);
+                var mpmsPath = MpmsImagesPaths.GetImageFilePath(file.Id, file.FileName);
                 try
                 {
-                    Directory.CreateDirectory(tmpDir);
-                    await File.WriteAllBytesAsync(tmp, file.FileData);
-                    MainWindow.Instance?.ShowPhotoViewer(tmp, file.FileName, file.Description,
-                        (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, false));
+                    Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
+                    await File.WriteAllBytesAsync(mpmsPath, file.FileData);
+                    MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
+                        (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
                 }
                 catch (Exception ex)
                 {
@@ -378,12 +378,11 @@ public partial class FilesControlViewModel : ViewModelBase
                     if (data != null)
                     {
                         file.FileData = data;
-                        var tmpDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
-                        var tmp = Path.Combine(tmpDir, file.FileName);
-                        Directory.CreateDirectory(tmpDir);
-                        await File.WriteAllBytesAsync(tmp, data);
-                        MainWindow.Instance?.ShowPhotoViewer(tmp, file.FileName, file.Description,
-                            (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, false));
+                        var mpmsPath = MpmsImagesPaths.GetImageFilePath(file.Id, file.FileName);
+                        Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
+                        await File.WriteAllBytesAsync(mpmsPath, data);
+                        MainWindow.Instance?.ShowPhotoViewer(mpmsPath, file.FileName, file.Description,
+                            (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, mpmsPath));
                     }
                 }
                 catch { }
@@ -418,7 +417,7 @@ public partial class FilesControlViewModel : ViewModelBase
         }
     }
 
-    private async Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, bool updateFilePath)
+    private async Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string mpmsPath)
     {
         if (!File.Exists(savedPath)) return;
 
@@ -434,8 +433,8 @@ public partial class FilesControlViewModel : ViewModelBase
         dbFile.FileSize = fileInfo.Length;
         dbFile.FileData = fileData;
         dbFile.Description = savedDescription;
-        if (updateFilePath)
-            dbFile.FilePath = savedPath;
+        // Always update FilePath to point to MPMS/images copy, never to original path
+        dbFile.FilePath = mpmsPath;
         dbFile.IsSynced = false;
         dbFile.LastModifiedLocally = DateTime.UtcNow;
 
