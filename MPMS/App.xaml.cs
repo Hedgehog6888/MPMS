@@ -106,6 +106,17 @@ public partial class App : Application
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         using var db = factory.CreateDbContext();
         db.Database.EnsureCreated();
+        
+        // Enable WAL mode for better concurrency
+        var connection = db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA journal_mode=WAL;";
+        command.ExecuteNonQuery();
+        command.CommandText = "PRAGMA synchronous=NORMAL;";
+        command.ExecuteNonQuery();
+        
         LocalSchemaMigrator.Apply(LocalDbPaths.GetConnectionString());
     }
 

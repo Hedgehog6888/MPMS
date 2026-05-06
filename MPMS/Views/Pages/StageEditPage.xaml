@@ -151,7 +151,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="#F4F5F7" Padding="24,4,24,6">
+        <Border Grid.Row="1" Background="Transparent" Padding="24,4,24,0">
             <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
                 <StackPanel Orientation="Horizontal">
                     <RadioButton Content="Основное" Tag="Main" GroupName="StageEditTabs" IsChecked="True" Style="{StaticResource TabButton}" Click="StageTab_Click"/>

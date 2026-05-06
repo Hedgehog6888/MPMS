@@ -13,7 +13,7 @@ public static class LocalDbPaths
     public static string GetConnectionString()
     {
         var path = GetDatabaseFilePath();
-        return $"Data Source={path}";
+        return $"Data Source={path};Default Timeout=5000";
     }
 
     public static string GetDatabaseFilePath()

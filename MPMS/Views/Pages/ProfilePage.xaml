@@ -156,7 +156,7 @@
                             <!-- Outer ring -->
                             <Border Width="96" Height="96" CornerRadius="48"
                                     HorizontalAlignment="Center"
-                                    BorderBrush="#BFDBFE" BorderThickness="2"/>
+                                    BorderBrush="#000000" BorderThickness="2"/>
 
                             <!-- Avatar circle -->
                             <Border x:Name="AvatarBorder" Style="{StaticResource AvatarCircle90}"
@@ -554,7 +554,7 @@
                 <Border x:Name="RoleInfoCard" Style="{StaticResource ProfileCard}" Padding="24">
                     <StackPanel>
                         <TextBlock Text="Информация о роли" Style="{StaticResource ProfileSectionTitle}"/>
-                        <Border Background="#F8FAFF" BorderBrush="#DBEAFE" BorderThickness="1" CornerRadius="10" Padding="14">
+                        <Border Background="#F8F9FA" BorderBrush="#D0D5DD" BorderThickness="1" CornerRadius="10" Padding="14">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48"/>
@@ -563,7 +563,7 @@
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0" Width="48" Height="48" CornerRadius="12"
-                                    Background="#EFF6FF">
+                                    Background="#F4F5F7">
                                 <Image Source="{svgc:SvgImage Source=/icons/profile_role.svg, AppName=MPMS}"
                                        Width="22" Height="22"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>

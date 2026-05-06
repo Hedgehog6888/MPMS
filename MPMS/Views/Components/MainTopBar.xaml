@@ -51,19 +51,15 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- MPMS rectangle (не кнопка) -->
-            <Border Grid.Column="0"
-                    Background="Black"
-                    CornerRadius="6"
-                    Padding="18,8"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left"
-                    Margin="8,0,24,0">
-                <TextBlock Text="MPMS"
-                           Foreground="White"
-                           FontWeight="Bold"
-                           FontSize="15"/>
-            </Border>
+            <!-- MPMS logo -->
+            <TextBlock Grid.Column="0"
+                       Text="MPMS"
+                       Foreground="Black"
+                       FontWeight="ExtraBold"
+                       FontSize="24"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Left"
+                       Margin="16,0,24,0"/>
 
             <!-- Search box with focus animation + popup results -->
             <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
@@ -139,10 +135,6 @@
                     <Border Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Margin="0,4,0,0" MaxHeight="480">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="16" Opacity="0.12"
-                                              ShadowDepth="4" Direction="270"/>
-                        </Border.Effect>
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="SearchResultsPanel" Margin="8">
                                 <!-- Projects section -->
@@ -461,10 +453,6 @@
                     <Border Background="White" CornerRadius="10"
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Margin="0,4,0,0">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#000000" BlurRadius="20" Opacity="0.12"
-                                              ShadowDepth="4" Direction="270"/>
-                        </Border.Effect>
                         <StackPanel>
                             <!-- Header -->
                             <Border x:Name="SyncPopupHeader" CornerRadius="10,10,0,0" Padding="16,14">
