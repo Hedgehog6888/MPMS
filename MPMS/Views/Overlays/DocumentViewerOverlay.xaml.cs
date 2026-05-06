@@ -1,14 +1,18 @@
 using System;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
+using Syncfusion.XlsIO;
 
 namespace MPMS.Views.Overlays;
 
@@ -27,6 +31,10 @@ public partial class DocumentViewerOverlay : UserControl
     private DocumentType _docType = DocumentType.Unsupported;
     private int _currentPage = 1;
     private int _totalPages = 1;
+    private readonly List<ExcelSheetView> _excelSheets = new();
+    private ExcelSheetView? _currentExcelSheet;
+    private ExcelEngine? _excelEngine;
+    private IWorkbook? _workbook;
 
     public DocumentViewerOverlay(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
     {
@@ -77,7 +85,7 @@ public partial class DocumentViewerOverlay : UserControl
                     LoadWordDocument(path);
                     break;
                 case DocumentType.Excel:
-                    ShowExcelNotViewable();
+                    LoadExcelDocument(path);
                     break;
                 default:
                     ShowUnsupportedFormat();
@@ -105,10 +113,10 @@ public partial class DocumentViewerOverlay : UserControl
     {
         var text = File.ReadAllText(path);
 
-        var excelDocumentBorder = (System.Windows.Controls.Border)FindName("ExcelDocumentBorder");
         var pagesContainer = (ItemsControl)FindName("PagesContainer");
 
-        excelDocumentBorder!.Visibility = Visibility.Collapsed;
+        ExcelViewer.Visibility = Visibility.Collapsed;
+        DocumentScrollViewer.Visibility = Visibility.Visible;
         pagesContainer!.Visibility = Visibility.Visible;
         FallbackCard.Visibility = Visibility.Collapsed;
 
@@ -164,10 +172,10 @@ public partial class DocumentViewerOverlay : UserControl
         using var doc = new WordDocument();
         doc.Open(path);
 
-        var excelDocumentBorder = (System.Windows.Controls.Border)FindName("ExcelDocumentBorder");
         var pagesContainer = (ItemsControl)FindName("PagesContainer");
 
-        excelDocumentBorder!.Visibility = Visibility.Collapsed;
+        ExcelViewer.Visibility = Visibility.Collapsed;
+        DocumentScrollViewer.Visibility = Visibility.Visible;
         pagesContainer!.Visibility = Visibility.Visible;
         FallbackCard.Visibility = Visibility.Collapsed;
 
@@ -593,20 +601,221 @@ public partial class DocumentViewerOverlay : UserControl
         pagesContainer.Items.Add(pageBorder);
     }
 
-    private void ShowExcelNotViewable()
+    private void LoadExcelDocument(string path)
     {
-        var excelDocumentBorder = (System.Windows.Controls.Border)FindName("ExcelDocumentBorder");
-        excelDocumentBorder!.Visibility = Visibility.Collapsed;
-        var pagesContainer = (ItemsControl)FindName("PagesContainer");
-        pagesContainer!.Visibility = Visibility.Collapsed;
-        FallbackCard.Visibility = Visibility.Visible;
-        FallbackMessage.Text = $"Просмотр Excel файлов в приложении не поддерживается.\n\nВы можете открыть этот файл в Excel, нажав кнопку «Открыть в Excel».";
+        _excelSheets.Clear();
+        ExcelGrid.Columns.Clear();
+        ExcelSheetTabs.Children.Clear();
+
+        DocumentScrollViewer.Visibility = Visibility.Collapsed;
+        ExcelViewer.Visibility = Visibility.Visible;
+        FallbackCard.Visibility = Visibility.Collapsed;
+
+        // Keep workbook open for lazy loading
+        _excelEngine = new ExcelEngine();
+        var application = _excelEngine.Excel;
+        _workbook = application.Workbooks.Open(path);
+
+        // Create metadata for each sheet (lazy load data later)
+        foreach (IWorksheet worksheet in _workbook.Worksheets)
+        {
+            _excelSheets.Add(new ExcelSheetView(worksheet.Name, null, null, worksheet.Index));
+        }
+
+        if (_excelSheets.Count == 0)
+        {
+            ShowError("В книге Excel нет листов для просмотра.");
+            CleanupExcelEngine();
+            return;
+        }
+
+        foreach (var sheet in _excelSheets)
+        {
+            var tab = new Button
+            {
+                Content = sheet.Name,
+                Style = (System.Windows.Style)FindResource("ExcelSheetTabStyle"),
+                Tag = sheet
+            };
+            tab.Click += ExcelSheetTab_Click;
+            ExcelSheetTabs.Children.Add(tab);
+        }
+
+        // Load first sheet data on demand
+        ShowExcelSheet(_excelSheets[0]);
+    }
+
+    private ExcelSheetView CreateExcelSheetView(IWorksheet worksheet)
+    {
+        var usedRange = worksheet.UsedRange;
+        int rowCount = Math.Max(usedRange.LastRow, 34);
+        int columnCount = Math.Max(usedRange.LastColumn, 11);
+        var table = new DataTable();
+        var formulas = new string[rowCount, columnCount];
+
+        for (int column = 1; column <= columnCount; column++)
+        {
+            table.Columns.Add($"C{column}", typeof(string));
+        }
+
+        for (int row = 1; row <= rowCount; row++)
+        {
+            var dataRow = table.NewRow();
+            for (int column = 1; column <= columnCount; column++)
+            {
+                var range = worksheet.Range[row, column];
+                dataRow[column - 1] = range.DisplayText;
+                formulas[row - 1, column - 1] = string.IsNullOrWhiteSpace(range.Formula) ? range.DisplayText : range.Formula;
+            }
+            table.Rows.Add(dataRow);
+        }
+
+        return new ExcelSheetView(worksheet.Name, table, formulas, worksheet.Index);
+    }
+
+    private void ShowExcelSheet(ExcelSheetView sheet)
+    {
+        _currentExcelSheet = sheet;
+        
+        // Lazy load sheet data if not already loaded
+        if (sheet.Table == null && _workbook != null)
+        {
+            var worksheet = _workbook.Worksheets[sheet.WorksheetIndex];
+            var loadedSheet = CreateExcelSheetView(worksheet);
+            
+            // Update the sheet in place with loaded data
+            var index = _excelSheets.IndexOf(sheet);
+            if (index >= 0)
+            {
+                _excelSheets[index] = loadedSheet;
+                _currentExcelSheet = loadedSheet;
+                sheet = loadedSheet;
+                
+                // Update ALL tab tags to reference the updated sheet
+                foreach (Button tab in ExcelSheetTabs.Children.OfType<Button>())
+                {
+                    if (tab.Tag is ExcelSheetView tabSheet && tabSheet.WorksheetIndex == sheet.WorksheetIndex)
+                    {
+                        tab.Tag = loadedSheet;
+                    }
+                }
+            }
+        }
+
+        // Guard against null table (shouldn't happen after lazy load)
+        if (sheet.Table == null)
+            return;
+
+        ExcelGrid.Columns.Clear();
+
+        for (int column = 0; column < sheet.Table.Columns.Count; column++)
+        {
+            var textColumn = new DataGridTextColumn
+            {
+                Header = GetExcelColumnName(column + 1),
+                Binding = new Binding($"[{sheet.Table.Columns[column].ColumnName}]"),
+                Width = new DataGridLength(92),
+                ElementStyle = new System.Windows.Style(typeof(TextBlock))
+                {
+                    Setters =
+                    {
+                        new Setter(TextBlock.PaddingProperty, new Thickness(5, 1, 5, 1)),
+                        new Setter(TextBlock.TextAlignmentProperty, TextAlignment.Center),
+                        new Setter(TextBlock.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center),
+                        new Setter(TextBlock.TextWrappingProperty, TextWrapping.NoWrap)
+                    }
+                }
+            };
+            ExcelGrid.Columns.Add(textColumn);
+        }
+
+        ExcelGrid.ItemsSource = sheet.Table.DefaultView;
+        ExcelGrid.LoadingRow -= ExcelGrid_LoadingRow;
+        ExcelGrid.LoadingRow += ExcelGrid_LoadingRow;
+        ExcelNameBox.Text = "A1";
+        ExcelFormulaBox.Text = sheet.Formulas != null && sheet.Formulas.Length > 0 ? sheet.Formulas[0, 0] : string.Empty;
+
+        foreach (Button tab in ExcelSheetTabs.Children.OfType<Button>())
+        {
+            bool selected = tab.Tag is ExcelSheetView tabSheet && tabSheet.WorksheetIndex == sheet.WorksheetIndex;
+            tab.Background = selected ? new SolidColorBrush(Color.FromRgb(17, 17, 17)) : Brushes.White;
+            tab.Foreground = selected ? Brushes.White : new SolidColorBrush(Color.FromRgb(17, 17, 17));
+            tab.BorderBrush = selected ? new SolidColorBrush(Color.FromRgb(17, 17, 17)) : new SolidColorBrush(Color.FromRgb(223, 225, 230));
+            tab.FontWeight = selected ? FontWeights.SemiBold : FontWeights.Normal;
+        }
+    }
+
+    private void ExcelSheetTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: ExcelSheetView sheet })
+        {
+            ShowExcelSheet(sheet);
+        }
+    }
+
+    private void ExcelGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
+    {
+        e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+    }
+
+    private void ExcelGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
+    {
+        if (_currentExcelSheet == null || _currentExcelSheet.Table == null || ExcelGrid.CurrentCell.Column == null || ExcelGrid.CurrentCell.Item is not DataRowView rowView)
+            return;
+
+        int rowIndex = _currentExcelSheet.Table.Rows.IndexOf(rowView.Row);
+        int columnIndex = ExcelGrid.CurrentCell.Column.DisplayIndex;
+
+        if (rowIndex < 0 || columnIndex < 0 || rowIndex >= _currentExcelSheet.Table.Rows.Count || columnIndex >= _currentExcelSheet.Table.Columns.Count)
+            return;
+
+        ExcelNameBox.Text = $"{GetExcelColumnName(columnIndex + 1)}{rowIndex + 1}";
+        ExcelFormulaBox.Text = _currentExcelSheet.Formulas != null ? _currentExcelSheet.Formulas[rowIndex, columnIndex] : string.Empty;
+    }
+
+    private void ExcelGrid_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // Check if click was on column header
+        var dep = (DependencyObject)e.OriginalSource;
+        while (dep != null && !(dep is DataGridColumnHeader))
+        {
+            dep = VisualTreeHelper.GetParent(dep);
+        }
+
+        if (dep is DataGridColumnHeader columnHeader && columnHeader.Column != null)
+        {
+            int columnIndex = columnHeader.Column.DisplayIndex;
+            SelectColumn(columnIndex);
+            e.Handled = true;
+        }
+    }
+
+    private void SelectColumn(int columnIndex)
+    {
+        ExcelGrid.SelectedCells.Clear();
+        foreach (DataRowView rowView in ExcelGrid.Items)
+        {
+            var cell = new DataGridCellInfo(rowView, ExcelGrid.Columns[columnIndex]);
+            ExcelGrid.SelectedCells.Add(cell);
+        }
+    }
+
+    private static string GetExcelColumnName(int columnNumber)
+    {
+        var columnName = string.Empty;
+        while (columnNumber > 0)
+        {
+            int modulo = (columnNumber - 1) % 26;
+            columnName = Convert.ToChar('A' + modulo) + columnName;
+            columnNumber = (columnNumber - modulo) / 26;
+        }
+        return columnName;
     }
 
     private void ShowUnsupportedFormat()
     {
-        var excelDocumentBorder = (System.Windows.Controls.Border)FindName("ExcelDocumentBorder");
-        excelDocumentBorder!.Visibility = Visibility.Collapsed;
+        ExcelViewer.Visibility = Visibility.Collapsed;
+        DocumentScrollViewer.Visibility = Visibility.Visible;
         var pagesContainer = (ItemsControl)FindName("PagesContainer");
         pagesContainer!.Visibility = Visibility.Collapsed;
         FallbackCard.Visibility = Visibility.Visible;
@@ -615,8 +824,8 @@ public partial class DocumentViewerOverlay : UserControl
 
     private void ShowError(string message)
     {
-        var excelDocumentBorder = (System.Windows.Controls.Border)FindName("ExcelDocumentBorder");
-        excelDocumentBorder!.Visibility = Visibility.Collapsed;
+        ExcelViewer.Visibility = Visibility.Collapsed;
+        DocumentScrollViewer.Visibility = Visibility.Visible;
         var pagesContainer = (ItemsControl)FindName("PagesContainer");
         pagesContainer!.Visibility = Visibility.Collapsed;
         FallbackCard.Visibility = Visibility.Visible;
@@ -626,7 +835,22 @@ public partial class DocumentViewerOverlay : UserControl
     // ── Close ───────────────────────────────────────────────────────────────
     private void Close_Click(object sender, RoutedEventArgs e)
     {
+        CleanupExcelEngine();
         MainWindow.Instance?.HideDocumentViewer();
+    }
+
+    private void CleanupExcelEngine()
+    {
+        if (_workbook != null)
+        {
+            _workbook.Close();
+            _workbook = null;
+        }
+        if (_excelEngine != null)
+        {
+            _excelEngine.Dispose();
+            _excelEngine = null;
+        }
     }
 
     // ── Open in App ────────────────────────────────────────────────────────
@@ -683,4 +907,6 @@ public partial class DocumentViewerOverlay : UserControl
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+
+    private sealed record ExcelSheetView(string Name, DataTable? Table, string[,]? Formulas, int WorksheetIndex);
 }

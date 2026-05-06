@@ -155,6 +155,76 @@
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
+        <Style x:Key="ExcelCellStyle" TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="CellBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="Transparent"
+                                BorderThickness="1">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="CellBorder" Property="Background" Value="#F4F5F7"/>
+                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#111111"/>
+                                <Setter Property="Foreground" Value="#111111"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ExcelHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F4F5F7"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+
+        <Style x:Key="ExcelRowHeaderStyle" TargetType="DataGridRowHeader">
+            <Setter Property="Background" Value="#F4F5F7"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
+
+        <!-- Excel sheet tab style (no hover effect, rounded corners) -->
+        <Style x:Key="ExcelSheetTabStyle" TargetType="Button">
+            <Setter Property="Padding" Value="12,3,12,3"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#111111"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
 
     <!-- Root: full overlay light background -->
@@ -178,31 +248,6 @@
                           HorizontalScrollBarVisibility="Auto"
                           Focusable="False">
                 <StackPanel x:Name="DocumentContainer" Margin="16" HorizontalAlignment="Center">
-                    <!-- FlowDocumentScrollViewer for Excel documents -->
-                    <Border x:Name="ExcelDocumentBorder"
-                            Background="White"
-                            BorderBrush="#E8E9EC"
-                            BorderThickness="1"
-                            Width="794"
-                            Margin="0,0,0,16"
-                            Effect="{x:Null}"
-                            Visibility="Collapsed">
-                        <FlowDocumentScrollViewer x:Name="FlowDocumentScrollViewer"
-                                                   Zoom="100"
-                                                   IsToolBarVisible="False"
-                                                   Background="White"
-                                                   BorderThickness="0"
-                                                   Padding="16">
-                            <FlowDocument x:Name="DocumentContent"
-                                         FontFamily="Segoe UI"
-                                         FontSize="14"
-                                         TextAlignment="Left"
-                                         PageWidth="794"
-                                         PageHeight="1123"
-                                         PagePadding="48"/>
-                        </FlowDocumentScrollViewer>
-                    </Border>
-
                     <!-- Pages container for text and Word documents -->
                     <ItemsControl x:Name="PagesContainer" Visibility="Collapsed"/>
 
@@ -232,6 +277,81 @@
                     </Border>
                 </StackPanel>
             </ScrollViewer>
+
+            <Grid x:Name="ExcelViewer"
+                  Background="#F3F3F3"
+                  Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="28"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="28"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Background="#F8F8F8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="92"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border BorderBrush="#D0D0D0" BorderThickness="0,0,1,1" Background="#F3F3F3">
+                        <TextBox x:Name="ExcelNameBox"
+                                 Text="A1"
+                                 FontSize="11"
+                                 Padding="6,2"
+                                 IsReadOnly="True"
+                                 BorderThickness="0"
+                                 Background="White"/>
+                    </Border>
+                    <Border Grid.Column="1" BorderBrush="#D0D0D0" BorderThickness="0,0,0,1" Background="#F8F8F8">
+                        <TextBox x:Name="ExcelFormulaBox"
+                                 FontSize="11"
+                                 Padding="8,2"
+                                 IsReadOnly="True"
+                                 BorderThickness="0"
+                                 Background="White"/>
+                    </Border>
+                </Grid>
+
+                <DataGrid x:Name="ExcelGrid"
+                          Grid.Row="1"
+                          AutoGenerateColumns="False"
+                          HeadersVisibility="All"
+                          GridLinesVisibility="All"
+                          SelectionUnit="Cell"
+                          SelectionMode="Extended"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserResizeRows="False"
+                          CanUserSortColumns="False"
+                          RowHeaderWidth="42"
+                          FontFamily="Arial"
+                          FontSize="11"
+                          Background="White"
+                          RowBackground="White"
+                          AlternatingRowBackground="White"
+                          BorderThickness="0"
+                          CellStyle="{StaticResource ExcelCellStyle}"
+                          ColumnHeaderStyle="{StaticResource ExcelHeaderStyle}"
+                          RowHeaderStyle="{StaticResource ExcelRowHeaderStyle}"
+                          HorizontalGridLinesBrush="#B7B7B7"
+                          VerticalGridLinesBrush="#B7B7B7"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          SelectedCellsChanged="ExcelGrid_SelectedCellsChanged"
+                          MouseLeftButtonUp="ExcelGrid_MouseLeftButtonUp"
+                          VirtualizingStackPanel.IsVirtualizing="True"
+                          VirtualizingStackPanel.VirtualizationMode="Recycling"
+                          VirtualizingPanel.ScrollUnit="Pixel"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsContainerVirtualizable="True"/>
+
+                <Border Grid.Row="2" Background="White" BorderBrush="#E8E9EC" BorderThickness="0,1,0,0">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="ExcelSheetTabs" Orientation="Horizontal" Margin="8,3"/>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
