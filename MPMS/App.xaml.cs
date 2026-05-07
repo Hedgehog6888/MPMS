@@ -78,6 +78,7 @@ public partial class App : Application
         // ── Page ViewModels ───────────────────────────────────────────────────
         services.AddTransient<HomeViewModel>();
         services.AddTransient<ProjectsViewModel>();
+        services.AddTransient<ClosedProjectsViewModel>();
         services.AddSingleton<ProjectDetailViewModel>();
         services.AddSingleton<StageEditViewModel>();
         services.AddTransient<TasksViewModel>();

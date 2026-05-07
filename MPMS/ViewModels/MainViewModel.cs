@@ -123,6 +123,7 @@ public partial class MainViewModel : ViewModelBase
         {
             "Home"      => _sp.GetRequiredService<HomeViewModel>(),
             "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
+            "ClosedProjects" => _sp.GetRequiredService<ClosedProjectsViewModel>(),
             "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
             "Files"     => _sp.GetRequiredService<FilesPageViewModel>(),
             "Calendar"  => _sp.GetRequiredService<CalendarViewModel>(),

@@ -28,6 +28,7 @@ public partial class ProjectsPage : UserControl
         _userRole = auth.UserRole ?? "";
         bool canCreate = _userRole is "Administrator" or "Project Manager";
         CreateProjectBtn.Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed;
+        ClosedProjectsBtn.Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private ProjectsViewModel? VM => DataContext as ProjectsViewModel;
@@ -98,6 +99,11 @@ public partial class ProjectsPage : UserControl
         if (e.Handled) return;
         if (sender is not FrameworkElement fe || fe.DataContext is not LocalProject project) return;
         MainVM?.NavigateToProject(project);
+    }
+
+    private void ClosedProjects_Click(object sender, RoutedEventArgs e)
+    {
+        MainVM?.Navigate("ClosedProjects");
     }
 }
 

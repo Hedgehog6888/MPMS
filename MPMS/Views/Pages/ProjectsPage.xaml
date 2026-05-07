@@ -75,9 +75,30 @@
                     <TextBlock Text="Управление монтажными проектами"
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
-                <!-- Create button -->
-                <Button x:Name="CreateProjectBtn" Grid.Column="1" Click="CreateProject_Click"
-                        Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- Closed projects button -->
+                    <Button x:Name="ClosedProjectsBtn" Click="ClosedProjects_Click"
+                            Height="38" Padding="18,0" Margin="0,0,8,0" FontSize="13" FontWeight="SemiBold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="White" CornerRadius="6"
+                                        BorderBrush="#E2E8F0" BorderThickness="1"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      TextElement.Foreground="#111111" TextElement.FontSize="13" TextElement.FontWeight="SemiBold"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#F8FAFC"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Button.Content>Закрытые проекты</Button.Content>
+                    </Button>
+                    <!-- Create project button -->
+                    <Button x:Name="CreateProjectBtn" Click="CreateProject_Click"
+                            Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bg" Background="#111111" CornerRadius="6"
@@ -97,6 +118,7 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
+                </StackPanel>
             </Grid>
         </Border>
 

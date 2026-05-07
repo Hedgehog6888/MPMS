@@ -1105,6 +1105,9 @@
             <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
                 <pages:ProjectsPage/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ClosedProjectsViewModel}">
+                <pages:ClosedProjectsPage/>
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
                 <pages:ProjectDetailPage/>
             </DataTemplate>

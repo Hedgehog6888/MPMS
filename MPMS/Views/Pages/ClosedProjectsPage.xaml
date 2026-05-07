@@ -1,0 +1,112 @@
+<UserControl x:Class="MPMS.Views.Pages.ClosedProjectsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             xmlns:controls="clr-namespace:MPMS.Controls"
+             xmlns:infra="clr-namespace:MPMS.Infrastructure"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+
+    <UserControl.Resources>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
+        <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
+    </UserControl.Resources>
+
+    <Grid Background="#F8FAFC">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- PAGE HEADER -->
+        <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
+            <StackPanel>
+                <TextBlock Text="Закрытые проекты" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
+                <TextBlock Text="Просмотр завершенных проектов" FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- BODY -->
+        <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
+            <ScrollViewer x:Name="MainListScroll"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="0,0,24,0"
+                          Background="Transparent">
+                <StackPanel Margin="0,80,0,0">
+                    <!-- Projects list -->
+                    <ItemsControl ItemsSource="{Binding Projects}" Margin="2,0,2,0"
+                                  Visibility="{Binding Projects.Count, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <!-- Empty state -->
+                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                Visibility="{Binding Projects.Count, Converter={StaticResource BoolToVisInv}}">
+                        <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
+                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                        <TextBlock Text="Закрытые проекты не найдены"
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Здесь будут отображаться завершенные проекты"
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                   Margin="0,8,0,0" LineHeight="18"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Плавающая панель поиска -->
+            <controls:SearchFilterBarControl
+                VerticalAlignment="Top" Panel.ZIndex="1"
+                HorizontalAlignment="Stretch" Margin="0,0,24,0"
+                IsFloating="True"
+                ScrollTarget="{Binding ElementName=MainListScroll}"
+                SearchText="{Binding SearchText, Mode=TwoWay}"
+                Placeholder="Поиск по названию или заказчику...">
+                <controls:SearchFilterBarControl.Filters>
+                    <StackPanel Orientation="Horizontal">
+                        <DatePicker SelectedDate="{Binding StartDateFilter, Mode=TwoWay, Converter={StaticResource DateOnlyToDateTime}}"
+                                   Height="36" FontSize="12" Margin="0,0,8,0" Width="140"
+                                   HorizontalContentAlignment="Center">
+                            <DatePicker.Resources>
+                                <Style TargetType="DatePickerTextBox">
+                                    <Setter Property="Control.Template">
+                                        <Setter.Value>
+                                            <ControlTemplate>
+                                                <TextBox Text="{Binding Text, RelativeSource={RelativeSource AncestorType=DatePicker}}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         BorderThickness="0" Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DatePicker.Resources>
+                        </DatePicker>
+                        <TextBlock Text="—" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#64748B"/>
+                        <DatePicker SelectedDate="{Binding EndDateFilter, Mode=TwoWay, Converter={StaticResource DateOnlyToDateTime}}"
+                                   Height="36" FontSize="12" Width="140"
+                                   HorizontalContentAlignment="Center">
+                            <DatePicker.Resources>
+                                <Style TargetType="DatePickerTextBox">
+                                    <Setter Property="Control.Template">
+                                        <Setter.Value>
+                                            <ControlTemplate>
+                                                <TextBox Text="{Binding Text, RelativeSource={RelativeSource AncestorType=DatePicker}}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         BorderThickness="0" Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DatePicker.Resources>
+                        </DatePicker>
+                    </StackPanel>
+                </controls:SearchFilterBarControl.Filters>
+            </controls:SearchFilterBarControl>
+        </Grid>
+    </Grid>
+</UserControl>
