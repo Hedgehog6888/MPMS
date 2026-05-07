@@ -1,4 +1,4 @@
-<UserControl x:Class="MPMS.Views.Pages.ProjectDetailPage"
+﻿<UserControl x:Class="MPMS.Views.Pages.ProjectDetailPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:MPMS.Controls"
@@ -131,7 +131,7 @@
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
-                            <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap"
+                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap"
                                        TextAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -756,11 +756,11 @@
                                              Foreground="{Binding ProjectProgressPercent, Converter={StaticResource ProgressPercentToBrush}}">
                                     <ProgressBar.Template>
                                         <ControlTemplate TargetType="ProgressBar">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                                <Border x:Name="PART_Track" CornerRadius="5">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                                                <Border x:Name="PART_Track" CornerRadius="3">
                                                     <Border x:Name="PART_Indicator"
                                                             Background="{TemplateBinding Foreground}"
-                                                            HorizontalAlignment="Left" CornerRadius="5"/>
+                                                            HorizontalAlignment="Left" CornerRadius="3"/>
                                                 </Border>
                                             </Border>
                                         </ControlTemplate>

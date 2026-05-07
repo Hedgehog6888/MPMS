@@ -117,7 +117,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border x:Name="CardBorder" CornerRadius="16" Margin="8"
-                                            Padding="24" BorderThickness="1.5"
+                                            Padding="0" BorderThickness="1.5"
                                             Cursor="Hand" MouseLeftButtonDown="ProjectRow_Click"
                                             Background="White"
                                             SnapsToDevicePixels="True"
@@ -140,7 +140,12 @@
                                                         <Setter Property="Background" Value="#F8F9FA"/>
                                                         <Setter Property="Effect">
                                                             <Setter.Value>
-                                                                <DropShadowEffect BlurRadius="16" Opacity="0.1" ShadowDepth="3" Direction="270" RenderingBias="Quality"/>
+                                                                <DropShadowEffect BlurRadius="16" Opacity="0.12" ShadowDepth="4" Direction="270" RenderingBias="Quality"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <TranslateTransform Y="-2"/>
                                                             </Setter.Value>
                                                         </Setter>
                                                     </Trigger>
@@ -161,119 +166,134 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="*"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
+                                        <Border.RenderTransform>
+                                            <TranslateTransform/>
+                                        </Border.RenderTransform>
+                                        <Grid Margin="24">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
-                                            <!-- Row 1: Title & Status -->
-                                            <Grid Grid.Row="0" Margin="0,0,0,16">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}"
-                                                               FontSize="18" FontWeight="Bold"
-                                                               Foreground="#111111"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                        <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.6"/>
-                                                        <TextBlock Text="{Binding Client}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                <!-- Row 1: Title & Status -->
+                                                <Grid Grid.Row="0" Margin="0,0,0,20">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="18" FontWeight="Bold"
+                                                                   Foreground="#111111"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                            <Border Background="#F1F5F9" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.6"/>
+                                                                    <TextBlock Text="{Binding Client}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </StackPanel>
                                                     </StackPanel>
 
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right">
-                                                    <Border CornerRadius="6" Padding="10,5" MinWidth="85">
-                                                        <Border.Style>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                        <Setter Property="Background" Value="#EF4444"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Border.Style>
-                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="White" 
-                                                                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Text" Value="{Binding Status, Converter={StaticResource ProjectStatusToString}}"/>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right">
+                                                        <Border CornerRadius="8" Padding="12,6" MinWidth="95">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                            <Setter Property="Text" Value="Пометка удаления"/>
+                                                                            <Setter Property="Background" Value="#EF4444"/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Border>
-                                                    
-                                                    <Border CornerRadius="4" Padding="6,2" Margin="0,6,0,0"
-                                                            Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                                            HorizontalAlignment="Right"
-                                                            Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
-                                                        <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
-                                                                   Foreground="#DC2626"/>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Row 2: Manager & Dates -->
-                                            <Grid Grid.Row="1" Margin="0,0,0,24">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Border Style="{StaticResource AvatarCircle48}" Background="#F4F5F7" Margin="0,0,16,0">
-                                                        <Grid>
-                                                            <Image Style="{StaticResource AvatarImage}"
-                                                                   Source="{Binding ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                   Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
-                                                            <TextBlock Text="{Binding ManagerInitials}" FontSize="14" FontWeight="Bold" 
-                                                                       Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                       Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding ManagerName}" FontSize="14" FontWeight="SemiBold" Foreground="#111111"/>
-                                                        <TextBlock Text="Менеджер проекта" FontSize="11" Foreground="#64748B"/>
+                                                            </Border.Style>
+                                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="White" 
+                                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="{Binding Status, Converter={StaticResource ProjectStatusToString}}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Text" Value="Пометка удаления"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Border>
+                                                        
+                                                        <Border CornerRadius="6" Padding="8,4" Margin="0,8,0,0"
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                                HorizontalAlignment="Right"
+                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Image Source="{svgc:SvgImage Source=/icons/alert.svg, AppName=MPMS}" Width="10" Height="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                                                           Foreground="#DC2626" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Border>
                                                     </StackPanel>
-                                                </StackPanel>
-
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                    <TextBlock FontSize="12" Foreground="#64748B" HorizontalAlignment="Right">
-                                                        <Run Text="{Binding StartDate, Converter={StaticResource DateOnlyToString}}"/>
-                                                        <Run Text=" — "/>
-                                                        <Run Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"/>
-                                                    </TextBlock>
-                                                    <TextBlock Text="Период реализации" FontSize="10" Foreground="#64748B" HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Row 3: Progress -->
-                                            <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
-                                                <Grid Margin="0,0,0,8">
-                                                    <TextBlock Text="ПРОГРЕСС" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
-                                                    <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}" 
-                                                               FontSize="13" FontWeight="Bold" Foreground="#111111" HorizontalAlignment="Right"/>
                                                 </Grid>
-                                                <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
-                                                             Maximum="100" Height="8"
-                                                             Background="#E9ECEF"
-                                                             Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
-                                                             Template="{StaticResource SlimPB}"/>
-                                            </StackPanel>
 
-                                            <!-- Actions (role-based) -->
-                                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,-4">
+                                                <!-- Row 2: Manager & Dates -->
+                                                <Grid Grid.Row="1" Margin="0,0,0,24">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Border Style="{StaticResource AvatarCircle48}" Background="#F4F5F7" Margin="0,0,14,0">
+                                                            <Grid>
+                                                                <Image Style="{StaticResource AvatarImage}"
+                                                                       Source="{Binding ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                       Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                <TextBlock Text="{Binding ManagerInitials}" FontSize="14" FontWeight="Bold" 
+                                                                           Foreground="#64748B" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                           Visibility="{Binding ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding ManagerName}" FontSize="14" FontWeight="SemiBold" Foreground="#111111"/>
+                                                            <TextBlock Text="Менеджер проекта" FontSize="11" Foreground="#64748B"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                        <Border Background="#F8FAFC" CornerRadius="6" Padding="10,6">
+                                                            <StackPanel>
+                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                                    <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center" Opacity="0.6"/>
+                                                                    <TextBlock FontSize="12" Foreground="#64748B">
+                                                                        <Run Text="{Binding StartDate, Converter={StaticResource DateOnlyToString}}"/>
+                                                                        <Run Text=" — "/>
+                                                                        <Run Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"/>
+                                                                    </TextBlock>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <!-- Row 3: Progress -->
+                                                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                                                    <Grid Margin="0,0,0,10">
+                                                        <TextBlock Text="Прогресс выполнения" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}" 
+                                                                   FontSize="15" FontWeight="Bold" Foreground="#111111" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
+                                                                 Maximum="100" Height="10"
+                                                                 Background="#E9ECEF"
+                                                                 Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
+                                                                 Template="{StaticResource SlimPB}"/>
+                                                </StackPanel>
+
+                                                <!-- Actions (role-based) -->
+                                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,-4">
                                                 <!-- Edit (Manager+, hidden when marked) -->
                                                 <Button Tag="{Binding}" Click="EditProject_Click" Margin="0,0,8,0" ToolTip="Редактировать">
                                                     <Button.Style>

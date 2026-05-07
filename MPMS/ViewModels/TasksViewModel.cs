@@ -147,6 +147,19 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var list = await query.ToListAsync();
 
+        // Populate ProjectName from Projects table
+        var projectIds = list.Select(t => t.ProjectId).Distinct().ToList();
+        var projectNames = await db.Projects
+            .Where(p => projectIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.Name })
+            .ToDictionaryAsync(p => p.Id, p => p.Name);
+
+        foreach (var t in list)
+        {
+            if (string.IsNullOrWhiteSpace(t.ProjectName) && projectNames.TryGetValue(t.ProjectId, out var name))
+                t.ProjectName = name;
+        }
+
         var projectMarkedById = projectList.ToDictionary(p => p.Id, p => p.IsMarkedForDeletion);
         foreach (var t in list)
             t.ProjectIsMarkedForDeletion = projectMarkedById.GetValueOrDefault(t.ProjectId);
@@ -245,7 +258,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var groups = list
             .GroupBy(t => new { t.ProjectId, t.ProjectName })
             .OrderBy(g => g.Key.ProjectName)
-            .Select(g => new ProjectTaskGroup(g.Key.ProjectId, g.Key.ProjectName ?? "—",
+            .Select(g => new ProjectTaskGroup(g.Key.ProjectId, 
+                string.IsNullOrWhiteSpace(g.Key.ProjectName) ? "—" : g.Key.ProjectName,
                 g.OrderBy(t => t.EffectiveTaskMarkedForDeletion).ThenBy(t => StatusOrder(t.Status))
                     .ThenBy(t => t.DueDate ?? DateOnly.MaxValue).ThenByDescending(t => t.UpdatedAt).ThenBy(t => t.Name).ToList()))
             .ToList();

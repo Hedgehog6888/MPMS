@@ -122,6 +122,20 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             }
 
             var tasks = await tasksQuery.ToListAsync();
+
+            // Populate ProjectName from Projects table if missing
+            var taskProjectIds = tasks.Select(t => t.ProjectId).Distinct().ToList();
+            var projectNames = await db.Projects
+                .Where(p => taskProjectIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.Name })
+                .ToDictionaryAsync(p => p.Id, p => p.Name);
+
+            foreach (var t in tasks)
+            {
+                if (string.IsNullOrWhiteSpace(t.ProjectName) && projectNames.TryGetValue(t.ProjectId, out var name))
+                    t.ProjectName = name;
+            }
+
             var taskDict = tasks.ToDictionary(t => t.Id);
             var taskIds = tasks.Select(t => t.Id).ToList();
 
@@ -293,7 +307,8 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 var ordered = g.OrderBy(x => x.TaskName).ToList();
                 var withFirst = ordered.Select((tg, i) => new TaskStageGroup(
                     tg.TaskId, tg.TaskName, tg.ProjectId, tg.ProjectName, tg.Stages, i == 0)).ToList();
-                return new ProjectStageGroup(g.Key.ProjectId, g.Key.ProjectName, withFirst);
+                var projectName = string.IsNullOrWhiteSpace(g.Key.ProjectName) ? "—" : g.Key.ProjectName;
+                return new ProjectStageGroup(g.Key.ProjectId, projectName, withFirst);
             })
             .ToList();
         ProjectStageGroups = new ObservableCollection<ProjectStageGroup>(projectGroups);

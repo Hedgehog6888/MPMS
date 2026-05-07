@@ -79,8 +79,8 @@
                         </Grid>
 
                         <!-- Progress bar -->
-                        <Border Background="#EEF0F3" CornerRadius="4" Height="8" Margin="0,0,0,6">
-                            <Border x:Name="ProgressFill" CornerRadius="4" HorizontalAlignment="Left"
+                        <Border Background="#E9ECEF" CornerRadius="3" Height="10" Margin="0,0,0,6">
+                            <Border x:Name="ProgressFill" CornerRadius="3" HorizontalAlignment="Left"
                                     Background="#0082FF" Width="0">
                                 <Border.Style>
                                     <Style TargetType="Border">
