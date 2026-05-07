@@ -130,7 +130,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
                                                     <TextBlock Grid.Column="1" Text="ИСПОЛНИТЕЛЬ"  Style="{StaticResource ColHeader}"/>
-                                                    <TextBlock Grid.Column="2" Text="СТАТУС"       Style="{StaticResource ColHeader}"/>
+                                                    <TextBlock Grid.Column="2" Text="СТАТУС"       Style="{StaticResource ColHeader}" HorizontalAlignment="Center"/>
                                                     <TextBlock Grid.Column="3" Text="ПРИОРИТЕТ"    Style="{StaticResource ColHeader}"/>
                                                     <TextBlock Grid.Column="4" Text="СРОК"         Style="{StaticResource ColHeader}"/>
                                                     <TextBlock Grid.Column="5" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
@@ -227,7 +227,7 @@
 
                                                 <!-- Status badge -->
                                                 <Border Grid.Column="2"
-                                                        HorizontalAlignment="Left"
+                                                        HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"
                                                         CornerRadius="4" Padding="8,4">
                                                     <Border.Style>
