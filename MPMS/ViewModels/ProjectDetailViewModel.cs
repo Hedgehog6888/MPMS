@@ -41,6 +41,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     // ─── Stages collections & filters ─────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalTaskStage> _allStages = [];
     [ObservableProperty] private ObservableCollection<LocalTaskStage> _filteredStages = [];
+    [ObservableProperty] private ObservableCollection<ProjectStageGroup> _projectStageGroups = [];
     [ObservableProperty] private string _stageSearchText = string.Empty;
     [ObservableProperty] private string _stageStatusFilter = "Все статусы";
 
@@ -218,7 +219,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             }
         }
 
-        var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id && !t.IsArchived);
+        var isClosedProject = Project.IsClosed || Project.Status == ProjectStatus.Closed;
+        var tasksQuery = db.Tasks.Where(t => t.ProjectId == Project.Id);
+        if (!isClosedProject)
+            tasksQuery = tasksQuery.Where(t => !t.IsArchived);
 
         if (userId.HasValue && isWorker)
         {
@@ -240,8 +244,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         // Load stages and compute TotalStages/CompletedStages + auto task status for each task
         var taskIds = tasks.Select(t => t.Id).ToList();
-        var stagesQuery = db.TaskStages
-            .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived);
+        var stagesQuery = db.TaskStages.Where(s => taskIds.Contains(s.TaskId));
+        if (!isClosedProject)
+            stagesQuery = stagesQuery.Where(s => !s.IsArchived);
         if (userId.HasValue && isWorker)
         {
             var workerStageIds = await db.StageAssignees
@@ -270,9 +275,12 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         }
 
-        // Persist task status changes and recalc project status
-        await RecalcAndSaveTaskStatusesAsync(db, tasks);
-        await RecalcProjectStatusAsync(db);
+        // Closed projects are read-only snapshots; keep their stored task/stage/project statuses intact.
+        if (!isClosedProject)
+        {
+            await RecalcAndSaveTaskStatusesAsync(db, tasks);
+            await RecalcProjectStatusAsync(db);
+        }
 
         // Populate AssignedUserAvatarData for tasks from Users
         var taskAssigneeIds = tasks.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
@@ -514,21 +522,24 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(s => s.Status == targetStatus.Value && !s.EffectiveMarkedForDeletion);
         }
 
-        var list = query
+        static int StageStatusOrder(StageStatus st) => st switch
+        {
+            StageStatus.Planned    => 0,
+            StageStatus.InProgress => 1,
+            StageStatus.Completed  => 2,
+            _                      => 9
+        };
+
+        var ordered = query
             .OrderBy(s => s.EffectiveMarkedForDeletion)
-            .ThenBy(s => s.Status switch
-            {
-                StageStatus.Planned    => 0,
-                StageStatus.InProgress => 1,
-                StageStatus.Completed  => 2,
-                _                      => 9
-            })
+            .ThenBy(s => StageStatusOrder(s.Status))
             .ThenBy(s => s.DueDate ?? DateOnly.MaxValue)
             .ThenByDescending(s => s.UpdatedAt)
             .ThenBy(s => s.TaskName)
             .ThenBy(s => s.Name)
             .ToList();
-        FilteredStages = new ObservableCollection<LocalTaskStage>(list);
+
+        FilteredStages = new ObservableCollection<LocalTaskStage>(ordered);
 
         StageItem MakeStageItem(LocalTaskStage s) => new()
         {
@@ -539,13 +550,33 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ProjectName = Project?.Name ?? "—"
         };
 
-        var markedItems = list.Where(s => s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
-        var stageItems = list.Where(s => !s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
+        var markedItems = ordered.Where(s => s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
+        var stageItems = ordered.Where(s => !s.EffectiveMarkedForDeletion).Select(MakeStageItem).ToList();
 
         FilteredMarkedStages = new ObservableCollection<StageItem>(markedItems);
         FilteredPlannedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Planned));
         FilteredInProgressStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.InProgress));
         FilteredCompletedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Completed));
+
+        // Построение группировки по задачам для отображения во вкладке "Этапы"
+        var taskGroups = ordered
+            .GroupBy(s => new { s.TaskId, s.TaskName })
+            .OrderBy(g => g.Key.TaskName)
+            .Select(g => new TaskStageGroup(g.Key.TaskId, g.Key.TaskName ?? "—", Project?.Id ?? Guid.Empty, Project?.Name ?? "—",
+                g.OrderBy(s => s.EffectiveMarkedForDeletion)
+                    .ThenBy(s => StageStatusOrder(s.Status))
+                    .ThenBy(s => s.DueDate ?? DateOnly.MaxValue)
+                    .ThenByDescending(s => s.UpdatedAt)
+                    .Select(MakeStageItem)
+                    .ToList(), isFirstInProject: false))
+            .ToList();
+
+        // Для одного проекта всегда одна группа проекта
+        var projectName = Project?.Name ?? "—";
+        var withFirst = taskGroups.Select((tg, i) => new TaskStageGroup(
+            tg.TaskId, tg.TaskName, tg.ProjectId, tg.ProjectName, tg.Stages, i == 0)).ToList();
+        var projectGroup = new ProjectStageGroup(Project?.Id ?? Guid.Empty, projectName, withFirst);
+        ProjectStageGroups = new ObservableCollection<ProjectStageGroup> { projectGroup };
     }
 
     public async Task UpdateProjectAsync(Guid id, UpdateProjectRequest req)
@@ -569,6 +600,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.ManagerName = managerName;
         project.IsMarkedForDeletion = req.IsMarkedForDeletion;
         project.IsArchived = req.IsArchived;
+        project.IsClosed = req.IsClosed;
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
@@ -835,6 +867,33 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var action = project.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = project.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task CloseProjectAsync()
+    {
+        await CloseProjectAsync(null);
+    }
+
+    public async Task CloseProjectAsync(string? closureReason)
+    {
+        if (Project is null) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(Project.Id);
+        if (project is null) return;
+
+        project.IsClosed = true;
+        project.Status = ProjectStatus.Closed;
+        project.IsSynced = false;
+        project.UpdatedAt = DateTime.UtcNow;
+        project.ClosedAt = DateTime.UtcNow;
+        project.ClosureReason = string.IsNullOrWhiteSpace(closureReason) ? null : closureReason;
+
+        await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Update, SyncPayloads.Project(project));
+
+        await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
         await LoadAsync();
     }
 

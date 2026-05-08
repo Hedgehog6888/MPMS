@@ -348,7 +348,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                         (isForeman && foremanProjectIds.Contains(p.Id)))
                                     && !s.IsMarkedForDeletion && !s.IsArchived
                                     && !t.IsMarkedForDeletion && !t.IsArchived
-                                    && !p.IsMarkedForDeletion && !p.IsArchived
+                                    && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
                                  select s;
 
                 // Tasks assigned to user (if they have no stages, they are distinct work items)
@@ -358,7 +358,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                         (isForeman && foremanProjectIds.Contains(p.Id)))
                                     && !db.TaskStages.Any(s => s.TaskId == t.Id) // Only tasks WITHOUT stages (others are counted via stages)
                                     && !t.IsMarkedForDeletion && !t.IsArchived
-                                    && !p.IsMarkedForDeletion && !p.IsArchived
+                                    && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
                                  select t;
 
                 int stagesCompleted = await stagesQuery.CountAsync(s => s.Status == StageStatus.Completed);
@@ -455,7 +455,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                 && t.Status != Models.TaskStatus.Completed 
                                                 && t.DueDate < today
                                                 && !t.IsArchived
-                                                && !p.IsArchived
+                                                && !p.IsArchived && !p.IsClosed
                                              select t.Id).CountAsync();
 
                 // For Attention, we count ALL overdue stages assigned to user
@@ -469,7 +469,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                   && s.DueDate < today
                                                   && !s.IsArchived
                                                   && !t.IsArchived
-                                                  && !p.IsArchived
+                                                  && !p.IsArchived && !p.IsClosed
                                                select s.Id).CountAsync();
                 
                 Card3Value = overdueStagesCount + overdueTasksCount;
@@ -548,7 +548,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             else if (isManager || IsAdmin)
             {
                 Card1Title = "Обзор нагрузки";
-                var query = db.Projects.Where(p => !p.IsMarkedForDeletion && !p.IsArchived);
+                var query = db.Projects.Where(p => !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed);
                 if (isManager) query = query.Where(p => p.ManagerId == userId);
 
                 var projects = await query.ToListAsync();
@@ -703,14 +703,14 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 else // Admin
                 {
                     // Global overdue counts for admin (only in active projects/tasks)
-                    int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && p.Status != ProjectStatus.Completed && p.EndDate < today);
+                    int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed && p.Status != ProjectStatus.Completed && p.EndDate < today);
 
                     int globalOverdueTasks = await (from t in db.Tasks
                                                    join p in db.Projects on t.ProjectId equals p.Id
                                                    where t.Status != Models.TaskStatus.Completed
                                                       && t.DueDate < today
                                                       && !t.IsArchived
-                                                      && !p.IsArchived
+                                                      && !p.IsArchived && !p.IsClosed
                                                    select t.Id).CountAsync();
                                                    
                     int globalOverdueStages = await (from s in db.TaskStages
@@ -720,7 +720,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                        && s.DueDate < today
                                                        && !s.IsArchived
                                                        && !t.IsArchived
-                                                       && !p.IsArchived
+                                                       && !p.IsArchived && !p.IsClosed
                                                     select s.Id).CountAsync();
                     
                     Card3Value = globalOverdueProjects + globalOverdueTasks + globalOverdueStages;

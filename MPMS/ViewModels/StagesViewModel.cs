@@ -75,7 +75,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var tasksQuery = db.Tasks.Where(t => !t.IsArchived);
+            var tasksQuery = db.Tasks.Where(t => !t.IsArchived && db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
             var userId = _auth.UserId;
             bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
                             string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
@@ -433,21 +433,37 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     }
 }
 
-public class ProjectStageGroup
+public partial class ProjectStageGroup : ObservableObject
 {
     public Guid ProjectId { get; }
     public string ProjectName { get; }
     public List<TaskStageGroup> TaskGroups { get; }
+    public int TaskCount { get; }
+    public int StageCount { get; }
+
+    [ObservableProperty] private bool _isExpanded;
 
     public ProjectStageGroup(Guid projectId, string projectName, List<TaskStageGroup> taskGroups)
     {
         ProjectId = projectId;
         ProjectName = projectName;
         TaskGroups = taskGroups;
+        TaskCount = taskGroups.Count;
+        StageCount = taskGroups.Sum(t => t.Stages.Count);
+
+        // Load saved state
+        var key = $"StagesPage_ProjectExpanded_{projectId}";
+        _isExpanded = Infrastructure.LocalSettings.GetBool(key, true);
+    }
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        var key = $"StagesPage_ProjectExpanded_{ProjectId}";
+        Infrastructure.LocalSettings.SetBool(key, value);
     }
 }
 
-public class TaskStageGroup
+public partial class TaskStageGroup : ObservableObject
 {
     public Guid TaskId { get; }
     public string TaskName { get; }
@@ -456,6 +472,8 @@ public class TaskStageGroup
     public List<StageItem> Stages { get; }
     /// <summary>Первая задача в проекте — в одной строке с названием проекта.</summary>
     public bool IsFirstInProject { get; }
+
+    [ObservableProperty] private bool _isExpanded;
 
     public TaskStageGroup(Guid taskId, string taskName, Guid projectId, string projectName, List<StageItem> stages,
         bool isFirstInProject = false)
@@ -466,6 +484,16 @@ public class TaskStageGroup
         ProjectName = projectName;
         Stages = stages;
         IsFirstInProject = isFirstInProject;
+
+        // Load saved state
+        var key = $"StagesPage_TaskExpanded_{taskId}";
+        _isExpanded = Infrastructure.LocalSettings.GetBool(key, true);
+    }
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        var key = $"StagesPage_TaskExpanded_{TaskId}";
+        Infrastructure.LocalSettings.SetBool(key, value);
     }
 }
 

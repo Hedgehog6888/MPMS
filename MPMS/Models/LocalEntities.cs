@@ -97,6 +97,10 @@ public class LocalProject : LocalEntity
 
     /// <summary>Project has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;
+    public bool IsClosed { get; set; } = false;
+
+    public DateTime? ClosedAt { get; set; }
+    public string? ClosureReason { get; set; }
 
     [NotMapped] public int TotalTasks { get; set; }
     [NotMapped] public int CompletedTasks { get; set; }

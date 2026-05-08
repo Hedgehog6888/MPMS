@@ -18,6 +18,31 @@
         <infra:BoolToVisibilityConverter x:Key="StringToVis" IsStringMode="True"/>
         <infra:EqualityToBoolConverter x:Key="EqualityToBool"/>
 
+        <!-- Sidebar width animation -->
+        <Storyboard x:Key="SidebarExpandAnimation">
+            <infra:GridLengthAnimation Storyboard.TargetName="SidebarColumn"
+                                       Storyboard.TargetProperty="Width"
+                                       Duration="0:0:0.25"
+                                       From="64"
+                                       To="220">
+                <infra:GridLengthAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </infra:GridLengthAnimation.EasingFunction>
+            </infra:GridLengthAnimation>
+        </Storyboard>
+
+        <Storyboard x:Key="SidebarCollapseAnimation">
+            <infra:GridLengthAnimation Storyboard.TargetName="SidebarColumn"
+                                       Storyboard.TargetProperty="Width"
+                                       Duration="0:0:0.25"
+                                       From="220"
+                                       To="64">
+                <infra:GridLengthAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </infra:GridLengthAnimation.EasingFunction>
+            </infra:GridLengthAnimation>
+        </Storyboard>
+
         <!-- Nav button style (light theme, white sidebar) -->
         <Style x:Key="NavButton" TargetType="RadioButton">
             <Setter Property="Background"     Value="Transparent"/>
@@ -98,7 +123,7 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <!-- Sidebar -->
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition x:Name="SidebarColumn" Width="220"/>
             <!-- Content -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>

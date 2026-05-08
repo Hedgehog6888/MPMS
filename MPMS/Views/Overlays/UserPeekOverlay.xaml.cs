@@ -94,7 +94,7 @@ public partial class UserPeekOverlay : UserControl
         var scope = _accessibleProjectIds.Intersect(targetProjectIds).ToHashSet();
 
         var projectsInScopeRaw = await db.Projects.AsNoTracking()
-            .Where(p => scope.Contains(p.Id) && !p.IsArchived)
+            .Where(p => scope.Contains(p.Id) && !p.IsArchived && !p.IsClosed)
             .Select(p => new { p.Id, p.Name, p.Status, p.IsMarkedForDeletion, p.EndDate, p.StartDate, p.UpdatedAt })
             .ToListAsync();
 

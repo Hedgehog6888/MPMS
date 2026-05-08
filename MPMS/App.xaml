@@ -918,6 +918,9 @@
 
             <!-- ── ToolTip ─────────────────────────────────────────── -->
             <Style x:Key="ProgramToolTip" TargetType="ToolTip">
+                <Setter Property="ToolTipService.InitialShowDelay" Value="100"/>
+                <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
+                <Setter Property="ToolTipService.ShowDuration" Value="30000"/>
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="Foreground" Value="#111111"/>
                 <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -991,6 +994,9 @@
             <infra:FileExtensionToForegroundBrushConverter x:Key="FileExtensionToForegroundBrush"/>
             <infra:FileTypeToIsImageConverter x:Key="FileTypeToIsImage"/>
             <infra:FileExtensionToShortLabelConverter x:Key="FileExtensionToShortLabel"/>
+            <infra:PluralTaskConverter x:Key="PluralTaskConverter"/>
+            <infra:PluralStageConverter x:Key="PluralStageConverter"/>
+            <infra:BoolToGridLengthConverter x:Key="BoolToGridLength"/>
 
             <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
             <Style x:Key="AvatarCircle20" TargetType="Border">

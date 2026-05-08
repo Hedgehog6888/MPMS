@@ -39,7 +39,7 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-            var query = db.Projects.Where(p => p.IsArchived);
+            var query = db.Projects.Where(p => p.IsClosed && !p.IsArchived);
 
             var userId = _auth.UserId;
             bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
@@ -92,6 +92,21 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
             }
 
             var list = await query.OrderByDescending(p => p.UpdatedAt).ToListAsync(ct);
+            var projectIds = list.Select(p => p.Id).ToList();
+            var tasks = await db.Tasks.Where(t => projectIds.Contains(t.ProjectId)).ToListAsync(ct);
+            var taskIds = tasks.Select(t => t.Id).ToList();
+            var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync(ct);
+
+            foreach (var project in list)
+            {
+                var projectTasks = tasks.Where(t => t.ProjectId == project.Id).ToList();
+                var projectTaskIds = projectTasks.Select(t => t.Id).ToList();
+                var projectStages = stages.Where(s => projectTaskIds.Contains(s.TaskId)).ToList();
+                foreach (var task in projectTasks)
+                    ProgressCalculator.ApplyTaskMetrics(task, projectStages.Where(s => s.TaskId == task.Id).ToList());
+                ProgressCalculator.ApplyProjectMetrics(project, projectTasks, projectStages);
+                project.Status = ProjectStatus.Closed;
+            }
             _allProjects = list;
             ApplySearch();
         }

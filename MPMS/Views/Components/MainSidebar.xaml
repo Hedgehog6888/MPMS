@@ -73,13 +73,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Главная"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -104,13 +108,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Проекты"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -134,13 +142,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Задачи"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -164,13 +176,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Этапы"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -195,13 +211,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Таймлайн"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -225,13 +245,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Календарь"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -255,13 +279,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Склад"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -285,13 +313,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Файлы"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
 
@@ -316,13 +348,17 @@
                                     <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
                                         <Setter Property="Opacity" Value="1"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Image.Style>
                     </Image>
                     <TextBlock Text="Администрирование"
                                FontSize="14"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </RadioButton>
         </StackPanel>

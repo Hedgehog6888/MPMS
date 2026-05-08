@@ -5,7 +5,8 @@ public enum ProjectStatus
     Planning,
     InProgress,
     Completed,
-    Cancelled
+    Cancelled,
+    Closed
 }
 
 public enum TaskStatus

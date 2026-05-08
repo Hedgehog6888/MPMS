@@ -90,6 +90,22 @@
                     <TextBlock x:Name="CascadeText"
                                FontSize="12" Foreground="#856404" TextWrapping="Wrap"/>
                 </Border>
+
+                <!-- Closure reason field (for close project) -->
+                <StackPanel x:Name="ClosureReasonPanel" Visibility="Collapsed" Margin="0,14,0,0">
+                    <TextBlock Text="Причина закрытия (необязательно)" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#344563" Margin="0,0,0,6"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                        <TextBox x:Name="ClosureReasonTextBox"
+                                 BorderThickness="0" Background="Transparent"
+                                 Foreground="#000000" FontSize="13"
+                                 Height="72" TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalContentAlignment="Top"/>
+                    </Border>
+                    <TextBlock Text="Укажите причину закрытия проекта."
+                               FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Footer -->

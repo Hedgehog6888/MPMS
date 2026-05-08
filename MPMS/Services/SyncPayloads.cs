@@ -7,7 +7,8 @@ public static class SyncPayloads
 {
     public static UpdateProjectRequest Project(LocalProject p) => new(
         p.Name, p.Description, p.Client, p.Address, p.StartDate, p.EndDate,
-        p.Status, p.ManagerId, p.IsMarkedForDeletion, p.IsArchived);
+        p.Status, p.ManagerId, p.IsMarkedForDeletion, p.IsArchived, p.IsClosed,
+        p.ClosedAt, p.ClosureReason);
 
     public static UpdateTaskRequest Task(LocalTask t) => new(
         t.Name, t.Description, t.AssignedUserId, t.Priority, t.DueDate, t.Status,

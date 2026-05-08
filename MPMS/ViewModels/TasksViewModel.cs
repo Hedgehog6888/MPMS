@@ -56,7 +56,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        var projectQuery = db.Projects.Where(p => !p.IsArchived);
+        var projectQuery = db.Projects.Where(p => !p.IsArchived && !p.IsClosed);
         var userId = _auth.UserId;
         bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
@@ -100,7 +100,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             .ToList();
         Projects = new ObservableCollection<LocalProject>(projectList);
 
-        var query = db.Tasks.Where(t => !t.IsArchived);
+        var query = db.Tasks.Where(t => !t.IsArchived && db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
 
         if (userId.HasValue)
         {
@@ -544,17 +544,31 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     }
 }
 
-public class ProjectTaskGroup
+public partial class ProjectTaskGroup : ObservableObject
 {
     public Guid ProjectId { get; }
     public string ProjectName { get; }
     public List<LocalTask> Tasks { get; }
+    public int TaskCount { get; }
+
+    [ObservableProperty] private bool _isExpanded;
 
     public ProjectTaskGroup(Guid projectId, string projectName, List<LocalTask> tasks)
     {
         ProjectId = projectId;
         ProjectName = projectName;
         Tasks = tasks;
+        TaskCount = tasks.Count;
+
+        // Load saved state
+        var key = $"TasksPage_ProjectExpanded_{projectId}";
+        _isExpanded = Infrastructure.LocalSettings.GetBool(key, true);
+    }
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        var key = $"TasksPage_ProjectExpanded_{ProjectId}";
+        Infrastructure.LocalSettings.SetBool(key, value);
     }
 }
 

@@ -31,6 +31,10 @@ public class Project
     public bool IsMarkedForDeletion { get; set; }
 
     public bool IsArchived { get; set; }
+    public bool IsClosed { get; set; }
+
+    public DateTime? ClosedAt { get; set; }
+    public string? ClosureReason { get; set; }
 
     public ICollection<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();
     public ICollection<ProjectMember> Members { get; set; } = new List<ProjectMember>();

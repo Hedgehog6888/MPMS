@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Services;
+using MPMS.Infrastructure;
 namespace MPMS.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
@@ -61,6 +62,9 @@ public partial class MainViewModel : ViewModelBase
         _sync = sync;
         _sp = sp;
 
+        // Load saved sidebar state
+        _isSidebarExpanded = LocalSettings.GetBool("SidebarExpanded", true);
+
         // Read the real connectivity state immediately so the badge is correct
         // on the very first frame, before the timer fires for the first time.
         _isOnline = _sync.IsOnline;
@@ -114,6 +118,11 @@ public partial class MainViewModel : ViewModelBase
 
     [RelayCommand]
     private void ToggleSidebar() => IsSidebarExpanded = !IsSidebarExpanded;
+
+    partial void OnIsSidebarExpandedChanged(bool value)
+    {
+        LocalSettings.SetBool("SidebarExpanded", value);
+    }
 
     [RelayCommand]
     public void Navigate(string page)

@@ -111,11 +111,21 @@ public partial class FilesControlViewModel : ViewModelBase
             {
                 query = query.Where(f => f.ProjectId == _projectId.Value);
             }
+            else
+            {
+                query = query.Where(f =>
+                    (!f.ProjectId.HasValue || db.Projects.Any(p => p.Id == f.ProjectId.Value && !p.IsArchived && !p.IsClosed)) &&
+                    (!f.TaskId.HasValue || db.Tasks.Any(t => t.Id == f.TaskId.Value && !t.IsArchived &&
+                        db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed))) &&
+                    (!f.StageId.HasValue || db.TaskStages.Any(s => s.Id == f.StageId.Value && !s.IsArchived &&
+                        db.Tasks.Any(t => t.Id == s.TaskId && !t.IsArchived &&
+                            db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed)))));
+            }
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
             
-            var projectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId.Value).Distinct().ToList();
-            var stageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId.Value).Distinct().ToList();
+            var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
+            var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
             
             var projects = await db.Projects.Where(p => projectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name);
             var stages = await db.TaskStages.Where(s => stageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name);
@@ -664,4 +674,3 @@ public partial class FilesControlViewModel : ViewModelBase
         await _sync.QueueLocalActivityLogAsync(log);
     }
 }
-

@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using MPMS.Models;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -29,6 +30,8 @@ public class BoolToVisibilityConverter : IValueConverter
         bool flag;
         if (IsStringMode)
             flag = value is string s && !string.IsNullOrEmpty(s);
+        else if (value is int count)
+            flag = count > 0;
         else
             flag = value is true;
 
@@ -279,6 +282,7 @@ public class ProjectStatusToBrushConverter : IValueConverter
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
             ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
             ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            ProjectStatus.Closed     => new SolidColorBrush(Color.FromRgb(0x00, 0x00, 0x00)),
             _                        => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
@@ -354,6 +358,7 @@ public class ProjectStatusToStringConverter : IValueConverter
             ProjectStatus.InProgress => "Выполняется",
             ProjectStatus.Completed  => "Завершён",
             ProjectStatus.Cancelled  => "Отменён",
+            ProjectStatus.Closed     => "Закрытый",
             _                        => value?.ToString() ?? ""
         };
 
@@ -446,6 +451,80 @@ public class IntToStarGridLengthConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
+}
+
+/// <summary>Converts bool to GridLength. Parameter: "trueWidth,falseWidth" (e.g., "220,64").</summary>
+public class BoolToGridLengthConverter : IValueConverter
+{
+    public static readonly BoolToGridLengthConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool isExpanded = value is true;
+        if (parameter is string param)
+        {
+            var parts = param.Split(',');
+            if (parts.Length == 2 && double.TryParse(parts[0], out double trueWidth) && double.TryParse(parts[1], out double falseWidth))
+            {
+                return new GridLength(isExpanded ? trueWidth : falseWidth, GridUnitType.Pixel);
+            }
+        }
+        return new GridLength(isExpanded ? 220 : 64, GridUnitType.Pixel);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Animates GridLength values for smooth column width transitions.</summary>
+public class GridLengthAnimation : AnimationTimeline
+{
+    public static readonly DependencyProperty FromProperty =
+        DependencyProperty.Register(nameof(From), typeof(GridLength), typeof(GridLengthAnimation));
+
+    public static readonly DependencyProperty ToProperty =
+        DependencyProperty.Register(nameof(To), typeof(GridLength), typeof(GridLengthAnimation));
+
+    public static readonly DependencyProperty EasingFunctionProperty =
+        DependencyProperty.Register(nameof(EasingFunction), typeof(IEasingFunction), typeof(GridLengthAnimation));
+
+    public GridLength From
+    {
+        get => (GridLength)GetValue(FromProperty);
+        set => SetValue(FromProperty, value);
+    }
+
+    public GridLength To
+    {
+        get => (GridLength)GetValue(ToProperty);
+        set => SetValue(ToProperty, value);
+    }
+
+    public IEasingFunction EasingFunction
+    {
+        get => (IEasingFunction)GetValue(EasingFunctionProperty);
+        set => SetValue(EasingFunctionProperty, value);
+    }
+
+    protected override Freezable CreateInstanceCore() => new GridLengthAnimation();
+
+    public override Type TargetPropertyType => typeof(GridLength);
+
+    public override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock)
+    {
+        if (animationClock == null || !animationClock.CurrentProgress.HasValue)
+            return From;
+
+        double progress = animationClock.CurrentProgress.Value;
+        if (EasingFunction != null)
+            progress = EasingFunction.Ease(progress);
+
+        double fromValue = From.Value;
+        double toValue = To.Value;
+        double currentValue = fromValue + (toValue - fromValue) * progress;
+
+        return new GridLength(currentValue, GridUnitType.Pixel);
+    }
 }
 
 /// <summary>Converts int to bool: true if value > 0.</summary>
@@ -1211,11 +1290,57 @@ public class FileExtensionToShortLabelConverter : IValueConverter
     {
         var input = value?.ToString() ?? "";
         if (string.IsNullOrEmpty(input)) return "";
-        
+
         var ext = Path.GetExtension(input);
         if (string.IsNullOrEmpty(ext)) ext = input;
-        
+
         return ext.TrimStart('.').ToUpperInvariant();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public class PluralTaskConverter : IValueConverter
+{
+    public static readonly PluralTaskConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not int count) return " задач";
+        var lastTwo = count % 100;
+        var lastOne = count % 10;
+
+        if (lastTwo >= 11 && lastTwo <= 19)
+            return " задач";
+        if (lastOne == 1)
+            return " задача";
+        if (lastOne >= 2 && lastOne <= 4)
+            return " задачи";
+        return " задач";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public class PluralStageConverter : IValueConverter
+{
+    public static readonly PluralStageConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not int count) return " этапов";
+        var lastTwo = count % 100;
+        var lastOne = count % 10;
+
+        if (lastTwo >= 11 && lastTwo <= 19)
+            return " этапов";
+        if (lastOne == 1)
+            return " этап";
+        if (lastOne >= 2 && lastOne <= 4)
+            return " этапа";
+        return " этапов";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

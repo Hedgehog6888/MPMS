@@ -106,7 +106,8 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
             bool isWorker  = string.Equals(_auth.UserRole, "Worker",  StringComparison.OrdinalIgnoreCase);
 
-            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion && t.DueDate != null);
+            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion && t.DueDate != null &&
+                db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
 
             if (userId.HasValue && !isAdmin)
             {

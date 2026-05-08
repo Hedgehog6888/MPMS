@@ -110,6 +110,23 @@ public partial class StagesPage : UserControl
         main.NavigateToStageEditor(stageEditor);
     }
 
+    private void TaskHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.DataContext is not TaskStageGroup group) return;
+        group.IsExpanded = !group.IsExpanded;
+    }
+
+    private void ProjectHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.DataContext is not ProjectStageGroup group) return;
+        group.IsExpanded = !group.IsExpanded;
+        // Разворачиваем/сворачиваем все задачи в проекте
+        foreach (var taskGroup in group.TaskGroups)
+        {
+            taskGroup.IsExpanded = group.IsExpanded;
+        }
+    }
+
     private static readonly SolidColorBrush _focusBrush = new(Colors.Black);
     private static readonly SolidColorBrush _normalBrush = new(Colors.Transparent);
     private static readonly SolidColorBrush _focusBg = new(Colors.White);

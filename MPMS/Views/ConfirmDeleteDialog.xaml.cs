@@ -5,6 +5,7 @@ namespace MPMS.Views;
 public partial class ConfirmDeleteDialog : Window
 {
     public bool Confirmed { get; private set; }
+    public string? ClosureReason { get; private set; }
 
     public ConfirmDeleteDialog()
     {
@@ -81,9 +82,38 @@ public partial class ConfirmDeleteDialog : Window
         if (EntityTypeText is not null) EntityTypeText.Text = "Действие";
     }
 
+    /// <summary>
+    /// Configures the dialog for close project action.
+    /// </summary>
+    public void ConfigureCloseProject(string projectName)
+    {
+        TitleText.Text = "Закрыть проект?";
+        EntityTypeText.Text = "Проект";
+        ItemNameText.Text = projectName;
+        ConfirmBtn.Content = "Закрыть";
+        CascadeWarning.Visibility = Visibility.Collapsed;
+        ClosureReasonPanel.Visibility = Visibility.Visible;
+        ClosureReasonTextBox.Text = string.Empty;
+    }
+
+    /// <summary>
+    /// Shows close project confirmation and returns the closure reason if confirmed.
+    /// </summary>
+    public static (bool confirmed, string? reason) ShowCloseProjectConfirmation(Window owner, string projectName)
+    {
+        var dialog = new ConfirmDeleteDialog
+        {
+            Owner = owner
+        };
+        dialog.ConfigureCloseProject(projectName);
+        dialog.ShowDialog();
+        return (dialog.Confirmed, dialog.ClosureReason);
+    }
+
     private void Confirm_Click(object sender, RoutedEventArgs e)
     {
         Confirmed = true;
+        ClosureReason = ClosureReasonTextBox.Text?.Trim();
         DialogResult = true;
         Close();
     }

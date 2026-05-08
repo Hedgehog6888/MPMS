@@ -45,6 +45,7 @@ public class ProjectSyncer : IEntitySyncer
                     local.UpdatedAt = p.UpdatedAt;
                     local.IsMarkedForDeletion = p.IsMarkedForDeletion;
                     local.IsArchived = p.IsArchived;
+                    local.IsClosed = p.IsClosed;
                     local.IsSynced = true;
                 }
                 else
@@ -62,6 +63,7 @@ public class ProjectSyncer : IEntitySyncer
                     local.UpdatedAt = p.UpdatedAt;
                     local.IsMarkedForDeletion = p.IsMarkedForDeletion;
                     local.IsArchived = p.IsArchived;
+                    local.IsClosed = p.IsClosed;
                 }
             }
             else
@@ -82,6 +84,7 @@ public class ProjectSyncer : IEntitySyncer
                     UpdatedAt = p.UpdatedAt,
                     IsMarkedForDeletion = p.IsMarkedForDeletion,
                     IsArchived = p.IsArchived,
+                    IsClosed = p.IsClosed,
                     IsSynced = true
                 });
             }

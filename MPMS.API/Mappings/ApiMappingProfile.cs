@@ -15,6 +15,7 @@ public class ApiMappingProfile : Profile
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.IsMarkedForDeletion, opt => opt.Ignore())
             .ForMember(dest => dest.IsArchived, opt => opt.Ignore())
+            .ForMember(dest => dest.IsClosed, opt => opt.Ignore())
             .ForMember(dest => dest.Manager, opt => opt.Ignore())
             .ForMember(dest => dest.Tasks, opt => opt.Ignore())
             .ForMember(dest => dest.Members, opt => opt.Ignore())
@@ -27,7 +28,9 @@ public class ApiMappingProfile : Profile
             .ForMember(dest => dest.Manager, opt => opt.Ignore())
             .ForMember(dest => dest.Tasks, opt => opt.Ignore())
             .ForMember(dest => dest.Members, opt => opt.Ignore())
-            .ForMember(dest => dest.Files, opt => opt.Ignore());
+            .ForMember(dest => dest.Files, opt => opt.Ignore())
+            .ForSourceMember(src => src.ClosedAt, opt => opt.DoNotValidate())
+            .ForSourceMember(src => src.ClosureReason, opt => opt.DoNotValidate());
 
         CreateMap<Project, ProjectListResponse>()
             .ForCtorParam(nameof(ProjectListResponse.Status), opt => opt.MapFrom(src => src.Status.ToString()))

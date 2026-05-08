@@ -46,7 +46,7 @@ public partial class TaskDetailOverlay : UserControl
         ApplyRoleRestrictions();
     }
 
-    private void ApplyRoleRestrictions()
+    private async System.Threading.Tasks.Task ApplyRoleRestrictionsAsync()
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
         string role = auth.UserRole ?? "";
@@ -55,7 +55,17 @@ public partial class TaskDetailOverlay : UserControl
         bool isManager  = role is "Manager" or "ProjectManager" or "Project Manager";
         bool isAdmin    = role is "Admin" or "Administrator";
 
-        if (isWorker)
+        // Проверка на закрытый проект
+        bool isProjectClosed = false;
+        if (_vm?.Task?.ProjectId != null)
+        {
+            var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var project = await db.Projects.FindAsync(_vm.Task.ProjectId);
+            isProjectClosed = project != null && (project.IsClosed || project.Status == ProjectStatus.Closed);
+        }
+
+        if (isWorker || isProjectClosed)
         {
             EditTaskBtn.Visibility    = Visibility.Collapsed;
             AddStageBtn.Visibility    = Visibility.Collapsed;
@@ -78,7 +88,7 @@ public partial class TaskDetailOverlay : UserControl
             MarkDeletionBtn.Visibility = Visibility.Visible;
         }
 
-        if (isWorker)
+        if (isWorker || isProjectClosed)
         {
             /* Edit already collapsed */
         }
@@ -97,7 +107,11 @@ public partial class TaskDetailOverlay : UserControl
         ApplyDeletionFooter();
         // Статус задачи вычисляется автоматически из этапов — ручное изменение скрыто
         ChangeStatusBtn.Visibility = Visibility.Collapsed;
+    }
 
+    private void ApplyRoleRestrictions()
+    {
+        _ = ApplyRoleRestrictionsAsync();
     }
 
     private void ApplyDeletionFooter()

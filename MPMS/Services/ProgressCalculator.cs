@@ -78,7 +78,9 @@ public static class ProgressCalculator
         project.CompletedStages = activeStages.Count(s => s.Status == StageStatus.Completed);
         project.InProgressStages = activeStages.Count(s => s.Status == StageStatus.InProgress);
         project.AverageTaskProgress = activeTasks.Count == 0 ? 0 : activeTasks.Average(t => t.ProgressPercent);
-        project.Status = StatusCalculator.GetProjectStatusFromTasks(activeTasks);
+        project.Status = project.Status == ProjectStatus.Closed
+            ? ProjectStatus.Closed
+            : StatusCalculator.GetProjectStatusFromTasks(activeTasks);
     }
 
     public static int GetTaskProgressPercent(LocalTask task)

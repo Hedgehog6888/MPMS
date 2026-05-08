@@ -99,33 +99,55 @@ public partial class ProjectDetailPage : UserControl
         UpdateMarkProjectButton();
     }
 
+    private async void CloseProject_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.Project is null) return;
+        var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+        if (owner is null) return;
+
+        var (confirmed, reason) = ConfirmDeleteDialog.ShowCloseProjectConfirmation(owner, VM.Project.Name);
+        if (confirmed)
+        {
+            await VM.CloseProjectAsync(reason);
+            UpdateMarkProjectButton();
+        }
+    }
+
     private void UpdateMarkProjectButton()
     {
         if (VM?.Project is null) return;
         bool marked = VM.Project.IsMarkedForDeletion;
+        bool closed = VM.Project.IsClosed || VM.Project.Status == ProjectStatus.Closed;
         // Update mark button text via template
         MarkProjectBtn.ApplyTemplate();
         if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
-        // Hide editing buttons when project is marked for deletion
-        EditProjectBtn.Visibility  = marked ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
+        // Closed projects are view-only.
+        EditProjectBtn.Visibility  = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
+        EditProjectBtn.IsEnabled   = !marked && !closed;
+        EditProjectBtn.Opacity     = (marked || closed) ? 0.5 : 1.0;
+        MarkProjectBtn.Visibility  = closed ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
+
+        CloseProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
+        CloseProjectBtn.IsEnabled  = !marked && !closed;
+        CloseProjectBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
 
         // Quick Actions should remain visible but disabled (as per request: ONLY IN QUICK ACTIONS IN THE PROJECT)
         CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskQuickBtn.IsEnabled  = !marked;
-        CreateTaskQuickBtn.Opacity    = marked ? 0.5 : 1.0;
+        CreateTaskQuickBtn.IsEnabled  = !marked && !closed;
+        CreateTaskQuickBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
 
         QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
-        QuickTeamBtn.IsEnabled  = !marked;
-        QuickTeamBtn.Opacity    = marked ? 0.5 : 1.0;
+        QuickTeamBtn.IsEnabled  = !marked && !closed;
+        QuickTeamBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
 
-        UploadFileQuickBtn.IsEnabled = !marked;
-        UploadFileQuickBtn.Opacity   = marked ? 0.5 : 1.0;
+        UploadFileQuickBtn.IsEnabled = !marked && !closed;
+        UploadFileQuickBtn.Opacity   = (marked || closed) ? 0.5 : 1.0;
 
         // Other buttons still disappear as per "так и нужно"
-        CreateTaskBtn.Visibility  = marked ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
-        CreateStageBtn.Visibility = marked ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
-        AddFileBtn.Visibility     = marked ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateTaskBtn.Visibility  = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        AddFileBtn.Visibility     = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
@@ -162,9 +184,10 @@ public partial class ProjectDetailPage : UserControl
         }
 
         bool marked = VM?.Project?.IsMarkedForDeletion ?? false;
-        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
-        CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
-        AddFileBtn.Visibility     = (tab == "Files" && _canEdit && !marked) ? Visibility.Visible : Visibility.Collapsed;
+        bool closed = VM?.Project is { } p && (p.IsClosed || p.Status == ProjectStatus.Closed);
+        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        AddFileBtn.Visibility     = (tab == "Files" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
         {
@@ -305,6 +328,7 @@ public partial class ProjectDetailPage : UserControl
     private async void DeleteStageFromProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        if (VM.Project?.IsClosed == true || VM.Project?.Status == ProjectStatus.Closed) return;
         var owner = Window.GetWindow(this);
         if (ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
             await VM.DeleteStageCommand.ExecuteAsync(stage);
@@ -564,6 +588,7 @@ public partial class ProjectDetailPage : UserControl
     private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)
     {
         if (VM is null || ProjectMessageInput is null) return;
+        if (VM.Project?.IsClosed == true || VM.Project?.Status == ProjectStatus.Closed) return;
         var text = ProjectMessageInput.Text;
         if (string.IsNullOrWhiteSpace(text)) return;
         ProjectMessageInput.Text = "";
@@ -637,5 +662,10 @@ public partial class ProjectDetailPage : UserControl
         if (DataContext is ProjectDetailViewModel vm) vm.StageSearchText = string.Empty;
     }
 
-}
+    private void TaskHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.DataContext is not TaskStageGroup group) return;
+        group.IsExpanded = !group.IsExpanded;
+    }
 
+}

@@ -87,6 +87,19 @@ public partial class ProjectsPage : UserControl
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(project);
     }
 
+    private async void CloseProject_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
+        var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+        if (owner is null) return;
+
+        var (confirmed, reason) = ConfirmDeleteDialog.ShowCloseProjectConfirmation(owner, project.Name);
+        if (confirmed)
+        {
+            await VM.CloseProjectAsync(project, reason);
+        }
+    }
+
     private void ProjectName_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not TextBlock tb || tb.DataContext is not LocalProject project) return;
@@ -106,4 +119,3 @@ public partial class ProjectsPage : UserControl
         MainVM?.Navigate("ClosedProjects");
     }
 }
-

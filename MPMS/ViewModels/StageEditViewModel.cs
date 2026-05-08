@@ -603,7 +603,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var projects = await db.Projects
-            .Where(p => !p.IsArchived && !p.IsMarkedForDeletion)
+            .Where(p => !p.IsArchived && !p.IsClosed && !p.IsMarkedForDeletion)
             .OrderBy(p => p.Name)
             .ToListAsync();
         ProjectRows = new ObservableCollection<PickerRowVm>(projects.Select(p => new PickerRowVm(p.Id, p.Name)));

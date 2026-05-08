@@ -24,7 +24,10 @@ public record UpdateProjectRequest(
     ProjectStatus Status,
     Guid ManagerId,
     bool IsMarkedForDeletion = false,
-    bool IsArchived = false
+    bool IsArchived = false,
+    bool IsClosed = false,
+    DateTime? ClosedAt = null,
+    string? ClosureReason = null
 );
 
 public record ProjectResponse(
@@ -45,7 +48,10 @@ public record ProjectResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsMarkedForDeletion = false,
-    bool IsArchived = false
+    bool IsArchived = false,
+    bool IsClosed = false,
+    DateTime? ClosedAt = null,
+    string? ClosureReason = null
 );
 
 public record ProjectListResponse(
@@ -62,5 +68,8 @@ public record ProjectListResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsMarkedForDeletion,
-    bool IsArchived
+    bool IsArchived,
+    bool IsClosed = false,
+    DateTime? ClosedAt = null,
+    string? ClosureReason = null
 );

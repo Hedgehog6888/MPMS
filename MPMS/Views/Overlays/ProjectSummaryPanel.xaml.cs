@@ -83,7 +83,9 @@ public partial class ProjectSummaryPanel : UserControl
 
         if (loadVersion != _loadVersion) return;
 
-        var displayStatus = project.TotalTasks > 0 && project.CompletedTasks >= project.TotalTasks
+        var displayStatus = project.Status == ProjectStatus.Closed
+            ? ProjectStatus.Closed
+            : project.TotalTasks > 0 && project.CompletedTasks >= project.TotalTasks
             ? ProjectStatus.Completed
             : project.Status;
 
@@ -101,6 +103,7 @@ public partial class ProjectSummaryPanel : UserControl
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
             ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
             ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xFE, 0xF2, 0xF2)),
+            ProjectStatus.Closed     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
             _                        => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
         };
 

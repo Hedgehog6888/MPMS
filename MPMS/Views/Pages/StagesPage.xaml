@@ -33,7 +33,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <TextBlock Text="Этапы" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
-                    <TextBlock Text="Все этапы задач проектов"
+                    <TextBlock Text="{Binding Stages.Count, StringFormat='Этапов: {0}'}"
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <Button x:Name="CreateStageBtn" Grid.Column="1"
@@ -75,69 +75,181 @@
                         <ItemsControl ItemsSource="{Binding ProjectStageGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
-                                        <ItemsControl ItemsSource="{Binding TaskGroups}">
+                                    <StackPanel ClipToBounds="False">
+                                        <!-- Заголовок проекта -->
+                                        <Button Margin="0,10,0,6" VerticalAlignment="Center"
+                                                Click="ProjectHeader_Click"
+                                                Cursor="Hand"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="0"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Stretch"
+                                                ClipToBounds="False">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Padding" Value="0"/>
+                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        Padding="{TemplateBinding Padding}"
+                                                                        ClipToBounds="False"
+                                                                        CornerRadius="4">
+                                                                    <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Trigger.EnterActions>
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <ColorAnimation Storyboard.TargetName="Border"
+                                                                                                  Storyboard.TargetProperty="Background.Color"
+                                                                                                  To="#F1F5F9" Duration="0:0:0.25"/>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </Trigger.EnterActions>
+                                                                        <Trigger.ExitActions>
+                                                                            <BeginStoryboard>
+                                                                                <Storyboard>
+                                                                                    <ColorAnimation Storyboard.TargetName="Border"
+                                                                                                  Storyboard.TargetProperty="Background.Color"
+                                                                                                  To="Transparent" Duration="0:0:0.25"/>
+                                                                                </Storyboard>
+                                                                            </BeginStoryboard>
+                                                                        </Trigger.ExitActions>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </Button.Style>
+                                            <Grid ClipToBounds="False">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*" MinWidth="0"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#111111"
+                                                        VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                           Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                           Text="Проект"/>
+                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                           FontWeight="SemiBold" Foreground="#111111"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Text="{Binding ProjectName, Mode=OneWay}"/>
+                                                <!-- Task and stage count -->
+                                                <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="11"
+                                                           Foreground="#64748B" Margin="8,0,8,0">
+                                                    <Run Text="{Binding TaskCount, Mode=OneWay}"/>
+                                                    <Run Text="{Binding TaskCount, Converter={StaticResource PluralTaskConverter}, Mode=OneWay}"/>
+                                                    <Run Text="·"/>
+                                                    <Run Text="{Binding StageCount, Mode=OneWay}"/>
+                                                    <Run Text="{Binding StageCount, Converter={StaticResource PluralStageConverter}, Mode=OneWay}"/>
+                                                </TextBlock>
+                                                <!-- Chevron icon -->
+                                                <Grid Grid.Column="4" Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,8,0">
+                                                    <Path Data="M 0 0 L 4 4 L 0 8" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"/>
+                                                    <Path Data="M 0 0 L 4 4 L 8 0" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisInv}}"/>
+                                                </Grid>
+                                            </Grid>
+                                        </Button>
+                                        
+                                        <ItemsControl ItemsSource="{Binding TaskGroups}" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel>
-                                                        <StackPanel.Style>
-                                                            <Style TargetType="StackPanel">
-                                                                <Setter Property="Margin" Value="12,0,0,0"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsFirstInProject}" Value="True">
-                                                                        <Setter Property="Margin" Value="0"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </StackPanel.Style>
-                                                        <!-- Первая задача: проект и задача в одной строке -->
-                                                        <Grid Margin="0,10,0,6" VerticalAlignment="Center"
-                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVis}}">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*" MinWidth="0"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" Width="3" CornerRadius="1.5" Background="#111111"
-                                                                    VerticalAlignment="Center" Margin="0,0,10,0" Height="14"/>
-                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
-                                                                       Text="Проект"/>
-                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#111111"
-                                                                       TextTrimming="CharacterEllipsis" MaxWidth="240"
-                                                                       Text="{Binding ProjectName, Mode=OneWay}" Margin="0,0,8,0"/>
-                                                            <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#CBD5E1" Margin="0,0,6,0" Text="·"/>
-                                                            <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,4,0"
-                                                                       Text="Задача"/>
-                                                            <TextBlock Grid.Column="5" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#111111"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
-                                                        </Grid>
-                                                        <!-- Следующие задачи: только строка задачи -->
-                                                        <Grid Margin="0,8,0,4" VerticalAlignment="Center"
-                                                              Visibility="{Binding IsFirstInProject, Converter={StaticResource BoolToVisInv}}">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*" MinWidth="0"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#64748B"
-                                                                    VerticalAlignment="Center" Margin="0,0,8,0" Height="12"/>
-                                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
-                                                                       Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
-                                                                       Text="Задача"/>
-                                                            <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
-                                                                       FontWeight="SemiBold" Foreground="#111111"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Text="{Binding TaskName, Mode=OneWay}"/>
-                                                        </Grid>
+                                                    <StackPanel Margin="0,0,0,0">
+                                                        <!-- Заголовок задачи -->
+                                                        <Button Margin="0,8,0,4" VerticalAlignment="Center"
+                                                                Click="TaskHeader_Click"
+                                                                Cursor="Hand"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Padding="0"
+                                                                HorizontalAlignment="Stretch"
+                                                                HorizontalContentAlignment="Stretch">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                                    <Setter Property="Padding" Value="0"/>
+                                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                                    <Setter Property="Template">
+                                                                        <Setter.Value>
+                                                                            <ControlTemplate TargetType="Button">
+                                                                                <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                                        Padding="{TemplateBinding Padding}"
+                                                                                        ClipToBounds="False"
+                                                                                        CornerRadius="4">
+                                                                                    <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                                                                                </Border>
+                                                                                <ControlTemplate.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Trigger.EnterActions>
+                                                                                            <BeginStoryboard>
+                                                                                                <Storyboard>
+                                                                                                    <ColorAnimation Storyboard.TargetName="Border"
+                                                                                                                  Storyboard.TargetProperty="Background.Color"
+                                                                                                                  To="#F1F5F9" Duration="0:0:0.25"/>
+                                                                                                </Storyboard>
+                                                                                            </BeginStoryboard>
+                                                                                        </Trigger.EnterActions>
+                                                                                        <Trigger.ExitActions>
+                                                                                            <BeginStoryboard>
+                                                                                                <Storyboard>
+                                                                                                    <ColorAnimation Storyboard.TargetName="Border"
+                                                                                                                  Storyboard.TargetProperty="Background.Color"
+                                                                                                                  To="Transparent" Duration="0:0:0.25"/>
+                                                                                                </Storyboard>
+                                                                                            </BeginStoryboard>
+                                                                                        </Trigger.ExitActions>
+                                                                                    </Trigger>
+                                                                                </ControlTemplate.Triggers>
+                                                                            </ControlTemplate>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </Style>
+                                                            </Button.Style>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*" MinWidth="0"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Grid.Column="0" Width="2" CornerRadius="1" Background="#64748B"
+                                                                        VerticalAlignment="Center" Margin="7,0,8,0" Height="12"/>
+                                                                <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="10"
+                                                                           Foreground="#64748B" FontWeight="SemiBold" Margin="0,0,6,0"
+                                                                           Text="Задача"/>
+                                                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="12"
+                                                                           FontWeight="SemiBold" Foreground="#111111"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           Text="{Binding TaskName, Mode=OneWay}"/>
+                                                                <!-- Chevron icon -->
+                                                                <Grid Grid.Column="3" Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,8,0">
+                                                                    <Path Data="M 0 0 L 4 4 L 0 8" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"/>
+                                                                    <Path Data="M 0 0 L 4 4 L 8 0" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                                          Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisInv}}"/>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Button>
+                                        <!-- Заголовки колонок и этапы под этой задачей -->
+                                        <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
                                         <!-- Заголовки колонок под этой задачей -->
                                         <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                                                 BorderThickness="1.5" BorderBrush="Transparent">
@@ -150,9 +262,11 @@
                                                     <ColumnDefinition Width="*" MinWidth="87"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"
-                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="ИСПОЛНИТЕЛЬ"
-                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                           FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                           Margin="0,0,8,0"/>
                                                 <TextBlock Grid.Column="2" Text="СМЕНА СТАТУСА"
                                                            FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"
                                                            Margin="0,0,24,0"/>
@@ -320,9 +434,6 @@
                                                                                 <DataTrigger Binding="{Binding Stage.EffectiveMarkedForDeletion}" Value="True">
                                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                                 </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Stage.Status}" Value="Completed">
-                                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                                        </DataTrigger>
                                                                             </Style.Triggers>
                                                                         </Style>
                                                                     </Button.Style>
@@ -411,6 +522,7 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        </StackPanel>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

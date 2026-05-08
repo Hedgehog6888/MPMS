@@ -1,6 +1,6 @@
 namespace MPMS.Models;
 
-public enum ProjectStatus  { Planning, InProgress, Completed, Cancelled }
+public enum ProjectStatus  { Planning, InProgress, Completed, Cancelled, Closed }
 public enum TaskStatus     { Planned, InProgress, Paused, Completed }
 public enum StageStatus    { Planned, InProgress, Completed }
 public enum TaskPriority   { Low, Medium, High, Critical }

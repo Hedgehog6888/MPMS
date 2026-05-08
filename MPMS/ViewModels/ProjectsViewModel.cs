@@ -47,7 +47,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
-            var query = db.Projects.Where(p => !p.IsArchived);
+            var query = db.Projects.Where(p => !p.IsArchived && !p.IsClosed);
 
             var userId = _auth.UserId;
             bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
@@ -271,6 +271,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         project.ManagerName = managerName;
         project.IsMarkedForDeletion = req.IsMarkedForDeletion;
         project.IsArchived = req.IsArchived;
+        project.IsClosed = req.IsClosed;
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
 
@@ -288,7 +289,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         var entity = await db.Projects.FindAsync(project.Id);
         if (entity is null) return;
 
-        // Move to archive — cascade IsArchived to all tasks and their stages
+        // Delete moves the project graph to archive. Closing is handled separately by IsClosed.
         entity.IsArchived = true;
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
@@ -311,7 +312,32 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
         foreach (var s in stages)
             await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
-        await LogActivityAsync(db, $"Проект «{project.Name}» перемещён в архив", "Project", project.Id, ActivityActionKind.Deleted);
+        await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task CloseProjectAsync(LocalProject project)
+    {
+        await CloseProjectAsync(project, null);
+    }
+
+    public async Task CloseProjectAsync(LocalProject project, string? closureReason)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var entity = await db.Projects.FindAsync(project.Id);
+        if (entity is null) return;
+
+        entity.IsClosed = true;
+        entity.Status = ProjectStatus.Closed;
+        entity.IsSynced = false;
+        entity.UpdatedAt = DateTime.UtcNow;
+        entity.ClosedAt = DateTime.UtcNow;
+        entity.ClosureReason = string.IsNullOrWhiteSpace(closureReason) ? null : closureReason;
+
+        await db.SaveChangesAsync();
+        await _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
+        await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
         await LoadAsync();
     }
 

@@ -541,7 +541,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             ArchivedProjects.Clear();
             foreach (var p in projects)
                 ArchivedProjects.Add(new ArchiveRow { Id = p.Id, EntityType = "Project", Name = p.Name, ParentName = p.Client ?? "—",
-                    StatusText = p.Status switch { ProjectStatus.Planning => "Планирование", ProjectStatus.InProgress => "В работе", ProjectStatus.Completed => "Завершён", _ => "—" },
+                    StatusText = p.Status switch { ProjectStatus.Planning => "Планирование", ProjectStatus.InProgress => "В работе", ProjectStatus.Completed => "Завершён", ProjectStatus.Closed => "Закрытый", _ => "—" },
                     DeletedAt = p.UpdatedAt, DeletedBy = p.ManagerName,
                     Description = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description });
 

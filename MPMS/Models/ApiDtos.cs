@@ -27,20 +27,23 @@ public record CreateProjectRequest(string Name, string? Description, string? Cli
 public record UpdateProjectRequest(string Name, string? Description, string? Client,
     string? Address, DateOnly? StartDate, DateOnly? EndDate,
     ProjectStatus Status, Guid ManagerId,
-    bool IsMarkedForDeletion = false, bool IsArchived = false);
+    bool IsMarkedForDeletion = false, bool IsArchived = false, bool IsClosed = false,
+    DateTime? ClosedAt = null, string? ClosureReason = null);
 
 public record ProjectResponse(Guid Id, string Name, string? Description, string? Client,
     string? Address, DateOnly? StartDate, DateOnly? EndDate, string Status,
     Guid ManagerId, string ManagerName,
     int TotalTasks, int CompletedTasks, int InProgressTasks, int OverdueTasks,
     DateTime CreatedAt, DateTime UpdatedAt,
-    bool IsMarkedForDeletion = false, bool IsArchived = false);
+    bool IsMarkedForDeletion = false, bool IsArchived = false, bool IsClosed = false,
+    DateTime? ClosedAt = null, string? ClosureReason = null);
 
 public record ProjectListResponse(Guid Id, string Name, string? Client,
     DateOnly? StartDate, DateOnly? EndDate, string Status, string ManagerName,
     Guid ManagerId, string? Description, string? Address,
     DateTime CreatedAt, DateTime UpdatedAt,
-    bool IsMarkedForDeletion, bool IsArchived);
+    bool IsMarkedForDeletion, bool IsArchived, bool IsClosed = false,
+    DateTime? ClosedAt = null, string? ClosureReason = null);
 
 // ── Tasks ─────────────────────────────────────────────────────────────────────
 public record CreateTaskRequest(Guid ProjectId, string Name, string? Description,

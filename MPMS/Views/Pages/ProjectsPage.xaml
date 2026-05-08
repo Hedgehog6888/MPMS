@@ -72,7 +72,7 @@
                 <StackPanel>
                     <TextBlock Text="Проекты" FontSize="24" FontWeight="Bold"
                                Foreground="#111111"/>
-                    <TextBlock Text="Управление монтажными проектами"
+                    <TextBlock Text="{Binding Projects.Count, StringFormat='Проектов: {0}'}"
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -315,96 +315,135 @@
                                                 </StackPanel>
 
                                                 <!-- Actions (role-based) -->
-                                                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,-4">
-                                                <!-- Edit (Manager+, hidden when marked) -->
-                                                <Button Tag="{Binding}" Click="EditProject_Click" Margin="0,0,8,0" ToolTip="Редактировать">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                                            <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                    <Image Width="16" Height="16" Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"/>
-                                                </Button>
+                                                <Grid Grid.Row="3" Margin="0,20,0,-4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
 
-                                                <!-- Mark for deletion / Unmark (Manager role) -->
-                                                <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click" Style="{StaticResource IconButton}" Margin="0,0,8,0"
-                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
-                                                    <Button.ToolTip>
-                                                        <ToolTip>
-                                                            <TextBlock>
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Text" Value="Пометить к удалению"/>
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                                <Setter Property="Text" Value="Снять пометку удаления"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </ToolTip>
-                                                    </Button.ToolTip>
-                                                    <Grid>
-                                                        <Image Width="16" Height="16">
-                                                            <Image.Style>
-                                                                <Style TargetType="Image">
-                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"/>
+                                                    <!-- Close project (left) -->
+                                                    <Button Grid.Column="0" Tag="{Binding}" Click="CloseProject_Click"
+                                                            Height="34" Padding="12,0" FontSize="13">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border x:Name="Bg" Background="Black" CornerRadius="6"
+                                                                        Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                                      TextElement.Foreground="White"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="Bg" Property="Background" Value="#333"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                        <Button.Content>Закрыть проект</Button.Content>
+                                                    </Button>
+
+                                                    <!-- Other actions (right) -->
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                        <!-- Edit (Manager+, hidden when marked) -->
+                                                        <Button Tag="{Binding}" Click="EditProject_Click" Margin="0,0,8,0" ToolTip="Редактировать">
+                                                            <Button.Style>
+                                                                <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                                    <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
                                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                                         </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
-                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"/>
-                                                                        </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
-                                                            </Image.Style>
-                                                        </Image>
-                                                        <Image Width="16" Height="16">
-                                                            <Image.Style>
-                                                                <Style TargetType="Image">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"/>
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
-                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete_black.svg, AppName=MPMS}"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Image.Style>
-                                                        </Image>
-                                                    </Grid>
-                                                </Button>
+                                                            </Button.Style>
+                                                            <Image Width="16" Height="16" Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"/>
+                                                        </Button>
 
-                                                <!-- Delete (Admin only) -->
-                                                <Button Tag="{Binding}" Click="DeleteProject_Click" Style="{StaticResource IconButton}" ToolTip="Удалить проект"
-                                                        Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
-                                                    <Image Width="16" Height="16">
-                                                        <Image.Style>
-                                                            <Style TargetType="Image">
-                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
+                                                        <!-- Mark for deletion / Unmark (Manager role) -->
+                                                        <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click" Style="{StaticResource IconButton}" Margin="0,0,8,0"
+                                                                Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
+                                                            <Button.ToolTip>
+                                                                <ToolTip>
+                                                                    <TextBlock>
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Text" Value="Пометить к удалению"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                        <Setter Property="Text" Value="Снять пометку удаления"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                </ToolTip>
+                                                            </Button.ToolTip>
+                                                            <Grid>
+                                                                <Image Width="16" Height="16">
+                                                                    <Image.Style>
+                                                                        <Style TargetType="Image">
+                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
+                                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/markDelete.svg, AppName=MPMS}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Image.Style>
+                                                                </Image>
+                                                                <Image Width="16" Height="16">
+                                                                    <Image.Style>
+                                                                        <Style TargetType="Image">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
+                                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete_black.svg, AppName=MPMS}"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Image.Style>
+                                                                </Image>
+                                                            </Grid>
+                                                        </Button>
+
+                                                        <!-- Delete (Admin only) -->
+                                                        <Button Tag="{Binding}" Click="DeleteProject_Click" Style="{StaticResource IconButton}" ToolTip="Удалить проект"
+                                                                Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
+                                                            <Image Width="16" Height="16">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
                                                                         <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
-                                                                    </DataTrigger>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ElementName=CardBorder, Path=IsMouseOver}" Value="True">
+                                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
+                                                                            </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Image.Style>
                                                     </Image>
                                                 </Button>
-                                            </StackPanel>
+                                                    </StackPanel>
+                                                </Grid>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

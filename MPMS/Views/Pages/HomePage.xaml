@@ -219,9 +219,6 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="10">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="20" Opacity="0.12" ShadowDepth="4" Direction="270"/>
-                            </Border.Effect>
                             <ContentPresenter />
                         </Border>
                     </ControlTemplate>
@@ -287,7 +284,7 @@
                     <!-- Card 1: Status Line -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
-                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                            <ToolTip Style="{StaticResource PremiumTooltip}">
                                 <StackPanel Width="280">
                                     <!-- Header matching Sync Popup -->
                                     <Border Style="{StaticResource TooltipHeaderSection}" Background="#EFF6FF">
@@ -374,7 +371,7 @@
                     <!-- Card 2: Next Action / Deletion (Admin) -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
-                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                            <ToolTip Style="{StaticResource PremiumTooltip}">
                                 <StackPanel Width="280">
                                     <Border>
                                         <Border.Style>
@@ -518,7 +515,7 @@
                     <!-- Card 3: Attention Required -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
-                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                            <ToolTip Style="{StaticResource PremiumTooltip}">
                                 <StackPanel Width="280">
                                     <Border Style="{StaticResource TooltipHeaderSection}" Background="#FFFBEB">
                                         <StackPanel>
@@ -656,7 +653,7 @@
                     <!-- Card 4: System Status -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White" Margin="0,0,0,0">
                         <Border.ToolTip>
-                            <ToolTip Style="{StaticResource PremiumTooltip}" ToolTipService.InitialShowDelay="400">
+                            <ToolTip Style="{StaticResource PremiumTooltip}">
                                 <StackPanel Width="280">
                                     <Border Style="{StaticResource TooltipHeaderSection}" Background="#F0FDF4">
                                         <StackPanel>

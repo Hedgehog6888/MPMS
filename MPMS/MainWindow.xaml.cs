@@ -49,6 +49,34 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
         Instance = this;
+
+        Loaded += (s, e) =>
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                // Set initial width based on current state
+                SidebarColumn.Width = new GridLength(vm.IsSidebarExpanded ? 220 : 64, GridUnitType.Pixel);
+
+                vm.PropertyChanged += (s, pe) =>
+                {
+                    if (pe.PropertyName == nameof(MainViewModel.IsSidebarExpanded))
+                        AnimateSidebarWidth(vm.IsSidebarExpanded);
+                };
+            }
+        };
+    }
+
+    private void AnimateSidebarWidth(bool isExpanded)
+    {
+        double targetWidth = isExpanded ? 220 : 64;
+        var animation = new GridLengthAnimation
+        {
+            From = SidebarColumn.Width,
+            To = new GridLength(targetWidth, GridUnitType.Pixel),
+            Duration = TimeSpan.FromMilliseconds(300),
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        SidebarColumn.BeginAnimation(ColumnDefinition.WidthProperty, animation);
     }
 
     /// <summary>Открыт ли поверх drawer стековый модал (для закрытия только его, без drawer).</summary>

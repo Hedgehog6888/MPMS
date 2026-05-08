@@ -11,6 +11,24 @@
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
         <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
+
+        <!-- Slim progress bar template -->
+        <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
+            <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                <Border x:Name="PART_Track" CornerRadius="2">
+                    <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                            HorizontalAlignment="Left" CornerRadius="2"/>
+                </Border>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Column header style -->
+        <Style x:Key="ColHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="#F8FAFC">
@@ -27,21 +45,126 @@
             </StackPanel>
         </Border>
 
-        <!-- BODY -->
+        <!-- BODY: скролл справа у края, но контент/плашка с отступом справа -->
         <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
             <ScrollViewer x:Name="MainListScroll"
-                          VerticalScrollBarVisibility="Auto"
-                          Padding="0,0,24,0"
-                          Background="Transparent">
-                <StackPanel Margin="0,80,0,0">
+                          VerticalScrollBarVisibility="Visible"
+                          Padding="0,62,24,0"
+                          Background="Transparent"
+                          Panel.ZIndex="0">
+                <StackPanel>
+                    <!-- Заголовки колонок -->
+                    <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
+                            BorderThickness="1.5" BorderBrush="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*" MinWidth="200"/>
+                                <ColumnDefinition Width="2*" MinWidth="170"/>
+                                <ColumnDefinition Width="*" MinWidth="125"/>
+                                <ColumnDefinition Width="*" MinWidth="92"/>
+                                <ColumnDefinition Width="*" MinWidth="115"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
+                            <TextBlock Grid.Column="1" Text="ЗАКАЗЧИК"     Style="{StaticResource ColHeader}"/>
+                            <TextBlock Grid.Column="2" Text="СТАТУС"       Style="{StaticResource ColHeader}" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="СРОК"         Style="{StaticResource ColHeader}"/>
+                            <TextBlock Grid.Column="4" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
+                        </Grid>
+                    </Border>
+
                     <!-- Projects list -->
-                    <ItemsControl ItemsSource="{Binding Projects}" Margin="2,0,2,0"
-                                  Visibility="{Binding Projects.Count, Converter={StaticResource BoolToVis}}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="2"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                    <ItemsControl ItemsSource="{Binding Projects}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="8" Margin="0,0,0,6"
+                                        Padding="15,10" BorderThickness="1.5"
+                                        Cursor="Hand" MouseLeftButtonDown="ProjectRow_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="#111111"/>
+                                                </Trigger>
+                                                <EventTrigger RoutedEvent="Loaded">
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             From="0" To="1" Duration="0:0:0.2"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="4*" MinWidth="200"/>
+                                            <ColumnDefinition Width="2*" MinWidth="170"/>
+                                            <ColumnDefinition Width="*" MinWidth="125"/>
+                                            <ColumnDefinition Width="*" MinWidth="92"/>
+                                            <ColumnDefinition Width="*" MinWidth="115"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Name -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="#111111"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+
+                                        <!-- Client -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Client, TargetNullValue='Без заказчика'}"
+                                                   FontSize="12" Foreground="#111111"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <!-- Status badge -->
+                                        <Border Grid.Column="2"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                CornerRadius="4" Padding="8,4">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{Binding Status, Converter={StaticResource ProjectStatusToBrush}}"/>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Status, Converter={StaticResource ProjectStatusToString}}"
+                                                       Foreground="White"
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Due date -->
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                    VerticalAlignment="Center">
+                                            <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
+                                                   Width="14" Height="14" Margin="0,0,4,0"
+                                                   VerticalAlignment="Center"
+                                                   Opacity="0.5"/>
+                                            <TextBlock Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"
+                                                       FontSize="12" Foreground="#111111"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- Progress -->
+                                        <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                                            <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
+                                                         Maximum="100" Height="6"
+                                                         Background="#E9ECEF"
+                                                         Foreground="{Binding ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
+                                                         Margin="0,0,0,4"
+                                                         Template="{StaticResource SlimPB}"/>
+                                            <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
+                                                       FontSize="11" Foreground="#64748B"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
                     <!-- Empty state -->

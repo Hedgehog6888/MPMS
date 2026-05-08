@@ -21,6 +21,7 @@ public partial class StageDetailOverlay : UserControl
     private LocalTaskStage? _stage;
     private LocalTask? _task;
     private Action? _onClosed;
+    private bool _isProjectClosed = false;
 
     public StageDetailOverlay()
     {
@@ -68,6 +69,7 @@ public partial class StageDetailOverlay : UserControl
             }
             _stage.TaskIsMarkedForDeletion = _task.IsMarkedForDeletion;
             _stage.ProjectIsMarkedForDeletion = _task.ProjectIsMarkedForDeletion;
+            _isProjectClosed = proj != null && (proj.IsClosed || proj.Status == ProjectStatus.Closed);
             ApplyStatus(_stage.Status);
             ApplyDeletionUi();
         });
@@ -141,13 +143,13 @@ public partial class StageDetailOverlay : UserControl
         var hint = _stage.StageInheritedDeletionHint ?? "";
         DeletionHintText.Text = hint;
         DeletionHintText.Visibility = string.IsNullOrEmpty(hint) ? Visibility.Collapsed : Visibility.Visible;
-        MarkDeletionBtn.Visibility = (_stage.CanToggleStageDeletionMark && canMarkDeletion) ? Visibility.Visible : Visibility.Collapsed;
+        MarkDeletionBtn.Visibility = (_stage.CanToggleStageDeletionMark && canMarkDeletion && !_isProjectClosed) ? Visibility.Visible : Visibility.Collapsed;
         MarkDeletionBtnText.Text = _stage.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
-        EditButton.Visibility = (eff || _stage.Status == StageStatus.Completed) ? Visibility.Collapsed : Visibility.Visible;
+        EditButton.Visibility = (eff || _stage.Status == StageStatus.Completed || _isProjectClosed) ? Visibility.Collapsed : Visibility.Visible;
         var isCompletedLocked = _stage.Status == StageStatus.Completed;
-        BtnPlanned.IsEnabled = !eff && !isCompletedLocked;
-        BtnInProgress.IsEnabled = !eff && !isCompletedLocked;
-        BtnCompleted.IsEnabled = !eff;
+        BtnPlanned.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
+        BtnInProgress.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
+        BtnCompleted.IsEnabled = !eff && !_isProjectClosed;
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
