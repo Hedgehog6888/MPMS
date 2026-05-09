@@ -57,7 +57,7 @@ public static class AvatarHelper
 
             double cx = size / 2.0;
             double cy = size / 2.0;
-            double r  = size / 2.0;
+            double r = size / 2.0;
 
             dc.DrawEllipse(new SolidColorBrush(bg), null, new Point(cx, cy), r, r);
 
@@ -103,12 +103,12 @@ public static class AvatarHelper
             bmp.BeginInit();
             bmp.StreamSource = new MemoryStream(data);
             bmp.CacheOption = BitmapCacheOption.OnLoad;
-            
+
             if (decodeWidth > 0)
             {
                 bmp.DecodePixelWidth = decodeWidth;
             }
-            
+
             bmp.EndInit();
             bmp.Freeze();
             return bmp;
@@ -131,22 +131,22 @@ public static class AvatarHelper
     /// 3. Generated initials avatar if fallbackDisplayName is provided (must be on UI thread)
     /// 4. null (caller should render initials circle)
     /// </summary>
-    public static BitmapImage? GetImageSource(byte[]? avatarData, string? avatarPath, string? fallbackDisplayName = null)
+    public static BitmapImage? GetImageSource(byte[]? avatarData, string? avatarPath, string? fallbackDisplayName = null, int decodeWidth = 0)
     {
         if (avatarData is { Length: > 0 })
-            return BytesToBitmapImage(avatarData);
+            return BytesToBitmapImage(avatarData, decodeWidth);
 
         if (!string.IsNullOrWhiteSpace(avatarPath) && File.Exists(avatarPath))
         {
             var bytes = FileToBytes(avatarPath);
             if (bytes is not null)
-                return BytesToBitmapImage(bytes);
+                return BytesToBitmapImage(bytes, decodeWidth);
         }
 
         if (!string.IsNullOrWhiteSpace(fallbackDisplayName))
         {
             var bytes = GenerateInitialsAvatar(fallbackDisplayName);
-            return BytesToBitmapImage(bytes);
+            return BytesToBitmapImage(bytes, decodeWidth);
         }
 
         return null;

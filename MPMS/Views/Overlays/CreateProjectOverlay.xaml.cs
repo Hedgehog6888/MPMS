@@ -449,7 +449,7 @@ public partial class CreateProjectOverlay : UserControl
         { ShowError("В проекте должен остаться хотя бы один работник"); return; }
 
         var startDate = DateOnly.FromDateTime(StartDatePicker.SelectedDate.Value);
-        var endDate   = DateOnly.FromDateTime(EndDatePicker.SelectedDate.Value);
+        var endDate = DateOnly.FromDateTime(EndDatePicker.SelectedDate.Value);
         if (endDate < startDate)
         { ShowError("Дата завершения не может быть раньше даты начала"); return; }
 

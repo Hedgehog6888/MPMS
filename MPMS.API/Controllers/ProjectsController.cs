@@ -55,6 +55,7 @@ public class ProjectsController : ControllerBase
     public async Task<ActionResult<ProjectResponse>> GetById(Guid id)
     {
         var p = await _db.Projects
+            .AsNoTracking()
             .Include(p => p.Manager)
             .Include(p => p.Tasks)
             .FirstOrDefaultAsync(p => p.Id == id);

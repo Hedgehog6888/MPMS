@@ -109,9 +109,9 @@ public partial class TaskSummaryPanel : UserControl
         StatusHeaderBand.Background = displayStatus switch
         {
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),
-            _                     => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
+            TaskStatus.Completed => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
+            TaskStatus.Paused => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),
+            _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
         };
 
         // Project section (show when project name available)
@@ -180,8 +180,8 @@ public partial class TaskSummaryPanel : UserControl
                     continue;
                 a.AvatarData = u.AvatarData;
                 a.AvatarPath = u.AvatarPath;
-                a.RoleName   = u.RoleName;
-                a.SubRole               = u.SubRole;
+                a.RoleName = u.RoleName;
+                a.SubRole = u.SubRole;
                 a.AdditionalSubRolesJson = u.AdditionalSubRoles;
                 if ((a.AvatarData is null || a.AvatarData.Length == 0)
                     && !string.IsNullOrWhiteSpace(a.AvatarPath))

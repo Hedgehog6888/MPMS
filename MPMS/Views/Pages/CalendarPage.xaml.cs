@@ -128,10 +128,10 @@ public partial class CalendarPage : UserControl
     {
         var item = new StageItem
         {
-            Stage       = stage,
-            TaskId      = parentTask.Id,
-            TaskName    = parentTask.Name,
-            ProjectId   = parentTask.ProjectId,
+            Stage = stage,
+            TaskId = parentTask.Id,
+            TaskName = parentTask.Name,
+            ProjectId = parentTask.ProjectId,
             ProjectName = parentTask.ProjectName ?? "—"
         };
 

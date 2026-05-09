@@ -14,7 +14,7 @@ public class TabItemModel
     public string Text { get; set; } = "";
 
     /// <summary>Строковый ключ, который возвращается в TabBarControl.SelectedTab.</summary>
-    public string Tag  { get; set; } = "";
+    public string Tag { get; set; } = "";
 
     // Внутреннее — устанавливается контролом
     internal TabBarControl? Owner { get; set; }

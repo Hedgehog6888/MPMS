@@ -101,10 +101,10 @@ public partial class ProjectSummaryPanel : UserControl
         StatusHeaderBand.Background = displayStatus switch
         {
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
-            ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xFE, 0xF2, 0xF2)),
-            ProjectStatus.Closed     => new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
-            _                        => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
+            ProjectStatus.Completed => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
+            ProjectStatus.Cancelled => new SolidColorBrush(Color.FromRgb(0xFE, 0xF2, 0xF2)),
+            ProjectStatus.Closed => new SolidColorBrush(Color.FromRgb(0xF1, 0xF5, 0xF9)),
+            _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
         };
 
         // Manager
@@ -147,14 +147,14 @@ public partial class ProjectSummaryPanel : UserControl
                     {
                         m.AvatarData = av.AvatarData;
                         m.AvatarPath = av.AvatarPath;
-                        m.SubRole               = av.SubRole;
+                        m.SubRole = av.SubRole;
                         m.AdditionalSubRolesJson = av.AdditionalSubRoles;
                     }
                 }
             }
 
             var foremans = members.Where(m => m.UserRole is "Foreman" or "Прораб").ToList();
-            var workers  = members.Where(m => m.UserRole is "Worker" or "Работник").ToList();
+            var workers = members.Where(m => m.UserRole is "Worker" or "Работник").ToList();
 
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {

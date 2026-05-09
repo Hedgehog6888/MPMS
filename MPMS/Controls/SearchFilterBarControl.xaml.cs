@@ -92,8 +92,8 @@ public partial class SearchFilterBarControl : UserControl
 
     private static readonly SolidColorBrush _focusBorderBrush = new(Colors.Black);
     private static readonly SolidColorBrush _normalBorderBrush = new(Colors.Transparent);
-    private static readonly SolidColorBrush _focusBg  = new(Colors.White);
-    private static readonly SolidColorBrush _normalBg  = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
+    private static readonly SolidColorBrush _focusBg = new(Colors.White);
+    private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
 
 
     // ── Ctor ─────────────────────────────────────────────────────────
@@ -118,14 +118,14 @@ public partial class SearchFilterBarControl : UserControl
     private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
         SearchBorder.BorderBrush = _focusBorderBrush;
-        SearchBorder.Background  = _focusBg;
+        SearchBorder.Background = _focusBg;
     }
 
     private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
     {
         SearchBorder.BorderBrush = _normalBorderBrush;
-        SearchBorder.Background  = _normalBg;
-        SearchBorder.Effect      = null;
+        SearchBorder.Background = _normalBg;
+        SearchBorder.Effect = null;
     }
 
     // ── Clear button ─────────────────────────────────────────────────

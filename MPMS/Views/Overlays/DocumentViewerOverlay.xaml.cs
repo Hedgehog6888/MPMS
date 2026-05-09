@@ -676,13 +676,13 @@ public partial class DocumentViewerOverlay : UserControl
     private void ShowExcelSheet(ExcelSheetView sheet)
     {
         _currentExcelSheet = sheet;
-        
+
         // Lazy load sheet data if not already loaded
         if (sheet.Table == null && _workbook != null)
         {
             var worksheet = _workbook.Worksheets[sheet.WorksheetIndex];
             var loadedSheet = CreateExcelSheetView(worksheet);
-            
+
             // Update the sheet in place with loaded data
             var index = _excelSheets.IndexOf(sheet);
             if (index >= 0)
@@ -690,7 +690,7 @@ public partial class DocumentViewerOverlay : UserControl
                 _excelSheets[index] = loadedSheet;
                 _currentExcelSheet = loadedSheet;
                 sheet = loadedSheet;
-                
+
                 // Update ALL tab tags to reference the updated sheet
                 foreach (Button tab in ExcelSheetTabs.Children.OfType<Button>())
                 {

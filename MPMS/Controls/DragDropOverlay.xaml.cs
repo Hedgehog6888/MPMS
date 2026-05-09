@@ -25,7 +25,7 @@ public partial class DragDropOverlay : UserControl
     public DragDropOverlay()
     {
         InitializeComponent();
-        
+
         _dragTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(200)
@@ -42,10 +42,10 @@ public partial class DragDropOverlay : UserControl
         {
             // Убеждаемся, что родитель принимает Drop, иначе события не будут возникать
             parent.AllowDrop = true;
-            
+
             // Подписываемся на туннельные события родителя
             parent.PreviewDragEnter += Parent_PreviewDragEnter;
-            parent.PreviewDragOver += Parent_PreviewDragEnter; 
+            parent.PreviewDragOver += Parent_PreviewDragEnter;
         }
     }
 
@@ -113,10 +113,10 @@ public partial class DragDropOverlay : UserControl
         {
             _isDragging = true;
             this.Visibility = Visibility.Visible;
-            
+
             var showAnim = (Storyboard)Resources["OverlayShowStoryboard"];
             var dashAnim = (Storyboard)Resources["DashedAnimation"];
-            
+
             showAnim.Begin(RootGrid);
             dashAnim.Begin(DashedBorder);
         }

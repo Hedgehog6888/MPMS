@@ -53,16 +53,21 @@ public static class UserListMergeHelper
             {
                 db.Users.Add(new LocalUser
                 {
-                    Id = u.Id, Name = fullName,
-                    FirstName = u.FirstName, LastName = u.LastName,
-                    Username = u.Username, Email = u.Email, RoleName = u.Role,
+                    Id = u.Id,
+                    Name = fullName,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Username = u.Username,
+                    Email = u.Email,
+                    RoleName = u.Role,
                     RoleId = u.RoleId,
                     SubRole = u.SubRole,
                     AdditionalSubRoles = u.AdditionalSubRoles,
                     BirthDate = u.BirthDate,
                     HomeAddress = u.HomeAddress,
                     AvatarData = u.AvatarData,
-                    IsSynced = true, CreatedAt = u.CreatedAt,
+                    IsSynced = true,
+                    CreatedAt = u.CreatedAt,
                     IsBlocked = u.IsBlocked,
                     BlockedAt = u.BlockedAt,
                     BlockedReason = u.BlockedReason

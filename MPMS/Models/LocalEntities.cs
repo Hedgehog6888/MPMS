@@ -24,13 +24,13 @@ public class LocalUser : LocalEntity
     /// <summary>Full name — stored for compatibility. Prefer FirstName+LastName for new data.</summary>
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
     [MaxLength(50)] public string FirstName { get; set; } = string.Empty;
-    [MaxLength(50)] public string LastName  { get; set; } = string.Empty;
+    [MaxLength(50)] public string LastName { get; set; } = string.Empty;
     [MaxLength(50)] public string Username { get; set; } = string.Empty;
     [MaxLength(255)] public string? Email { get; set; }
     public DateOnly? BirthDate { get; set; }
     [MaxLength(500)] public string? HomeAddress { get; set; }
     public Guid RoleId { get; set; }
-    [MaxLength(50)]  public string RoleName { get; set; } = string.Empty;
+    [MaxLength(50)] public string RoleName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     [MaxLength(500)] public string? AvatarPath { get; set; }
 
@@ -66,12 +66,12 @@ public class LocalUser : LocalEntity
     [NotMapped]
     public string RoleDisplayName => RoleName switch
     {
-        "Administrator" or "Admin"                              => "Администратор",
-        "Project Manager" or "ProjectManager" or "Manager"     => "Менеджер",
-        "Foreman"                                               => "Прораб",
-        "Worker"                                                => "Работник",
-        { Length: > 0 } r                                       => r,
-        _                                                       => "—"
+        "Administrator" or "Admin" => "Администратор",
+        "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
+        "Foreman" => "Прораб",
+        "Worker" => "Работник",
+        { Length: > 0 } r => r,
+        _ => "—"
     };
 
     [NotMapped]
@@ -113,7 +113,8 @@ public class LocalProject : LocalEntity
     [NotMapped] public double AverageTaskProgress { get; set; }
     /// <summary>ProgressCalculator: прогресс проекта учитывает задачи, этапы, просрочку и средний прогресс.</summary>
     [NotMapped] public int ProgressPercent => ProgressCalculator.GetProjectProgressPercent(this);
-    [NotMapped] public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
+    [NotMapped]
+    public string ManagerInitials => string.IsNullOrWhiteSpace(ManagerName) ? "?" :
         string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2).Select(w => w[0].ToString().ToUpper()));
 
@@ -137,7 +138,8 @@ public class LocalTask : LocalEntity
     [MaxLength(100)] public string? AssignedUserName { get; set; }
     [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
     [NotMapped] public string? AssignedUserAvatarPath { get; set; }
-    [NotMapped] public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
+    [NotMapped]
+    public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
         : string.Join("", AssignedUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
     public DateOnly? DueDate { get; set; }
@@ -153,17 +155,20 @@ public class LocalTask : LocalEntity
     [NotMapped] public bool ProjectIsMarkedForDeletion { get; set; }
 
     /// <summary>Пометка к удалению с учётом проекта (задача помечена или проект помечен).</summary>
-    [NotMapped] public bool EffectiveTaskMarkedForDeletion =>
+    [NotMapped]
+    public bool EffectiveTaskMarkedForDeletion =>
         IsMarkedForDeletion || ProjectIsMarkedForDeletion;
 
-    [NotMapped] public DeletionMarkSource TaskDeletionMarkSource =>
+    [NotMapped]
+    public DeletionMarkSource TaskDeletionMarkSource =>
         ProjectIsMarkedForDeletion ? DeletionMarkSource.Project :
         IsMarkedForDeletion ? DeletionMarkSource.Task : DeletionMarkSource.None;
 
     /// <summary>Кнопка пометки задачи скрыта, пока проект помечен — снимать только с проекта.</summary>
     [NotMapped] public bool CanToggleTaskDeletionMark => TaskDeletionMarkSource != DeletionMarkSource.Project;
 
-    [NotMapped] public string TaskInheritedDeletionHint =>
+    [NotMapped]
+    public string TaskInheritedDeletionHint =>
         TaskDeletionMarkSource == DeletionMarkSource.Project
             ? "Пометка с уровня проекта"
             : "";
@@ -195,7 +200,8 @@ public class LocalTaskStage : LocalEntity
     [MaxLength(100)] public string? AssignedUserName { get; set; }
     [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
     [NotMapped] public string? AssignedUserAvatarPath { get; set; }
-    [NotMapped] public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
+    [NotMapped]
+    public string AssignedUserInitials => string.IsNullOrWhiteSpace(AssignedUserName) ? "?"
         : string.Join("", AssignedUserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
     public StageStatus Status { get; set; } = StageStatus.Planned;
     public DateOnly? DueDate { get; set; }
@@ -206,18 +212,22 @@ public class LocalTaskStage : LocalEntity
     [NotMapped] public bool TaskIsMarkedForDeletion { get; set; }
     [NotMapped] public bool ProjectIsMarkedForDeletion { get; set; }
 
-    [NotMapped] public bool EffectiveMarkedForDeletion =>
+    [NotMapped]
+    public bool EffectiveMarkedForDeletion =>
         IsMarkedForDeletion || TaskIsMarkedForDeletion || ProjectIsMarkedForDeletion;
 
-    [NotMapped] public DeletionMarkSource StageDeletionMarkSource =>
+    [NotMapped]
+    public DeletionMarkSource StageDeletionMarkSource =>
         ProjectIsMarkedForDeletion ? DeletionMarkSource.Project :
         TaskIsMarkedForDeletion ? DeletionMarkSource.Task :
         IsMarkedForDeletion ? DeletionMarkSource.Stage : DeletionMarkSource.None;
 
-    [NotMapped] public bool CanToggleStageDeletionMark =>
+    [NotMapped]
+    public bool CanToggleStageDeletionMark =>
         StageDeletionMarkSource is DeletionMarkSource.None or DeletionMarkSource.Stage;
 
-    [NotMapped] public string StageInheritedDeletionHint => StageDeletionMarkSource switch
+    [NotMapped]
+    public string StageInheritedDeletionHint => StageDeletionMarkSource switch
     {
         DeletionMarkSource.Project => "Пометка с уровня проекта",
         DeletionMarkSource.Task => "Пометка с уровня задачи",
@@ -273,7 +283,7 @@ public class LocalEquipmentCategory
 public class LocalMaterial : LocalEntity
 {
     [MaxLength(200)] public string Name { get; set; } = string.Empty;
-    [MaxLength(50)]  public string? Unit { get; set; }
+    [MaxLength(50)] public string? Unit { get; set; }
     public string? Description { get; set; }
     public decimal Quantity { get; set; }
     public decimal? Cost { get; set; }
@@ -327,35 +337,35 @@ public class LocalEquipment : LocalEntity
     [NotMapped]
     public string StatusDisplay => Status switch
     {
-        "Available"   => "Доступно",
+        "Available" => "Доступно",
         "Unavailable" => "Недоступно",
-        "3"           => "Недоступно",
-        "InUse"       => "Используется",
-        "CheckedOut"  => "Используется",
-        "Retired"     => "Списано",
-        _             => Status
+        "3" => "Недоступно",
+        "InUse" => "Используется",
+        "CheckedOut" => "Используется",
+        "Retired" => "Списано",
+        _ => Status
     };
 
     [NotMapped]
     public string StatusColor => Status switch
     {
-        "Available"   => "#00875A",
+        "Available" => "#00875A",
         "Unavailable" => "#DE350B",
-        "3"           => "#DE350B",
-        "InUse"       => "#FF8B00",
-        "CheckedOut"  => "#FF8B00",
-        "Retired"     => "#6B778C",
-        "WrittenOff"  => "#6B778C",
-        _             => "#6B778C"
+        "3" => "#DE350B",
+        "InUse" => "#FF8B00",
+        "CheckedOut" => "#FF8B00",
+        "Retired" => "#6B778C",
+        "WrittenOff" => "#6B778C",
+        _ => "#6B778C"
     };
 
     [NotMapped]
     public string ConditionDisplay => Condition switch
     {
-        "Good"              => "Исправно",
-        "NeedsMaintenance"  => "Требует обслуживания",
-        "Faulty"            => "Неисправно",
-        _                   => Condition
+        "Good" => "Исправно",
+        "NeedsMaintenance" => "Требует обслуживания",
+        "Faulty" => "Неисправно",
+        _ => Condition
     };
 }
 
@@ -377,14 +387,14 @@ public class LocalEquipmentHistoryEntry
     [NotMapped]
     public string EventTypeDisplay => EventType switch
     {
-        "Added"        => "Добавлено",
-        "CheckedOut"   => "Выдано",
-        "Returned"     => "Возвращено",
+        "Added" => "Добавлено",
+        "CheckedOut" => "Выдано",
+        "Returned" => "Возвращено",
         "StatusChanged" => "Смена статуса",
         "StatusChange" => "Смена статуса",
-        "Note"         => "Заметка",
-        "WrittenOff"   => "Списано",
-        _              => EventType
+        "Note" => "Заметка",
+        "WrittenOff" => "Списано",
+        _ => EventType
     };
 }
 
@@ -393,7 +403,7 @@ public class LocalStageMaterial : LocalEntity
     public Guid StageId { get; set; }
     public Guid MaterialId { get; set; }
     [MaxLength(200)] public string MaterialName { get; set; } = string.Empty;
-    [MaxLength(50)]  public string? Unit { get; set; }
+    [MaxLength(50)] public string? Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
     [NotMapped] public string StageName { get; set; } = string.Empty;
@@ -420,9 +430,9 @@ public class LocalStageEquipment : LocalEntity
 
 public class LocalFile : LocalEntity
 {
-    [MaxLength(255)]  public string FileName { get; set; } = string.Empty;
+    [MaxLength(255)] public string FileName { get; set; } = string.Empty;
     [MaxLength(1000)] public string FilePath { get; set; } = string.Empty;
-    [MaxLength(100)]  public string? FileType { get; set; }
+    [MaxLength(100)] public string? FileType { get; set; }
     public long FileSize { get; set; }
     public byte[]? FileData { get; set; }
     public Guid UploadedById { get; set; }
@@ -433,7 +443,7 @@ public class LocalFile : LocalEntity
     public DateTime CreatedAt { get; set; }
     public DateTime? OriginalCreatedAt { get; set; }
     public string? Description { get; set; }
-    
+
     [NotMapped] public string? ProjectName { get; set; }
     [NotMapped] public string? StageName { get; set; }
 }
@@ -559,31 +569,31 @@ public class LocalMessage
 /// <summary>Action type for activity log — used for styling and filtering.</summary>
 public static class ActivityActionKind
 {
-    public const string Created              = "Created";
-    public const string Updated              = "Updated";
-    public const string Deleted              = "Deleted";
-    public const string MarkedForDeletion    = "MarkedForDeletion";
-    public const string UnmarkedForDeletion  = "UnmarkedForDeletion";
-    public const string Message              = "Message";
+    public const string Created = "Created";
+    public const string Updated = "Updated";
+    public const string Deleted = "Deleted";
+    public const string MarkedForDeletion = "MarkedForDeletion";
+    public const string UnmarkedForDeletion = "UnmarkedForDeletion";
+    public const string Message = "Message";
 
     // Auth events
-    public const string Login                = "Login";
-    public const string Logout               = "Logout";
+    public const string Login = "Login";
+    public const string Logout = "Logout";
 
     // Profile events
-    public const string PasswordChanged      = "PasswordChanged";
-    public const string AvatarChanged        = "AvatarChanged";
+    public const string PasswordChanged = "PasswordChanged";
+    public const string AvatarChanged = "AvatarChanged";
 
     // Admin-only user management events
-    public const string UserCreated          = "UserCreated";
-    public const string UserEdited           = "UserEdited";
-    public const string UserBlocked          = "UserBlocked";
-    public const string UserUnblocked        = "UserUnblocked";
-    public const string UserDeleted          = "UserDeleted";
+    public const string UserCreated = "UserCreated";
+    public const string UserEdited = "UserEdited";
+    public const string UserBlocked = "UserBlocked";
+    public const string UserUnblocked = "UserUnblocked";
+    public const string UserDeleted = "UserDeleted";
 
     // Archive / restore
-    public const string Restored             = "Restored";
-    public const string PermanentlyDeleted   = "PermanentlyDeleted";
+    public const string Restored = "Restored";
+    public const string PermanentlyDeleted = "PermanentlyDeleted";
 }
 
 /// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>
@@ -595,11 +605,11 @@ public class LocalActivityLog
     /// <summary>Role of the actor at log time — used to hide admin actions from managers.</summary>
     [MaxLength(50)] public string? ActorRole { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
-    [MaxLength(5)]   public string UserInitials { get; set; } = "?";
-    [MaxLength(20)]  public string UserColor { get; set; } = "#0F2038";
-    [MaxLength(50)]  public string? ActionType { get; set; }
+    [MaxLength(5)] public string UserInitials { get; set; } = "?";
+    [MaxLength(20)] public string UserColor { get; set; } = "#0F2038";
+    [MaxLength(50)] public string? ActionType { get; set; }
     [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
-    [MaxLength(50)]  public string EntityType { get; set; } = string.Empty;
+    [MaxLength(50)] public string EntityType { get; set; } = string.Empty;
     public Guid EntityId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -645,11 +655,11 @@ public class AuthSession
 public class RecentAccount
 {
     public int Id { get; set; }
-    [MaxLength(50)]  public string Username { get; set; } = string.Empty;
+    [MaxLength(50)] public string Username { get; set; } = string.Empty;
     [MaxLength(100)] public string DisplayName { get; set; } = string.Empty;
-    [MaxLength(50)]  public string Role { get; set; } = string.Empty;
-    [MaxLength(20)]  public string AvatarColor { get; set; } = "#0F2038";
-    [MaxLength(5)]   public string Initials { get; set; } = "?";
+    [MaxLength(50)] public string Role { get; set; } = string.Empty;
+    [MaxLength(20)] public string AvatarColor { get; set; } = "#0F2038";
+    [MaxLength(5)] public string Initials { get; set; } = "?";
     public DateTime LastLoginAt { get; set; }
 
     /// <summary>Derive initials and color from name and role</summary>
@@ -662,11 +672,11 @@ public class RecentAccount
 
         var color = role switch
         {
-            "Administrator"   => "#C0392B",
+            "Administrator" => "#C0392B",
             "Project Manager" => "#2980B9",
-            "Foreman"         => "#27AE60",
-            "Worker"          => "#E67E22",
-            _                 => "#0F2038"
+            "Foreman" => "#27AE60",
+            "Worker" => "#E67E22",
+            _ => "#0F2038"
         };
 
         return new RecentAccount

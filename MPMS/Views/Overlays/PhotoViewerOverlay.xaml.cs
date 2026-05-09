@@ -133,15 +133,15 @@ public partial class PhotoViewerOverlay : UserControl
             // ScaleTransform on ImageContainer operates predictably.
             double pw = bmp.PixelWidth;
             double ph = bmp.PixelHeight;
-            MainImage.Source  = bmp;
-            MainImage.Width   = pw;
-            MainImage.Height  = ph;
+            MainImage.Source = bmp;
+            MainImage.Width = pw;
+            MainImage.Height = ph;
 
             // ImageContainer and DrawCanvas must match so the Canvas covers the image.
-            ImageContainer.Width  = pw;
+            ImageContainer.Width = pw;
             ImageContainer.Height = ph;
-            DrawCanvas.Width      = pw;
-            DrawCanvas.Height     = ph;
+            DrawCanvas.Width = pw;
+            DrawCanvas.Height = ph;
 
             _viewportReady = false;
         }
@@ -162,11 +162,11 @@ public partial class PhotoViewerOverlay : UserControl
             ? $"{sizeBytes / 1024.0 / 1024.0:F1} МБ"
             : $"{sizeBytes / 1024.0:F1} КБ";
 
-        ResolutionText.Text    = $"{_source.PixelWidth} × {_source.PixelHeight}";
-        FileSizeText.Text      = sizeStr;
+        ResolutionText.Text = $"{_source.PixelWidth} × {_source.PixelHeight}";
+        FileSizeText.Text = sizeStr;
 
         var info = new FileInfo(_filePath);
-        CreatedText.Text  = info.CreationTime.ToString("d MMMM yyyy г. HH:mm",
+        CreatedText.Text = info.CreationTime.ToString("d MMMM yyyy г. HH:mm",
             new System.Globalization.CultureInfo("ru-RU"));
         ModifiedText.Text = info.LastWriteTime.ToString("d MMMM yyyy г. HH:mm",
             new System.Globalization.CultureInfo("ru-RU"));
@@ -227,7 +227,7 @@ public partial class PhotoViewerOverlay : UserControl
         scale = Math.Max(0.01, scale);
 
         _zoomFactor = scale;
-        
+
         // Exact formula to perfectly center a visual that has RenderTransformOrigin="0.5,0.5"
         _panX = (vw - _source.PixelWidth) / 2.0;
         _panY = (vh - _source.PixelHeight) / 2.0;
@@ -358,11 +358,11 @@ public partial class PhotoViewerOverlay : UserControl
         if (viewportPoint.HasValue && ViewportGrid.ActualWidth > 0 && _source != null)
         {
             double ratio = newZoom / _zoomFactor;
-            
+
             // Image center before transform (because RenderTransformOrigin="0.5,0.5")
             double cx = _source.PixelWidth / 2.0;
             double cy = _source.PixelHeight / 2.0;
-            
+
             // Target point on the viewport
             double vx = viewportPoint.Value.X;
             double vy = viewportPoint.Value.Y;
@@ -374,15 +374,15 @@ public partial class PhotoViewerOverlay : UserControl
         }
         else if (_source != null)
         {
-             // If zooming by buttons (no mouse point), zoom to viewport center
-             double ratio = newZoom / _zoomFactor;
-             double cx = _source.PixelWidth / 2.0;
-             double cy = _source.PixelHeight / 2.0;
-             double vx = ViewportGrid.ActualWidth / 2.0;
-             double vy = ViewportGrid.ActualHeight / 2.0;
-             
-             _panX = _panX * ratio + (vx - cx) * (1 - ratio);
-             _panY = _panY * ratio + (vy - cy) * (1 - ratio);
+            // If zooming by buttons (no mouse point), zoom to viewport center
+            double ratio = newZoom / _zoomFactor;
+            double cx = _source.PixelWidth / 2.0;
+            double cy = _source.PixelHeight / 2.0;
+            double vx = ViewportGrid.ActualWidth / 2.0;
+            double vy = ViewportGrid.ActualHeight / 2.0;
+
+            _panX = _panX * ratio + (vx - cx) * (1 - ratio);
+            _panY = _panY * ratio + (vy - cy) * (1 - ratio);
         }
 
         _zoomFactor = newZoom;
@@ -852,7 +852,8 @@ public partial class PhotoViewerOverlay : UserControl
         {
             var border = new Border
             {
-                Width = 24, Height = 24,
+                Width = 24,
+                Height = 24,
                 CornerRadius = new CornerRadius(12),
                 Background = new SolidColorBrush(color),
                 Margin = new Thickness(1),
@@ -1156,14 +1157,14 @@ public partial class PhotoViewerOverlay : UserControl
             double top = Math.Min(startPoint.Y, currentPoint.Y);
             double right = Math.Max(startPoint.X, currentPoint.X);
             double bottom = Math.Max(startPoint.Y, currentPoint.Y);
-            
+
             // Apply aspect ratio constraint if not Free
             if (_currentAspectRatio != AspectRatio.Free)
             {
                 double targetRatio = GetTargetAspectRatio();
                 double width = right - left;
                 double height = bottom - top;
-                
+
                 if (width / height > targetRatio)
                 {
                     // Width is too large, adjust height
@@ -1183,7 +1184,7 @@ public partial class PhotoViewerOverlay : UserControl
                         right = left + newWidth;
                 }
             }
-            
+
             if (right - left < min)
             {
                 if (currentPoint.X < startPoint.X) left = Math.Max(bounds.Left, right - min);
@@ -1228,7 +1229,7 @@ public partial class PhotoViewerOverlay : UserControl
             double width = r - l;
             double height = b - t;
             double currentRatio = width / height;
-            
+
             // Adjust based on which handle is being dragged
             if (handle is CropHandle.TL or CropHandle.TR or CropHandle.T)
             {
@@ -1266,7 +1267,7 @@ public partial class PhotoViewerOverlay : UserControl
                 else
                     b = t + newHeight;
             }
-            
+
             // Re-clamp after aspect ratio adjustment
             l = Math.Clamp(l, bounds.Left, r - min);
             r = Math.Clamp(r, l + min, bounds.Right);
@@ -1283,7 +1284,7 @@ public partial class PhotoViewerOverlay : UserControl
     private double GetTargetAspectRatio()
     {
         if (_source == null) return 1.0;
-        
+
         return _currentAspectRatio switch
         {
             AspectRatio.Free => 0, // 0 means no constraint

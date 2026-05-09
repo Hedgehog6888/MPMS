@@ -16,7 +16,7 @@ public class TaskSyncer : IEntitySyncer
         _jsonOptions = jsonOptions;
     }
 
-    public bool CanHandle(string entityType) => 
+    public bool CanHandle(string entityType) =>
         entityType is "Task" or "Stage" or "TaskAssignees" or "StageAssignees";
 
     public Task PrepareAsync(LocalDbContext db) => Task.CompletedTask;
@@ -47,33 +47,23 @@ public class TaskSyncer : IEntitySyncer
                         local.ProjectName = t.ProjectName;
                         local.IsSynced = true;
                     }
-                    else
-                    {
-                        local.Name = t.Name;
-                        local.Status = Enum.Parse<Models.TaskStatus>(t.Status);
-                        local.Priority = Enum.Parse<TaskPriority>(t.Priority);
-                        local.AssignedUserId = t.AssignedUserId;
-                        local.AssignedUserName = t.AssignedUserName;
-                        local.TotalStages = t.TotalStages;
-                        local.CompletedStages = t.CompletedStages;
-                        local.DueDate = t.DueDate;
-                        local.IsMarkedForDeletion = t.IsMarkedForDeletion;
-                        local.IsArchived = t.IsArchived;
-                        local.ProjectName = t.ProjectName;
-                    }
+                    // If not synced, don't overwrite local changes - protect them from server data
                 }
                 else
                 {
                     db.Tasks.Add(new LocalTask
                     {
-                        Id = t.Id, ProjectId = t.ProjectId, ProjectName = t.ProjectName,
+                        Id = t.Id,
+                        ProjectId = t.ProjectId,
+                        ProjectName = t.ProjectName,
                         Name = t.Name,
                         AssignedUserId = t.AssignedUserId,
                         AssignedUserName = t.AssignedUserName,
                         Priority = Enum.Parse<TaskPriority>(t.Priority),
                         DueDate = t.DueDate,
                         Status = Enum.Parse<Models.TaskStatus>(t.Status),
-                        TotalStages = t.TotalStages, CompletedStages = t.CompletedStages,
+                        TotalStages = t.TotalStages,
+                        CompletedStages = t.CompletedStages,
                         IsMarkedForDeletion = t.IsMarkedForDeletion,
                         IsArchived = t.IsArchived,
                         IsSynced = true
@@ -99,7 +89,7 @@ public class TaskSyncer : IEntitySyncer
             if (taskApi?.Stages is null) continue;
 
             var localTaskRow = await db.Tasks.FindAsync(taskId);
-            if (localTaskRow is not null)
+            if (localTaskRow is not null && localTaskRow.IsSynced)
             {
                 localTaskRow.Description = taskApi.Description;
                 localTaskRow.AssignedUserId = taskApi.AssignedUserId;
@@ -131,28 +121,35 @@ public class TaskSyncer : IEntitySyncer
             {
                 if (existingStages.TryGetValue(s.Id, out var localStage))
                 {
-                    localStage.Name = s.Name;
-                    localStage.Description = s.Description;
-                    localStage.ServiceTemplateId = s.ServiceTemplateId;
-                    localStage.ServiceNameSnapshot = s.ServiceName;
-                    localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
-                    localStage.WorkUnitSnapshot = s.WorkUnit;
-                    localStage.WorkQuantity = s.WorkQuantity;
-                    localStage.WorkPricePerUnit = s.WorkPricePerUnit;
-                    localStage.AssignedUserName = s.AssignedUserName;
-                    localStage.AssignedUserId = s.AssignedUserId;
-                    localStage.DueDate = s.DueDate;
-                    localStage.Status = Enum.Parse<StageStatus>(s.Status);
-                    localStage.UpdatedAt = s.UpdatedAt;
-                    localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
-                    localStage.IsArchived = s.IsArchived;
+                    if (localStage.IsSynced)
+                    {
+                        localStage.Name = s.Name;
+                        localStage.Description = s.Description;
+                        localStage.ServiceTemplateId = s.ServiceTemplateId;
+                        localStage.ServiceNameSnapshot = s.ServiceName;
+                        localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
+                        localStage.WorkUnitSnapshot = s.WorkUnit;
+                        localStage.WorkQuantity = s.WorkQuantity;
+                        localStage.WorkPricePerUnit = s.WorkPricePerUnit;
+                        localStage.AssignedUserName = s.AssignedUserName;
+                        localStage.AssignedUserId = s.AssignedUserId;
+                        localStage.DueDate = s.DueDate;
+                        localStage.Status = Enum.Parse<StageStatus>(s.Status);
+                        localStage.UpdatedAt = s.UpdatedAt;
+                        localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
+                        localStage.IsArchived = s.IsArchived;
+                    }
+                    // If not synced, don't overwrite local changes
                 }
                 else
                 {
                     db.TaskStages.Add(new LocalTaskStage
                     {
-                        Id = s.Id, TaskId = s.TaskId, Name = s.Name,
-                        Description = s.Description, AssignedUserName = s.AssignedUserName,
+                        Id = s.Id,
+                        TaskId = s.TaskId,
+                        Name = s.Name,
+                        Description = s.Description,
+                        AssignedUserName = s.AssignedUserName,
                         ServiceTemplateId = s.ServiceTemplateId,
                         ServiceNameSnapshot = s.ServiceName,
                         ServiceDescriptionSnapshot = s.ServiceDescription,
@@ -172,7 +169,7 @@ public class TaskSyncer : IEntitySyncer
 
                 await db.StageAssignees.Where(a => a.StageId == s.Id).ExecuteDeleteAsync();
                 await db.StageServices.Where(x => x.StageId == s.Id).ExecuteDeleteAsync();
-                
+
                 if (s.AssigneeUserIds is { Count: > 0 })
                 {
                     foreach (var uid in s.AssigneeUserIds)
@@ -216,9 +213,14 @@ public class TaskSyncer : IEntitySyncer
                     {
                         db.StageMaterials.Add(new LocalStageMaterial
                         {
-                            Id = sm.Id, StageId = s.Id,
-                            MaterialId = sm.MaterialId, MaterialName = sm.MaterialName,
-                            Unit = sm.Unit, Quantity = sm.Quantity, PricePerUnit = sm.PricePerUnit, IsSynced = true
+                            Id = sm.Id,
+                            StageId = s.Id,
+                            MaterialId = sm.MaterialId,
+                            MaterialName = sm.MaterialName,
+                            Unit = sm.Unit,
+                            Quantity = sm.Quantity,
+                            PricePerUnit = sm.PricePerUnit,
+                            IsSynced = true
                         });
                     }
                     else
@@ -256,10 +258,10 @@ public class TaskSyncer : IEntitySyncer
             req = req with { Id = op.EntityId };
             var created = await _api.CreateTaskAsync(req);
             if (created is null) return false;
-            
+
             var local = await db.Tasks.FindAsync(op.EntityId);
             if (local is not null) local.IsSynced = true;
-            
+
             return true;
         }
 
@@ -267,10 +269,10 @@ public class TaskSyncer : IEntitySyncer
         if (updateReq is null) return false;
         var updated = await _api.UpdateTaskAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        
+
         var local2 = await db.Tasks.FindAsync(op.EntityId);
         if (local2 is not null) local2.IsSynced = true;
-        
+
         return true;
     }
 
@@ -286,10 +288,10 @@ public class TaskSyncer : IEntitySyncer
             req = req with { Id = op.EntityId };
             var created = await _api.CreateStageAsync(req);
             if (created is null) return false;
-            
+
             var local = await db.TaskStages.FindAsync(op.EntityId);
             if (local is not null) local.IsSynced = true;
-            
+
             return true;
         }
 
@@ -297,10 +299,10 @@ public class TaskSyncer : IEntitySyncer
         if (updateReq is null) return false;
         var updated = await _api.UpdateStageAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        
+
         var local2 = await db.TaskStages.FindAsync(op.EntityId);
         if (local2 is not null) local2.IsSynced = true;
-        
+
         return true;
     }
 

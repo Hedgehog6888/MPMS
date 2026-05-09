@@ -30,7 +30,7 @@ public partial class HomePage : UserControl
 
         // 1. Clear character formatting
         selection.ClearAllProperties();
-        
+
         // 2. Clear blockquote formatting
         var paragraphs = GetSelectedParagraphs(selection);
         foreach (var p in paragraphs)
@@ -49,10 +49,10 @@ public partial class HomePage : UserControl
         // 3. Remove from lists
         // If the selection is inside a list, we toggle the active list type to turn it off
         UpdateFormattingButtons();
-        
+
         if (BulletsBtn.IsChecked == true)
             EditingCommands.ToggleBullets.Execute(null, NotesRTB);
-        
+
         if (NumberingBtn.IsChecked == true)
             EditingCommands.ToggleNumbering.Execute(null, NotesRTB);
 
@@ -62,7 +62,7 @@ public partial class HomePage : UserControl
     private void FormatButton_Click(object sender, RoutedEventArgs e)
     {
         // Give the command a moment to execute then update UI state
-        Dispatcher.BeginInvoke(new Action(() => 
+        Dispatcher.BeginInvoke(new Action(() =>
         {
             MergeAdjacentLists(NotesRTB);
             UpdateFormattingButtons();
@@ -92,7 +92,7 @@ public partial class HomePage : UserControl
                     }
                     // Remove the now-empty second list
                     doc.Blocks.Remove(list2);
-                    
+
                     // Stay on current index to check if the next block is also a list that should be merged
                     i--;
                     changed = true;
@@ -160,7 +160,7 @@ public partial class HomePage : UserControl
         if (selection == null) return;
 
         var paragraphs = GetSelectedParagraphs(selection);
-        
+
         // Generate a unique ID for this specific formatting action
         // This ensures that adjacent quotes formatted separately don't merge
         string blockId = System.Guid.NewGuid().ToString();
@@ -188,7 +188,7 @@ public partial class HomePage : UserControl
                 p.ClearValue(FrameworkContentElement.TagProperty);
             }
         }
-        
+
         RefreshBlockquoteFormatting();
         UpdateFormattingButtons();
     }
@@ -208,19 +208,19 @@ public partial class HomePage : UserControl
                 if (isQuoted)
                 {
                     // Check neighbors to decide on margins and padding
-                    bool prevIsQuoted = (p.PreviousBlock is Paragraph prevP) && 
-                                        prevP.BorderThickness.Left > 0 && 
+                    bool prevIsQuoted = (p.PreviousBlock is Paragraph prevP) &&
+                                        prevP.BorderThickness.Left > 0 &&
                                         Equals(prevP.Tag, p.Tag);
-                                        
-                    bool nextIsQuoted = (p.NextBlock is Paragraph nextP) && 
-                                        nextP.BorderThickness.Left > 0 && 
+
+                    bool nextIsQuoted = (p.NextBlock is Paragraph nextP) &&
+                                        nextP.BorderThickness.Left > 0 &&
                                         Equals(nextP.Tag, p.Tag);
 
                     // Slightly reduced vertical spacing around the entire block
                     double topMargin = prevIsQuoted ? 0 : 10;
                     double bottomMargin = nextIsQuoted ? 0 : 10;
                     p.Margin = new Thickness(0, topMargin, 0, bottomMargin);
-                    
+
                     // Reduced padding for a tighter look
                     double topPadding = prevIsQuoted ? 2 : 8;
                     double bottomPadding = nextIsQuoted ? 2 : 8;
@@ -249,11 +249,11 @@ public partial class HomePage : UserControl
                             IsHitTestVisible = false,
                             Focusable = false
                         };
-                        
+
                         var container = new BlockUIContainer(quoteIcon);
                         container.IsEnabled = false; // Try to make it non-selectable without compilation error
                         floater.Blocks.Add(container);
-                        
+
                         if (p.Inlines.FirstInline != null)
                             p.Inlines.InsertBefore(p.Inlines.FirstInline, floater);
                         else
@@ -276,7 +276,7 @@ public partial class HomePage : UserControl
     {
         var paragraphs = new List<Paragraph>();
         var pointer = selection.Start.GetPositionAtOffset(0, LogicalDirection.Forward);
-        
+
         while (pointer != null && pointer.CompareTo(selection.End) <= 0)
         {
             var p = pointer.Paragraph;
@@ -286,13 +286,13 @@ public partial class HomePage : UserControl
             }
             pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
         }
-        
+
         // If selection is empty but we are in a paragraph, add it
         if (paragraphs.Count == 0 && selection.Start.Paragraph != null)
         {
             paragraphs.Add(selection.Start.Paragraph);
         }
-        
+
         return paragraphs;
     }
 

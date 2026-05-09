@@ -1090,8 +1090,10 @@
                 </Setter>
             </Style>
             <Style x:Key="AvatarImage" TargetType="Image">
-                <Setter Property="RenderOptions.BitmapScalingMode" Value="Fant"/>
-                <Setter Property="Stretch" Value="UniformToFill"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+                <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="Stretch" Value="Uniform"/>
             </Style>
 
             <!-- ── Local search Border style with focus animation ─── -->

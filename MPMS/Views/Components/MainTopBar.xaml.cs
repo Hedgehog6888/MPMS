@@ -26,7 +26,7 @@ namespace MPMS.Views.Components
         public MainTopBar()
         {
             InitializeComponent();
-            
+
             this.Loaded += (s, e) =>
             {
                 if (DataContext is MainViewModel vm)

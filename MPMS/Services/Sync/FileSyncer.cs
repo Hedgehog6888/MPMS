@@ -82,13 +82,13 @@ public class FileSyncer : IEntitySyncer
             if (meta is null) return false;
 
             var local = await db.Files.FindAsync(op.EntityId);
-            if (local is null) return false; 
-            if (local.FileData is null || local.FileData.Length == 0) return true; 
+            if (local is null) return false;
+            if (local.FileData is null || local.FileData.Length == 0) return true;
 
             var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
             var tempPath = Path.Combine(tempDir, local.FileName);
-            
+
             await File.WriteAllBytesAsync(tempPath, local.FileData);
             try
             {

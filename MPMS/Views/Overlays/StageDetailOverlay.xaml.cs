@@ -175,7 +175,7 @@ public partial class StageDetailOverlay : UserControl
         }
 
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
-        var roleByUser    = new Dictionary<Guid, string?>();
+        var roleByUser = new Dictionary<Guid, string?>();
         var subRoleByUser = new Dictionary<Guid, string?>();
         var addSpecByUser = new Dictionary<Guid, string?>();
         if (userIds.Count > 0)
@@ -184,7 +184,7 @@ public partial class StageDetailOverlay : UserControl
                 .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
             var avDict = userRows.ToDictionary(u => u.Id);
-            roleByUser    = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            roleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             subRoleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.SubRole);
             addSpecByUser = userRows.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
             foreach (var a in assignees)
@@ -412,10 +412,10 @@ public partial class StageDetailOverlay : UserControl
 
         var item = new MPMS.ViewModels.StageItem
         {
-            Stage       = _stage,
-            TaskId      = _task.Id,
-            TaskName    = _task.Name,
-            ProjectId   = _task.ProjectId,
+            Stage = _stage,
+            TaskId = _task.Id,
+            TaskName = _task.Name,
+            ProjectId = _task.ProjectId,
             ProjectName = _task.ProjectName ?? "—"
         };
 

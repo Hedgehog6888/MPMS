@@ -16,10 +16,10 @@ namespace MPMS.Views.Overlays;
 public partial class AdminUserFormOverlay : UserControl
 {
     private AdminViewModel? _adminVm;
-    private AdminUserRow?   _editingRow;
-    private bool            _isEditMode;
-    private bool            _loadingRoles;
-    private bool            _suppressSubRoleRebuild;
+    private AdminUserRow? _editingRow;
+    private bool _isEditMode;
+    private bool _loadingRoles;
+    private bool _suppressSubRoleRebuild;
 
     /// <summary>Состояние выбора доп. специализаций (как в списке работников проекта).</summary>
     private readonly Dictionary<string, bool> _additionalSpecSelected = new(StringComparer.OrdinalIgnoreCase);
@@ -164,27 +164,27 @@ public partial class AdminUserFormOverlay : UserControl
 
     public void SetCreateMode(AdminViewModel vm)
     {
-        _adminVm    = vm;
+        _adminVm = vm;
         _isEditMode = false;
         _editingRow = null;
-        TitleLabel.Text    = "Создать пользователя";
+        TitleLabel.Text = "Создать пользователя";
         SubtitleLabel.Text = "Заполните данные нового пользователя";
         PasswordHint.Visibility = Visibility.Collapsed;
     }
 
     public void SetEditMode(AdminViewModel vm, AdminUserRow row)
     {
-        _adminVm    = vm;
+        _adminVm = vm;
         _isEditMode = true;
         _editingRow = row;
-        TitleLabel.Text    = "Редактировать пользователя";
+        TitleLabel.Text = "Редактировать пользователя";
         SubtitleLabel.Text = $"Изменение данных: {row.Name}";
         PasswordHint.Visibility = Visibility.Visible;
 
         FirstNameBox.Text = row.FirstName;
-        LastNameBox.Text  = row.LastName;
-        UsernameBox.Text  = row.Username;
-        EmailBox.Text     = row.Email;
+        LastNameBox.Text = row.LastName;
+        UsernameBox.Text = row.Username;
+        EmailBox.Text = row.Email;
         BirthDatePicker.SelectedDate = row.BirthDate?.ToDateTime(TimeOnly.MinValue);
         HomeAddressBox.Text = row.HomeAddress ?? string.Empty;
     }
@@ -317,20 +317,20 @@ public partial class AdminUserFormOverlay : UserControl
         try
         {
             var firstName = FirstNameBox.Text.Trim();
-            var lastName  = LastNameBox.Text.Trim();
-            var username  = UsernameBox.Text.Trim();
-            var email     = EmailBox.Text.Trim();
-            var password  = PasswordBox.Password;
+            var lastName = LastNameBox.Text.Trim();
+            var username = UsernameBox.Text.Trim();
+            var email = EmailBox.Text.Trim();
+            var password = PasswordBox.Password;
             var passConfirm = PasswordConfirmBox.Password;
             var role = RoleCombo.SelectedItem as RoleItem;
             DateOnly? birthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
             var homeAddress = string.IsNullOrWhiteSpace(HomeAddressBox.Text) ? null : HomeAddressBox.Text.Trim();
 
             // Validation
-            if (string.IsNullOrWhiteSpace(firstName))  { ShowError("Введите имя"); return; }
-            if (string.IsNullOrWhiteSpace(lastName))   { ShowError("Введите фамилию"); return; }
-            if (string.IsNullOrWhiteSpace(username))   { ShowError("Введите логин"); return; }
-            if (role is null)                          { ShowError("Выберите роль"); return; }
+            if (string.IsNullOrWhiteSpace(firstName)) { ShowError("Введите имя"); return; }
+            if (string.IsNullOrWhiteSpace(lastName)) { ShowError("Введите фамилию"); return; }
+            if (string.IsNullOrWhiteSpace(username)) { ShowError("Введите логин"); return; }
+            if (role is null) { ShowError("Выберите роль"); return; }
             var roleNameForSpecs = (_isEditMode && _editingRow is not null) ? _editingRow.RoleName : role.Name;
             if (IsDbWorkerRole(roleNameForSpecs) && string.IsNullOrWhiteSpace(GetMainSubRoleFromCombo()))
             { ShowError("Выберите основную специализацию работника."); return; }
@@ -353,17 +353,17 @@ public partial class AdminUserFormOverlay : UserControl
                 if (await db.Users.AnyAsync(u => u.Username == username && u.Id != user.Id))
                 { ShowError("Пользователь с таким логином уже существует"); return; }
 
-                user.Name      = fullName;
+                user.Name = fullName;
                 user.FirstName = firstName;
-                user.LastName  = lastName;
-                user.Username  = username;
-                user.Email     = string.IsNullOrWhiteSpace(email) ? null : email;
+                user.LastName = lastName;
+                user.Username = username;
+                user.Email = string.IsNullOrWhiteSpace(email) ? null : email;
                 user.BirthDate = birthDate;
                 user.HomeAddress = homeAddress;
-                user.RoleId    = _editingRow.RoleId;
-                user.RoleName  = _editingRow.RoleName;
-                user.SubRole             = subRole;
-                user.AdditionalSubRoles  = additionalJson;
+                user.RoleId = _editingRow.RoleId;
+                user.RoleName = _editingRow.RoleName;
+                user.SubRole = subRole;
+                user.AdditionalSubRoles = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
 
                 // Обновить UserName во всех связанных сущностях
@@ -428,21 +428,21 @@ public partial class AdminUserFormOverlay : UserControl
                 var hash = BCrypt.Net.BCrypt.HashPassword(password);
                 var newUser = new LocalUser
                 {
-                    Id           = newId,
-                    Name         = fullName,
-                    FirstName    = firstName,
-                    LastName     = lastName,
-                    Username     = username,
-                    Email        = string.IsNullOrWhiteSpace(email) ? null : email,
-                    BirthDate    = birthDate,
-                    HomeAddress  = homeAddress,
-                    RoleId       = role.Id,
-                    RoleName     = role.Name,
-                    SubRole             = subRole,
-                    AdditionalSubRoles  = additionalJson,
+                    Id = newId,
+                    Name = fullName,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Username = username,
+                    Email = string.IsNullOrWhiteSpace(email) ? null : email,
+                    BirthDate = birthDate,
+                    HomeAddress = homeAddress,
+                    RoleId = role.Id,
+                    RoleName = role.Name,
+                    SubRole = subRole,
+                    AdditionalSubRoles = additionalJson,
                     PasswordHash = hash,
-                    AvatarData   = avatarData,
-                    CreatedAt    = DateTime.UtcNow,
+                    AvatarData = avatarData,
+                    CreatedAt = DateTime.UtcNow,
                     LastModifiedLocally = DateTime.UtcNow
                 };
                 db.Users.Add(newUser);
@@ -494,7 +494,7 @@ public partial class AdminUserFormOverlay : UserControl
 
     private void ShowError(string message)
     {
-        ErrorText.Text     = message;
+        ErrorText.Text = message;
         ErrorBorder.Visibility = Visibility.Visible;
         FormMainScrollViewer.ScrollToVerticalOffset(0);
     }
@@ -503,11 +503,11 @@ public partial class AdminUserFormOverlay : UserControl
 
     private static string GetRoleDisplay(string roleName) => roleName switch
     {
-        "Administrator" or "Admin"                          => "Администратор",
+        "Administrator" or "Admin" => "Администратор",
         "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
-        "Foreman"                                           => "Прораб",
-        "Worker"                                            => "Работник",
-        _                                                   => roleName
+        "Foreman" => "Прораб",
+        "Worker" => "Работник",
+        _ => roleName
     };
 
     private async Task UpdateUserNameInRelatedEntitiesAsync(LocalDbContext db, Guid userId, string newFullName, string? oldUsername = null)

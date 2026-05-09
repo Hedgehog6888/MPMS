@@ -41,7 +41,7 @@ public static class LocalSchemaMigrator
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
         ApplyServicesSchema(conn);
-        
+
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"FileData\" BLOB NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"OriginalCreatedAt\" TEXT NULL;");
     }

@@ -19,8 +19,8 @@ namespace MPMS.Infrastructure;
 /// </summary>
 public class BoolToVisibilityConverter : IValueConverter
 {
-    public static readonly BoolToVisibilityConverter Instance  = new();
-    public static readonly BoolToVisibilityConverter NotEmpty  = new() { IsStringMode = true };
+    public static readonly BoolToVisibilityConverter Instance = new();
+    public static readonly BoolToVisibilityConverter NotEmpty = new() { IsStringMode = true };
 
     public bool IsStringMode { get; init; }
     public bool Invert { get; init; }
@@ -127,7 +127,7 @@ public class AvatarBytesToImageSourceConverter : IValueConverter
     {
         var bytes = value as byte[];
         int decodeWidth = 0;
-        
+
         if (parameter != null && int.TryParse(parameter.ToString(), out int width))
         {
             decodeWidth = width;
@@ -162,7 +162,7 @@ public class BlockedToStatusBrushConverter : IValueConverter
 {
     public static readonly BlockedToStatusBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush ActiveBrush  = new(Color.FromRgb(0x22, 0xC5, 0x5E));
+    private static readonly SolidColorBrush ActiveBrush = new(Color.FromRgb(0x22, 0xC5, 0x5E));
     private static readonly SolidColorBrush BlockedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -182,24 +182,24 @@ public class ActionKindToLabelConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
         {
-            MPMS.Models.ActivityActionKind.Created            => "Создан",
-            MPMS.Models.ActivityActionKind.Updated            => "Изменён",
-            MPMS.Models.ActivityActionKind.Deleted            => "Удалён",
-            MPMS.Models.ActivityActionKind.MarkedForDeletion  => "Пометка удаления",
+            MPMS.Models.ActivityActionKind.Created => "Создан",
+            MPMS.Models.ActivityActionKind.Updated => "Изменён",
+            MPMS.Models.ActivityActionKind.Deleted => "Удалён",
+            MPMS.Models.ActivityActionKind.MarkedForDeletion => "Пометка удаления",
             MPMS.Models.ActivityActionKind.UnmarkedForDeletion => "Снята пометка",
-            MPMS.Models.ActivityActionKind.Message            => "Сообщение",
-            MPMS.Models.ActivityActionKind.Login              => "Вход",
-            MPMS.Models.ActivityActionKind.Logout             => "Выход",
-            MPMS.Models.ActivityActionKind.PasswordChanged    => "Смена пароля",
-            MPMS.Models.ActivityActionKind.AvatarChanged      => "Смена аватара",
-            MPMS.Models.ActivityActionKind.UserCreated        => "Создан пользователь",
-            MPMS.Models.ActivityActionKind.UserEdited         => "Изменён пользователь",
-            MPMS.Models.ActivityActionKind.UserBlocked        => "Заблокирован",
-            MPMS.Models.ActivityActionKind.UserUnblocked      => "Разблокирован",
-            MPMS.Models.ActivityActionKind.UserDeleted        => "Удалён пользователь",
-            MPMS.Models.ActivityActionKind.Restored           => "Восстановлен",
+            MPMS.Models.ActivityActionKind.Message => "Сообщение",
+            MPMS.Models.ActivityActionKind.Login => "Вход",
+            MPMS.Models.ActivityActionKind.Logout => "Выход",
+            MPMS.Models.ActivityActionKind.PasswordChanged => "Смена пароля",
+            MPMS.Models.ActivityActionKind.AvatarChanged => "Смена аватара",
+            MPMS.Models.ActivityActionKind.UserCreated => "Создан пользователь",
+            MPMS.Models.ActivityActionKind.UserEdited => "Изменён пользователь",
+            MPMS.Models.ActivityActionKind.UserBlocked => "Заблокирован",
+            MPMS.Models.ActivityActionKind.UserUnblocked => "Разблокирован",
+            MPMS.Models.ActivityActionKind.UserDeleted => "Удалён пользователь",
+            MPMS.Models.ActivityActionKind.Restored => "Восстановлен",
             MPMS.Models.ActivityActionKind.PermanentlyDeleted => "Удалён навсегда",
-            _                                                  => value?.ToString() ?? "—"
+            _ => value?.ToString() ?? "—"
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -213,38 +213,38 @@ public class ActionKindToBrushConverter : IValueConverter
 {
     public static readonly ActionKindToBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush BlueBrush   = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush GreenBrush  = new(Color.FromRgb(0x10, 0xB9, 0x81));
-    private static readonly SolidColorBrush RedBrush    = new(Color.FromRgb(0xEF, 0x44, 0x44));
+    private static readonly SolidColorBrush BlueBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
     private static readonly SolidColorBrush OrangeBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
     private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
-    private static readonly SolidColorBrush GrayBrush   = new(Color.FromRgb(0x64, 0x74, 0x8B));
+    private static readonly SolidColorBrush GrayBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
         {
             MPMS.Models.ActivityActionKind.Created or
-            MPMS.Models.ActivityActionKind.UserCreated        => BlueBrush,
+            MPMS.Models.ActivityActionKind.UserCreated => BlueBrush,
 
             MPMS.Models.ActivityActionKind.Login or
             MPMS.Models.ActivityActionKind.UnmarkedForDeletion or
             MPMS.Models.ActivityActionKind.Restored or
-            MPMS.Models.ActivityActionKind.UserUnblocked      => GreenBrush,
+            MPMS.Models.ActivityActionKind.UserUnblocked => GreenBrush,
 
             MPMS.Models.ActivityActionKind.Deleted or
             MPMS.Models.ActivityActionKind.PermanentlyDeleted or
             MPMS.Models.ActivityActionKind.UserDeleted or
-            MPMS.Models.ActivityActionKind.UserBlocked        => RedBrush,
+            MPMS.Models.ActivityActionKind.UserBlocked => RedBrush,
 
             MPMS.Models.ActivityActionKind.MarkedForDeletion or
             MPMS.Models.ActivityActionKind.PasswordChanged or
             MPMS.Models.ActivityActionKind.AvatarChanged or
             MPMS.Models.ActivityActionKind.Updated or
-            MPMS.Models.ActivityActionKind.UserEdited         => OrangeBrush,
+            MPMS.Models.ActivityActionKind.UserEdited => OrangeBrush,
 
-            MPMS.Models.ActivityActionKind.Message            => PurpleBrush,
+            MPMS.Models.ActivityActionKind.Message => PurpleBrush,
 
-            _                                                  => GrayBrush
+            _ => GrayBrush
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -259,11 +259,11 @@ public class TaskStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            TaskStatus.Planned => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
-            _                     => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
+            TaskStatus.Paused => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
+            TaskStatus.Completed => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            _ => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -278,12 +278,12 @@ public class ProjectStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            ProjectStatus.Planning   => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            ProjectStatus.Planning => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
-            ProjectStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
-            ProjectStatus.Cancelled  => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
-            ProjectStatus.Closed     => new SolidColorBrush(Color.FromRgb(0x00, 0x00, 0x00)),
-            _                        => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
+            ProjectStatus.Completed => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            ProjectStatus.Cancelled => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            ProjectStatus.Closed => new SolidColorBrush(Color.FromRgb(0x00, 0x00, 0x00)),
+            _ => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -298,11 +298,11 @@ public class PriorityToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskPriority.Low      => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
-            TaskPriority.Medium   => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
-            TaskPriority.High     => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
+            TaskPriority.Low => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            TaskPriority.Medium => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
+            TaskPriority.High => new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
             TaskPriority.Critical => new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
-            _                     => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
+            _ => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -317,10 +317,10 @@ public class StageStatusToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            StageStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
+            StageStatus.Planned => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),
             StageStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),
-            StageStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
-            _                      => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
+            StageStatus.Completed => new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)),
+            _ => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8))
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -335,11 +335,11 @@ public class TaskStatusToStringConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskStatus.Planned    => "Запланирована",
+            TaskStatus.Planned => "Запланирована",
             TaskStatus.InProgress => "Выполняется",
-            TaskStatus.Paused     => "Приостановлена",
-            TaskStatus.Completed  => "Завершена",
-            _                     => value?.ToString() ?? ""
+            TaskStatus.Paused => "Приостановлена",
+            TaskStatus.Completed => "Завершена",
+            _ => value?.ToString() ?? ""
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -354,12 +354,12 @@ public class ProjectStatusToStringConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            ProjectStatus.Planning   => "Планирование",
+            ProjectStatus.Planning => "Планирование",
             ProjectStatus.InProgress => "Выполняется",
-            ProjectStatus.Completed  => "Завершён",
-            ProjectStatus.Cancelled  => "Отменён",
-            ProjectStatus.Closed     => "Закрытый",
-            _                        => value?.ToString() ?? ""
+            ProjectStatus.Completed => "Завершён",
+            ProjectStatus.Cancelled => "Отменён",
+            ProjectStatus.Closed => "Закрытый",
+            _ => value?.ToString() ?? ""
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -374,11 +374,11 @@ public class PriorityToStringConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            TaskPriority.Low      => "Низкий",
-            TaskPriority.Medium   => "Средний",
-            TaskPriority.High     => "Высокий",
+            TaskPriority.Low => "Низкий",
+            TaskPriority.Medium => "Средний",
+            TaskPriority.High => "Высокий",
             TaskPriority.Critical => "Критический",
-            _                     => value?.ToString() ?? ""
+            _ => value?.ToString() ?? ""
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -393,10 +393,10 @@ public class StageStatusToStringConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value switch
         {
-            StageStatus.Planned    => "Запланирован",
+            StageStatus.Planned => "Запланирован",
             StageStatus.InProgress => "Выполняется",
-            StageStatus.Completed  => "Завершён",
-            _                      => value?.ToString() ?? ""
+            StageStatus.Completed => "Завершён",
+            _ => value?.ToString() ?? ""
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -417,17 +417,17 @@ public class DateOnlyToStringConverter : IValueConverter
         string fmt = parameter as string ?? "short";
         return fmt switch
         {
-            "long"    => d.ToString("d MMMM yyyy", RuCulture),
+            "long" => d.ToString("d MMMM yyyy", RuCulture),
             "dayname" => d.DayOfWeek switch
             {
-                DayOfWeek.Monday    => "понедельник",
-                DayOfWeek.Tuesday   => "вторник",
+                DayOfWeek.Monday => "понедельник",
+                DayOfWeek.Tuesday => "вторник",
                 DayOfWeek.Wednesday => "среда",
-                DayOfWeek.Thursday  => "четверг",
-                DayOfWeek.Friday    => "пятница",
-                DayOfWeek.Saturday  => "суббота",
-                DayOfWeek.Sunday    => "воскресенье",
-                _                   => d.DayOfWeek.ToString()
+                DayOfWeek.Thursday => "четверг",
+                DayOfWeek.Friday => "пятница",
+                DayOfWeek.Saturday => "суббота",
+                DayOfWeek.Sunday => "воскресенье",
+                _ => d.DayOfWeek.ToString()
             },
             _ => d.ToString("dd.MM.yyyy")
         };
@@ -688,28 +688,28 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
 {
     public static readonly EntityTypeToAccentBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush ProjectBrush  = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush TaskBrush     = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush StageBrush    = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush ProjectBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush TaskBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush StageBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
     private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
     private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
-    private static readonly SolidColorBrush FileBrush      = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
-    private static readonly SolidColorBrush MessageBrush  = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
-    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x64, 0x74, 0x8B));
+    private static readonly SolidColorBrush FileBrush = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
+    private static readonly SolidColorBrush MessageBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
         {
-            "Project"  => ProjectBrush,
-            "Task"     => TaskBrush,
-            "Stage"    => StageBrush,
+            "Project" => ProjectBrush,
+            "Task" => TaskBrush,
+            "Stage" => StageBrush,
             "TaskStage" => StageBrush,
             "Material" => MaterialBrush,
             "Equipment" => EquipmentBrush,
-            "File"     => FileBrush,
-            "Message"  => MessageBrush,
-            "User"     => DefaultBrush,
-            _          => DefaultBrush
+            "File" => FileBrush,
+            "Message" => MessageBrush,
+            "User" => DefaultBrush,
+            _ => DefaultBrush
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -721,18 +721,18 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
 {
     public static readonly ActivityLogToAccentBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush DeletedBrush         = new(Color.FromRgb(0xEF, 0x44, 0x44));
+    private static readonly SolidColorBrush DeletedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
     private static readonly SolidColorBrush MarkedForDeletionBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush UnmarkedBrush       = new(Color.FromRgb(0x10, 0xB9, 0x81));
-    private static readonly SolidColorBrush CreatedBrush        = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush MessageBrush        = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
-    private static readonly SolidColorBrush ProjectBrush        = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush TaskBrush           = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush StageBrush          = new(Color.FromRgb(0x10, 0xB9, 0x81));
-    private static readonly SolidColorBrush MaterialBrush       = new(Color.FromRgb(0x0D, 0x94, 0x88));
-    private static readonly SolidColorBrush EquipmentBrush      = new(Color.FromRgb(0x0D, 0x94, 0x88));
-    private static readonly SolidColorBrush FileBrush           = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
-    private static readonly SolidColorBrush DefaultBrush        = new(Color.FromRgb(0x64, 0x74, 0x8B));
+    private static readonly SolidColorBrush UnmarkedBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush CreatedBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush MessageBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush ProjectBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
+    private static readonly SolidColorBrush TaskBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+    private static readonly SolidColorBrush StageBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
+    private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
+    private static readonly SolidColorBrush FileBrush = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
+    private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -752,11 +752,11 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         {
             return actionType switch
             {
-                MPMS.Models.ActivityActionKind.Deleted           => DeletedBrush,
+                MPMS.Models.ActivityActionKind.Deleted => DeletedBrush,
                 MPMS.Models.ActivityActionKind.MarkedForDeletion => MarkedForDeletionBrush,
                 MPMS.Models.ActivityActionKind.UnmarkedForDeletion => UnmarkedBrush,
-                MPMS.Models.ActivityActionKind.Created          => CreatedBrush,
-                MPMS.Models.ActivityActionKind.Message          => MessageBrush,
+                MPMS.Models.ActivityActionKind.Created => CreatedBrush,
+                MPMS.Models.ActivityActionKind.Message => MessageBrush,
                 _ => EntityToBrush(log.EntityType)
             };
         }
@@ -765,15 +765,15 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
 
     private static SolidColorBrush EntityToBrush(string entityType) => entityType switch
     {
-        "Project"  => ProjectBrush,
-        "Task"     => TaskBrush,
-        "Stage"    => StageBrush,
+        "Project" => ProjectBrush,
+        "Task" => TaskBrush,
+        "Stage" => StageBrush,
         "TaskStage" => StageBrush,
         "Material" => MaterialBrush,
         "Equipment" => EquipmentBrush,
-        "File"     => FileBrush,
-        "Message"  => MessageBrush,
-        _          => DefaultBrush
+        "File" => FileBrush,
+        "Message" => MessageBrush,
+        _ => DefaultBrush
     };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -788,16 +788,16 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => (value?.ToString() ?? "") switch
         {
-            "Project"  => "Проект",
-            "Task"     => "Задача",
-            "Stage"    => "Этап",
+            "Project" => "Проект",
+            "Task" => "Задача",
+            "Stage" => "Этап",
             "TaskStage" => "Этап",
             "Material" => "Материал",
             "Equipment" => "Оборудование",
-            "File"     => "Файл",
-            "Message"  => "Сообщение",
-            "User"     => "Пользователь",
-            _          => "—"
+            "File" => "Файл",
+            "Message" => "Сообщение",
+            "User" => "Пользователь",
+            _ => "—"
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -812,11 +812,11 @@ public class ActorRoleToLabelConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => NormalizeRoleKey(value?.ToString()) switch
         {
-            "admin"    => "Админ",
-            "manager"  => "Менеджер",
-            "foreman"  => "Прораб",
-            "worker"   => "Работник",
-            _          => ""
+            "admin" => "Админ",
+            "manager" => "Менеджер",
+            "foreman" => "Прораб",
+            "worker" => "Работник",
+            _ => ""
         };
 
     /// <summary>English keys, Russian titles from messages (RoleToRussian), short forms.</summary>
@@ -846,20 +846,20 @@ public class ActorRoleToBrushConverter : IValueConverter
 {
     public static readonly ActorRoleToBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush AdminBrush    = new(Color.FromRgb(0xFE, 0xE2, 0xE2));
-    private static readonly SolidColorBrush ManagerBrush  = new(Color.FromRgb(0xDB, 0xE8, 0xFE));
-    private static readonly SolidColorBrush ForemanBrush  = new(Color.FromRgb(0xD1, 0xFA, 0xE5));
-    private static readonly SolidColorBrush WorkerBrush   = new(Color.FromRgb(0xED, 0xE9, 0xFE));
-    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0xF1, 0xF3, 0xF5));
+    private static readonly SolidColorBrush AdminBrush = new(Color.FromRgb(0xFE, 0xE2, 0xE2));
+    private static readonly SolidColorBrush ManagerBrush = new(Color.FromRgb(0xDB, 0xE8, 0xFE));
+    private static readonly SolidColorBrush ForemanBrush = new(Color.FromRgb(0xD1, 0xFA, 0xE5));
+    private static readonly SolidColorBrush WorkerBrush = new(Color.FromRgb(0xED, 0xE9, 0xFE));
+    private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0xF1, 0xF3, 0xF5));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => ActorRoleToLabelConverter.NormalizeRoleKey(value?.ToString()) switch
         {
-            "admin"    => AdminBrush,
-            "manager"  => ManagerBrush,
-            "foreman"  => ForemanBrush,
-            "worker"   => WorkerBrush,
-            _          => DefaultBrush
+            "admin" => AdminBrush,
+            "manager" => ManagerBrush,
+            "foreman" => ForemanBrush,
+            "worker" => WorkerBrush,
+            _ => DefaultBrush
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -871,20 +871,20 @@ public class ActorRoleToForegroundBrushConverter : IValueConverter
 {
     public static readonly ActorRoleToForegroundBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush AdminBrush    = new(Color.FromRgb(0x99, 0x1B, 0x1B));
-    private static readonly SolidColorBrush ManagerBrush  = new(Color.FromRgb(0x1D, 0x4E, 0xD8));
-    private static readonly SolidColorBrush ForemanBrush  = new(Color.FromRgb(0x16, 0x65, 0x34));
-    private static readonly SolidColorBrush WorkerBrush   = new(Color.FromRgb(0x6D, 0x28, 0xD9));
-    private static readonly SolidColorBrush DefaultBrush  = new(Color.FromRgb(0x4B, 0x55, 0x63));
+    private static readonly SolidColorBrush AdminBrush = new(Color.FromRgb(0x99, 0x1B, 0x1B));
+    private static readonly SolidColorBrush ManagerBrush = new(Color.FromRgb(0x1D, 0x4E, 0xD8));
+    private static readonly SolidColorBrush ForemanBrush = new(Color.FromRgb(0x16, 0x65, 0x34));
+    private static readonly SolidColorBrush WorkerBrush = new(Color.FromRgb(0x6D, 0x28, 0xD9));
+    private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x4B, 0x55, 0x63));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => ActorRoleToLabelConverter.NormalizeRoleKey(value?.ToString()) switch
         {
-            "admin"    => AdminBrush,
-            "manager"  => ManagerBrush,
-            "foreman"  => ForemanBrush,
-            "worker"   => WorkerBrush,
-            _          => DefaultBrush
+            "admin" => AdminBrush,
+            "manager" => ManagerBrush,
+            "foreman" => ForemanBrush,
+            "worker" => WorkerBrush,
+            _ => DefaultBrush
         };
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -915,10 +915,10 @@ public class NullToVisibilityConverter : IValueConverter
     {
         bool hasValue = value switch
         {
-            null             => false,
-            byte[] b         => b.Length > 0,
-            string s         => !string.IsNullOrEmpty(s),
-            _                => true
+            null => false,
+            byte[] b => b.Length > 0,
+            string s => !string.IsNullOrEmpty(s),
+            _ => true
         };
         if (Invert) hasValue = !hasValue;
         return hasValue ? Visibility.Visible : Visibility.Collapsed;
@@ -936,11 +936,11 @@ public class TaskStatusToPaleBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is TaskStatus s ? s switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC)),  // Slate-50
+            TaskStatus.Planned => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC)),  // Slate-50
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),  // Blue-50
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),  // Amber-50
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),  // Green-50
-            _                     => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC))
+            TaskStatus.Paused => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),  // Amber-50
+            TaskStatus.Completed => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),  // Green-50
+            _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC))
         } : new SolidColorBrush(Color.FromRgb(0xF8, 0xFA, 0xFC));
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -955,11 +955,11 @@ public class TaskStatusToForegroundBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is TaskStatus s ? s switch
         {
-            TaskStatus.Planned    => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),  // Slate-600
+            TaskStatus.Planned => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69)),  // Slate-600
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)),  // Blue-600
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)),  // Amber-600
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)),  // Green-600
-            _                     => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69))
+            TaskStatus.Paused => new SolidColorBrush(Color.FromRgb(0xD9, 0x77, 0x06)),  // Amber-600
+            TaskStatus.Completed => new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A)),  // Green-600
+            _ => new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69))
         } : new SolidColorBrush(Color.FromRgb(0x47, 0x55, 0x69));
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -1140,12 +1140,12 @@ public class FileTypeToIsImageConverter : IValueConverter
     {
         string? type = value?.ToString()?.ToLowerInvariant();
         if (string.IsNullOrEmpty(type)) return false;
-        
+
         if (type.StartsWith("image/")) return true;
-        
+
         var ext = Path.GetExtension(type);
         if (string.IsNullOrEmpty(ext)) ext = "." + type;
-        
+
         return ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".tiff" or ".heic";
     }
 

@@ -414,9 +414,9 @@
                                                                 <Image.Style>
                                                                     <Style TargetType="Image">
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </Image.Style>
@@ -459,22 +459,23 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                                     </StackPanel>
-                            <!-- Empty state -->
-                            <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
-                                        Visibility="{Binding Tasks.Count, Converter={StaticResource IntToVisInv}}">
-                                <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
-                                       Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                                <TextBlock Text="Задачи не найдены"
-                                           FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
-                                           HorizontalAlignment="Center"/>
-                                <TextBlock Text="Создайте первую задачу"
-                                           FontSize="12" Foreground="#64748B" TextAlignment="Center"
-                                           Margin="0,8,0,0" LineHeight="18"/>
-                            </StackPanel>
                         </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- Empty state (shown when no tasks at all) -->
+                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
+                                Visibility="{Binding Tasks.Count, Converter={StaticResource IntToVisInv}}">
+                        <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
+                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                        <TextBlock Text="Задачи не найдены"
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Создайте первую задачу"
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                   Margin="0,8,0,0" LineHeight="18"/>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
             <!-- ── Плавающая панель поиска ── -->

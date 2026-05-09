@@ -37,12 +37,12 @@ public partial class MainViewModel : ViewModelBase
     public string UserRole => _auth.UserRole ?? "—";
     public string UserRoleDisplay => _auth.UserRole switch
     {
-        "Administrator" or "Admin"          => "Администратор",
+        "Administrator" or "Admin" => "Администратор",
         "Project Manager" or "ProjectManager" or "Manager" => "Менеджер",
-        "Foreman"                           => "Прораб",
-        "Worker"                            => "Работник",
-        { } r                               => r,
-        _                                   => "—"
+        "Foreman" => "Прораб",
+        "Worker" => "Работник",
+        { } r => r,
+        _ => "—"
     };
     public string UserInitials => _auth.UserName is { Length: > 0 } name
         ? string.Concat(name.Split(' ').Take(2).Select(w => w[0]))
@@ -130,19 +130,19 @@ public partial class MainViewModel : ViewModelBase
         CurrentPage = page;
         ViewModelBase? vm = page switch
         {
-            "Home"      => _sp.GetRequiredService<HomeViewModel>(),
-            "Projects"  => _sp.GetRequiredService<ProjectsViewModel>(),
+            "Home" => _sp.GetRequiredService<HomeViewModel>(),
+            "Projects" => _sp.GetRequiredService<ProjectsViewModel>(),
             "ClosedProjects" => _sp.GetRequiredService<ClosedProjectsViewModel>(),
-            "Tasks"     => _sp.GetRequiredService<TasksViewModel>(),
-            "Files"     => _sp.GetRequiredService<FilesPageViewModel>(),
-            "Calendar"  => _sp.GetRequiredService<CalendarViewModel>(),
-            "Timeline"     => _sp.GetRequiredService<TimelineViewModel>(),
+            "Tasks" => _sp.GetRequiredService<TasksViewModel>(),
+            "Files" => _sp.GetRequiredService<FilesPageViewModel>(),
+            "Calendar" => _sp.GetRequiredService<CalendarViewModel>(),
+            "Timeline" => _sp.GetRequiredService<TimelineViewModel>(),
             "Warehouse" => _sp.GetRequiredService<WarehouseViewModel>(),
-            "Stages"    => _sp.GetRequiredService<StagesViewModel>(),
-            "Profile"   => _sp.GetRequiredService<ProfileViewModel>(),
-            "Admin"     => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings"  => null, // handled via overlay
-            _           => null
+            "Stages" => _sp.GetRequiredService<StagesViewModel>(),
+            "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
+            "Admin" => _sp.GetRequiredService<AdminViewModel>(),
+            "Settings" => null, // handled via overlay
+            _ => null
         };
 
         if (vm is ILoadable loadable)
@@ -276,21 +276,21 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             await using var db = await _sp.GetRequiredService<IDbContextFactory<Data.LocalDbContext>>().CreateDbContextAsync();
-            var name     = _auth.UserName ?? "?";
+            var name = _auth.UserName ?? "?";
             var initials = Services.AvatarHelper.GetInitials(name);
-            var color    = Services.AvatarHelper.GetColorForName(name);
+            var color = Services.AvatarHelper.GetColorForName(name);
             var log = new Models.LocalActivityLog
             {
-                UserId       = _auth.UserId,
-                ActorRole    = _auth.UserRole,
-                UserName     = name,
+                UserId = _auth.UserId,
+                ActorRole = _auth.UserRole,
+                UserName = name,
                 UserInitials = initials,
-                UserColor    = color,
-                ActionType   = Models.ActivityActionKind.Logout,
-                ActionText   = "Выход из системы",
-                EntityType   = "User",
-                EntityId     = _auth.UserId ?? Guid.Empty,
-                CreatedAt    = DateTime.UtcNow
+                UserColor = color,
+                ActionType = Models.ActivityActionKind.Logout,
+                ActionText = "Выход из системы",
+                EntityType = "User",
+                EntityId = _auth.UserId ?? Guid.Empty,
+                CreatedAt = DateTime.UtcNow
             };
             db.ActivityLogs.Add(log);
             await db.SaveChangesAsync();

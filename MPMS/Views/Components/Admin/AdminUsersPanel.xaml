@@ -271,7 +271,8 @@
                                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Редактировать"
                                                     Command="{Binding DataContext.OpenEditFormCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding}"
+                                                    Visibility="{Binding ShowEditActionButton, Converter={StaticResource BoolToVis}}">
                                                 <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}" Width="14" Height="14"/>
                                             </Button>
                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="{Binding BlockLabel}"

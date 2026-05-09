@@ -32,12 +32,12 @@ public class AuthService : IAuthService
     }
 
     public bool IsAuthenticated => _current is not null;
-    public string? Token    => _current?.Token;
+    public string? Token => _current?.Token;
     public string? RefreshToken => _current?.RefreshToken;
-    public Guid?   UserId   => _current?.UserId;
-    public string? UserName  => _current?.Name;
-    public string? Username  => _current?.Username;
-    public string? UserRole  => _current?.Role;
+    public Guid? UserId => _current?.UserId;
+    public string? UserName => _current?.Name;
+    public string? Username => _current?.Username;
+    public string? UserRole => _current?.Role;
 
     /// <inheritdoc />
     public string ApiBaseUrl =>
@@ -353,8 +353,8 @@ public class AuthService : IAuthService
                 .OrderByDescending(s => s.ExpiresAt)
                 .ToListAsync())
             .FirstOrDefault(s => string.Equals(s.Username, r.Username, StringComparison.OrdinalIgnoreCase));
-        var pwdHash  = BCrypt.Net.BCrypt.HashPassword(plainPassword);
-        var apiUrl   = NormalizeApiBaseUrl(_activeApiBaseUrl ?? _persistedApiBaseUrl ?? _defaultApiBaseUrl);
+        var pwdHash = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+        var apiUrl = NormalizeApiBaseUrl(_activeApiBaseUrl ?? _persistedApiBaseUrl ?? _defaultApiBaseUrl);
         var encPlain = ProtectPlainPassword(plainPassword);
         var allSessions = await db.AuthSessions.ToListAsync();
         foreach (var session in allSessions)
@@ -364,9 +364,13 @@ public class AuthService : IAuthService
         {
             db.AuthSessions.Add(new AuthSession
             {
-                Token = r.Token, RefreshToken = r.RefreshToken, UserId = r.UserId,
-                UserName = r.Name, Username = r.Username,
-                UserRole = r.Role, ExpiresAt = r.ExpiresAt,
+                Token = r.Token,
+                RefreshToken = r.RefreshToken,
+                UserId = r.UserId,
+                UserName = r.Name,
+                Username = r.Username,
+                UserRole = r.Role,
+                ExpiresAt = r.ExpiresAt,
                 LocalPasswordHash = pwdHash,
                 ApiBaseUrl = apiUrl,
                 SessionPasswordProtected = encPlain,
@@ -375,17 +379,17 @@ public class AuthService : IAuthService
         }
         else
         {
-            existing.Token             = r.Token;
-            existing.RefreshToken      = r.RefreshToken;
-            existing.UserId            = r.UserId;
-            existing.UserName          = r.Name;
-            existing.Username          = r.Username;
-            existing.UserRole          = r.Role;
-            existing.ExpiresAt         = r.ExpiresAt;
+            existing.Token = r.Token;
+            existing.RefreshToken = r.RefreshToken;
+            existing.UserId = r.UserId;
+            existing.UserName = r.Name;
+            existing.Username = r.Username;
+            existing.UserRole = r.Role;
+            existing.ExpiresAt = r.ExpiresAt;
             existing.LocalPasswordHash = pwdHash;
-            existing.ApiBaseUrl        = apiUrl;
+            existing.ApiBaseUrl = apiUrl;
             existing.SessionPasswordProtected = encPlain;
-            existing.IsActiveSession   = true;
+            existing.IsActiveSession = true;
         }
 
         await db.SaveChangesAsync();
@@ -419,10 +423,10 @@ public class AuthService : IAuthService
         if (existing is not null)
         {
             existing.DisplayName = r.Name;
-            existing.Role        = r.Role;
+            existing.Role = r.Role;
             existing.LastLoginAt = DateTime.UtcNow;
             var refreshed = RecentAccount.From(r.Username, r.Name, r.Role);
-            existing.Initials    = refreshed.Initials;
+            existing.Initials = refreshed.Initials;
             existing.AvatarColor = refreshed.AvatarColor;
         }
         else

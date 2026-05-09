@@ -11,7 +11,7 @@ public partial class LoginWindow : Window
 {
     private readonly LoginViewModel _vm;
 
-    private static readonly SolidColorBrush FocusBrush  = new(Color.FromRgb(0x6B, 0x77, 0x8C));
+    private static readonly SolidColorBrush FocusBrush = new(Color.FromRgb(0x6B, 0x77, 0x8C));
     private static readonly SolidColorBrush NormalBrush = new(Color.FromRgb(0xDF, 0xE1, 0xE6));
 
     public LoginWindow(LoginViewModel vm)
@@ -40,11 +40,11 @@ public partial class LoginWindow : Window
         if (_pwdVisible)
         {
             // Sync PasswordBox → TextBox before showing
-            PwdVisibleBox.Text       = PwdBox.Password;
-            PwdBox.Visibility        = Visibility.Collapsed;
+            PwdVisibleBox.Text = PwdBox.Password;
+            PwdBox.Visibility = Visibility.Collapsed;
             PwdVisibleBox.Visibility = Visibility.Visible;
-            EyeOnIcon.Visibility     = Visibility.Visible;
-            EyeOffIcon.Visibility    = Visibility.Collapsed;
+            EyeOnIcon.Visibility = Visibility.Visible;
+            EyeOffIcon.Visibility = Visibility.Collapsed;
             PwdVisibleBox.Focus();
             PwdVisibleBox.CaretIndex = PwdVisibleBox.Text.Length;
         }
@@ -52,12 +52,12 @@ public partial class LoginWindow : Window
         {
             // Sync TextBox → PasswordBox before hiding
             var text = PwdVisibleBox.Text;
-            PwdBox.Visibility        = Visibility.Visible;
+            PwdBox.Visibility = Visibility.Visible;
             PwdVisibleBox.Visibility = Visibility.Collapsed;
-            EyeOnIcon.Visibility     = Visibility.Collapsed;
-            EyeOffIcon.Visibility    = Visibility.Visible;
-            PwdBox.Password          = text;
-            _vm.Password             = text;
+            EyeOnIcon.Visibility = Visibility.Collapsed;
+            EyeOffIcon.Visibility = Visibility.Visible;
+            PwdBox.Password = text;
+            _vm.Password = text;
             PwdBox.Focus();
             // Run before next render so user doesn't see caret jump from start to end.
             Dispatcher.Invoke(() => SetPasswordBoxCaretEnd(PwdBox),

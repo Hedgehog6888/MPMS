@@ -37,7 +37,7 @@ public partial class App : Application
         {
             splash.SetLoadingText("Загрузка данных...");
             await Services.GetRequiredService<IApiService>().ProbeAsync();
-            
+
             splash.SetLoadingText("Открытие приложения...");
             await OpenMainWindowAsync(splash);
         }
@@ -83,7 +83,7 @@ public partial class App : Application
         services.AddSingleton<IEntitySyncer, UserSyncer>();
         services.AddSingleton<IEntitySyncer, FileSyncer>();
         services.AddSingleton<IEntitySyncer, SocialSyncer>();
-        
+
         services.AddSingleton<ISyncService, SyncCoordinator>();
 
         // ── Page ViewModels ───────────────────────────────────────────────────
@@ -118,7 +118,7 @@ public partial class App : Application
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         using var db = factory.CreateDbContext();
         db.Database.EnsureCreated();
-        
+
         // Enable WAL mode for better concurrency
         var connection = db.Database.GetDbConnection();
         if (connection.State != System.Data.ConnectionState.Open)
@@ -128,7 +128,7 @@ public partial class App : Application
         command.ExecuteNonQuery();
         command.CommandText = "PRAGMA synchronous=NORMAL;";
         command.ExecuteNonQuery();
-        
+
         LocalSchemaMigrator.Apply(LocalDbPaths.GetConnectionString());
     }
 
@@ -138,13 +138,13 @@ public partial class App : Application
         await Services.GetRequiredService<ISyncService>().SyncAsync();
         var main = Services.GetRequiredService<MainWindow>();
         Services.GetRequiredService<MainViewModel>().RefreshUserInfoAndNavigateHome();
-        
+
         // Close splash screen before showing main window
         splash?.CloseWithFadeOut();
-        
+
         // Small delay to allow fade out animation
         await Task.Delay(300);
-        
+
         main.Show();
     }
 

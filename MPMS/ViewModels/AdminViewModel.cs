@@ -15,31 +15,31 @@ namespace MPMS.ViewModels;
 // ─────────────────────────────────────────────────────────────────────────
 public class AdminUserRow : ObservableObject
 {
-    public Guid   Id             { get; set; }
-    public string Name           { get; set; } = string.Empty;
-    public string FirstName      { get; set; } = string.Empty;
-    public string LastName       { get; set; } = string.Empty;
-    public string Username       { get; set; } = string.Empty;
-    public string Email          { get; set; } = string.Empty;
-    public DateOnly? BirthDate   { get; set; }
-    public string? HomeAddress   { get; set; }
-    public string RoleName       { get; set; } = string.Empty;
-    public string RoleDisplay    { get; set; } = string.Empty;
-    public Guid   RoleId         { get; set; }
-    public string? SubRole            { get; set; }
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public DateOnly? BirthDate { get; set; }
+    public string? HomeAddress { get; set; }
+    public string RoleName { get; set; } = string.Empty;
+    public string RoleDisplay { get; set; } = string.Empty;
+    public Guid RoleId { get; set; }
+    public string? SubRole { get; set; }
     public string? AdditionalSubRoles { get; set; }
-    public DateTime CreatedAt    { get; set; }
-    public bool   IsBlocked      { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public bool IsBlocked { get; set; }
     public string? BlockedReason { get; set; }
-    public DateTime? BlockedAt   { get; set; }
-    public byte[]? AvatarData    { get; set; }
-    public string? AvatarPath    { get; set; }
+    public DateTime? BlockedAt { get; set; }
+    public byte[]? AvatarData { get; set; }
+    public string? AvatarPath { get; set; }
 
-    public string Initials     => AvatarHelper.GetInitials(Name);
-    public string AvatarColor  => AvatarHelper.GetColorForName(Name);
-    public string StatusText   => IsBlocked ? "Заблокирован" : "Активен";
-    public string BlockIcon    => IsBlocked ? "🔓" : "🔒";
-    public string BlockLabel   => IsBlocked ? "Разблокировать" : "Заблокировать";
+    public string Initials => AvatarHelper.GetInitials(Name);
+    public string AvatarColor => AvatarHelper.GetColorForName(Name);
+    public string StatusText => IsBlocked ? "Заблокирован" : "Активен";
+    public string BlockIcon => IsBlocked ? "🔓" : "🔒";
+    public string BlockLabel => IsBlocked ? "Разблокировать" : "Заблокировать";
 
     /// <summary>Кнопка блокировки: администраторов нельзя блокировать (разблокировать — можно).</summary>
     public bool ShowBlockActionButton => !UserPeekAccess.IsAdministrator(RoleName) || IsBlocked;
@@ -47,21 +47,24 @@ public class AdminUserRow : ObservableObject
     /// <summary>Удаление недоступно для пользователей с ролью администратора.</summary>
     public bool ShowDeleteActionButton => !UserPeekAccess.IsAdministrator(RoleName);
 
+    /// <summary>Редактирование недоступно для пользователей с ролью администратора.</summary>
+    public bool ShowEditActionButton => !UserPeekAccess.IsAdministrator(RoleName);
+
     public string RoleColor => RoleName switch
     {
-        "Administrator" or "Admin"                              => "#FEE2E2",
-        "Project Manager" or "ProjectManager" or "Manager"     => "#DBEAFE",
-        "Foreman"                                               => "#D1FAE5",
-        "Worker"                                                => "#EDE9FE",
-        _                                                       => "#F1F3F5"
+        "Administrator" or "Admin" => "#FEE2E2",
+        "Project Manager" or "ProjectManager" or "Manager" => "#DBEAFE",
+        "Foreman" => "#D1FAE5",
+        "Worker" => "#EDE9FE",
+        _ => "#F1F3F5"
     };
     public string RoleForeground => RoleName switch
     {
-        "Administrator" or "Admin"                              => "#991B1B",
-        "Project Manager" or "ProjectManager" or "Manager"     => "#1D4ED8",
-        "Foreman"                                               => "#166534",
-        "Worker"                                                => "#6D28D9",
-        _                                                       => "#4B5563"
+        "Administrator" or "Admin" => "#991B1B",
+        "Project Manager" or "ProjectManager" or "Manager" => "#1D4ED8",
+        "Foreman" => "#166534",
+        "Worker" => "#6D28D9",
+        _ => "#4B5563"
     };
 }
 
@@ -70,13 +73,13 @@ public class AdminUserRow : ObservableObject
 // ─────────────────────────────────────────────────────────────────────────
 public class ArchiveRow
 {
-    public Guid   Id          { get; set; }
-    public string EntityType  { get; set; } = string.Empty;
-    public string Name        { get; set; } = string.Empty;
-    public string ParentName  { get; set; } = string.Empty;
-    public string StatusText  { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+    public string EntityType { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string ParentName { get; set; } = string.Empty;
+    public string StatusText { get; set; } = string.Empty;
     public DateTime DeletedAt { get; set; }
-    public string DeletedBy   { get; set; } = string.Empty;
+    public string DeletedBy { get; set; } = string.Empty;
     public string? Description { get; set; }
 }
 
@@ -85,8 +88,8 @@ public class ArchiveRow
 // ─────────────────────────────────────────────────────────────────────────
 public class RoleItem
 {
-    public Guid   Id      { get; set; }
-    public string Name    { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
     public string Display { get; set; } = string.Empty;
     public override string ToString() => Display;
 }
@@ -107,7 +110,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     public event Action<AdminUserRow>? OpenEditFormRequested;
 
     // Static filter options
-    public static readonly IReadOnlyList<string> RoleFilterOptions   = ["Все", "Администратор", "Менеджер", "Прораб", "Работник"];
+    public static readonly IReadOnlyList<string> RoleFilterOptions = ["Все", "Администратор", "Менеджер", "Прораб", "Работник"];
     public static readonly IReadOnlyList<string> StatusFilterOptions = ["Все", "Активные", "Заблокированные"];
 
     // History action type options (display name → action kind constant)
@@ -115,11 +118,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         ["Все", "Создано", "Изменено", "Удалено/Архив", "Восстановлено", "Сообщение"];
     private static readonly Dictionary<string, string[]> HistoryActionMap = new()
     {
-        ["Создано"]       = [ActivityActionKind.Created],
-        ["Изменено"]      = [ActivityActionKind.Updated, ActivityActionKind.UserEdited],
+        ["Создано"] = [ActivityActionKind.Created],
+        ["Изменено"] = [ActivityActionKind.Updated, ActivityActionKind.UserEdited],
         ["Удалено/Архив"] = [ActivityActionKind.Deleted, ActivityActionKind.MarkedForDeletion, ActivityActionKind.UserDeleted, ActivityActionKind.PermanentlyDeleted],
         ["Восстановлено"] = [ActivityActionKind.Restored, ActivityActionKind.UnmarkedForDeletion, ActivityActionKind.UserUnblocked],
-        ["Сообщение"]     = [ActivityActionKind.Message],
+        ["Сообщение"] = [ActivityActionKind.Message],
     };
 
     // Activity event type options
@@ -127,11 +130,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         ["Все", "Вход", "Выход", "Смена пароля", "Смена аватара", "Заблокирован"];
     private static readonly Dictionary<string, string[]> ActivityEventMap = new()
     {
-        ["Вход"]          = [ActivityActionKind.Login],
-        ["Выход"]         = [ActivityActionKind.Logout],
-        ["Смена пароля"]  = [ActivityActionKind.PasswordChanged],
+        ["Вход"] = [ActivityActionKind.Login],
+        ["Выход"] = [ActivityActionKind.Logout],
+        ["Смена пароля"] = [ActivityActionKind.PasswordChanged],
         ["Смена аватара"] = [ActivityActionKind.AvatarChanged],
-        ["Заблокирован"]  = [ActivityActionKind.UserBlocked, ActivityActionKind.UserUnblocked],
+        ["Заблокирован"] = [ActivityActionKind.UserBlocked, ActivityActionKind.UserUnblocked],
     };
 
     private const int PageSize = 50;
@@ -142,8 +145,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // ── Users tab ─────────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<AdminUserRow> _users = new();
     [ObservableProperty] private ObservableCollection<AdminUserRow> _filteredUsers = new();
-    [ObservableProperty] private string _userSearchText   = string.Empty;
-    [ObservableProperty] private string _userRoleFilter   = "Все";
+    [ObservableProperty] private string _userSearchText = string.Empty;
+    [ObservableProperty] private string _userRoleFilter = "Все";
     [ObservableProperty] private string _userStatusFilter = "Все";
     [ObservableProperty] private int _totalUsersCount;
     [ObservableProperty] private int _activeUsersCount;
@@ -152,8 +155,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // ── Archive tab ───────────────────────────────────────────────────────
     [ObservableProperty] private string _archiveTab = "Projects";
     [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedProjects = new();
-    [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedTasks    = new();
-    [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedStages   = new();
+    [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedTasks = new();
+    [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedStages = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedMaterials = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedEquipment = new();
     [ObservableProperty] private int _archiveProjectCount;
@@ -163,19 +166,19 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _archiveEquipmentCount;
     [ObservableProperty] private string _archiveSearchText = string.Empty;
     [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedProjects = new();
-    [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedTasks    = new();
-    [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedStages   = new();
+    [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedTasks = new();
+    [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedStages = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedMaterials = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedEquipment = new();
 
     // ── History tab ───────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _historyLogs = new();
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _filteredHistoryLogs = new();
-    [ObservableProperty] private string _historySearchText    = string.Empty;
-    [ObservableProperty] private string _historyActionFilter  = "Все";
-    [ObservableProperty] private string _historyUserFilter    = "Все";
+    [ObservableProperty] private string _historySearchText = string.Empty;
+    [ObservableProperty] private string _historyActionFilter = "Все";
+    [ObservableProperty] private string _historyUserFilter = "Все";
     [ObservableProperty] private ObservableCollection<string> _historyUserList = new();
-    [ObservableProperty] private int  _historyTotalCount;
+    [ObservableProperty] private int _historyTotalCount;
     [ObservableProperty] private bool _hasMoreHistory;
     private int _historyLoadedCount = PageSize;
     private List<LocalActivityLog> _allHistoryLogs = new();
@@ -183,11 +186,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // ── Activity tab ──────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _activityLogs = new();
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _filteredActivityLogs = new();
-    [ObservableProperty] private string _activitySearchText   = string.Empty;
-    [ObservableProperty] private string _activityUserFilter   = "Все";
-    [ObservableProperty] private string _activityEventFilter  = "Все";
+    [ObservableProperty] private string _activitySearchText = string.Empty;
+    [ObservableProperty] private string _activityUserFilter = "Все";
+    [ObservableProperty] private string _activityEventFilter = "Все";
     [ObservableProperty] private ObservableCollection<string> _activityUserList = new();
-    [ObservableProperty] private int  _activityTotalCount;
+    [ObservableProperty] private int _activityTotalCount;
     [ObservableProperty] private bool _hasMoreActivity;
     private int _activityLoadedCount = PageSize;
     private List<LocalActivityLog> _allActivityLogs = new();
@@ -197,33 +200,33 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private bool _isUnblockOverlayOpen;
     [ObservableProperty] private string _blockTargetName = string.Empty;
     [ObservableProperty] private string _blockTargetReason = string.Empty; // reason when unblocking (read-only)
-    [ObservableProperty] private string _blockReason     = string.Empty;
+    [ObservableProperty] private string _blockReason = string.Empty;
     private AdminUserRow? _blockTargetRow;
 
     // ── Confirm overlay ───────────────────────────────────────────────────
-    [ObservableProperty] private bool   _isConfirmOverlayOpen;
-    [ObservableProperty] private string _confirmTitle       = string.Empty;
-    [ObservableProperty] private string _confirmEntityName  = string.Empty;
-    [ObservableProperty] private string _confirmButtonText  = "Подтвердить";
-    [ObservableProperty] private bool   _confirmIsDestructive;
+    [ObservableProperty] private bool _isConfirmOverlayOpen;
+    [ObservableProperty] private string _confirmTitle = string.Empty;
+    [ObservableProperty] private string _confirmEntityName = string.Empty;
+    [ObservableProperty] private string _confirmButtonText = "Подтвердить";
+    [ObservableProperty] private bool _confirmIsDestructive;
     private Func<Task>? _confirmAction;
 
     private void SetupConfirm(string title, string entityName, string buttonText, bool destructive, Func<Task> action)
     {
-        ConfirmTitle        = title;
-        ConfirmEntityName   = entityName;
-        ConfirmButtonText   = buttonText;
+        ConfirmTitle = title;
+        ConfirmEntityName = entityName;
+        ConfirmButtonText = buttonText;
         ConfirmIsDestructive = destructive;
-        _confirmAction      = action;
+        _confirmAction = action;
         IsConfirmOverlayOpen = true;
     }
 
     public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, ISyncService sync)
     {
         _dbFactory = dbFactory;
-        _auth      = auth;
-        _api       = api;
-        _sync      = sync;
+        _auth = auth;
+        _api = api;
+        _sync = sync;
     }
 
     public async Task LoadAsync()
@@ -257,25 +260,25 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 var parts = name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
                 return new AdminUserRow
                 {
-                Id            = u.Id,
-                Name          = name,
-                FirstName     = parts.Length > 0 ? parts[0] : u.FirstName,
-                LastName      = parts.Length > 1 ? parts[1] : u.LastName,
-                Username      = u.Username,
-                Email         = u.Email ?? string.Empty,
-                BirthDate     = u.BirthDate,
-                HomeAddress   = u.HomeAddress,
-                RoleName      = u.RoleName,
-                RoleDisplay   = u.RoleDisplayName,
-                RoleId        = u.RoleId,
-                SubRole            = u.SubRole,
-                AdditionalSubRoles = u.AdditionalSubRoles,
-                CreatedAt     = u.CreatedAt,
-                IsBlocked     = u.IsBlocked,
-                BlockedReason = u.BlockedReason,
-                BlockedAt     = u.BlockedAt,
-                AvatarData    = u.AvatarData,
-                AvatarPath    = u.AvatarPath
+                    Id = u.Id,
+                    Name = name,
+                    FirstName = parts.Length > 0 ? parts[0] : u.FirstName,
+                    LastName = parts.Length > 1 ? parts[1] : u.LastName,
+                    Username = u.Username,
+                    Email = u.Email ?? string.Empty,
+                    BirthDate = u.BirthDate,
+                    HomeAddress = u.HomeAddress,
+                    RoleName = u.RoleName,
+                    RoleDisplay = u.RoleDisplayName,
+                    RoleId = u.RoleId,
+                    SubRole = u.SubRole,
+                    AdditionalSubRoles = u.AdditionalSubRoles,
+                    CreatedAt = u.CreatedAt,
+                    IsBlocked = u.IsBlocked,
+                    BlockedReason = u.BlockedReason,
+                    BlockedAt = u.BlockedAt,
+                    AvatarData = u.AvatarData,
+                    AvatarPath = u.AvatarPath
                 };
             }).ToList();
 
@@ -283,15 +286,15 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             Users.Clear();
             foreach (var r in rows) Users.Add(r);
-            TotalUsersCount   = rows.Count;
-            ActiveUsersCount  = rows.Count(r => !r.IsBlocked);
+            TotalUsersCount = rows.Count;
+            ActiveUsersCount = rows.Count(r => !r.IsBlocked);
             BlockedUsersCount = rows.Count(r => r.IsBlocked);
             ApplyUserFilter();
         });
     }
 
-    partial void OnUserSearchTextChanged(string value)   => ApplyUserFilter();
-    partial void OnUserRoleFilterChanged(string value)   => ApplyUserFilter();
+    partial void OnUserSearchTextChanged(string value) => ApplyUserFilter();
+    partial void OnUserRoleFilterChanged(string value) => ApplyUserFilter();
     partial void OnUserStatusFilterChanged(string value) => ApplyUserFilter();
 
     private void ApplyUserFilter()
@@ -389,8 +392,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             return;
         }
 
-        user.IsBlocked     = newBlocked;
-        user.BlockedAt     = newBlocked ? DateTime.UtcNow : null;
+        user.IsBlocked = newBlocked;
+        user.BlockedAt = newBlocked ? DateTime.UtcNow : null;
         user.BlockedReason = newBlocked ? BlockReason.Trim() : null;
         user.LastModifiedLocally = DateTime.UtcNow;
 
@@ -530,7 +533,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             .OrderByDescending(e => e.UpdatedAt)
             .ToListAsync();
 
-        var stageTaskIds  = stages.Select(s => s.TaskId).Distinct().ToList();
+        var stageTaskIds = stages.Select(s => s.TaskId).Distinct().ToList();
         var taskNamesById = await db.Tasks
             .Where(t => stageTaskIds.Contains(t.Id))
             .Select(t => new { t.Id, t.Name })
@@ -540,24 +543,44 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         {
             ArchivedProjects.Clear();
             foreach (var p in projects)
-                ArchivedProjects.Add(new ArchiveRow { Id = p.Id, EntityType = "Project", Name = p.Name, ParentName = p.Client ?? "—",
+                ArchivedProjects.Add(new ArchiveRow
+                {
+                    Id = p.Id,
+                    EntityType = "Project",
+                    Name = p.Name,
+                    ParentName = p.Client ?? "—",
                     StatusText = p.Status switch { ProjectStatus.Planning => "Планирование", ProjectStatus.InProgress => "В работе", ProjectStatus.Completed => "Завершён", ProjectStatus.Closed => "Закрытый", _ => "—" },
-                    DeletedAt = p.UpdatedAt, DeletedBy = p.ManagerName,
-                    Description = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description });
+                    DeletedAt = p.UpdatedAt,
+                    DeletedBy = p.ManagerName,
+                    Description = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description
+                });
 
             ArchivedTasks.Clear();
             foreach (var t in tasks)
-                ArchivedTasks.Add(new ArchiveRow { Id = t.Id, EntityType = "Task", Name = t.Name, ParentName = t.ProjectName,
+                ArchivedTasks.Add(new ArchiveRow
+                {
+                    Id = t.Id,
+                    EntityType = "Task",
+                    Name = t.Name,
+                    ParentName = t.ProjectName,
                     StatusText = t.Status switch { Models.TaskStatus.Planned => "Запланирована", Models.TaskStatus.InProgress => "Выполняется", Models.TaskStatus.Completed => "Завершена", _ => "—" },
-                    DeletedAt = t.UpdatedAt, DeletedBy = t.AssignedUserName ?? "—",
-                    Description = string.IsNullOrWhiteSpace(t.Description) ? null : t.Description });
+                    DeletedAt = t.UpdatedAt,
+                    DeletedBy = t.AssignedUserName ?? "—",
+                    Description = string.IsNullOrWhiteSpace(t.Description) ? null : t.Description
+                });
 
             ArchivedStages.Clear();
             foreach (var s in stages)
-                ArchivedStages.Add(new ArchiveRow { Id = s.Id, EntityType = "Stage", Name = s.Name,
+                ArchivedStages.Add(new ArchiveRow
+                {
+                    Id = s.Id,
+                    EntityType = "Stage",
+                    Name = s.Name,
                     ParentName = taskNamesById.GetValueOrDefault(s.TaskId, "—"),
                     StatusText = s.Status switch { StageStatus.Planned => "Запланирован", StageStatus.InProgress => "Выполняется", StageStatus.Completed => "Завершён", _ => "—" },
-                    DeletedAt = s.UpdatedAt, DeletedBy = s.AssignedUserName ?? "—" });
+                    DeletedAt = s.UpdatedAt,
+                    DeletedBy = s.AssignedUserName ?? "—"
+                });
             ArchivedMaterials.Clear();
             foreach (var m in materials)
                 ArchivedMaterials.Add(new ArchiveRow
@@ -586,8 +609,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
                 });
 
             ArchiveProjectCount = projects.Count;
-            ArchiveTaskCount    = tasks.Count;
-            ArchiveStageCount   = stages.Count;
+            ArchiveTaskCount = tasks.Count;
+            ArchiveStageCount = stages.Count;
             ArchiveMaterialCount = materials.Count;
             ArchiveEquipmentCount = equipment.Count;
             ApplyArchiveFilter();
@@ -638,11 +661,13 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         }
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Update, SyncPayloads.Project(p));
+
+        // Queue updates without await to avoid blocking
+        _ = _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Update, SyncPayloads.Project(p));
         foreach (var t in tasks)
-            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+            _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
         foreach (var s in stages)
-            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
+            _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await _sync.QueueLocalActivityLogAsync(log);
         await LoadArchiveAsync();
         SetStatus($"Проект «{p.Name}» восстановлен");
@@ -702,9 +727,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         }
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
         await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+
+        // Queue updates without await to avoid blocking
+        _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
         foreach (var s in stages)
-            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
+            _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await _sync.QueueLocalActivityLogAsync(log);
         await LoadArchiveAsync();
         SetStatus($"Задача «{t.Name}» восстановлена");
@@ -762,6 +789,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         await TryReserveRestoredStageEquipmentAsync(db, s, task?.ProjectId);
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил этап «{s.Name}» из архива", "Stage", s.Id);
         await db.SaveChangesAsync();
+
         await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         if (parentTaskUnarchived && task is not null)
             await _sync.QueueOperationAsync("Task", task.Id, SyncOperation.Update, SyncPayloads.Task(task));
@@ -935,21 +963,21 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         Application.Current.Dispatcher.Invoke(() =>
         {
             HistoryTotalCount = _allHistoryLogs.Count;
-            var currentUser   = HistoryUserFilter;
+            var currentUser = HistoryUserFilter;
             var currentAction = HistoryActionFilter;
             HistoryUserList.Clear();
             HistoryUserList.Add("Все");
             foreach (var n in userNames) HistoryUserList.Add(n);
             // Restore selections (prevents reset on reload)
-            HistoryUserFilter   = HistoryUserList.Contains(currentUser)   ? currentUser   : "Все";
+            HistoryUserFilter = HistoryUserList.Contains(currentUser) ? currentUser : "Все";
             HistoryActionFilter = HistoryActionOptions.Contains(currentAction) ? currentAction : "Все";
             ApplyHistoryFilter();
         });
     }
 
-    partial void OnHistorySearchTextChanged(string value)   => ApplyHistoryFilter();
+    partial void OnHistorySearchTextChanged(string value) => ApplyHistoryFilter();
     partial void OnHistoryActionFilterChanged(string value) => ApplyHistoryFilter();
-    partial void OnHistoryUserFilterChanged(string value)   => ApplyHistoryFilter();
+    partial void OnHistoryUserFilterChanged(string value) => ApplyHistoryFilter();
 
     private void ApplyHistoryFilter()
     {
@@ -1043,19 +1071,19 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         Application.Current.Dispatcher.Invoke(() =>
         {
             ActivityTotalCount = _allActivityLogs.Count;
-            var currentUser  = ActivityUserFilter;
+            var currentUser = ActivityUserFilter;
             var currentEvent = ActivityEventFilter;
             ActivityUserList.Clear();
             ActivityUserList.Add("Все");
             foreach (var n in userNames) ActivityUserList.Add(n);
-            ActivityUserFilter  = ActivityUserList.Contains(currentUser)   ? currentUser  : "Все";
+            ActivityUserFilter = ActivityUserList.Contains(currentUser) ? currentUser : "Все";
             ActivityEventFilter = ActivityEventOptions.Contains(currentEvent) ? currentEvent : "Все";
             ApplyActivityFilter();
         });
     }
 
-    partial void OnActivitySearchTextChanged(string value)  => ApplyActivityFilter();
-    partial void OnActivityUserFilterChanged(string value)  => ApplyActivityFilter();
+    partial void OnActivitySearchTextChanged(string value) => ApplyActivityFilter();
+    partial void OnActivityUserFilterChanged(string value) => ApplyActivityFilter();
     partial void OnActivityEventFilterChanged(string value) => ApplyActivityFilter();
 
     private void ApplyActivityFilter()
@@ -1112,16 +1140,16 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     {
         var log = new LocalActivityLog
         {
-            UserId       = _auth.UserId,
-            ActorRole    = _auth.UserRole,
-            UserName     = _auth.UserName ?? "Администратор",
+            UserId = _auth.UserId,
+            ActorRole = _auth.UserRole,
+            UserName = _auth.UserName ?? "Администратор",
             UserInitials = AvatarHelper.GetInitials(_auth.UserName ?? "АД"),
-            UserColor    = "#C0392B",
-            ActionType   = actionType,
-            ActionText   = text,
-            EntityType   = entityType,
-            EntityId     = entityId,
-            CreatedAt    = DateTime.UtcNow
+            UserColor = "#C0392B",
+            ActionType = actionType,
+            ActionText = text,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
         };
         db.ActivityLogs.Add(log);
         return log;

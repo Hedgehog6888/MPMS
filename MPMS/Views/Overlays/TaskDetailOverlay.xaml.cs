@@ -50,10 +50,10 @@ public partial class TaskDetailOverlay : UserControl
     {
         var auth = App.Services.GetRequiredService<IAuthService>();
         string role = auth.UserRole ?? "";
-        bool isWorker   = string.Equals(role, "Worker",   StringComparison.OrdinalIgnoreCase);
-        bool isForeman  = string.Equals(role, "Foreman",  StringComparison.OrdinalIgnoreCase);
-        bool isManager  = role is "Manager" or "ProjectManager" or "Project Manager";
-        bool isAdmin    = role is "Admin" or "Administrator";
+        bool isWorker = string.Equals(role, "Worker", StringComparison.OrdinalIgnoreCase);
+        bool isForeman = string.Equals(role, "Foreman", StringComparison.OrdinalIgnoreCase);
+        bool isManager = role is "Manager" or "ProjectManager" or "Project Manager";
+        bool isAdmin = role is "Admin" or "Administrator";
 
         // Проверка на закрытый проект
         bool isProjectClosed = false;
@@ -67,8 +67,8 @@ public partial class TaskDetailOverlay : UserControl
 
         if (isWorker || isProjectClosed)
         {
-            EditTaskBtn.Visibility    = Visibility.Collapsed;
-            AddStageBtn.Visibility    = Visibility.Collapsed;
+            EditTaskBtn.Visibility = Visibility.Collapsed;
+            AddStageBtn.Visibility = Visibility.Collapsed;
             MarkDeletionBtn.Visibility = Visibility.Collapsed;
         }
         else if (isForeman)
@@ -154,7 +154,7 @@ public partial class TaskDetailOverlay : UserControl
             });
         }
 
-        var roleMap    = new Dictionary<Guid, string?>();
+        var roleMap = new Dictionary<Guid, string?>();
         var subRoleMap = new Dictionary<Guid, string?>();
         var addSpecMap = new Dictionary<Guid, string?>();
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
@@ -164,7 +164,7 @@ public partial class TaskDetailOverlay : UserControl
                 .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
             var avDict = users.ToDictionary(u => u.Id);
-            roleMap    = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            roleMap = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
             subRoleMap = users.ToDictionary(u => u.Id, u => (string?)u.SubRole);
             addSpecMap = users.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
             foreach (var a in assignees)
@@ -179,10 +179,10 @@ public partial class TaskDetailOverlay : UserControl
         var displayItems = assignees
             .Select(a =>
             {
-                var role    = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
+                var role = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
                 var subRole = subRoleMap.TryGetValue(a.UserId, out var sr) ? sr : null;
                 var addSpec = addSpecMap.TryGetValue(a.UserId, out var aj) ? aj : null;
-                var peek    = UserPeekAccess.CanInteractPeekRow(auth, db, role);
+                var peek = UserPeekAccess.CanInteractPeekRow(auth, db, role);
                 return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec, peek);
             })
             .ToList();
@@ -234,10 +234,10 @@ public partial class TaskDetailOverlay : UserControl
         if (sender is not RadioButton rb) return;
         string tag = rb.Tag as string ?? "";
 
-        StagesPanel.Visibility   = tag == "Stages"    ? Visibility.Visible : Visibility.Collapsed;
+        StagesPanel.Visibility = tag == "Stages" ? Visibility.Visible : Visibility.Collapsed;
         MaterialsPanel.Visibility = tag == "Materials" ? Visibility.Visible : Visibility.Collapsed;
-        FilesPanel.Visibility     = tag == "Files"     ? Visibility.Visible : Visibility.Collapsed;
-        MessagesPanel.Visibility = tag == "Messages"   ? Visibility.Visible : Visibility.Collapsed;
+        FilesPanel.Visibility = tag == "Files" ? Visibility.Visible : Visibility.Collapsed;
+        MessagesPanel.Visibility = tag == "Messages" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)

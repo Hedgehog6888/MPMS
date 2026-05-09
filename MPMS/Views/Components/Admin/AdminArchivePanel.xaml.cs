@@ -31,10 +31,10 @@ namespace MPMS.Views.Components.Admin
             if (sender is not RadioButton rb) return;
             var tag = rb.Tag?.ToString() ?? "Projects";
 
-            ArchProjPanel.Visibility      = tag == "Projects" ? Visibility.Visible : Visibility.Collapsed;
-            ArchTaskPanel.Visibility      = tag == "Tasks"    ? Visibility.Visible : Visibility.Collapsed;
-            ArchStagePanel.Visibility     = tag == "Stages"   ? Visibility.Visible : Visibility.Collapsed;
-            ArchMaterialPanel.Visibility  = tag == "Materials" ? Visibility.Visible : Visibility.Collapsed;
+            ArchProjPanel.Visibility = tag == "Projects" ? Visibility.Visible : Visibility.Collapsed;
+            ArchTaskPanel.Visibility = tag == "Tasks" ? Visibility.Visible : Visibility.Collapsed;
+            ArchStagePanel.Visibility = tag == "Stages" ? Visibility.Visible : Visibility.Collapsed;
+            ArchMaterialPanel.Visibility = tag == "Materials" ? Visibility.Visible : Visibility.Collapsed;
             ArchEquipmentPanel.Visibility = tag == "Equipment" ? Visibility.Visible : Visibility.Collapsed;
 
             if (DataContext is AdminViewModel vm)

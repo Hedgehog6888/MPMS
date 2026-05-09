@@ -13,10 +13,10 @@ namespace MPMS.ViewModels;
 public partial class StageItem : ObservableObject
 {
     public LocalTaskStage Stage { get; init; } = null!;
-    public string TaskName    { get; init; } = string.Empty;
+    public string TaskName { get; init; } = string.Empty;
     public string ProjectName { get; init; } = string.Empty;
-    public Guid   TaskId      { get; init; }
-    public Guid   ProjectId   { get; init; }
+    public Guid TaskId { get; init; }
+    public Guid ProjectId { get; init; }
 
     public bool CanDragInKanban => !Stage.EffectiveMarkedForDeletion;
 }
@@ -200,10 +200,10 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                 taskDict.TryGetValue(s.TaskId, out var task);
                 return new StageItem
                 {
-                    Stage       = s,
-                    TaskId      = s.TaskId,
-                    TaskName    = task?.Name    ?? "—",
-                    ProjectId   = task?.ProjectId ?? Guid.Empty,
+                    Stage = s,
+                    TaskId = s.TaskId,
+                    TaskName = task?.Name ?? "—",
+                    ProjectId = task?.ProjectId ?? Guid.Empty,
                     ProjectName = task?.ProjectName ?? "—"
                 };
             }).ToList();
@@ -260,9 +260,9 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             var targetStatus = StatusFilter switch
             {
                 "Запланирован" => StageStatus.Planned,
-                "Выполняется"  => StageStatus.InProgress,
-                "Завершён"     => StageStatus.Completed,
-                _              => (StageStatus?)null
+                "Выполняется" => StageStatus.InProgress,
+                "Завершён" => StageStatus.Completed,
+                _ => (StageStatus?)null
             };
             if (targetStatus.HasValue)
                 query = query.Where(s => s.Stage.Status == targetStatus.Value && !s.Stage.EffectiveMarkedForDeletion);
@@ -270,10 +270,10 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
         static int StageStatusOrder(StageStatus st) => st switch
         {
-            StageStatus.Planned    => 0,
+            StageStatus.Planned => 0,
             StageStatus.InProgress => 1,
-            StageStatus.Completed  => 2,
-            _                      => 9
+            StageStatus.Completed => 2,
+            _ => 9
         };
 
         var ordered = query

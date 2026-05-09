@@ -583,12 +583,16 @@ public partial class TaskDetailViewModel : ViewModelBase
 
     public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)
     {
-        if (!DueDatePolicy.IsAllowed(req.DueDate))
-            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
-
         await using var db = await _dbFactory.CreateDbContextAsync();
         var task = await db.Tasks.FindAsync(taskId);
         if (task is null) return;
+
+        // Validate due date only if it was actually changed
+        if (req.DueDate != task.DueDate)
+        {
+            if (!DueDatePolicy.IsAllowed(req.DueDate))
+                throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
+        }
 
         var assignedName = req.AssignedUserId.HasValue
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)

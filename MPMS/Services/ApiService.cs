@@ -281,7 +281,8 @@ public class ApiService : IApiService
             ("id", id?.ToString()));
 
         // We can't reuse MultipartFormDataContent across retries, so we need a factory or create it inside.
-        var response = await SendWithRetryAsync(async () => {
+        var response = await SendWithRetryAsync(async () =>
+        {
             using var content = new MultipartFormDataContent();
             var fileContent = new ByteArrayContent(await File.ReadAllBytesAsync(filePath));
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(GetMimeType(fileInfo.Extension));
@@ -310,7 +311,7 @@ public class ApiService : IApiService
         LastUsersPullError = null;
         var q = BuildQuery(("search", search));
         var uri = Api($"users{q}");
-        
+
         var response = await SendWithRetryAsync(() => _http.GetAsync(uri));
         if (response == null) return null;
 

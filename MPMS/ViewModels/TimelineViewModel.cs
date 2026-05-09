@@ -13,40 +13,40 @@ namespace MPMS.ViewModels;
 /// <summary>A single row in the Timeline chart (task).</summary>
 public sealed class TimelineTaskRow
 {
-    public LocalTask Task         { get; init; } = null!;
+    public LocalTask Task { get; init; } = null!;
     /// <summary>0–1 fraction: gap before bar.</summary>
-    public double BarLeft         { get; init; }
+    public double BarLeft { get; init; }
     /// <summary>0–1 fraction: bar width.</summary>
-    public double BarWidth        { get; init; }
+    public double BarWidth { get; init; }
     /// <summary>0–1 fraction: gap after bar (= 1 - BarLeft - BarWidth).</summary>
-    public double BarRemainder    { get; init; }
-    public bool   HasBar          { get; init; }
-    public string StatusLabel     { get; init; } = string.Empty;
-    public string StatusColor     { get; init; } = "#64748B";
+    public double BarRemainder { get; init; }
+    public bool HasBar { get; init; }
+    public string StatusLabel { get; init; } = string.Empty;
+    public string StatusColor { get; init; } = "#64748B";
     /// <summary>Bar colour based on task progress % (same palette as ProgressPercentToBrushConverter).</summary>
-    public string BarColorHex     { get; init; } = "#EF4444";
+    public string BarColorHex { get; init; } = "#EF4444";
     /// <summary>Срок полосы: от даты начала (создание) до дедлайна, «dd.MM.yyyy — dd.MM.yyyy».</summary>
-    public string BarRangeLabel   { get; init; } = "";
-    public bool   IsOverdue       { get; init; }
+    public string BarRangeLabel { get; init; } = "";
+    public bool IsOverdue { get; init; }
 }
 
 /// <summary>A single row in the Timeline chart (stage).</summary>
 public sealed class TimelineStageRow
 {
-    public StageItem  Stage       { get; init; } = null!;
-    public LocalTask? ParentTask  { get; init; }
-    public double BarLeft         { get; init; }
-    public double BarWidth        { get; init; }
-    public double BarRemainder    { get; init; }
-    public bool   HasBar          { get; init; }
-    public string StatusLabel     { get; init; } = string.Empty;
+    public StageItem Stage { get; init; } = null!;
+    public LocalTask? ParentTask { get; init; }
+    public double BarLeft { get; init; }
+    public double BarWidth { get; init; }
+    public double BarRemainder { get; init; }
+    public bool HasBar { get; init; }
+    public string StatusLabel { get; init; } = string.Empty;
     /// <summary>Badge colour — original stage status palette (gray/blue/green).</summary>
-    public string StatusColor     { get; init; } = "#64748B";
+    public string StatusColor { get; init; } = "#64748B";
     /// <summary>Bar colour — matches task progress palette (red/blue/green).</summary>
-    public string BarColorHex     { get; init; } = "#EF4444";
+    public string BarColorHex { get; init; } = "#EF4444";
     /// <summary>Срок полосы этапа: от создания до дедлайна.</summary>
-    public string BarRangeLabel   { get; init; } = "";
-    public bool   IsOverdue       { get; init; }
+    public string BarRangeLabel { get; init; } = "";
+    public bool IsOverdue { get; init; }
 }
 
 public partial class TimelineViewModel : ViewModelBase, ILoadable
@@ -55,10 +55,10 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
 
     [ObservableProperty] private DateTime _currentDate = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-    [ObservableProperty] private string _monthTitle    = string.Empty;
-    [ObservableProperty] private string _activeTab     = "Tasks";
+    [ObservableProperty] private string _monthTitle = string.Empty;
+    [ObservableProperty] private string _activeTab = "Tasks";
 
-    [ObservableProperty] private ObservableCollection<TimelineTaskRow>  _taskRows  = [];
+    [ObservableProperty] private ObservableCollection<TimelineTaskRow> _taskRows = [];
     [ObservableProperty] private ObservableCollection<TimelineStageRow> _stageRows = [];
     [ObservableProperty] private ObservableCollection<TimelineDayHeader> _dayHeaders = [];
 
@@ -68,7 +68,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
     public TimelineViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
     {
         _dbFactory = dbFactory;
-        _auth      = auth;
+        _auth = auth;
         UpdateMonthTitle();
     }
 
@@ -82,14 +82,15 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
 
     private void UpdateMonthTitle()
     {
-        var ci  = new CultureInfo("ru-RU");
+        var ci = new CultureInfo("ru-RU");
         var raw = CurrentDate.ToString("MMMM yyyy", ci);
         MonthTitle = raw.Length > 0 ? char.ToUpper(raw[0]) + raw[1..] : raw;
     }
 
     [RelayCommand] private void PreviousMonth() => CurrentDate = CurrentDate.AddMonths(-1);
-    [RelayCommand] private void NextMonth()      => CurrentDate = CurrentDate.AddMonths(1);
-    [RelayCommand] private void GoToToday()
+    [RelayCommand] private void NextMonth() => CurrentDate = CurrentDate.AddMonths(1);
+    [RelayCommand]
+    private void GoToToday()
         => CurrentDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
     public async Task LoadAsync()
@@ -99,13 +100,13 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var userId    = _auth.UserId;
-            bool isAdmin  = _auth.UserRole is "Administrator" or "Admin";
+            var userId = _auth.UserId;
+            bool isAdmin = _auth.UserRole is "Administrator" or "Admin";
             bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
-            bool isWorker  = string.Equals(_auth.UserRole, "Worker",  StringComparison.OrdinalIgnoreCase);
+            bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
             var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion);
 
@@ -133,8 +134,8 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 }
             }
 
-            var allTasks  = await taskQuery.ToListAsync();
-            var taskIds   = allTasks.Select(t => t.Id).ToList();
+            var allTasks = await taskQuery.ToListAsync();
+            var taskIds = allTasks.Select(t => t.Id).ToList();
             var allStages = taskIds.Count > 0
                 ? await db.TaskStages.Where(s => !s.IsArchived && !s.IsMarkedForDeletion && taskIds.Contains(s.TaskId)).ToListAsync()
                 : new List<LocalTaskStage>();
@@ -154,14 +155,14 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
             }
 
             // Build month range
-            var start     = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
+            var start = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
             var daysCount = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
-            var end       = start.AddDays(daysCount - 1);
-            var today     = DateTime.Today;
+            var end = start.AddDays(daysCount - 1);
+            var today = DateTime.Today;
             double totalDays = daysCount;
 
             // Day headers
-            var ci      = new CultureInfo("ru-RU");
+            var ci = new CultureInfo("ru-RU");
             var headers = new List<TimelineDayHeader>();
             for (int d = 0; d < daysCount; d++)
             {
@@ -169,8 +170,8 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 headers.Add(new TimelineDayHeader
                 {
                     DayNumber = day.Day.ToString(),
-                    DayName   = day.ToString("ddd", ci),
-                    IsToday   = day.Date == today.Date
+                    DayName = day.ToString("ddd", ci),
+                    IsToday = day.Date == today.Date
                 });
             }
             DayHeaders = new ObservableCollection<TimelineDayHeader>(headers);
@@ -193,16 +194,16 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                         out var hasBar, out var left, out var width);
                     return new TimelineTaskRow
                     {
-                        Task         = t,
-                        HasBar       = hasBar,
-                        BarLeft      = left,
-                        BarWidth     = width,
+                        Task = t,
+                        HasBar = hasBar,
+                        BarLeft = left,
+                        BarWidth = width,
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
-                        StatusLabel  = TaskStatusLabel(t.Status),
-                        StatusColor  = TaskStatusColor(t.Status),
-                        BarColorHex  = ProgressToHex(t.ProgressPercent),
+                        StatusLabel = TaskStatusLabel(t.Status),
+                        StatusColor = TaskStatusColor(t.Status),
+                        BarColorHex = ProgressToHex(t.ProgressPercent),
                         BarRangeLabel = FormatTimelineBarRangeLabel(barStart, t.DueDate),
-                        IsOverdue    = t.IsOverdue
+                        IsOverdue = t.IsOverdue
                     };
                 })
                 .Where(r => r.HasBar)
@@ -218,10 +219,10 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                     taskDict.TryGetValue(s.TaskId, out var parentTask);
                     var item = new StageItem
                     {
-                        Stage       = s,
-                        TaskId      = s.TaskId,
-                        TaskName    = parentTask?.Name      ?? "—",
-                        ProjectId   = parentTask?.ProjectId ?? Guid.Empty,
+                        Stage = s,
+                        TaskId = s.TaskId,
+                        TaskName = parentTask?.Name ?? "—",
+                        ProjectId = parentTask?.ProjectId ?? Guid.Empty,
                         ProjectName = parentTask?.ProjectName ?? "—"
                     };
 
@@ -232,17 +233,17 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                         out var hasBar, out var left, out var width);
                     return new TimelineStageRow
                     {
-                        Stage        = item,
-                        ParentTask   = parentTask,
-                        HasBar       = hasBar,
-                        BarLeft      = left,
-                        BarWidth     = width,
+                        Stage = item,
+                        ParentTask = parentTask,
+                        HasBar = hasBar,
+                        BarLeft = left,
+                        BarWidth = width,
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
-                        StatusLabel  = StageStatusLabel(s.Status),
-                        StatusColor  = StageStatusColor(s.Status),
-                        BarColorHex  = StageBarColor(s.Status),
+                        StatusLabel = StageStatusLabel(s.Status),
+                        StatusColor = StageStatusColor(s.Status),
+                        BarColorHex = StageBarColor(s.Status),
                         BarRangeLabel = FormatTimelineBarRangeLabel(stageBarStart, s.DueDate),
-                        IsOverdue    = s.IsOverdue
+                        IsOverdue = s.IsOverdue
                     };
                 })
                 .Where(r => r.HasBar)
@@ -259,53 +260,53 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
 
     /// <summary>Progress-based colour matching ProgressPercentToBrushConverter.</summary>
     private static string ProgressToHex(int pct) => pct >= 100 ? "#10B981"
-        : pct >= 60  ? "#3B82F6"
-        : pct >= 30  ? "#F59E0B"
+        : pct >= 60 ? "#3B82F6"
+        : pct >= 30 ? "#F59E0B"
         : "#EF4444";
 
     private static string TaskStatusLabel(TaskStatus s) => s switch
     {
-        TaskStatus.Planned    => "Запланирована",
+        TaskStatus.Planned => "Запланирована",
         TaskStatus.InProgress => "Выполняется",
-        TaskStatus.Paused     => "Приостановлена",
-        TaskStatus.Completed  => "Завершена",
-        _                     => s.ToString()
+        TaskStatus.Paused => "Приостановлена",
+        TaskStatus.Completed => "Завершена",
+        _ => s.ToString()
     };
 
     // Colors matching TaskStatusToBrushConverter exactly
     private static string TaskStatusColor(TaskStatus s) => s switch
     {
-        TaskStatus.Planned    => "#64748B",
+        TaskStatus.Planned => "#64748B",
         TaskStatus.InProgress => "#3B82F6",
-        TaskStatus.Paused     => "#F59E0B",
-        TaskStatus.Completed  => "#10B981",
-        _                     => "#64748B"
+        TaskStatus.Paused => "#F59E0B",
+        TaskStatus.Completed => "#10B981",
+        _ => "#64748B"
     };
 
     private static string StageStatusLabel(StageStatus s) => s switch
     {
-        StageStatus.Planned    => "Запланирован",
+        StageStatus.Planned => "Запланирован",
         StageStatus.InProgress => "Выполняется",
-        StageStatus.Completed  => "Завершён",
-        _                      => s.ToString()
+        StageStatus.Completed => "Завершён",
+        _ => s.ToString()
     };
 
     // Badge colour — original StageStatusToBrushConverter palette
     private static string StageStatusColor(StageStatus s) => s switch
     {
-        StageStatus.Planned    => "#64748B",
+        StageStatus.Planned => "#64748B",
         StageStatus.InProgress => "#3B82F6",
-        StageStatus.Completed  => "#10B981",
-        _                      => "#64748B"
+        StageStatus.Completed => "#10B981",
+        _ => "#64748B"
     };
 
     // Bar colour — same palette as task progress bars
     private static string StageBarColor(StageStatus s) => s switch
     {
-        StageStatus.Planned    => "#EF4444",
+        StageStatus.Planned => "#EF4444",
         StageStatus.InProgress => "#3B82F6",
-        StageStatus.Completed  => "#10B981",
-        _                      => "#EF4444"
+        StageStatus.Completed => "#10B981",
+        _ => "#EF4444"
     };
 
     /// <summary>Текст «с — по» для подсказки на полосе (та же логика, что у отрезка на шкале).</summary>
@@ -344,12 +345,12 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
             (startDate, endDate) = (endDate, startDate);
 
         var startDt = startDate.ToDateTime(TimeOnly.MinValue);
-        var endDt   = endDate.ToDateTime(TimeOnly.MinValue);
+        var endDt = endDate.ToDateTime(TimeOnly.MinValue);
         if (startDt > monthEnd || endDt < monthStart) return;
 
         var clipStart = startDt < monthStart ? monthStart : startDt;
-        var clipEnd   = endDt > monthEnd ? monthEnd : endDt;
-        left  = (clipStart - monthStart).TotalDays / totalDaysInMonth;
+        var clipEnd = endDt > monthEnd ? monthEnd : endDt;
+        left = (clipStart - monthStart).TotalDays / totalDaysInMonth;
         width = Math.Max((clipEnd - clipStart).TotalDays + 1, 1) / totalDaysInMonth;
         hasBar = true;
     }
@@ -358,6 +359,6 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
 public sealed class TimelineDayHeader
 {
     public string DayNumber { get; init; } = string.Empty;
-    public string DayName   { get; init; } = string.Empty;
-    public bool   IsToday   { get; init; }
+    public string DayName { get; init; } = string.Empty;
+    public bool IsToday { get; init; }
 }

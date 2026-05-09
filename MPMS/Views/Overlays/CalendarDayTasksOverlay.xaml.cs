@@ -83,7 +83,7 @@ public partial class CalendarDayTasksOverlay : UserControl
 
     private static string FormatSummaryLine(int taskCount, int stageCount)
     {
-        var tasksPart  = FormatTaskCount(taskCount);
+        var tasksPart = FormatTaskCount(taskCount);
         var stagesPart = FormatStageCount(stageCount);
         return $"{tasksPart} · {stagesPart}";
     }

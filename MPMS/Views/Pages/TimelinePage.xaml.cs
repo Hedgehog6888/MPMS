@@ -22,8 +22,8 @@ public partial class TimelinePage : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
-        Loaded             += (_, _) => DrawTodayLine();
-        SizeChanged        += (_, _) => DrawTodayLine();
+        Loaded += (_, _) => DrawTodayLine();
+        SizeChanged += (_, _) => DrawTodayLine();
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -59,7 +59,7 @@ public partial class TimelinePage : UserControl
     private void UpdateTabVisibility()
     {
         var isTask = _vm?.ActiveTab == "Tasks";
-        TasksSection.Visibility  = isTask ? Visibility.Visible   : Visibility.Collapsed;
+        TasksSection.Visibility = isTask ? Visibility.Visible : Visibility.Collapsed;
         StagesSection.Visibility = isTask ? Visibility.Collapsed : Visibility.Visible;
         Dispatcher.BeginInvoke(DrawTodayLine);
     }
@@ -73,43 +73,45 @@ public partial class TimelinePage : UserControl
         if (fraction < 0 || fraction > 1) return;
 
         // Find the timeline column (right of the 260px info column)
-        const double leftColWidth  = 260;
-        const double headerHeight  = 37; // approx day-header row height
-        double totalWidth          = ActualWidth - 16 - 16; // margins 16+16
+        const double leftColWidth = 260;
+        const double headerHeight = 37; // approx day-header row height
+        double totalWidth = ActualWidth - 16 - 16; // margins 16+16
         if (totalWidth <= leftColWidth) return;
 
         double timelineWidth = totalWidth - leftColWidth;
         double lineX = leftColWidth + fraction * timelineWidth;
 
-        bool isTasks  = _vm.ActiveTab == "Tasks";
-        int rowCount  = isTasks ? _vm.TaskRows.Count : _vm.StageRows.Count;
+        bool isTasks = _vm.ActiveTab == "Tasks";
+        int rowCount = isTasks ? _vm.TaskRows.Count : _vm.StageRows.Count;
         double height = headerHeight + rowCount * 52 + 10;
 
-        TodayLineCanvas.Width  = totalWidth;
+        TodayLineCanvas.Width = totalWidth;
         TodayLineCanvas.Height = height;
 
         // Vertical dashed line (red)
         var line = new Line
         {
-            X1 = lineX, Y1 = headerHeight,
-            X2 = lineX, Y2 = height,
-            Stroke          = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            X1 = lineX,
+            Y1 = headerHeight,
+            X2 = lineX,
+            Y2 = height,
+            Stroke = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
             StrokeThickness = 1.5,
             StrokeDashArray = new DoubleCollection { 4, 3 },
-            Opacity         = 0.9
+            Opacity = 0.9
         };
         TodayLineCanvas.Children.Add(line);
 
         // "Сегодня" label (red)
         var label = new Border
         {
-            Background  = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
+            Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
             CornerRadius = new CornerRadius(3),
-            Padding      = new Thickness(4, 2, 4, 2),
-            Child        = new TextBlock
+            Padding = new Thickness(4, 2, 4, 2),
+            Child = new TextBlock
             {
-                Text       = "Сегодня",
-                FontSize   = 9,
+                Text = "Сегодня",
+                FontSize = 9,
                 Foreground = Brushes.White,
                 FontWeight = FontWeights.SemiBold
             }

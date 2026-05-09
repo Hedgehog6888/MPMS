@@ -16,6 +16,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
     private CancellationTokenSource _loadCts = new();
+    private bool _isDeleting = false;
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
     [ObservableProperty] private string _searchText = string.Empty;
@@ -40,6 +41,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
+        // Prevent reload during delete operations
+        if (_isDeleting) return;
+
         // Cancel any previous in-flight load
         _loadCts.Cancel();
         _loadCts = new CancellationTokenSource();
@@ -178,6 +182,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         var filtered = _allLoadedProjects.AsEnumerable();
 
+        // Always filter out archived projects (same as LoadAsync)
+        filtered = filtered.Where(p => !p.IsArchived && !p.IsClosed);
+
         if (searchTerm is not null)
         {
             filtered = filtered.Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
@@ -291,35 +298,50 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task DeleteProjectAsync(LocalProject project)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        var entity = await db.Projects.FindAsync(project.Id);
-        if (entity is null) return;
-
-        // Delete moves the project graph to archive. Closing is handled separately by IsClosed.
-        entity.IsArchived = true;
-        entity.IsSynced = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-
-        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
-        var taskIds = tasks.Select(t => t.Id).ToList();
-        var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
-        foreach (var t in tasks) { t.IsArchived = true; t.IsSynced = false; t.UpdatedAt = DateTime.UtcNow; }
-        foreach (var s in stages)
+        _isDeleting = true;
+        try
         {
-            s.IsArchived = true;
-            s.IsSynced = false;
-            s.UpdatedAt = DateTime.UtcNow;
-            s.LastModifiedLocally = DateTime.UtcNow;
-        }
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var entity = await db.Projects.FindAsync(project.Id);
+            if (entity is null) return;
 
-        await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
-        foreach (var t in tasks)
-            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
-        foreach (var s in stages)
-            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
-        await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
-        await LoadAsync();
+            // Delete moves the project graph to archive. Closing is handled separately by IsClosed.
+            entity.IsArchived = true;
+            entity.IsSynced = false;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id).ToListAsync();
+            var taskIds = tasks.Select(t => t.Id).ToList();
+            var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).ToListAsync();
+            foreach (var t in tasks) { t.IsArchived = true; t.IsSynced = false; t.UpdatedAt = DateTime.UtcNow; }
+            foreach (var s in stages)
+            {
+                s.IsArchived = true;
+                s.IsSynced = false;
+                s.UpdatedAt = DateTime.UtcNow;
+                s.LastModifiedLocally = DateTime.UtcNow;
+            }
+
+            await LogActivityAsync(db, $"Проект «{project.Name}» удалён", "Project", project.Id, ActivityActionKind.Deleted);
+            await db.SaveChangesAsync();
+
+            // Queue updates without await to avoid blocking - server doesn't cascade
+            _ = _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
+            foreach (var t in tasks)
+                _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+            foreach (var s in stages)
+                _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
+
+            // Remove from UI immediately instead of reloading (avoids cache issues)
+            var toRemove = Projects.FirstOrDefault(p => p.Id == project.Id);
+            if (toRemove is not null)
+                Projects.Remove(toRemove);
+            _allLoadedProjects.RemoveAll(p => p.Id == project.Id);
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
     }
 
     [RelayCommand]
@@ -380,15 +402,23 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             }
         }
 
-        await db.SaveChangesAsync();
-        await _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
-        foreach (var t in tasks)
-            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
-
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
-        await LoadAsync();
+        await db.SaveChangesAsync();
+
+        // Queue updates without await to avoid blocking - server doesn't cascade
+        _ = _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
+        foreach (var t in tasks)
+            _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
+
+        // Update UI immediately instead of reloading
+        var existing = _allLoadedProjects.FirstOrDefault(p => p.Id == project.Id);
+        if (existing is not null)
+        {
+            existing.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+            ApplyFilter();
+        }
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText,

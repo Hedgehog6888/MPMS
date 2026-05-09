@@ -120,12 +120,12 @@ public partial class FilesControlViewModel : ViewModelBase
                     .Where(p => !p.IsArchived && !p.IsClosed)
                     .Select(p => p.Id)
                     .ToList();
-                
+
                 var activeTaskIds = db.Tasks
                     .Where(t => !t.IsArchived && activeProjectIds.Contains(t.ProjectId))
                     .Select(t => t.Id)
                     .ToList();
-                
+
                 var activeStageIds = db.TaskStages
                     .Where(s => !s.IsArchived && activeTaskIds.Contains(s.TaskId))
                     .Select(s => s.Id)
@@ -138,16 +138,16 @@ public partial class FilesControlViewModel : ViewModelBase
             }
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
-            
+
             // Оптимизация: загружаем проекты и stages за один раз
             var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
             var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
-            
+
             var projects = await db.Projects
                 .Where(p => projectIds.Contains(p.Id))
                 .Select(p => new { p.Id, p.Name })
                 .ToDictionaryAsync(p => p.Id, p => p.Name);
-            
+
             var stages = await db.TaskStages
                 .Where(s => stageIds.Contains(s.Id))
                 .Select(s => new { s.Id, s.Name })
@@ -274,7 +274,7 @@ public partial class FilesControlViewModel : ViewModelBase
         IsLoading = true;
         var successfullyUploaded = 0;
         var skippedFiles = new List<string>();
-        
+
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
@@ -282,15 +282,15 @@ public partial class FilesControlViewModel : ViewModelBase
             foreach (var filePath in filePaths)
             {
                 if (!File.Exists(filePath)) continue;
-                
+
                 var fileInfo = new FileInfo(filePath);
                 byte[] fileData;
-                
+
                 try
                 {
                     fileData = await File.ReadAllBytesAsync(filePath);
                 }
-                catch (IOException ioEx) when (ioEx.Message.Contains("being used by another process") || 
+                catch (IOException ioEx) when (ioEx.Message.Contains("being used by another process") ||
                                                ioEx.Message.Contains("used by another process"))
                 {
                     skippedFiles.Add(fileInfo.Name);
@@ -314,31 +314,31 @@ public partial class FilesControlViewModel : ViewModelBase
 
                 db.Files.Add(newFile);
                 await db.SaveChangesAsync();
-                
+
                 // Queue for server upload
-                var dto = new FileDto(newFile.Id, newFile.FileName, newFile.FileType ?? "", newFile.FileSize, 
-                    newFile.UploadedById, newFile.UploadedByName, newFile.ProjectId, newFile.TaskId, newFile.StageId, 
+                var dto = new FileDto(newFile.Id, newFile.FileName, newFile.FileType ?? "", newFile.FileSize,
+                    newFile.UploadedById, newFile.UploadedByName, newFile.ProjectId, newFile.TaskId, newFile.StageId,
                     newFile.CreatedAt, newFile.OriginalCreatedAt);
                 await _sync.QueueOperationAsync("File", newFile.Id, SyncOperation.Create, dto);
 
                 var logText = _projectId.HasValue ? $"Загружен файл «{newFile.FileName}» в проект" : $"Загружен файл «{newFile.FileName}»";
                 await LogActivityAsync(db, logText, "File", newFile.Id, ActivityActionKind.Created);
-                
+
                 successfullyUploaded++;
             }
 
             await LoadFilesAsync();
-            
+
             if (skippedFiles.Count > 0)
             {
                 var skippedList = string.Join("\n• ", skippedFiles);
                 MessageBox.Show(
                     $"Следующие файлы не были загружены, так как они открыты в другой программе:\n\n• {skippedList}\n\nЗакройте файлы и попробуйте снова.",
-                    "Файлы пропущены", 
-                    MessageBoxButton.OK, 
+                    "Файлы пропущены",
+                    MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
-            
+
             if (successfullyUploaded > 0)
             {
                 ShowSuccessToast(successfullyUploaded == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
@@ -360,7 +360,7 @@ public partial class FilesControlViewModel : ViewModelBase
     private async Task DeleteFileAsync(LocalFile file)
     {
         if (file == null) return;
-        
+
         var owner = Application.Current.MainWindow;
         if (!MPMS.Views.ConfirmDeleteDialog.Show(owner, "Файл", file.FileName))
             return;

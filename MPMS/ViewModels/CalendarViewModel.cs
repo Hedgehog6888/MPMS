@@ -28,9 +28,9 @@ public sealed class CalendarDayStage
 /// <summary>Data for a single calendar grid cell.</summary>
 public sealed class CalendarCell
 {
-    public bool IsEmpty    { get; init; }
-    public DateTime Date   { get; init; }
-    public bool IsToday    { get; init; }
+    public bool IsEmpty { get; init; }
+    public DateTime Date { get; init; }
+    public bool IsToday { get; init; }
     public List<LocalTask> Tasks { get; init; } = [];
     public List<CalendarDayStage> DayStages { get; init; } = [];
     /// <summary>Видимые плашки (число задаётся шириной ячейки); остальное — в <see cref="MoreCount"/>.</summary>
@@ -70,7 +70,7 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
     public CalendarViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
     {
         _dbFactory = dbFactory;
-        _auth      = auth;
+        _auth = auth;
         UpdateMonthTitle();
     }
 
@@ -82,14 +82,14 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
     private void UpdateMonthTitle()
     {
-        var ci  = new CultureInfo("ru-RU");
+        var ci = new CultureInfo("ru-RU");
         var raw = CurrentDate.ToString("MMMM yyyy", ci);
         MonthTitle = raw.Length > 0 ? char.ToUpper(raw[0]) + raw[1..] : raw;
     }
 
     [RelayCommand] private void PreviousMonth() => CurrentDate = CurrentDate.AddMonths(-1);
-    [RelayCommand] private void NextMonth()      => CurrentDate = CurrentDate.AddMonths(1);
-    [RelayCommand] private void GoToToday()      => CurrentDate = DateTime.Today;
+    [RelayCommand] private void NextMonth() => CurrentDate = CurrentDate.AddMonths(1);
+    [RelayCommand] private void GoToToday() => CurrentDate = DateTime.Today;
 
     public async Task LoadAsync()
     {
@@ -98,13 +98,13 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            var userId    = _auth.UserId;
-            bool isAdmin  = _auth.UserRole is "Administrator" or "Admin";
+            var userId = _auth.UserId;
+            bool isAdmin = _auth.UserRole is "Administrator" or "Admin";
             bool isManager = string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase)
                           || string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
-            bool isWorker  = string.Equals(_auth.UserRole, "Worker",  StringComparison.OrdinalIgnoreCase);
+            bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
             var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion && t.DueDate != null &&
                 db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
@@ -161,15 +161,15 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
     private void BuildCells(List<LocalTask> allTasks, List<LocalTaskStage> stagesWithDueDate)
     {
-        var year  = CurrentDate.Year;
+        var year = CurrentDate.Year;
         var month = CurrentDate.Month;
-        var monthStart  = new DateTime(year, month, 1);
+        var monthStart = new DateTime(year, month, 1);
         var daysInMonth = DateTime.DaysInMonth(year, month);
         var today = DateTime.Today;
         var taskById = allTasks.ToDictionary(t => t.Id);
 
         // Monday-based: DayOfWeek.Monday=1 → 0 empty, Sunday=0 → 6 empty
-        var dow   = (int)monthStart.DayOfWeek;
+        var dow = (int)monthStart.DayOfWeek;
         var empty = dow == 0 ? 6 : dow - 1;
 
         var cells = new List<CalendarCell>();
@@ -178,7 +178,7 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
         for (int d = 1; d <= daysInMonth; d++)
         {
-            var date     = new DateTime(year, month, d);
+            var date = new DateTime(year, month, d);
             var dateOnly = DateOnly.FromDateTime(date);
             var dayTasks = allTasks
                 .Where(t => t.DueDate == dateOnly)
@@ -209,12 +209,12 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
             cells.Add(new CalendarCell
             {
-                Date         = date,
-                IsToday      = date.Date == today.Date,
-                Tasks        = dayTasks,
-                DayStages    = dayStages,
+                Date = date,
+                IsToday = date.Date == today.Date,
+                Tasks = dayTasks,
+                DayStages = dayStages,
                 DisplayChips = display,
-                MoreCount    = more
+                MoreCount = more
             });
         }
 

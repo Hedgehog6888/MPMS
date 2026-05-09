@@ -18,7 +18,7 @@ public class UserSyncer : IEntitySyncer
         _jsonOptions = jsonOptions;
     }
 
-    public bool CanHandle(string entityType) => 
+    public bool CanHandle(string entityType) =>
         entityType is "User" or "UserProfile";
 
     public Task PrepareAsync(LocalDbContext db) => Task.CompletedTask;
@@ -76,7 +76,7 @@ public class UserSyncer : IEntitySyncer
         if (req is null) return false;
         var updated = await _api.UpdateUserAsync(op.EntityId, req);
         if (updated is null) return false;
-        
+
         var user = await db.Users.FindAsync(op.EntityId);
         if (user is not null)
         {

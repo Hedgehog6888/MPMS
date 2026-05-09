@@ -12,7 +12,7 @@ namespace MPMS.Services;
 public interface ISyncService
 {
     bool IsSyncing { get; }
-    bool IsOnline  { get; }
+    bool IsOnline { get; }
     event EventHandler<bool>? OnlineStatusChanged;
     DateTime? LastSyncTime { get; }
     Task SyncAsync();
@@ -41,13 +41,13 @@ public class SyncCoordinator : ISyncService
     private DateTime? _lastSyncTime;
 
     public bool IsSyncing => _isSyncing;
-    public bool IsOnline  => _api.IsOnline;
+    public bool IsOnline => _api.IsOnline;
     public DateTime? LastSyncTime => _lastSyncTime;
     public event EventHandler<bool>? OnlineStatusChanged;
 
     public SyncCoordinator(
         IDbContextFactory<LocalDbContext> dbFactory,
-        IApiService api, 
+        IApiService api,
         IAuthService auth,
         IEnumerable<IEntitySyncer> syncers)
     {
@@ -86,7 +86,7 @@ public class SyncCoordinator : ISyncService
             {
                 await dbInit.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
             }
-            
+
             // 1. Send local changes to server
             try
             {
@@ -205,7 +205,7 @@ public class SyncCoordinator : ISyncService
             {
                 var syncer = _syncers.FirstOrDefault(s => s.CanHandle(op.EntityType));
                 bool success = false;
-                
+
                 if (syncer != null)
                 {
                     success = await syncer.PushAsync(db, op);
@@ -227,9 +227,9 @@ public class SyncCoordinator : ISyncService
                     op.RetryCount++;
                     if (op.RetryCount >= 5) op.IsFailed = true;
                     consecutiveNetworkErrors++;
-                    await Task.Delay(1000); 
+                    await Task.Delay(1000);
                 }
-                
+
                 await db.SaveChangesAsync();
             }
             catch (Exception ex)

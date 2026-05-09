@@ -22,33 +22,33 @@ public class LocalDbContext : DbContext
             .HaveConversion<NullableDateTimeAsUtcConverter>();
     }
 
-    public DbSet<AuthSession>        AuthSessions     => Set<AuthSession>();
-    public DbSet<RecentAccount>      RecentAccounts   => Set<RecentAccount>();
-    public DbSet<LocalRole>          Roles            => Set<LocalRole>();
-    public DbSet<LocalUser>          Users            => Set<LocalUser>();
-    public DbSet<LocalProject>       Projects         => Set<LocalProject>();
-    public DbSet<LocalTask>          Tasks            => Set<LocalTask>();
-    public DbSet<LocalTaskStage>     TaskStages       => Set<LocalTaskStage>();
+    public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
+    public DbSet<RecentAccount> RecentAccounts => Set<RecentAccount>();
+    public DbSet<LocalRole> Roles => Set<LocalRole>();
+    public DbSet<LocalUser> Users => Set<LocalUser>();
+    public DbSet<LocalProject> Projects => Set<LocalProject>();
+    public DbSet<LocalTask> Tasks => Set<LocalTask>();
+    public DbSet<LocalTaskStage> TaskStages => Set<LocalTaskStage>();
     public DbSet<LocalServiceCategory> ServiceCategories => Set<LocalServiceCategory>();
     public DbSet<LocalServiceTemplate> ServiceTemplates => Set<LocalServiceTemplate>();
     public DbSet<LocalMaterialCategory> MaterialCategories => Set<LocalMaterialCategory>();
     public DbSet<LocalEquipmentCategory> EquipmentCategories => Set<LocalEquipmentCategory>();
-    public DbSet<LocalMaterial>      Materials        => Set<LocalMaterial>();
+    public DbSet<LocalMaterial> Materials => Set<LocalMaterial>();
     public DbSet<LocalMaterialStockMovement> MaterialStockMovements => Set<LocalMaterialStockMovement>();
-    public DbSet<LocalEquipment>     Equipments       => Set<LocalEquipment>();
+    public DbSet<LocalEquipment> Equipments => Set<LocalEquipment>();
     public DbSet<LocalEquipmentHistoryEntry> EquipmentHistoryEntries => Set<LocalEquipmentHistoryEntry>();
-    public DbSet<LocalStageMaterial> StageMaterials   => Set<LocalStageMaterial>();
-    public DbSet<LocalStageService> StageServices   => Set<LocalStageService>();
+    public DbSet<LocalStageMaterial> StageMaterials => Set<LocalStageMaterial>();
+    public DbSet<LocalStageService> StageServices => Set<LocalStageService>();
     public DbSet<LocalStageEquipment> StageEquipments => Set<LocalStageEquipment>();
-    public DbSet<LocalFile>          Files            => Set<LocalFile>();
-    public DbSet<LocalActivityLog>   ActivityLogs     => Set<LocalActivityLog>();
-    public DbSet<LocalProjectMember> ProjectMembers    => Set<LocalProjectMember>();
-    public DbSet<LocalTaskAssignee>  TaskAssignees     => Set<LocalTaskAssignee>();
-    public DbSet<LocalStageAssignee> StageAssignees    => Set<LocalStageAssignee>();
-    public DbSet<LocalMessage>       Messages          => Set<LocalMessage>();
-    public DbSet<PendingOperation>   PendingOperations => Set<PendingOperation>();
-    public DbSet<DeletedUserId>     DeletedUserIds   => Set<DeletedUserId>();
-    public DbSet<LocalNote>         Notes            => Set<LocalNote>();
+    public DbSet<LocalFile> Files => Set<LocalFile>();
+    public DbSet<LocalActivityLog> ActivityLogs => Set<LocalActivityLog>();
+    public DbSet<LocalProjectMember> ProjectMembers => Set<LocalProjectMember>();
+    public DbSet<LocalTaskAssignee> TaskAssignees => Set<LocalTaskAssignee>();
+    public DbSet<LocalStageAssignee> StageAssignees => Set<LocalStageAssignee>();
+    public DbSet<LocalMessage> Messages => Set<LocalMessage>();
+    public DbSet<PendingOperation> PendingOperations => Set<PendingOperation>();
+    public DbSet<DeletedUserId> DeletedUserIds => Set<DeletedUserId>();
+    public DbSet<LocalNote> Notes => Set<LocalNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

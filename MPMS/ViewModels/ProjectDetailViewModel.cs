@@ -391,7 +391,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             if (userAvatars.TryGetValue(m.UserId, out var av))
             {
                 m.AvatarPath = av.AvatarPath;
-                m.SubRole               = av.SubRole;
+                m.SubRole = av.SubRole;
                 m.AdditionalSubRolesJson = av.AdditionalSubRoles;
                 var data = av.AvatarData;
                 if ((data is null || data.Length == 0) && !string.IsNullOrWhiteSpace(av.AvatarPath))
@@ -409,7 +409,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         Members = new ObservableCollection<LocalProjectMember>(members);
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
-        WorkerMembers  = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
+        WorkerMembers = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
 
         // Load project messages (discussion) with AvatarData from Users
         var messages = await db.Messages
@@ -453,9 +453,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             var status = TaskStatusFilter switch
             {
                 "Запланирована" => TaskStatus.Planned,
-                "Выполняется"   => TaskStatus.InProgress,
-                "Завершена"     => TaskStatus.Completed,
-                _               => (TaskStatus?)null
+                "Выполняется" => TaskStatus.InProgress,
+                "Завершена" => TaskStatus.Completed,
+                _ => (TaskStatus?)null
             };
             if (status.HasValue)
                 query = query.Where(t => t.Status == status.Value && !t.EffectiveTaskMarkedForDeletion);
@@ -465,11 +465,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         {
             var priority = TaskPriorityFilter switch
             {
-                "Низкий"      => TaskPriority.Low,
-                "Средний"     => TaskPriority.Medium,
-                "Высокий"     => TaskPriority.High,
+                "Низкий" => TaskPriority.Low,
+                "Средний" => TaskPriority.Medium,
+                "Высокий" => TaskPriority.High,
                 "Критический" => TaskPriority.Critical,
-                _             => (TaskPriority?)null
+                _ => (TaskPriority?)null
             };
             if (priority.HasValue)
                 query = query.Where(t => t.Priority == priority.Value);
@@ -480,11 +480,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .OrderBy(t => t.EffectiveTaskMarkedForDeletion)
             .ThenBy(t => t.Status switch
             {
-                TaskStatus.Planned    => 0,
+                TaskStatus.Planned => 0,
                 TaskStatus.InProgress => 1,
-                TaskStatus.Paused     => 2,
-                TaskStatus.Completed  => 3,
-                _                     => 4
+                TaskStatus.Paused => 2,
+                TaskStatus.Completed => 3,
+                _ => 4
             })
             .ThenBy(t => t.DueDate ?? DateOnly.MaxValue)
             .ThenByDescending(t => t.UpdatedAt)
@@ -515,9 +515,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             var targetStatus = StageStatusFilter switch
             {
                 "Запланирован" => StageStatus.Planned,
-                "Выполняется"  => StageStatus.InProgress,
-                "Завершён"     => StageStatus.Completed,
-                _              => (StageStatus?)null
+                "Выполняется" => StageStatus.InProgress,
+                "Завершён" => StageStatus.Completed,
+                _ => (StageStatus?)null
             };
             if (targetStatus.HasValue)
                 query = query.Where(s => s.Status == targetStatus.Value && !s.EffectiveMarkedForDeletion);
@@ -525,10 +525,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         static int StageStatusOrder(StageStatus st) => st switch
         {
-            StageStatus.Planned    => 0,
+            StageStatus.Planned => 0,
             StageStatus.InProgress => 1,
-            StageStatus.Completed  => 2,
-            _                      => 9
+            StageStatus.Completed => 2,
+            _ => 9
         };
 
         var ordered = query
@@ -782,9 +782,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await db.SaveChangesAsync();
         await RecalcProjectStatusAsync(db);
-        await _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
+
+        // Queue updates without await to avoid blocking
+        _ = _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         foreach (var s in stages)
-            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
+            _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await LogActivityAsync(db, $"Задача «{task.Name}» перемещена в архив", "Task", task.Id, ActivityActionKind.Deleted);
         await LoadAsync();
     }

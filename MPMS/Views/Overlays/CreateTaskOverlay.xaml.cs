@@ -241,7 +241,8 @@ public partial class CreateTaskOverlay : UserControl
         var sp = new StackPanel { Orientation = Orientation.Horizontal };
         sp.Children.Add(new TextBlock
         {
-            Text = item.Name, FontSize = 11,
+            Text = item.Name,
+            FontSize = 11,
             Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
             VerticalAlignment = VerticalAlignment.Center
         });
@@ -331,9 +332,14 @@ public partial class CreateTaskOverlay : UserControl
         { ShowError("Назначьте хотя бы одного исполнителя на задачу"); return; }
 
         var priority = GetPriority();
-        var dueDate  = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);
-        if (!DueDatePolicy.IsAllowed(dueDate))
-        { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
+        var dueDate = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);
+
+        // Validate due date only for new tasks or if the date was actually changed
+        if (_editTask is null || dueDate != _editTask.DueDate)
+        {
+            if (!DueDatePolicy.IsAllowed(dueDate))
+            { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
+        }
 
         var primaryAssigneeId = _selectedAssigneeIds.Count > 0
             ? _selectedAssigneeIds.First()
@@ -492,9 +498,9 @@ public partial class CreateTaskOverlay : UserControl
             return item.Tag?.ToString() switch
             {
                 "InProgress" => TaskStatus.InProgress,
-                "Paused"     => TaskStatus.Paused,
-                "Completed"  => TaskStatus.Completed,
-                _            => TaskStatus.Planned
+                "Paused" => TaskStatus.Paused,
+                "Completed" => TaskStatus.Completed,
+                _ => TaskStatus.Planned
             };
         }
         return TaskStatus.Planned;

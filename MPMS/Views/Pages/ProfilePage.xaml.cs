@@ -27,6 +27,7 @@ public partial class ProfilePage : UserControl
     private DispatcherTimer? _copyToastHideTimer;
     private bool _copyToastActive;
     private bool _isBackgroundSyncInProgress;
+    private ISyncService? _sync;
 
     private static string AvatarDirectory =>
         System.IO.Path.Combine(
@@ -38,36 +39,41 @@ public partial class ProfilePage : UserControl
         InitializeComponent();
         Loaded += async (_, _) =>
         {
+            _sync = App.Services.GetRequiredService<ISyncService>();
+            _sync.OnlineStatusChanged += OnOnlineStatusChanged;
+            UpdateButtonsOnlineState(_sync.IsOnline);
             await LoadUserAsync();
+        };
+        Unloaded += (_, _) =>
+        {
+            if (_sync != null)
+                _sync.OnlineStatusChanged -= OnOnlineStatusChanged;
         };
         EmailRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(EmailText.Text, e);
         LoginRow.MouseLeftButtonDown += (_, e) => CopyToClipboard(LoginText.Text, e);
     }
 
-    private static readonly Dictionary<string, (string label, string desc, string[] perms)> RoleInfo = new()
+    private void OnOnlineStatusChanged(object? sender, bool isOnline)
     {
-        ["Administrator"] = ("Администратор",
-            "Полный доступ ко всем функциям системы",
-            ["Создание и удаление проектов", "Управление пользователями", "Просмотр всех данных", "Управление ролями"]),
-        ["Admin"] = ("Администратор",
-            "Полный доступ ко всем функциям системы",
-            ["Создание и удаление проектов", "Управление пользователями", "Просмотр всех данных", "Управление ролями"]),
-        ["Project Manager"] = ("Менеджер",
-            "Управление проектами и командой исполнителей",
-            ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["ProjectManager"] = ("Менеджер",
-            "Управление проектами и командой исполнителей",
-            ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["Manager"] = ("Менеджер",
-            "Управление проектами и командой исполнителей",
-            ["Создание проектов", "Назначение задач", "Просмотр прогресса", "Добавление членов команды"]),
-        ["Foreman"] = ("Прораб",
-            "Руководство монтажными работами на объекте",
-            ["Просмотр своих проектов", "Управление этапами", "Отчёт о выполнении", "Добавление материалов"]),
-        ["Worker"] = ("Работник",
-            "Выполнение монтажных работ на объекте",
-            ["Просмотр назначенных задач", "Обновление статусов этапов", "Добавление материалов"]),
-    };
+        UpdateButtonsOnlineState(isOnline);
+    }
+
+    private void UpdateButtonsOnlineState(bool isOnline)
+    {
+        EditBtn.IsEnabled = isOnline;
+        ChangePasswordBtn.IsEnabled = isOnline;
+
+        if (isOnline)
+        {
+            EditBtn.ToolTip = null;
+            ChangePasswordBtn.ToolTip = null;
+        }
+        else
+        {
+            EditBtn.ToolTip = "Требуется подключение для редактирования профиля";
+            ChangePasswordBtn.ToolTip = "Требуется подключение для смены пароля";
+        }
+    }
 
     private async System.Threading.Tasks.Task LoadUserAsync()
     {
@@ -130,60 +136,81 @@ public partial class ProfilePage : UserControl
 
         // View mode fields
         ViewFirstName.Text = _user.FirstName;
-        ViewLastName.Text  = _user.LastName;
-        ViewUsername.Text  = _user.Username;
-        ViewEmail.Text     = string.IsNullOrWhiteSpace(_user.Email) ? "Не указан" : _user.Email;
+        ViewLastName.Text = _user.LastName;
+        ViewUsername.Text = _user.Username;
+        ViewEmail.Text = string.IsNullOrWhiteSpace(_user.Email) ? "Не указан" : _user.Email;
         ViewBirthDate.Text = _user.BirthDate.HasValue ? _user.BirthDate.Value.ToString("dd.MM.yyyy") : "Не указана";
         ViewAddress.Text = string.IsNullOrWhiteSpace(_user.HomeAddress) ? "Не указан" : _user.HomeAddress;
-        ViewCreated.Text   = _user.CreatedAt.ToString("dd.MM.yyyy");
+        ViewCreated.Text = _user.CreatedAt.ToString("dd.MM.yyyy");
 
         // Edit mode pre-fill
         FirstNameBox.Text = _user.FirstName;
-        LastNameBox.Text  = _user.LastName;
-        EmailBox.Text     = _user.Email ?? "";
+        LastNameBox.Text = _user.LastName;
+        EmailBox.Text = _user.Email ?? "";
         BirthDatePicker.SelectedDate = _user.BirthDate?.ToDateTime(TimeOnly.MinValue);
         AddressBox.Text = _user.HomeAddress ?? "";
 
         // Role info
         var roleName = _user.RoleName;
-        string positionLabel = roleName;
+        ViewRole.Text = roleName;
+        PositionText.Text = roleName;
 
-        if (RoleInfo.TryGetValue(roleName, out var info))
-        {
-            var roleLabel = info.label;
-            positionLabel = roleLabel;
-            ViewRole.Text = roleLabel;
-            RoleCardTitle.Text = roleLabel;
-            RoleCardDesc.Text = info.desc;
-            PermissionsList.ItemsSource = info.perms;
-        }
-        else
-        {
-            ViewRole.Text = roleName;
-            RoleCardTitle.Text = roleName;
-            RoleCardDesc.Text = "";
-        }
-
-        // Specialties for workers (основная + дополнительные)
+        // Worker specializations
         if (roleName == "Worker")
         {
-            var specLine = WorkerSpecialtiesJson.FormatWorkerLine(_user.SubRole, _user.AdditionalSubRoles);
-            var hasSpecs = !string.IsNullOrWhiteSpace(_user.SubRole)
-                           || WorkerSpecialtiesJson.Deserialize(_user.AdditionalSubRoles).Count > 0;
-            SubRoleBadge.Visibility = hasSpecs ? Visibility.Visible : Visibility.Collapsed;
-            SubRoleText.Text = specLine;
-            PositionText.Text = hasSpecs ? specLine : positionLabel;
+            WorkerSpecsPanel.Visibility = Visibility.Visible;
+            var mainSpec = string.IsNullOrWhiteSpace(_user.SubRole) ? "Не указана" : _user.SubRole.Trim();
+            MainSpecialtyText.Text = mainSpec;
+
+            // Apply colored badge style to main specialty
+            if (!string.IsNullOrWhiteSpace(_user.SubRole))
+            {
+                var bg = WorkerSpecialtiesJson.BadgeBackgroundRgbForSpecName(_user.SubRole);
+                var fg = WorkerSpecialtiesJson.BadgeForegroundRgbForSpecName(_user.SubRole);
+                MainSpecialtyBadge.Background = new SolidColorBrush(Color.FromRgb(bg.R, bg.G, bg.B));
+                MainSpecialtyText.Foreground = new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B));
+            }
+            else
+            {
+                MainSpecialtyBadge.Background = new SolidColorBrush(Color.FromRgb(0xF4, 0xF5, 0xF7));
+                MainSpecialtyText.Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
+            }
+
+            AdditionalSpecsWrap.Children.Clear();
+            var additionalSpecs = WorkerSpecialtiesJson.Deserialize(_user.AdditionalSubRoles);
+            additionalSpecs.RemoveAll(s => string.Equals(s, _user.SubRole?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            foreach (var spec in additionalSpecs)
+            {
+                var bg = WorkerSpecialtiesJson.BadgeBackgroundRgbForSpecName(spec);
+                var fg = WorkerSpecialtiesJson.BadgeForegroundRgbForSpecName(spec);
+                var badge = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(bg.R, bg.G, bg.B)),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(8, 3, 8, 3),
+                    Margin = new Thickness(0, 0, 6, 4),
+                    Child = new TextBlock
+                    {
+                        Text = spec,
+                        FontSize = 11,
+                        FontWeight = FontWeights.SemiBold,
+                        Foreground = new SolidColorBrush(Color.FromRgb(fg.R, fg.G, fg.B))
+                    }
+                };
+                AdditionalSpecsWrap.Children.Add(badge);
+            }
         }
         else
         {
-            SubRoleBadge.Visibility = Visibility.Collapsed;
-            PositionText.Text = positionLabel;
+            WorkerSpecsPanel.Visibility = Visibility.Collapsed;
         }
 
-        // Load stats
-        var projectCount = await db.Projects.CountAsync();
-        var taskCount = await db.Tasks.CountAsync();
-        var stageCount = await db.TaskStages.CountAsync();
+        // Load stats - only for current user
+        var userId = _user!.Id;
+        var projectCount = await db.Projects.CountAsync(p => p.ManagerId == userId || db.ProjectMembers.Any(m => m.ProjectId == p.Id && m.UserId == userId));
+        var taskCount = await db.Tasks.CountAsync(t => t.AssignedUserId == userId || db.TaskAssignees.Any(a => a.TaskId == t.Id && a.UserId == userId));
+        var stageCount = await db.TaskStages.CountAsync(s => s.AssignedUserId == userId || db.StageAssignees.Any(a => a.StageId == s.Id && a.UserId == userId));
         ProjectCountText.Text = projectCount.ToString();
         TaskCountText.Text = taskCount.ToString();
         StageCountText.Text = stageCount.ToString();
@@ -237,8 +264,8 @@ public partial class ProfilePage : UserControl
         if (_user is not null)
         {
             FirstNameBox.Text = _user.FirstName;
-            LastNameBox.Text  = _user.LastName;
-            EmailBox.Text     = _user.Email ?? "";
+            LastNameBox.Text = _user.LastName;
+            EmailBox.Text = _user.Email ?? "";
             BirthDatePicker.SelectedDate = _user.BirthDate?.ToDateTime(TimeOnly.MinValue);
             AddressBox.Text = _user.HomeAddress ?? "";
         }
@@ -263,7 +290,7 @@ public partial class ProfilePage : UserControl
         SuccessPanel.Visibility = Visibility.Collapsed;
 
         var firstName = FirstNameBox.Text.Trim();
-        var lastName  = LastNameBox.Text.Trim();
+        var lastName = LastNameBox.Text.Trim();
 
         if (string.IsNullOrWhiteSpace(firstName))
         {
@@ -284,7 +311,7 @@ public partial class ProfilePage : UserControl
             var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
             await using var db = await dbFactory.CreateDbContextAsync();
 
-            var session = await db.AuthSessions.FindAsync(1);
+            var session = await db.AuthSessions.FirstOrDefaultAsync(s => s.UserId == _user!.Id);
             if (session is null)
             {
                 ShowError("Сессия не найдена.");
@@ -306,12 +333,12 @@ public partial class ProfilePage : UserControl
                 if (userEntity is not null)
                 {
                     userEntity.FirstName = firstName;
-                    userEntity.LastName  = lastName;
-                    userEntity.Name      = fullName;
-                    userEntity.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
+                    userEntity.LastName = lastName;
+                    userEntity.Name = fullName;
+                    userEntity.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
                     userEntity.BirthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
                     userEntity.HomeAddress = string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim();
-                    userEntity.IsSynced  = false;
+                    userEntity.IsSynced = false;
                     userEntity.LastModifiedLocally = DateTime.UtcNow;
                 }
             }
@@ -366,9 +393,9 @@ public partial class ProfilePage : UserControl
             if (_user is not null)
             {
                 _user.FirstName = firstName;
-                _user.LastName  = lastName;
-                _user.Name      = fullName;
-                _user.Email     = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
+                _user.LastName = lastName;
+                _user.Name = fullName;
+                _user.Email = string.IsNullOrWhiteSpace(EmailBox.Text) ? null : EmailBox.Text.Trim();
                 _user.BirthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
                 _user.HomeAddress = string.IsNullOrWhiteSpace(AddressBox.Text) ? null : AddressBox.Text.Trim();
                 if (userEntity is not null)
@@ -395,13 +422,13 @@ public partial class ProfilePage : UserControl
 
             SuccessPanel.Visibility = Visibility.Visible;
 
-            NameText.Text      = _user?.Name ?? "";
+            NameText.Text = _user?.Name ?? "";
             ViewFirstName.Text = _user?.FirstName ?? "";
-            ViewLastName.Text  = _user?.LastName  ?? "";
-            ViewEmail.Text     = _user?.Email ?? "Не указан";
+            ViewLastName.Text = _user?.LastName ?? "";
+            ViewEmail.Text = _user?.Email ?? "Не указан";
             ViewBirthDate.Text = _user?.BirthDate?.ToString("dd.MM.yyyy") ?? "Не указана";
             ViewAddress.Text = string.IsNullOrWhiteSpace(_user?.HomeAddress) ? "Не указан" : _user!.HomeAddress!;
-            EmailText.Text     = _user?.Email ?? "—";
+            EmailText.Text = _user?.Email ?? "—";
             AvatarInitials.Text = AvatarHelper.GetInitials(_user?.Name ?? "");
             ApplyAvatarDisplay(_user?.AvatarData, _user?.AvatarPath);
 
@@ -483,21 +510,21 @@ public partial class ProfilePage : UserControl
             {
                 entity.AvatarPath = avatarPath;
                 entity.AvatarData = avatarBytes;
-                entity.IsSynced   = false;
+                entity.IsSynced = false;
                 entity.LastModifiedLocally = DateTime.UtcNow;
 
                 var actLog = new LocalActivityLog
                 {
-                    UserId      = _user.Id,
-                    ActorRole   = auth.UserRole,
-                    UserName    = _user.Name,
+                    UserId = _user.Id,
+                    ActorRole = auth.UserRole,
+                    UserName = _user.Name,
                     UserInitials = AvatarHelper.GetInitials(_user.Name),
-                    UserColor   = "#0F2038",
-                    ActionType  = ActivityActionKind.AvatarChanged,
-                    ActionText  = "Изменил фото профиля",
-                    EntityType  = "User",
-                    EntityId    = _user.Id,
-                    CreatedAt   = DateTime.UtcNow
+                    UserColor = "#0F2038",
+                    ActionType = ActivityActionKind.AvatarChanged,
+                    ActionText = "Изменил фото профиля",
+                    EntityType = "User",
+                    EntityId = _user.Id,
+                    CreatedAt = DateTime.UtcNow
                 };
                 db.ActivityLogs.Add(actLog);
 

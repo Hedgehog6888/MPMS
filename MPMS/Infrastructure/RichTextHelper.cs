@@ -24,7 +24,7 @@ public static class RichTextHelper
         if (d is not RichTextBox richTextBox) return;
 
         string xaml = (string)e.NewValue;
-        
+
         // Avoid infinite loop
         if (GetIsUpdating(richTextBox)) return;
 
@@ -39,12 +39,12 @@ public static class RichTextHelper
             SetIsUpdating(richTextBox, true);
             var doc = new FlowDocument();
             var range = new TextRange(doc.ContentStart, doc.ContentEnd);
-            
+
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(xaml)))
             {
                 range.Load(stream, DataFormats.Xaml);
             }
-            
+
             richTextBox.Document = doc;
         }
         catch

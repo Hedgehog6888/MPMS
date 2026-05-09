@@ -646,11 +646,11 @@ public partial class UserPeekOverlay : UserControl
 
     private static Color GetRoleBadgeColor(string? roleName) => roleName switch
     {
-        "Administrator" or "Admin"                          => Color.FromRgb(0xC0, 0x39, 0x2B),
+        "Administrator" or "Admin" => Color.FromRgb(0xC0, 0x39, 0x2B),
         "Project Manager" or "ProjectManager" or "Manager" => Color.FromRgb(0x1B, 0x6E, 0xC2),
-        "Foreman"                                           => Color.FromRgb(0x27, 0xAE, 0x60),
-        "Worker"                                            => Color.FromRgb(0xEA, 0x58, 0x0C),
-        _                                                   => Color.FromRgb(0x6B, 0x77, 0x8C),
+        "Foreman" => Color.FromRgb(0x27, 0xAE, 0x60),
+        "Worker" => Color.FromRgb(0xEA, 0x58, 0x0C),
+        _ => Color.FromRgb(0x6B, 0x77, 0x8C),
     };
 
     /// <summary>Фон шапки по статусу задачи (как в сводке задачи слева).</summary>
@@ -664,9 +664,9 @@ public partial class UserPeekOverlay : UserControl
         return displayStatus switch
         {
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            TaskStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
-            TaskStatus.Paused     => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),
-            _                     => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA)),
+            TaskStatus.Completed => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
+            TaskStatus.Paused => new SolidColorBrush(Color.FromRgb(0xFF, 0xFB, 0xEB)),
+            _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA)),
         };
     }
 
@@ -678,8 +678,8 @@ public partial class UserPeekOverlay : UserControl
         return stage.Status switch
         {
             StageStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            StageStatus.Completed  => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
-            _                      => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA)),
+            StageStatus.Completed => new SolidColorBrush(Color.FromRgb(0xF0, 0xFD, 0xF4)),
+            _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA)),
         };
     }
 

@@ -16,7 +16,7 @@ public class SocialSyncer : IEntitySyncer
         _jsonOptions = jsonOptions;
     }
 
-    public bool CanHandle(string entityType) => 
+    public bool CanHandle(string entityType) =>
         entityType is "DiscussionMessage" or "SyncedActivityLog";
 
     public Task PrepareAsync(LocalDbContext db) => Task.CompletedTask;

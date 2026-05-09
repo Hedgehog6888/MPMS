@@ -14,15 +14,15 @@ namespace MPMS.Views.Overlays;
 
 public partial class AdminUserInfoOverlay : UserControl
 {
-    private AdminUserRow  _row;
+    private AdminUserRow _row;
     private AdminViewModel _adminVm;
 
     public AdminUserInfoOverlay(AdminUserRow row, AdminViewModel adminVm)
     {
         InitializeComponent();
-        _row     = row;
+        _row = row;
         _adminVm = adminVm;
-        Loaded  += async (_, _) => await LoadAsync();
+        Loaded += async (_, _) => await LoadAsync();
     }
 
     private async Task LoadAsync()
@@ -33,21 +33,21 @@ public partial class AdminUserInfoOverlay : UserControl
         if (_row.AvatarData is { Length: > 0 })
         {
             var src = AvatarHelper.GetImageSource(_row.AvatarData, _row.AvatarPath, _row.Name);
-            AvatarImage.Source    = src;
+            AvatarImage.Source = src;
             AvatarInitials.Visibility = Visibility.Collapsed;
         }
         else
         {
-            AvatarImage.Source    = null;
-            AvatarInitials.Text   = _row.Initials;
+            AvatarImage.Source = null;
+            AvatarInitials.Text = _row.Initials;
             AvatarInitials.Visibility = Visibility.Visible;
         }
 
         // Name / username / role
-        FullNameText.Text   = _row.Name;
-        UsernameText.Text   = $"@{_row.Username}";
-        RoleBadgeText.Text  = _row.RoleDisplay;
-        RoleBadge.Background   = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleColor));
+        FullNameText.Text = _row.Name;
+        UsernameText.Text = $"@{_row.Username}";
+        RoleBadgeText.Text = _row.RoleDisplay;
+        RoleBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleColor));
         RoleBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(_row.RoleForeground));
         var isWorker = _row.RoleName is "Worker" or "Работник";
         RoleText.Text = isWorker ? "Работник" : _row.RoleDisplay;
@@ -84,20 +84,20 @@ public partial class AdminUserInfoOverlay : UserControl
         if (_row.IsBlocked)
         {
             StatusBar.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
-            StatusDot.Fill       = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-            StatusText.Text      = "Заблокирован";
+            StatusDot.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            StatusText.Text = "Заблокирован";
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x99, 0x1B, 0x1B));
             BlockReasonText.Text = string.IsNullOrWhiteSpace(_row.BlockedReason) ? string.Empty : $"· {_row.BlockedReason}";
-            BlockButton.Content  = "Разблокировать";
+            BlockButton.Content = "Разблокировать";
         }
         else
         {
             StatusBar.Background = new SolidColorBrush(Color.FromRgb(0xD1, 0xFA, 0xE5));
-            StatusDot.Fill       = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
-            StatusText.Text      = "Активен";
+            StatusDot.Fill = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
+            StatusText.Text = "Активен";
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(0x06, 0x5F, 0x46));
             BlockReasonText.Text = string.Empty;
-            BlockButton.Content  = "Заблокировать";
+            BlockButton.Content = "Заблокировать";
         }
 
         BlockButton.Visibility = (!UserPeekAccess.IsAdministrator(_row.RoleName) || _row.IsBlocked)
@@ -108,8 +108,12 @@ public partial class AdminUserInfoOverlay : UserControl
             ? Visibility.Collapsed
             : Visibility.Visible;
 
+        EditButton.Visibility = UserPeekAccess.IsAdministrator(_row.RoleName)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
         // Contact info
-        EmailText.Text     = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
+        EmailText.Text = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
         CreatedAtText.Text = _row.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
         BirthDateText.Text = _row.BirthDate.HasValue
             ? _row.BirthDate.Value.ToString("dd.MM.yyyy")
@@ -165,16 +169,16 @@ public partial class AdminUserInfoOverlay : UserControl
     private static Border CreateSpecBadge(string text, Brush background, Brush foreground) =>
         new()
         {
-            Background     = background,
-            CornerRadius   = new CornerRadius(4),
-            Padding        = new Thickness(8, 3, 8, 3),
-            Margin         = new Thickness(0, 0, 6, 4),
+            Background = background,
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(8, 3, 8, 3),
+            Margin = new Thickness(0, 0, 6, 4),
             Child = new TextBlock
             {
-                Text         = text,
-                FontSize     = 11,
-                FontWeight   = FontWeights.SemiBold,
-                Foreground   = foreground,
+                Text = text,
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = foreground,
             },
         };
 }

@@ -115,21 +115,21 @@ public partial class LoginViewModel : ViewModelBase
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-            var name     = _auth.UserName ?? "?";
+            var name = _auth.UserName ?? "?";
             var initials = Services.AvatarHelper.GetInitials(name);
-            var color    = Services.AvatarHelper.GetColorForName(name);
+            var color = Services.AvatarHelper.GetColorForName(name);
             var log = new LocalActivityLog
             {
-                UserId       = _auth.UserId,
-                ActorRole    = _auth.UserRole,
-                UserName     = name,
+                UserId = _auth.UserId,
+                ActorRole = _auth.UserRole,
+                UserName = name,
                 UserInitials = initials,
-                UserColor    = color,
-                ActionType   = ActivityActionKind.Login,
-                ActionText   = $"Вход в систему",
-                EntityType   = "User",
-                EntityId     = _auth.UserId ?? Guid.Empty,
-                CreatedAt    = DateTime.UtcNow
+                UserColor = color,
+                ActionType = ActivityActionKind.Login,
+                ActionText = $"Вход в систему",
+                EntityType = "User",
+                EntityId = _auth.UserId ?? Guid.Empty,
+                CreatedAt = DateTime.UtcNow
             };
             db.ActivityLogs.Add(log);
             await db.SaveChangesAsync();

@@ -46,7 +46,7 @@ public partial class ChangePasswordOverlay : UserControl
             var auth = App.Services.GetRequiredService<IAuthService>();
             await using var db = await dbFactory.CreateDbContextAsync();
 
-            var session = await db.AuthSessions.FindAsync(1);
+            var session = await db.AuthSessions.FirstOrDefaultAsync(s => s.UserId == _userId);
             if (session is null)
             { ShowError("Сессия не найдена."); return; }
             if (!BCrypt.Net.BCrypt.Verify(current, session.LocalPasswordHash))

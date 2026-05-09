@@ -142,11 +142,11 @@ public partial class AvatarCropOverlay : UserControl
     {
         var pos = e.GetPosition(CropCanvas);
 
-        if (HitHandle(pos, _cx, _cy - _r))      { _drag = DragMode.ResizeN; }
+        if (HitHandle(pos, _cx, _cy - _r)) { _drag = DragMode.ResizeN; }
         else if (HitHandle(pos, _cx, _cy + _r)) { _drag = DragMode.ResizeS; }
         else if (HitHandle(pos, _cx - _r, _cy)) { _drag = DragMode.ResizeW; }
         else if (HitHandle(pos, _cx + _r, _cy)) { _drag = DragMode.ResizeE; }
-        else if (Distance(pos, _cx, _cy) < _r)  { _drag = DragMode.Move; }
+        else if (Distance(pos, _cx, _cy) < _r) { _drag = DragMode.Move; }
 
         if (_drag != DragMode.None)
         {

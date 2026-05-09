@@ -10,7 +10,7 @@ public partial class SplashWindow : Window
     public SplashWindow()
     {
         InitializeComponent();
-        
+
         // Animate progress bar
         _progressAnimation = new DoubleAnimation
         {
@@ -21,7 +21,7 @@ public partial class SplashWindow : Window
             RepeatBehavior = RepeatBehavior.Forever,
             AutoReverse = true
         };
-        
+
         Loaded += (s, e) =>
         {
             ProgressBar.BeginAnimation(WidthProperty, _progressAnimation);

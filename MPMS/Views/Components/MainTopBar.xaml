@@ -779,24 +779,30 @@
                             Style="{StaticResource IconButton}" Padding="0" Background="Transparent">
                         <StackPanel Orientation="Horizontal">
                             <!-- Avatar circle слева: photo if available, else initials -->
-                            <Grid Width="30" Height="30" Margin="0,0,8,0"
+                            <Grid Width="36" Height="36" Margin="0,0,8,0"
                                   VerticalAlignment="Center">
                                 <!-- Initials fallback -->
                                 <Border Background="{StaticResource AvatarPlaceholderBrush}"
-                                        CornerRadius="15">
+                                        CornerRadius="18">
                                     <TextBlock Text="{Binding UserInitials}"
-                                               Foreground="White" FontSize="11"
+                                               Foreground="White" FontSize="13"
                                                FontWeight="Bold"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"/>
                                 </Border>
-                                <!-- Photo overlay (EllipseGeometry для идеального круга) -->
+                                <!-- Photo overlay -->
                                 <Border x:Name="TopBarAvatarBorder"
-                                        Style="{StaticResource AvatarCircle30}"
-                                        Visibility="Collapsed">
+                                        Width="36" Height="36"
+                                        CornerRadius="18"
+                                        Visibility="Collapsed"
+                                        SnapsToDevicePixels="True"
+                                        UseLayoutRounding="True">
                                     <Image x:Name="TopBarAvatarImage"
                                            Style="{StaticResource AvatarImage}"
-                                           Width="30" Height="30"/>
+                                           Width="36" Height="36"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           RenderOptions.EdgeMode="Aliased"
+                                           SnapsToDevicePixels="True"/>
                                 </Border>
                             </Grid>
                             <!-- Name + Role stacked -->

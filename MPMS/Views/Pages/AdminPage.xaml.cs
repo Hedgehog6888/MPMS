@@ -20,16 +20,16 @@ public partial class AdminPage : UserControl
         if (e.OldValue is AdminViewModel oldVm)
         {
             oldVm.OpenCreateFormRequested -= OnOpenCreateForm;
-            oldVm.OpenEditFormRequested   -= OnOpenEditForm;
-            oldVm.OpenUserInfoRequested   -= OnOpenUserInfo;
+            oldVm.OpenEditFormRequested -= OnOpenEditForm;
+            oldVm.OpenUserInfoRequested -= OnOpenUserInfo;
         }
 
         if (e.NewValue is not AdminViewModel vm) return;
         _vm = vm;
 
         vm.OpenCreateFormRequested += OnOpenCreateForm;
-        vm.OpenEditFormRequested   += OnOpenEditForm;
-        vm.OpenUserInfoRequested   += OnOpenUserInfo;
+        vm.OpenEditFormRequested += OnOpenEditForm;
+        vm.OpenUserInfoRequested += OnOpenUserInfo;
     }
 
     // ── Drawer openers ────────────────────────────────────────────────────
@@ -61,9 +61,9 @@ public partial class AdminPage : UserControl
         if (sender is not RadioButton rb) return;
         var tag = rb.Tag?.ToString() ?? "Users";
 
-        UsersPanel.Visibility    = tag == "Users"    ? Visibility.Visible : Visibility.Collapsed;
-        ArchivePanel.Visibility  = tag == "Archive"  ? Visibility.Visible : Visibility.Collapsed;
-        HistoryPanel.Visibility  = tag == "History"  ? Visibility.Visible : Visibility.Collapsed;
+        UsersPanel.Visibility = tag == "Users" ? Visibility.Visible : Visibility.Collapsed;
+        ArchivePanel.Visibility = tag == "Archive" ? Visibility.Visible : Visibility.Collapsed;
+        HistoryPanel.Visibility = tag == "History" ? Visibility.Visible : Visibility.Collapsed;
         ActivityPanel.Visibility = tag == "Activity" ? Visibility.Visible : Visibility.Collapsed;
 
         if (tag == "Archive" && _vm is not null)

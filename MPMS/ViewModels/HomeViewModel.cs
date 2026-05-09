@@ -17,43 +17,43 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
 
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
-    
+
     [ObservableProperty] private ObservableCollection<LocalNote> _notes = [];
     [ObservableProperty] private LocalNote? _selectedNote;
     [ObservableProperty] private bool _isNoteEditing;
     [ObservableProperty] private string _currentNoteXaml = string.Empty;
     [ObservableProperty] private bool _isBackConfirmPopupOpen;
-    
+
     [ObservableProperty] private int _activeProjectsCount;
     [ObservableProperty] private int _totalProjectsCount;
     [ObservableProperty] private int _tasksDueTodayCount;
     [ObservableProperty] private int _tasksCompletedTodayCount;
     [ObservableProperty] private int _overdueTasksCount;
     [ObservableProperty] private int _totalFilesCount;
-    
+
     // Role-specific card properties
     [ObservableProperty] private string _card2Title = "Ближайшее";
     [ObservableProperty] private string _card2Value = "—";
     [ObservableProperty] private string _card2SubValue = "Нет активных задач";
-    
+
     [ObservableProperty] private string _card3Title = "Внимание";
     [ObservableProperty] private int _card3Value = 0;
     [ObservableProperty] private string _card3SubValue = "Все по графику";
-    
+
     [ObservableProperty] private string _card1Title = "Эффективность";
     [ObservableProperty] private string _card1Value = "0%";
     [ObservableProperty] private string _card1SubValue = "за 7 дней";
-    
+
     [ObservableProperty] private string _card4Title = "Статус системы";
     [ObservableProperty] private string _card4Value = "Загрузка...";
     [ObservableProperty] private string _card4SubValue = "синхронизация данных";
-    
+
     // Card 1 segments
     [ObservableProperty] private int _card1Completed;
     [ObservableProperty] private int _card1InProgress;
     [ObservableProperty] private int _card1Planned;
     [ObservableProperty] private int _card1Total;
-    
+
     // For gradient stops
     [ObservableProperty] private double _card1DoneOffset;
     [ObservableProperty] private double _card1InProgressOffset;
@@ -63,15 +63,15 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _card3Segment2;
     [ObservableProperty] private int _card3Segment3;
     [ObservableProperty] private int _card3Total;
-    
+
     // For gradient stops
     [ObservableProperty] private double _card3Offset1;
     [ObservableProperty] private double _card3Offset2;
-    
+
     [ObservableProperty] private string _lastSyncTime = "Только что";
     [ObservableProperty] private bool _isOnline = true;
     [ObservableProperty] private bool _isAdmin;
-    
+
     // Detailed Tooltip Properties
     [ObservableProperty] private string _card1TooltipHeader = "Обзор нагрузки";
     [ObservableProperty] private string _card1TooltipDesc = "Текущее распределение объектов по статусам";
@@ -81,13 +81,13 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _card2Segment1;
     [ObservableProperty] private int _card2Segment2;
     [ObservableProperty] private int _card2Segment3;
-    
+
     [ObservableProperty] private string _card3TooltipHeader = "Зона риска";
     [ObservableProperty] private string _card3TooltipDesc = "Объекты, требующие немедленного внимания";
     [ObservableProperty] private string _card3Segment1Label = "Критический уровень";
     [ObservableProperty] private string _card3Segment2Label = "Высокий приоритет";
     [ObservableProperty] private string _card3Segment3Label = "Прочие замечания";
-    
+
     [ObservableProperty] private string _card4TooltipHeader = "Статус системы";
     [ObservableProperty] private string _card4TooltipDesc = "Техническое состояние и синхронизация";
 
@@ -124,9 +124,9 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         LastSyncTime = syncTime; // Update the tooltip property too
         Card4Value = IsOnline ? "В сети" : "Офлайн";
         Card4SubValue = $"Синхронизация: {syncTime}";
-        
-        Card4TooltipDesc = IsOnline 
-            ? $"Система подключена к серверу. Последний обмен данными: {syncTime}" 
+
+        Card4TooltipDesc = IsOnline
+            ? $"Система подключена к серверу. Последний обмен данными: {syncTime}"
             : "Система работает в автономном режиме. Изменения будут синхронизированы при восстановлении связи.";
     }
 
@@ -177,7 +177,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-            
+
             SelectedNote.Content = CurrentNoteXaml;
             SelectedNote.UpdatedAt = DateTime.UtcNow;
             SelectedNote.UserId = _auth.UserId ?? Guid.Empty;
@@ -193,11 +193,11 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             }
 
             await db.SaveChangesAsync();
-            
+
             // Update original values to reflect the saved state
             _originalTitle = SelectedNote.Title ?? "";
             _originalXaml = SelectedNote.Content ?? "";
-            
+
             await LoadNotesAsync();
         }
         catch (Exception ex)
@@ -216,13 +216,13 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             await using var db = await _dbFactory.CreateDbContextAsync();
             db.Notes.Remove(note);
             await db.SaveChangesAsync();
-            
+
             if (SelectedNote?.Id == note.Id)
             {
                 IsNoteEditing = false;
                 SelectedNote = null;
             }
-            
+
             await LoadNotesAsync();
         }
         catch (Exception ex)
@@ -275,7 +275,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var userId = _auth.UserId;
-        
+
         var notesList = await db.Notes
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.UpdatedAt)
@@ -310,7 +310,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
             // 6. Statistics (General)
             TotalFilesCount = await db.Files.CountAsync();
-            
+
             var today = DateOnly.FromDateTime(DateTime.Today);
             var role = _auth.UserRole;
 
@@ -341,15 +341,15 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
                 // All stages assigned to user (directly or via parent task/project)
                 var stagesQuery = from s in db.TaskStages
-                                 join t in db.Tasks on s.TaskId equals t.Id
-                                 join p in db.Projects on t.ProjectId equals p.Id
-                                 where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) || 
-                                        t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                        (isForeman && foremanProjectIds.Contains(p.Id)))
-                                    && !s.IsMarkedForDeletion && !s.IsArchived
-                                    && !t.IsMarkedForDeletion && !t.IsArchived
-                                    && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
-                                 select s;
+                                  join t in db.Tasks on s.TaskId equals t.Id
+                                  join p in db.Projects on t.ProjectId equals p.Id
+                                  where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) ||
+                                         t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
+                                         (isForeman && foremanProjectIds.Contains(p.Id)))
+                                     && !s.IsMarkedForDeletion && !s.IsArchived
+                                     && !t.IsMarkedForDeletion && !t.IsArchived
+                                     && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
+                                  select s;
 
                 // Tasks assigned to user (if they have no stages, they are distinct work items)
                 var tasksQuery = from t in db.Tasks
@@ -373,7 +373,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 Card1InProgress = stagesInProgress + tasksInProgress;
                 Card1Planned = stagesPlanned + tasksPlanned;
                 Card1Total = Card1Completed + Card1InProgress + Card1Planned;
-                
+
                 // Calculate offsets for gradient (0.0 to 1.0)
                 if (Card1Total > 0)
                 {
@@ -385,12 +385,12 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card1DoneOffset = 0;
                     Card1InProgressOffset = 0;
                 }
-                
+
                 // Terminology: for workers/foremen we show tasks/stages
                 Card1Value = GetPlural(Card1Total, "задача", "задачи", "задач");
                 Card1SubValue = isWorker ? "ваша нагрузка" : "задачи и этапы проектов";
-                Card1TooltipDesc = isWorker 
-                    ? "Ваш текущий план работ (задачи и этапы):" 
+                Card1TooltipDesc = isWorker
+                    ? "Ваш текущий план работ (задачи и этапы):"
                     : "Общая нагрузка по всем вашим проектам:";
 
                 // Card 2: Next Action
@@ -404,11 +404,12 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 {
                     Card2Value = nextStage.Name;
                     Card2SubValue = nextStage.DueDate?.ToString("dd.MM.yyyy") ?? "Срок не задан";
-                    
+
                     if (nextStage.DueDate.HasValue)
                     {
                         var days = (nextStage.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                        Card2TooltipDesc = days switch {
+                        Card2TooltipDesc = days switch
+                        {
                             0 => "Крайний срок — СЕГОДНЯ. Нужно завершить как можно скорее.",
                             1 => "Крайний срок — завтра. Пора приступать к финализации.",
                             > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
@@ -428,7 +429,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     if (nextTask.DueDate.HasValue)
                     {
                         var days = (nextTask.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                        Card2TooltipDesc = days switch {
+                        Card2TooltipDesc = days switch
+                        {
                             0 => "Крайний срок — СЕГОДНЯ. Не забудьте отметить выполнение.",
                             1 => "Крайний срок — завтра. Рекомендуется проверить готовность.",
                             > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
@@ -449,29 +451,29 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
                 // For Attention, we count ALL overdue tasks assigned to user
                 var overdueTasksCount = await (from t in db.Tasks
-                                             join p in db.Projects on t.ProjectId equals p.Id
-                                             where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                                    (isForeman && foremanProjectIds.Contains(p.Id)))
-                                                && t.Status != Models.TaskStatus.Completed 
-                                                && t.DueDate < today
-                                                && !t.IsArchived
-                                                && !p.IsArchived && !p.IsClosed
-                                             select t.Id).CountAsync();
+                                               join p in db.Projects on t.ProjectId equals p.Id
+                                               where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
+                                                      (isForeman && foremanProjectIds.Contains(p.Id)))
+                                                  && t.Status != Models.TaskStatus.Completed
+                                                  && t.DueDate < today
+                                                  && !t.IsArchived
+                                                  && !p.IsArchived && !p.IsClosed
+                                               select t.Id).CountAsync();
 
                 // For Attention, we count ALL overdue stages assigned to user
                 var overdueStagesCount = await (from s in db.TaskStages
-                                               join t in db.Tasks on s.TaskId equals t.Id
-                                               join p in db.Projects on t.ProjectId equals p.Id
-                                               where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) || 
-                                                      t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                                      (isForeman && foremanProjectIds.Contains(p.Id)))
-                                                  && s.Status != StageStatus.Completed 
-                                                  && s.DueDate < today
-                                                  && !s.IsArchived
-                                                  && !t.IsArchived
-                                                  && !p.IsArchived && !p.IsClosed
-                                               select s.Id).CountAsync();
-                
+                                                join t in db.Tasks on s.TaskId equals t.Id
+                                                join p in db.Projects on t.ProjectId equals p.Id
+                                                where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) ||
+                                                       t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
+                                                       (isForeman && foremanProjectIds.Contains(p.Id)))
+                                                   && s.Status != StageStatus.Completed
+                                                   && s.DueDate < today
+                                                   && !s.IsArchived
+                                                   && !t.IsArchived
+                                                   && !p.IsArchived && !p.IsClosed
+                                                select s.Id).CountAsync();
+
                 Card3Value = overdueStagesCount + overdueTasksCount;
                 Card3Segment1 = overdueTasksCount;
                 Card3Segment2 = overdueStagesCount;
@@ -481,7 +483,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 Card3Segment1Label = "Просроченные задачи:";
                 Card3Segment2Label = "Просроченные этапы:";
                 Card3Segment3Label = "";
-                
+
                 if (Card3Total > 0)
                 {
                     Card3Offset1 = (double)Card3Segment1 / Card3Total;
@@ -492,7 +494,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card3Offset1 = 0;
                     Card3Offset2 = 0;
                 }
-                
+
                 if (isWorker)
                 {
                     if (Card3Value == 0)
@@ -509,8 +511,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 else // Foreman
                 {
                     // For foreman, also count unassigned tasks in their projects
-                    int unassigned = await db.Tasks.CountAsync(t => foremanProjectIds.Contains(t.ProjectId) && 
-                                                                   t.AssignedUserId == null && 
+                    int unassigned = await db.Tasks.CountAsync(t => foremanProjectIds.Contains(t.ProjectId) &&
+                                                                   t.AssignedUserId == null &&
                                                                    !t.IsMarkedForDeletion && !t.IsArchived);
                     Card3Value = overdueStagesCount + overdueTasksCount + unassigned;
                     Card3Segment1 = overdueTasksCount;
@@ -521,7 +523,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card3Segment1Label = "Просроченные задачи:";
                     Card3Segment2Label = "Просроченные этапы:";
                     Card3Segment3Label = "Без ответственного:";
-                    
+
                     if (Card3Total > 0)
                     {
                         Card3Offset1 = (double)Card3Segment1 / Card3Total;
@@ -532,7 +534,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3Offset1 = 0;
                         Card3Offset2 = 0;
                     }
-                    
+
                     if (Card3Value == 0)
                     {
                         Card3SubValue = "Проблем не обнаружено";
@@ -565,7 +567,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     var pTasks = allTasks.Where(t => t.ProjectId == p.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToList();
                     var pTaskIds = pTasks.Select(t => t.Id).ToHashSet();
                     var pStages = allStages.Where(s => pTaskIds.Contains(s.TaskId) && !s.IsArchived).ToList();
-                    
+
                     foreach (var t in pTasks)
                     {
                         var tStages = pStages.Where(s => s.TaskId == t.Id).ToList();
@@ -593,8 +595,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
                 Card1Value = GetPlural(Card1Total, "проект", "проекта", "проектов");
                 Card1SubValue = isManager ? "ваши активные проекты" : "все проекты в системе";
-                Card1TooltipDesc = isManager 
-                    ? "Статистика по курируемым вами проектам:" 
+                Card1TooltipDesc = isManager
+                    ? "Статистика по курируемым вами проектам:"
                     : "Общий обзор всех проектов в организации:";
 
                 // Card 2: Next Action or Users
@@ -611,7 +613,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         if (nextProject.EndDate.HasValue)
                         {
                             var days = (nextProject.EndDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                            Card2TooltipDesc = days switch {
+                            Card2TooltipDesc = days switch
+                            {
                                 0 => "Проект должен быть завершен СЕГОДНЯ. Проверьте финальные этапы.",
                                 1 => "Дедлайн проекта завтра. Убедитесь, что все задачи закрыты.",
                                 > 1 => $"До завершения проекта осталось {GetPlural(days, "день", "дня", "дней")}.",
@@ -638,7 +641,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
                     Card2Value = GetPlural(totalMarked, "объект", "объекта", "объектов");
                     Card2SubValue = "ожидают подтверждения";
-                    
+
                     Card2Segment1 = projectsMarked;
                     Card2Segment2 = tasksMarked;
                     Card2Segment3 = stagesMarked;
@@ -654,11 +657,11 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 {
                     var managerProjectIds = await query.Select(p => p.Id).ToListAsync();
                     int overdueProj = await query.CountAsync(p => p.Status != ProjectStatus.Completed && p.EndDate < today);
-                    int overdueTasksInProj = await db.Tasks.CountAsync(t => managerProjectIds.Contains(t.ProjectId) && 
-                                                                          t.Status != Models.TaskStatus.Completed && 
-                                                                          t.DueDate < today && 
+                    int overdueTasksInProj = await db.Tasks.CountAsync(t => managerProjectIds.Contains(t.ProjectId) &&
+                                                                          t.Status != Models.TaskStatus.Completed &&
+                                                                          t.DueDate < today &&
                                                                           !t.IsArchived);
-                    
+
                     int overdueStagesInProj = await (from s in db.TaskStages
                                                      join t in db.Tasks on s.TaskId equals t.Id
                                                      where managerProjectIds.Contains(t.ProjectId)
@@ -667,7 +670,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                         && !s.IsArchived
                                                         && !t.IsArchived
                                                      select s).CountAsync();
-                                                     
+
                     Card3Value = overdueProj + overdueTasksInProj + overdueStagesInProj;
                     Card3Segment1 = overdueProj;
                     Card3Segment2 = overdueTasksInProj;
@@ -677,7 +680,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card3Segment1Label = "Просроченные проекты:";
                     Card3Segment2Label = "Просроченные задачи:";
                     Card3Segment3Label = "Просроченные этапы:";
-                    
+
                     if (Card3Total > 0)
                     {
                         Card3Offset1 = (double)Card3Segment1 / Card3Total;
@@ -688,7 +691,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3Offset1 = 0;
                         Card3Offset2 = 0;
                     }
-                    
+
                     if (Card3Value == 0)
                     {
                         Card3SubValue = "Задержек нет";
@@ -706,23 +709,23 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed && p.Status != ProjectStatus.Completed && p.EndDate < today);
 
                     int globalOverdueTasks = await (from t in db.Tasks
-                                                   join p in db.Projects on t.ProjectId equals p.Id
-                                                   where t.Status != Models.TaskStatus.Completed
-                                                      && t.DueDate < today
-                                                      && !t.IsArchived
-                                                      && !p.IsArchived && !p.IsClosed
-                                                   select t.Id).CountAsync();
-                                                   
-                    int globalOverdueStages = await (from s in db.TaskStages
-                                                    join t in db.Tasks on s.TaskId equals t.Id
                                                     join p in db.Projects on t.ProjectId equals p.Id
-                                                    where s.Status != StageStatus.Completed
-                                                       && s.DueDate < today
-                                                       && !s.IsArchived
+                                                    where t.Status != Models.TaskStatus.Completed
+                                                       && t.DueDate < today
                                                        && !t.IsArchived
                                                        && !p.IsArchived && !p.IsClosed
-                                                    select s.Id).CountAsync();
-                    
+                                                    select t.Id).CountAsync();
+
+                    int globalOverdueStages = await (from s in db.TaskStages
+                                                     join t in db.Tasks on s.TaskId equals t.Id
+                                                     join p in db.Projects on t.ProjectId equals p.Id
+                                                     where s.Status != StageStatus.Completed
+                                                        && s.DueDate < today
+                                                        && !s.IsArchived
+                                                        && !t.IsArchived
+                                                        && !p.IsArchived && !p.IsClosed
+                                                     select s.Id).CountAsync();
+
                     Card3Value = globalOverdueProjects + globalOverdueTasks + globalOverdueStages;
                     Card3Segment1 = globalOverdueProjects;
                     Card3Segment2 = globalOverdueTasks;
@@ -732,7 +735,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card3Segment1Label = "Просроченные проекты:";
                     Card3Segment2Label = "Просроченные задачи:";
                     Card3Segment3Label = "Просроченные этапы:";
-                    
+
                     if (Card3Total > 0)
                     {
                         Card3Offset1 = (double)Card3Segment1 / Card3Total;
@@ -743,7 +746,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3Offset1 = 0;
                         Card3Offset2 = 0;
                     }
-                    
+
                     if (Card3Value == 0)
                     {
                         Card3SubValue = "Проблем не обнаружено";

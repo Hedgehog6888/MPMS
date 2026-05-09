@@ -211,7 +211,8 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
-                <Button Content="Редактировать"
+                <Button x:Name="EditButton"
+                        Content="Редактировать"
                         Style="{StaticResource BlackBtn}"
                         HorizontalAlignment="Right"
                         Click="Edit_Click"/>

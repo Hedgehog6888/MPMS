@@ -7,11 +7,11 @@ public record LoginRequest(string Username, string Password);
 public record LoginResult(AuthResponse? Response, string? Error)
 {
     public bool Success => Response is not null;
-    public static LoginResult Ok(AuthResponse r)           => new(r, null);
-    public static LoginResult Fail(string error)           => new(null, error);
-    public static LoginResult Offline()                    => Fail("Нет соединения с сервером. Проверьте, что API запущен (порт 5147).");
-    public static LoginResult WrongCredentials()           => Fail("Неверный логин или пароль.");
-    public static LoginResult Blocked(string message)      => Fail(message);
+    public static LoginResult Ok(AuthResponse r) => new(r, null);
+    public static LoginResult Fail(string error) => new(null, error);
+    public static LoginResult Offline() => Fail("Нет соединения с сервером. Проверьте, что API запущен (порт 5147).");
+    public static LoginResult WrongCredentials() => Fail("Неверный логин или пароль.");
+    public static LoginResult Blocked(string message) => Fail(message);
 }
 public record RegisterRequest(string FirstName, string LastName, string Username, string? Email, string Password, Guid RoleId);
 public record AuthResponse(Guid UserId, string Name, string Username, string Role,

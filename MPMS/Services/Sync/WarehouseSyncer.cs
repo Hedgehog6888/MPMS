@@ -490,10 +490,10 @@ public class WarehouseSyncer : IEntitySyncer
             req = req with { Id = op.EntityId };
             var created = await _api.CreateEquipmentAsync(req);
             if (created is null) return false;
-            
+
             var local = await db.Equipments.FindAsync(op.EntityId);
             if (local is not null) local.IsSynced = true;
-            
+
             return true;
         }
 
@@ -501,10 +501,10 @@ public class WarehouseSyncer : IEntitySyncer
         if (updateReq is null) return false;
         var updated = await _api.UpdateEquipmentAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        
+
         var local2 = await db.Equipments.FindAsync(op.EntityId);
         if (local2 is not null) local2.IsSynced = true;
-        
+
         return true;
     }
 

@@ -57,15 +57,15 @@ public partial class ProjectDetailPage : UserControl
         _canEdit = _userRole is "Administrator" or "Project Manager" or "Foreman";
         _canManageTeam = _userRole is "Administrator" or "Project Manager";
         bool isManagerOrAbove = _userRole is "Administrator" or "Project Manager";
-        bool canMarkProject   = _userRole is "Administrator" or "Project Manager";
+        bool canMarkProject = _userRole is "Administrator" or "Project Manager";
 
-        EditProjectBtn.Visibility      = isManagerOrAbove ? Visibility.Visible : Visibility.Collapsed;
-        MarkProjectBtn.Visibility      = canMarkProject ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskBtn.Visibility       = Visibility.Collapsed; // shown only on Tasks tab for editors
-        CreateStageBtn.Visibility      = Visibility.Collapsed; // shown only on Stages tab for editors
-        AddFileBtn.Visibility          = (FilesPanel.Visibility == Visibility.Visible && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskQuickBtn.Visibility  = _canEdit ? Visibility.Visible : Visibility.Collapsed;
-        QuickTeamBtn.Visibility        = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
+        EditProjectBtn.Visibility = isManagerOrAbove ? Visibility.Visible : Visibility.Collapsed;
+        MarkProjectBtn.Visibility = canMarkProject ? Visibility.Visible : Visibility.Collapsed;
+        CreateTaskBtn.Visibility = Visibility.Collapsed; // shown only on Tasks tab for editors
+        CreateStageBtn.Visibility = Visibility.Collapsed; // shown only on Stages tab for editors
+        AddFileBtn.Visibility = (FilesPanel.Visibility == Visibility.Visible && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
+        CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
+        QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
         _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
         _ = Dispatcher.InvokeAsync(SyncStageViewToggleIcons, System.Windows.Threading.DispatcherPriority.Loaded);
     }
@@ -123,31 +123,31 @@ public partial class ProjectDetailPage : UserControl
         if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
         // Closed projects are view-only.
-        EditProjectBtn.Visibility  = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
-        EditProjectBtn.IsEnabled   = !marked && !closed;
-        EditProjectBtn.Opacity     = (marked || closed) ? 0.5 : 1.0;
-        MarkProjectBtn.Visibility  = closed ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
+        EditProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
+        EditProjectBtn.IsEnabled = !marked && !closed;
+        EditProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
+        MarkProjectBtn.Visibility = closed ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
 
         CloseProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
-        CloseProjectBtn.IsEnabled  = !marked && !closed;
-        CloseProjectBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
+        CloseProjectBtn.IsEnabled = !marked && !closed;
+        CloseProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
         // Quick Actions should remain visible but disabled (as per request: ONLY IN QUICK ACTIONS IN THE PROJECT)
         CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskQuickBtn.IsEnabled  = !marked && !closed;
-        CreateTaskQuickBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
+        CreateTaskQuickBtn.IsEnabled = !marked && !closed;
+        CreateTaskQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
         QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
-        QuickTeamBtn.IsEnabled  = !marked && !closed;
-        QuickTeamBtn.Opacity    = (marked || closed) ? 0.5 : 1.0;
+        QuickTeamBtn.IsEnabled = !marked && !closed;
+        QuickTeamBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
         UploadFileQuickBtn.IsEnabled = !marked && !closed;
-        UploadFileQuickBtn.Opacity   = (marked || closed) ? 0.5 : 1.0;
+        UploadFileQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
         // Other buttons still disappear as per "так и нужно"
-        CreateTaskBtn.Visibility  = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateTaskBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
-        AddFileBtn.Visibility     = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        AddFileBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
     private ProjectDetailViewModel? VM => DataContext as ProjectDetailViewModel;
@@ -164,12 +164,12 @@ public partial class ProjectDetailPage : UserControl
         if (sender is not RadioButton rb || rb.Tag is not string tab) return;
         VM?.SwitchTabCommand.Execute(tab);
 
-        InfoPanel.Visibility       = tab == "Info"       ? Visibility.Visible : Visibility.Collapsed;
-        TasksPanel.Visibility      = tab == "Tasks"      ? Visibility.Visible : Visibility.Collapsed;
-        StagesPanel.Visibility     = tab == "Stages"     ? Visibility.Visible : Visibility.Collapsed;
+        InfoPanel.Visibility = tab == "Info" ? Visibility.Visible : Visibility.Collapsed;
+        TasksPanel.Visibility = tab == "Tasks" ? Visibility.Visible : Visibility.Collapsed;
+        StagesPanel.Visibility = tab == "Stages" ? Visibility.Visible : Visibility.Collapsed;
         DiscussionPanel.Visibility = tab == "Discussion" ? Visibility.Visible : Visibility.Collapsed;
-        FilesPanel.Visibility      = tab == "Files"      ? Visibility.Visible : Visibility.Collapsed;
-        MaterialsPanel.Visibility  = tab == "Materials"  ? Visibility.Visible : Visibility.Collapsed;
+        FilesPanel.Visibility = tab == "Files" ? Visibility.Visible : Visibility.Collapsed;
+        MaterialsPanel.Visibility = tab == "Materials" ? Visibility.Visible : Visibility.Collapsed;
 
         StageViewModeSwitcher.Visibility = tab == "Stages" ? Visibility.Visible : Visibility.Collapsed;
 
@@ -185,9 +185,9 @@ public partial class ProjectDetailPage : UserControl
 
         bool marked = VM?.Project?.IsMarkedForDeletion ?? false;
         bool closed = VM?.Project is { } p && (p.IsClosed || p.Status == ProjectStatus.Closed);
-        CreateTaskBtn.Visibility  = (tab == "Tasks"  && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        CreateTaskBtn.Visibility = (tab == "Tasks" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
         CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
-        AddFileBtn.Visibility     = (tab == "Files" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        AddFileBtn.Visibility = (tab == "Files" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
         {
@@ -489,8 +489,8 @@ public partial class ProjectDetailPage : UserControl
         var newStatus = statusStr switch
         {
             "InProgress" => StageStatus.InProgress,
-            "Completed"  => StageStatus.Completed,
-            _            => StageStatus.Planned
+            "Completed" => StageStatus.Completed,
+            _ => StageStatus.Planned
         };
 
         if (item.Stage.Status == newStatus)

@@ -84,16 +84,16 @@ public class DonutChart : Canvas
         double startAngleDeg, double sweepAngleDeg)
     {
         double startRad = startAngleDeg * Math.PI / 180.0;
-        double endRad   = (startAngleDeg + sweepAngleDeg) * Math.PI / 180.0;
-        bool largeArc   = sweepAngleDeg > 180;
+        double endRad = (startAngleDeg + sweepAngleDeg) * Math.PI / 180.0;
+        bool largeArc = sweepAngleDeg > 180;
 
         var outerStart = new Point(center.X + outerR * Math.Cos(startRad),
                                    center.Y + outerR * Math.Sin(startRad));
-        var outerEnd   = new Point(center.X + outerR * Math.Cos(endRad),
+        var outerEnd = new Point(center.X + outerR * Math.Cos(endRad),
                                    center.Y + outerR * Math.Sin(endRad));
         var innerStart = new Point(center.X + innerR * Math.Cos(startRad),
                                    center.Y + innerR * Math.Sin(startRad));
-        var innerEnd   = new Point(center.X + innerR * Math.Cos(endRad),
+        var innerEnd = new Point(center.X + innerR * Math.Cos(endRad),
                                    center.Y + innerR * Math.Sin(endRad));
 
         var figure = new PathFigure { StartPoint = outerStart };

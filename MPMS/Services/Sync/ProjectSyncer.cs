@@ -48,23 +48,7 @@ public class ProjectSyncer : IEntitySyncer
                     local.IsClosed = p.IsClosed;
                     local.IsSynced = true;
                 }
-                else
-                {
-                    local.Name = p.Name;
-                    local.Description = p.Description;
-                    local.Client = p.Client;
-                    local.Address = p.Address;
-                    local.StartDate = p.StartDate;
-                    local.EndDate = p.EndDate;
-                    local.Status = Enum.Parse<ProjectStatus>(p.Status);
-                    local.ManagerId = p.ManagerId;
-                    local.ManagerName = p.ManagerName;
-                    local.CreatedAt = p.CreatedAt;
-                    local.UpdatedAt = p.UpdatedAt;
-                    local.IsMarkedForDeletion = p.IsMarkedForDeletion;
-                    local.IsArchived = p.IsArchived;
-                    local.IsClosed = p.IsClosed;
-                }
+                // If not synced, don't overwrite local changes - protect them from server data
             }
             else
             {
@@ -95,7 +79,7 @@ public class ProjectSyncer : IEntitySyncer
             .Where(p => p.IsSynced && !serverProjectIds.Contains(p.Id))
             .Select(p => p.Id)
             .ToListAsync();
-        
+
         foreach (var pid in orphanProjectIds)
             await LocalDbGraphDeletion.PermanentlyDeleteProjectGraphAsync(db, pid);
     }
@@ -112,10 +96,10 @@ public class ProjectSyncer : IEntitySyncer
             req = req with { Id = op.EntityId };
             var created = await _api.CreateProjectAsync(req);
             if (created is null) return false;
-            
+
             var local = await db.Projects.FindAsync(op.EntityId);
             if (local is not null) local.IsSynced = true;
-            
+
             return true;
         }
 
@@ -123,10 +107,10 @@ public class ProjectSyncer : IEntitySyncer
         if (updateReq is null) return false;
         var updated = await _api.UpdateProjectAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-        
-        var local2 = await db.Projects.FindAsync(op.EntityId);
-        if (local2 is not null) local2.IsSynced = true;
-        
+
+        // Don't set IsSynced = true for updates - wait for all related entities to sync
+        // This prevents PullAsync from overwriting local changes with server data
+
         return true;
     }
 }

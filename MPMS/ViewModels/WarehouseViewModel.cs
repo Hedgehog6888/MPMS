@@ -138,14 +138,14 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         matFilterOpts.AddRange(cats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        
+
         // Обновляем только если список реально изменился, чтобы не сбивать UI
         if (MaterialCategoryFilterOptions.Count != matFilterOpts.Count)
             MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
 
         var eqFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         eqFilterOpts.AddRange(eqCats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        
+
         if (EquipmentCategoryFilterOptions.Count != eqFilterOpts.Count)
             EquipmentCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(eqFilterOpts);
 
