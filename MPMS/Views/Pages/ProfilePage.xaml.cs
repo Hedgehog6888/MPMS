@@ -377,6 +377,22 @@ public partial class ProfilePage : UserControl
                     _user.RoleId = userEntity.RoleId;
             }
 
+            // Обновить UserName во всех связанных сущностях
+            if (userEntity is not null)
+            {
+                await UpdateUserNameInRelatedEntitiesAsync(db, userEntity.Id, fullName);
+                await db.SaveChangesAsync();
+            }
+
+            // Обновить данные текущего пользователя в AuthService
+            await auth.UpdateCurrentUserAsync(fullName, _user?.Username ?? "");
+
+            // Уведомить MainViewModel об изменении текущего пользователя
+            var mainVm = App.Services.GetService(typeof(MPMS.ViewModels.MainViewModel))
+                         as MPMS.ViewModels.MainViewModel;
+            if (mainVm is not null)
+                mainVm.RefreshUserInfo();
+
             SuccessPanel.Visibility = Visibility.Visible;
 
             NameText.Text      = _user?.Name ?? "";
@@ -606,6 +622,29 @@ public partial class ProfilePage : UserControl
         catch
         {
             CopyToast.Margin = new Thickness(8, 8, 0, 0);
+        }
+    }
+
+    private async System.Threading.Tasks.Task UpdateUserNameInRelatedEntitiesAsync(LocalDbContext db, Guid userId, string newFullName)
+    {
+        // Обновить UserName во всех связанных сущностях
+        foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
+            m.UserName = newFullName;
+        foreach (var t in await db.TaskAssignees.Where(x => x.UserId == userId).ToListAsync())
+            t.UserName = newFullName;
+        foreach (var s in await db.StageAssignees.Where(x => x.UserId == userId).ToListAsync())
+            s.UserName = newFullName;
+        foreach (var msg in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
+            msg.UserName = newFullName;
+        foreach (var log in await db.ActivityLogs.Where(x => x.UserId == userId).ToListAsync())
+            log.UserName = newFullName;
+
+        // Обновить RecentAccounts по username (нужно сохранить в переменную для EF)
+        var currentUsername = _user?.Username;
+        if (!string.IsNullOrEmpty(currentUsername))
+        {
+            foreach (var recent in await db.RecentAccounts.Where(x => x.Username == currentUsername).ToListAsync())
+                recent.DisplayName = newFullName;
         }
     }
 }

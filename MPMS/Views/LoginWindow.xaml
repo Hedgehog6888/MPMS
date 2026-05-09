@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:MPMS.Infrastructure"
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
-        Title="MPMS" Height="740" Width="880"
+        Title="MPMS" Height="640" Width="480"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="None"
@@ -135,159 +135,11 @@
                               ShadowDepth="8" Direction="270"/>
         </Border.Effect>
 
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="310"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
+        <Grid MouseLeftButtonDown="DragBar_MouseLeftButtonDown">
             <!-- ═══════════════════════════════════════════════════
-                 LEFT — Branding panel
+                 Login form
             ═══════════════════════════════════════════════════ -->
-            <Grid Grid.Column="0" ClipToBounds="True"
-                  MouseLeftButtonDown="DragBar_MouseLeftButtonDown">
-
-                <Grid.Background>
-                    <SolidColorBrush Color="#111111"/>
-                </Grid.Background>
-
-                <Grid Margin="26,28,26,22">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Header -->
-                    <StackPanel Grid.Row="0">
-                        <Border Width="90" Height="40"
-                                Background="White"
-                                CornerRadius="8"
-                                HorizontalAlignment="Left">
-                            <TextBlock Text="MPMS"
-                                       Foreground="#111111"
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="Montage Project Management System"
-                                   Foreground="#C1C7D0"
-                                   FontSize="11"
-                                   Margin="0,10,0,0"/>
-                    </StackPanel>
-
-                    <!-- Main card -->
-                    <Border Grid.Row="1"
-                            Margin="0,22,0,22"
-                            Background="#1A1A1A"
-                            CornerRadius="12"
-                            BorderThickness="1"
-                            BorderBrush="#2A2A2A"
-                            Padding="18,18,18,16"
-                            VerticalAlignment="Center">
-                        <StackPanel>
-                            <TextBlock Text="Монтажные проекты под контролем"
-                                       Foreground="White"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       TextWrapping="Wrap"
-                                       Margin="0,0,0,8"/>
-                            <TextBlock Text="MPMS объединяет планирование, склад и командную работу в одном рабочем пространстве."
-                                       TextWrapping="Wrap"
-                                       Foreground="#9FA7B5"
-                                       FontSize="12"
-                                       Margin="0,0,0,14"/>
-
-                            <Border Height="1" Background="#2A2A2A" Margin="0,0,0,14"/>
-
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="&#xE8C8;"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="14"
-                                           Foreground="#DADDE3"
-                                           VerticalAlignment="Top"
-                                           Margin="0,1,10,0"/>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Проекты и этапы"
-                                               Foreground="#DADDE3"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Структурируйте работы по стадиям и ответственным."
-                                               Foreground="#9FA7B5"
-                                               FontSize="11"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="&#xE823;"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="14"
-                                           Foreground="#DADDE3"
-                                           VerticalAlignment="Top"
-                                           Margin="0,1,10,0"/>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Задачи и сроки"
-                                               Foreground="#DADDE3"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Отслеживайте статус, приоритеты и дедлайны без лишних шагов."
-                                               Foreground="#9FA7B5"
-                                               FontSize="11"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="&#xE7BF;"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="14"
-                                           Foreground="#DADDE3"
-                                           VerticalAlignment="Top"
-                                           Margin="0,1,10,0"/>
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="Материалы и команда"
-                                               Foreground="#DADDE3"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Синхронизируйте склад, исполнителей и ход выполнения."
-                                               Foreground="#9FA7B5"
-                                               FontSize="11"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Footer -->
-                    <TextBlock Grid.Row="2"
-                               Text="v 1.0  ·  2026"
-                               Foreground="#6B778C"
-                               FontSize="11"
-                               HorizontalAlignment="Left"/>
-                </Grid>
-            </Grid>
-
-            <!-- ═══════════════════════════════════════════════════
-                 RIGHT — Login form
-            ═══════════════════════════════════════════════════ -->
-            <Grid Grid.Column="1" Background="{StaticResource BackgroundBrush}">
+            <Grid Background="{StaticResource BackgroundBrush}">
 
                 <!-- Close button -->
                 <Button x:Name="CloseBtn" Click="CloseButton_Click"
@@ -306,10 +158,10 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="CloseBd"
-                                            Property="Background" Value="#FFF0F0"/>
+                                            Property="Background" Value="#F5F5F5"/>
                                     <Setter TargetName="CloseBd"
                                             Property="TextElement.Foreground"
-                                            Value="#E74C3C"/>
+                                            Value="#666666"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

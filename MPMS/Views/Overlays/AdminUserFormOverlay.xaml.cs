@@ -366,6 +366,9 @@ public partial class AdminUserFormOverlay : UserControl
                 user.AdditionalSubRoles  = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
 
+                // Обновить UserName во всех связанных сущностях
+                await UpdateUserNameInRelatedEntitiesAsync(db, user.Id, fullName, _editingRow?.Username);
+
                 LocalActivityLog? pwdLog = null;
                 if (!string.IsNullOrEmpty(password))
                 {
@@ -378,6 +381,17 @@ public partial class AdminUserFormOverlay : UserControl
                     $"Изменил данные пользователя {fullName} ({username})", "User", user.Id);
 
                 await db.SaveChangesAsync();
+
+                // Если редактируется текущий пользователь, обновить AuthService и MainViewModel
+                var auth = App.Services.GetRequiredService<IAuthService>();
+                if (auth.UserId == user.Id)
+                {
+                    await auth.UpdateCurrentUserAsync(fullName, username);
+                    var mainVm = App.Services.GetService(typeof(MPMS.ViewModels.MainViewModel))
+                                 as MPMS.ViewModels.MainViewModel;
+                    if (mainVm is not null)
+                        mainVm.RefreshUserInfo();
+                }
 
                 var sync = App.Services.GetRequiredService<ISyncService>();
                 if (pwdLog is not null) await sync.QueueLocalActivityLogAsync(pwdLog);
@@ -495,4 +509,26 @@ public partial class AdminUserFormOverlay : UserControl
         "Worker"                                            => "Работник",
         _                                                   => roleName
     };
+
+    private async Task UpdateUserNameInRelatedEntitiesAsync(LocalDbContext db, Guid userId, string newFullName, string? oldUsername = null)
+    {
+        // Обновить UserName во всех связанных сущностях
+        foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
+            m.UserName = newFullName;
+        foreach (var t in await db.TaskAssignees.Where(x => x.UserId == userId).ToListAsync())
+            t.UserName = newFullName;
+        foreach (var s in await db.StageAssignees.Where(x => x.UserId == userId).ToListAsync())
+            s.UserName = newFullName;
+        foreach (var msg in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
+            msg.UserName = newFullName;
+        foreach (var log in await db.ActivityLogs.Where(x => x.UserId == userId).ToListAsync())
+            log.UserName = newFullName;
+
+        // Обновить RecentAccounts по старому username
+        if (!string.IsNullOrEmpty(oldUsername))
+        {
+            foreach (var recent in await db.RecentAccounts.Where(x => x.Username == oldUsername).ToListAsync())
+                recent.DisplayName = newFullName;
+        }
+    }
 }

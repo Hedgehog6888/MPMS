@@ -152,18 +152,18 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#F8F9FA"/>
-                    <Setter Property="BorderBrush" Value="#000000"/>
+                    <Setter Property="BorderBrush" Value="#111111"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Template for Image Cards -->
         <DataTemplate x:Key="ImageCardTemplate">
-            <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,16,16"
+            <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,6,6"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     Cursor="Hand">
                 <Border.InputBindings>
-                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenPhotoViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                 </Border.InputBindings>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -380,6 +380,11 @@
                         <WrapPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Margin" Value="0"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
             </ItemsControl>
         </DataTemplate>
 
@@ -387,7 +392,7 @@
             <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource DocumentListTemplate}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical"/>
+                        <StackPanel/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
@@ -491,7 +496,7 @@
         <!-- ── Content Area ── -->
         <Grid Grid.Row="1">
             <!-- Images ScrollViewer -->
-            <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+            <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -530,11 +535,16 @@
                                    Margin="0,8,0,0" LineHeight="18"/>
                     </StackPanel>
 
-                    <!-- Files Grid for Images -->
+                    <!-- Files Grid/List for Images -->
                     <ContentControl Content="{Binding}">
                         <ContentControl.Style>
                             <Style TargetType="ContentControl">
                                 <Setter Property="ContentTemplate" Value="{StaticResource FilesGridViewTemplate}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ViewMode}" Value="List">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource FilesListViewTemplate}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
                         </ContentControl.Style>
                     </ContentControl>
@@ -542,7 +552,7 @@
             </ScrollViewer>
 
             <!-- Documents ScrollViewer -->
-            <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+            <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>

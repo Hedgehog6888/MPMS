@@ -19,21 +19,32 @@ public partial class App : Application
 
     private async void OnStartup(object sender, StartupEventArgs e)
     {
+        // Show splash screen
+        var splash = new SplashWindow();
+        splash.Show();
+
         var services = new ServiceCollection();
         ConfigureServices(services);
         Services = services.BuildServiceProvider();
 
+        splash.SetLoadingText("Инициализация базы данных...");
         EnsureLocalDatabase();
 
+        splash.SetLoadingText("Проверка авторизации...");
         var authService = Services.GetRequiredService<IAuthService>();
 
         if (await authService.TryRestoreSessionAsync())
         {
+            splash.SetLoadingText("Загрузка данных...");
             await Services.GetRequiredService<IApiService>().ProbeAsync();
-            await OpenMainWindowAsync();
+            
+            splash.SetLoadingText("Открытие приложения...");
+            await OpenMainWindowAsync(splash);
         }
         else
         {
+            splash.SetLoadingText("Открытие входа...");
+            splash.CloseWithFadeOut();
             var loginWindow = Services.GetRequiredService<LoginWindow>();
             loginWindow.Show();
         }
@@ -122,11 +133,18 @@ public partial class App : Application
     }
 
     /// <summary>Сначала полная синхронизация с сервером в SQLite, затем главное окно и навигация — чтобы списки не были пустыми.</summary>
-    public static async Task OpenMainWindowAsync()
+    public static async Task OpenMainWindowAsync(SplashWindow? splash = null)
     {
         await Services.GetRequiredService<ISyncService>().SyncAsync();
         var main = Services.GetRequiredService<MainWindow>();
-        Services.GetRequiredService<MainViewModel>().RefreshUserInfo();
+        Services.GetRequiredService<MainViewModel>().RefreshUserInfoAndNavigateHome();
+        
+        // Close splash screen before showing main window
+        splash?.CloseWithFadeOut();
+        
+        // Small delay to allow fade out animation
+        await Task.Delay(300);
+        
         main.Show();
     }
 

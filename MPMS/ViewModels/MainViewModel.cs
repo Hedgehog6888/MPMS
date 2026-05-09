@@ -239,7 +239,12 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsProjectsVisible));
         OnPropertyChanged(nameof(IsAdminPanelVisible));
         _ = RefreshAvatarAsync();
-        // Workers go to Home page by default
+    }
+
+    /// <summary>Вызывает RefreshUserInfo и затем навигацию на Home (для инициализации).</summary>
+    public void RefreshUserInfoAndNavigateHome()
+    {
+        RefreshUserInfo();
         Navigate("Home");
     }
 

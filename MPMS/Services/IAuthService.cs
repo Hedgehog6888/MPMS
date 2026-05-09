@@ -31,6 +31,10 @@ public interface IAuthService
     Task<bool> TryRefreshJwtIfNeededAsync(IApiService api);
 
     void Logout();
+
+    /// <summary>Обновляет данные текущего пользователя в памяти после изменений в профиле.</summary>
+    Task UpdateCurrentUserAsync(string newName, string newUsername);
+
     Task<bool> TryRestoreSessionAsync();
     /// <summary>Returns (response, null) on success; (null, blockMessage) if deleted/blocked; (null, null) if wrong password.</summary>
     Task<(AuthResponse? Response, string? BlockMessage)> TryOfflineLoginAsync(string username, string plainPassword);

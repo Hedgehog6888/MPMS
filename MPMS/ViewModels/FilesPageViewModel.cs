@@ -10,6 +10,7 @@ namespace MPMS.ViewModels;
 public partial class FilesPageViewModel : ViewModelBase, ILoadable
 {
     public FilesControlViewModel FilesControlVM { get; }
+    private bool _isLoaded = false;
 
     public FilesPageViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
     {
@@ -18,7 +19,11 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        FilesControlVM.Initialize(null); // Глобальный режим
+        if (!_isLoaded)
+        {
+            FilesControlVM.Initialize(null); // Глобальный режим
+            _isLoaded = true;
+        }
         await Task.CompletedTask;
     }
 }

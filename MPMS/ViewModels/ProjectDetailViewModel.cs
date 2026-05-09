@@ -156,12 +156,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         {
             var managerAv = await db.Users
                 .Where(u => u.Id == projectEntity.ManagerId)
-                .Select(u => new { u.AvatarData, u.AvatarPath })
+                .Select(u => new { u.Name, u.AvatarData, u.AvatarPath })
                 .FirstOrDefaultAsync();
             byte[]? mgrAvatarData = null;
             string? mgrAvatarPath = null;
             if (managerAv is not null)
             {
+                projectEntity.ManagerName = managerAv.Name;
                 mgrAvatarData = managerAv.AvatarData;
                 mgrAvatarPath = managerAv.AvatarPath;
                 if ((mgrAvatarData is null || mgrAvatarData.Length == 0)

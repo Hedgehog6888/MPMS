@@ -44,14 +44,26 @@ public partial class MainWindow : Window
 
     private readonly List<UIElement> _drawerModalStack = [];
 
+    private System.Windows.Threading.DispatcherTimer? _saveSettingsTimer;
+
     public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;
         Instance = this;
 
+        // Load saved window size
+        LoadWindowSize();
+
         Loaded += (s, e) =>
         {
+            // Bring window to front on startup
+            Topmost = true;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                Topmost = false;
+            }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+
             if (DataContext is MainViewModel vm)
             {
                 // Set initial width based on current state
@@ -64,6 +76,60 @@ public partial class MainWindow : Window
                 };
             }
         };
+
+        Closing += (s, e) => SaveWindowSize();
+        StateChanged += (s, e) => ScheduleSaveSettings();
+        LocationChanged += (s, e) => ScheduleSaveSettings();
+        SizeChanged += (s, e) => ScheduleSaveSettings();
+    }
+
+    private void ScheduleSaveSettings()
+    {
+        // Debounce: save settings 500ms after last change
+        _saveSettingsTimer?.Stop();
+        _saveSettingsTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _saveSettingsTimer.Tick += (s, e) =>
+        {
+            _saveSettingsTimer?.Stop();
+            SaveWindowSize();
+        };
+        _saveSettingsTimer.Start();
+    }
+
+    private void LoadWindowSize()
+    {
+        const double defaultWidth = 1280;
+        const double defaultHeight = 768;
+
+        double savedWidth = LocalSettings.GetDouble("MainWindow_Width", defaultWidth);
+        double savedHeight = LocalSettings.GetDouble("MainWindow_Height", defaultHeight);
+
+        // Ensure minimum size constraints are respected
+        Width = Math.Max(savedWidth, MinWidth);
+        Height = Math.Max(savedHeight, MinHeight);
+
+        // Load window state (maximized/normal)
+        string savedState = LocalSettings.Get("MainWindow_State", "Normal");
+        if (Enum.TryParse<WindowState>(savedState, out var state))
+        {
+            WindowState = state;
+        }
+    }
+
+    private void SaveWindowSize()
+    {
+        // Save window state
+        LocalSettings.Set("MainWindow_State", WindowState.ToString());
+
+        // Save size only in normal state
+        if (WindowState == WindowState.Normal)
+        {
+            LocalSettings.SetDouble("MainWindow_Width", ActualWidth);
+            LocalSettings.SetDouble("MainWindow_Height", ActualHeight);
+        }
     }
 
     private void AnimateSidebarWidth(bool isExpanded)
@@ -348,6 +414,10 @@ public partial class MainWindow : Window
 
     private void ModalOverlayContentClip_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        // Skip if modal overlay is not visible
+        if (ModalOverlayPanel.Visibility != Visibility.Visible)
+            return;
+
         if (sender is not Border host) return;
         double w = host.ActualWidth;
         double h = host.ActualHeight;

@@ -52,6 +52,8 @@ public partial class FilesControlViewModel : ViewModelBase
     public int DocumentsCount => AllFiles.Count(f => !IsImage(f.FileName));
 
     private Guid? _projectId;
+    private List<LocalFile> _cachedImagesFiles = new();
+    private List<LocalFile> _cachedDocumentsFiles = new();
 
     public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
     {
@@ -113,22 +115,43 @@ public partial class FilesControlViewModel : ViewModelBase
             }
             else
             {
+                // Оптимизированный запрос: загружаем только активные проекты и их связанные файлы
+                var activeProjectIds = db.Projects
+                    .Where(p => !p.IsArchived && !p.IsClosed)
+                    .Select(p => p.Id)
+                    .ToList();
+                
+                var activeTaskIds = db.Tasks
+                    .Where(t => !t.IsArchived && activeProjectIds.Contains(t.ProjectId))
+                    .Select(t => t.Id)
+                    .ToList();
+                
+                var activeStageIds = db.TaskStages
+                    .Where(s => !s.IsArchived && activeTaskIds.Contains(s.TaskId))
+                    .Select(s => s.Id)
+                    .ToList();
+
                 query = query.Where(f =>
-                    (!f.ProjectId.HasValue || db.Projects.Any(p => p.Id == f.ProjectId.Value && !p.IsArchived && !p.IsClosed)) &&
-                    (!f.TaskId.HasValue || db.Tasks.Any(t => t.Id == f.TaskId.Value && !t.IsArchived &&
-                        db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed))) &&
-                    (!f.StageId.HasValue || db.TaskStages.Any(s => s.Id == f.StageId.Value && !s.IsArchived &&
-                        db.Tasks.Any(t => t.Id == s.TaskId && !t.IsArchived &&
-                            db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed)))));
+                    (!f.ProjectId.HasValue || activeProjectIds.Contains(f.ProjectId.Value)) &&
+                    (!f.TaskId.HasValue || activeTaskIds.Contains(f.TaskId.Value)) &&
+                    (!f.StageId.HasValue || activeStageIds.Contains(f.StageId.Value)));
             }
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
             
+            // Оптимизация: загружаем проекты и stages за один раз
             var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
             var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
             
-            var projects = await db.Projects.Where(p => projectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name);
-            var stages = await db.TaskStages.Where(s => stageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name);
+            var projects = await db.Projects
+                .Where(p => projectIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.Name })
+                .ToDictionaryAsync(p => p.Id, p => p.Name);
+            
+            var stages = await db.TaskStages
+                .Where(s => stageIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.Name })
+                .ToDictionaryAsync(s => s.Id, s => s.Name);
 
             foreach (var f in files)
             {
@@ -138,9 +161,14 @@ public partial class FilesControlViewModel : ViewModelBase
                     f.StageName = sname;
             }
 
+            // Оптимизация:批量 добавление вместо по одному
             AllFiles.Clear();
             foreach (var f in files)
                 AllFiles.Add(f);
+
+            // Кэшируем результаты фильтрации для быстрого переключения
+            _cachedImagesFiles = files.Where(f => IsImage(f.FileName)).ToList();
+            _cachedDocumentsFiles = files.Where(f => !IsImage(f.FileName)).ToList();
 
             UpdateExtensionFilterOptions();
             ApplyFilters();
@@ -155,16 +183,9 @@ public partial class FilesControlViewModel : ViewModelBase
 
     private void ApplyFilters()
     {
-        var filtered = AllFiles.AsEnumerable();
-
-        if (CurrentTab == "Images")
-        {
-            filtered = filtered.Where(f => IsImage(f.FileName));
-        }
-        else
-        {
-            filtered = filtered.Where(f => !IsImage(f.FileName));
-        }
+        // Используем кэшированные данные для быстрого переключения вкладок
+        var baseList = CurrentTab == "Images" ? _cachedImagesFiles : _cachedDocumentsFiles;
+        var filtered = baseList.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
@@ -177,7 +198,7 @@ public partial class FilesControlViewModel : ViewModelBase
 
         if (!string.IsNullOrEmpty(ExtensionFilter) && ExtensionFilter != "Все")
         {
-            filtered = filtered.Where(f => 
+            filtered = filtered.Where(f =>
                 (Path.GetExtension(f.FileName)?.TrimStart('.').ToUpper() ?? "") == ExtensionFilter);
         }
 
@@ -190,17 +211,10 @@ public partial class FilesControlViewModel : ViewModelBase
 
     private void UpdateExtensionFilterOptions()
     {
-        var filtered = AllFiles.AsEnumerable();
-        if (CurrentTab == "Images")
-        {
-            filtered = filtered.Where(f => IsImage(f.FileName));
-        }
-        else
-        {
-            filtered = filtered.Where(f => !IsImage(f.FileName));
-        }
+        // Используем кэшированные данные для быстрого обновления фильтров
+        var baseList = CurrentTab == "Images" ? _cachedImagesFiles : _cachedDocumentsFiles;
 
-        var exts = filtered
+        var exts = baseList
             .Select(f => Path.GetExtension(f.FileName)?.TrimStart('.').ToUpper() ?? "")
             .Where(e => !string.IsNullOrEmpty(e))
             .Distinct()
@@ -208,7 +222,7 @@ public partial class FilesControlViewModel : ViewModelBase
             .ToList();
 
         var oldVal = ExtensionFilter;
-        
+
         ExtensionFilterOptions.Clear();
         ExtensionFilterOptions.Add("Все");
         foreach (var ext in exts)
@@ -369,6 +383,70 @@ public partial class FilesControlViewModel : ViewModelBase
         catch (Exception ex)
         {
             MessageBox.Show($"Ошибка при удалении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenPhotoViewer(LocalFile file)
+    {
+        if (file == null) return;
+
+        // Check if it's actually an image - if not, open in system app instead
+        if (!IsImage(file.FileName))
+        {
+            await OpenFile(file);
+            return;
+        }
+
+        string filePath = string.Empty;
+
+        // If file exists on disk, use it
+        if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
+        {
+            filePath = file.FilePath;
+        }
+        // Otherwise extract from FileData to temp
+        else if (file.FileData != null && file.FileData.Length > 0)
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
+            Directory.CreateDirectory(tempDir);
+            filePath = Path.Combine(tempDir, file.FileName);
+            await File.WriteAllBytesAsync(filePath, file.FileData);
+        }
+        // Fetch from server if online
+        else if (_api.IsOnline)
+        {
+            IsLoading = true;
+            try
+            {
+                var data = await _api.DownloadFileAsync(file.Id);
+                if (data != null)
+                {
+                    file.FileData = data;
+                    var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
+                    Directory.CreateDirectory(tempDir);
+                    filePath = Path.Combine(tempDir, file.FileName);
+                    await File.WriteAllBytesAsync(filePath, data);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке файла: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            finally { IsLoading = false; }
+        }
+
+        if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+        {
+            MainWindow.Instance?.ShowPhotoViewer(filePath, file.FileName, file.Description,
+                (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, filePath));
+        }
+        else
+        {
+            MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 

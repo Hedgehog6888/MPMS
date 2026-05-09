@@ -6,7 +6,7 @@
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         Title="MPMS — Montage Project Management System"
         Height="768" Width="1280"
-        MinHeight="768" MinWidth="1280"
+        MinHeight="768" MinWidth="1300"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}"
         UseLayoutRounding="True"
@@ -160,8 +160,9 @@
                     Width="520"
                     Margin="520,0,0,0">
                 <Border.Effect>
-                    <DropShadowEffect Color="Black" BlurRadius="40"
-                                      Opacity="0.18" Direction="180" ShadowDepth="0"/>
+                    <DropShadowEffect Color="Black" BlurRadius="20"
+                                      Opacity="0.15" Direction="180" ShadowDepth="0"
+                                      RenderingBias="Performance"/>
                 </Border.Effect>
                 <ContentPresenter x:Name="DrawerContentPresenter"/>
             </Border>

@@ -86,4 +86,15 @@ public static class LocalSettings
     {
         Set(key, value.ToString());
     }
+
+    public static double GetDouble(string key, double defaultValue = 0)
+    {
+        var value = Get(key);
+        return double.TryParse(value, out var result) ? result : defaultValue;
+    }
+
+    public static void SetDouble(string key, double value)
+    {
+        Set(key, value.ToString());
+    }
 }

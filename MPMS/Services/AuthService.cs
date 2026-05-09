@@ -122,6 +122,24 @@ public class AuthService : IAuthService
         _ = ClearSessionAsync(currentUserId);
     }
 
+    /// <summary>Обновляет данные текущего пользователя в памяти после изменений в профиле.</summary>
+    public async Task UpdateCurrentUserAsync(string newName, string newUsername)
+    {
+        if (_current is null) return;
+
+        var updated = new AuthResponse(
+            _current.UserId,
+            newName,
+            newUsername,
+            _current.Role,
+            _current.Token,
+            _current.ExpiresAt,
+            _current.RefreshToken);
+
+        _current = updated;
+        await PersistSessionAsync(updated, _sessionPlainPassword ?? "");
+    }
+
     public async Task<bool> TryRestoreSessionAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
