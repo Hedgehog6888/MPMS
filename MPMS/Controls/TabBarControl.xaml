@@ -32,9 +32,19 @@
                     <RadioButton Content="{Binding Text}"
                                  GroupName="{Binding GroupName, ElementName=Root}"
                                  Tag="{Binding Tag}"
-                                 Style="{StaticResource TabButton}"
                                  IsChecked="{Binding IsSelected, Mode=OneWay}"
-                                 Click="Tab_Click"/>
+                                 Click="Tab_Click">
+                        <RadioButton.Style>
+                            <Style TargetType="RadioButton" BasedOn="{StaticResource TabButton}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Tag}" Value="Documents">
+                                        <Setter Property="Visibility" Value="{Binding DataContext.IsWorkerRole, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RadioButton.Style>
+                    </RadioButton>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

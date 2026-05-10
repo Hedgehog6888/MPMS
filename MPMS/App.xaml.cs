@@ -142,9 +142,6 @@ public partial class App : Application
         // Close splash screen before showing main window
         splash?.CloseWithFadeOut();
 
-        // Small delay to allow fade out animation
-        await Task.Delay(300);
-
         main.Show();
     }
 

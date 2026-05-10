@@ -140,7 +140,7 @@ public class SyncCoordinator : ISyncService
         var dto = new CreateSyncedActivityLogRequest(
             log.Id, log.UserId, log.ActorRole,
             log.UserName, log.UserInitials, log.UserColor,
-            log.ActionType, log.ActionText, log.EntityType, log.EntityId, log.CreatedAt);
+            log.ActionType, log.ActionText, log.DetailsText, log.EntityType, log.EntityId, log.CreatedAt);
         return QueueOperationAsync("SyncedActivityLog", log.Id, SyncOperation.Create, dto);
     }
 

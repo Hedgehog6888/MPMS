@@ -43,6 +43,38 @@ public class BoolToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Converts string to Visibility: Visible when string equals "───" (separator).</summary>
+public class SeparatorToVisibilityConverter : IValueConverter
+{
+    public static readonly SeparatorToVisibilityConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string s && s == "───")
+            return Visibility.Visible;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Converts string to Visibility: Collapsed when string equals "───" (separator), Visible otherwise.</summary>
+public class SeparatorToVisibilityInvertedConverter : IValueConverter
+{
+    public static readonly SeparatorToVisibilityInvertedConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string s && s == "───")
+            return Visibility.Collapsed;
+        return Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Converts value to bool: true when value equals parameter (string comparison).</summary>
 public class EqualityToBoolConverter : IValueConverter
 {
@@ -721,60 +753,321 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
 {
     public static readonly ActivityLogToAccentBrushConverter Instance = new();
 
-    private static readonly SolidColorBrush DeletedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
-    private static readonly SolidColorBrush MarkedForDeletionBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush UnmarkedBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
-    private static readonly SolidColorBrush CreatedBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush MessageBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
-    private static readonly SolidColorBrush ProjectBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
-    private static readonly SolidColorBrush TaskBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush StageBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
-    private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
-    private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
-    private static readonly SolidColorBrush FileBrush = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
     private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
+
+    // === PROJECT (синяя гамма) ===
+    private static readonly Color ProjectCreated = Color.FromRgb(0x1E, 0x40, 0xAF);      // тёмно-синий
+    private static readonly Color ProjectUpdated = Color.FromRgb(0x25, 0x63, 0xEB);      // синий
+    private static readonly Color ProjectDeleted = Color.FromRgb(0x3B, 0x82, 0xF6);      // голубой
+    private static readonly Color ProjectWarning = Color.FromRgb(0x60, 0xA5, 0xFA);     // светло-голубой
+    private static readonly Color ProjectClosed = Color.FromRgb(0x37, 0x41, 0x51);      // тёмно-серый
+
+    // === TASK (зелёная гамма) ===
+    private static readonly Color TaskCreated = Color.FromRgb(0x05, 0x96, 0x69);         // тёмно-зелёный
+    private static readonly Color TaskUpdated = Color.FromRgb(0x10, 0xB9, 0x81);         // зелёный
+    private static readonly Color TaskDeleted = Color.FromRgb(0x34, 0xD3, 0x99);         // светло-зелёный
+    private static readonly Color TaskWarning = Color.FromRgb(0x6E, 0xE7, 0xB7);           // мятный
+
+    // === STAGE (пурпурная гамма) ===
+    private static readonly Color StageCreated = Color.FromRgb(0x7E, 0x22, 0xCE);       // тёмно-пурпурный
+    private static readonly Color StageUpdated = Color.FromRgb(0x9F, 0x12, 0x3B);         // пурпурный
+    private static readonly Color StageDeleted = Color.FromRgb(0xBE, 0x18, 0x5D);         // розово-пурпурный
+    private static readonly Color StageWarning = Color.FromRgb(0xE1, 0x1D, 0x48);         // светло-пурпурный
+
+    // === MATERIAL (жёлтая гамма) ===
+    private static readonly Color MaterialCreated = Color.FromRgb(0xCA, 0x8A, 0x04);     // тёмно-жёлтый
+    private static readonly Color MaterialUpdated = Color.FromRgb(0xE1, 0xB1, 0x2C);     // жёлто-оранжевый
+    private static readonly Color MaterialDeleted = Color.FromRgb(0xF4, 0x82, 0x1C);     // оранжевый
+    private static readonly Color MaterialWarning = Color.FromRgb(0xF9, 0x73, 0x16);     // ярко-оранжевый
+
+    // === EQUIPMENT (тёмно-бирюзовая гамма) ===
+    private static readonly Color EquipmentCreated = Color.FromRgb(0x0E, 0x7A, 0x86);   // тёмно-бирюзовый
+    private static readonly Color EquipmentUpdated = Color.FromRgb(0x08, 0x91, 0x82);   // бирюзовый
+    private static readonly Color EquipmentDeleted = Color.FromRgb(0x11, 0x5E, 0x59);   // тёмно-зелёно-бирюзовый
+    private static readonly Color EquipmentWarning = Color.FromRgb(0x0F, 0x76, 0x67);   // тёмный бирюзовый
+
+    // === FILE (розовая гамма) ===
+    private static readonly Color FileCreated = Color.FromRgb(0xBE, 0x18, 0x5D);          // тёмно-розовый
+    private static readonly Color FileUpdated = Color.FromRgb(0xE1, 0x1D, 0x48);          // розовый
+    private static readonly Color FileDeleted = Color.FromRgb(0xF4, 0x3F, 0x5E);          // розово-красный
+    private static readonly Color FileWarning = Color.FromRgb(0xFB, 0x71, 0x85);          // светло-розовый
+
+    // === IMAGE (индиго гамма) ===
+    private static readonly Color ImageCreated = Color.FromRgb(0x4F, 0x46, 0xE5);       // тёмно-индиго
+    private static readonly Color ImageUpdated = Color.FromRgb(0x63, 0x66, 0xF1);           // индиго
+    private static readonly Color ImageDeleted = Color.FromRgb(0x81, 0x8C, 0xF8);       // светло-индиго
+    private static readonly Color ImageWarning = Color.FromRgb(0xA5, 0xB4, 0xFC);        // светло-синий
+
+    // === DOCUMENT (оливковая гамма) ===
+    private static readonly Color DocumentCreated = Color.FromRgb(0x65, 0xA3, 0x0D);    // тёмно-оливковый
+    private static readonly Color DocumentUpdated = Color.FromRgb(0x84, 0xCC, 0x16);    // оливковый
+    private static readonly Color DocumentDeleted = Color.FromRgb(0xA3, 0xE6, 0x35);    // светло-оливковый
+    private static readonly Color DocumentWarning = Color.FromRgb(0xBE, 0xF2, 0x64);    // салатовый
+
+    // === MESSAGE (фиолетовая гамма) ===
+    private static readonly Color MessageCreated = Color.FromRgb(0x6D, 0x28, 0xD9);      // тёмно-фиолетовый
+    private static readonly Color MessageUpdated = Color.FromRgb(0x8B, 0x5C, 0xF6);      // фиолетовый
+    private static readonly Color MessageDeleted = Color.FromRgb(0xA7, 0x8B, 0xFA);      // светло-фиолетовый
+    private static readonly Color MessageWarning = Color.FromRgb(0xC0, 0x84, 0xFC);      // лавандовый
+
+    // === USER (серая гамма) ===
+    private static readonly Color UserCreated = Color.FromRgb(0x4B, 0x55, 0x63);         // тёмно-серый
+    private static readonly Color UserUpdated = Color.FromRgb(0x6B, 0x72, 0x80);         // серый
+    private static readonly Color UserDeleted = Color.FromRgb(0x94, 0xA3, 0xB8);         // светло-серый
+    private static readonly Color UserWarning = Color.FromRgb(0xBC, 0xBF, 0xE0);         // серо-голубой
+
+    // === SYSTEM (нейтральные цвета) ===
+    private static readonly Color SystemLogin = Color.FromRgb(0x37, 0x51, 0x64);         // тёмно-синий-серый
+    private static readonly Color SystemPassword = Color.FromRgb(0x05, 0x96, 0x69);      // зелёный
+    private static readonly Color SystemAvatar = Color.FromRgb(0x7C, 0x3A, 0xED);        // фиолетовый
+
+    // === STATUS CHANGED (оттенки для каждого типа сущности) ===
+    private static readonly Color ProjectStatusChanged = Color.FromRgb(0x60, 0xA5, 0xFA); // светло-голубой оттенок
+    private static readonly Color TaskStatusChanged = Color.FromRgb(0x6E, 0xE7, 0xB7);    // мятный оттенок
+    private static readonly Color StageStatusChanged = Color.FromRgb(0xE1, 0x1D, 0x48);  // светло-пурпурный оттенок
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not MPMS.Models.LocalActivityLog log)
             return DefaultBrush;
 
-        // Для материалов/оборудования всегда используем цвет сущности, а не цвет action type.
-        if (string.Equals(log.EntityType, "Material", StringComparison.Ordinal))
-            return MaterialBrush;
-        if (string.Equals(log.EntityType, "Equipment", StringComparison.Ordinal))
-            return EquipmentBrush;
-        if (string.Equals(log.EntityType, "File", StringComparison.Ordinal))
-            return FileBrush;
+        // Отдельная логика для закрытия проекта
+        if (IsProjectClosed(log))
+            return new SolidColorBrush(ProjectClosed);
 
-        var actionType = log.ActionType;
-        if (!string.IsNullOrEmpty(actionType))
+        // Отдельная логика для изменения статуса (оттенки для каждого типа сущности)
+        if (log.ActionType == ActivityActionKind.StatusChanged)
         {
-            return actionType switch
+            return log.EntityType switch
             {
-                MPMS.Models.ActivityActionKind.Deleted => DeletedBrush,
-                MPMS.Models.ActivityActionKind.MarkedForDeletion => MarkedForDeletionBrush,
-                MPMS.Models.ActivityActionKind.UnmarkedForDeletion => UnmarkedBrush,
-                MPMS.Models.ActivityActionKind.Created => CreatedBrush,
-                MPMS.Models.ActivityActionKind.Message => MessageBrush,
-                _ => EntityToBrush(log.EntityType)
+                "Project" => new SolidColorBrush(ProjectStatusChanged),
+                "Task" => new SolidColorBrush(TaskStatusChanged),
+                "Stage" => new SolidColorBrush(StageStatusChanged),
+                _ => DefaultBrush
             };
         }
-        return EntityToBrush(log.EntityType);
+        if (log.ActionType == ActivityActionKind.TaskStatusChanged)
+            return new SolidColorBrush(TaskStatusChanged);
+        if (log.ActionType == ActivityActionKind.StageStatusChanged)
+            return new SolidColorBrush(StageStatusChanged);
+
+        var actionCategory = GetActionCategory(log.ActionType);
+        var entityType = GetEntityTypeFromFileExtension(log);
+
+        return (entityType, actionCategory) switch
+        {
+            // Project - синяя гамма
+            (EntityType.Project, ActionCategory.Creative) => new SolidColorBrush(ProjectCreated),
+            (EntityType.Project, ActionCategory.Change) => new SolidColorBrush(ProjectUpdated),
+            (EntityType.Project, ActionCategory.Destructive) => new SolidColorBrush(ProjectDeleted),
+            (EntityType.Project, ActionCategory.Warning) => new SolidColorBrush(ProjectWarning),
+
+            // Task - зелёная гамма
+            (EntityType.Task, ActionCategory.Creative) => new SolidColorBrush(TaskCreated),
+            (EntityType.Task, ActionCategory.Change) => new SolidColorBrush(TaskUpdated),
+            (EntityType.Task, ActionCategory.Destructive) => new SolidColorBrush(TaskDeleted),
+            (EntityType.Task, ActionCategory.Warning) => new SolidColorBrush(TaskWarning),
+
+            // Stage - оранжевая гамма
+            (EntityType.Stage, ActionCategory.Creative) => new SolidColorBrush(StageCreated),
+            (EntityType.Stage, ActionCategory.Change) => new SolidColorBrush(StageUpdated),
+            (EntityType.Stage, ActionCategory.Destructive) => new SolidColorBrush(StageDeleted),
+            (EntityType.Stage, ActionCategory.Warning) => new SolidColorBrush(StageWarning),
+
+            // Material - жёлтая гамма
+            (EntityType.Material, ActionCategory.Creative) => new SolidColorBrush(MaterialCreated),
+            (EntityType.Material, ActionCategory.Change) => new SolidColorBrush(MaterialUpdated),
+            (EntityType.Material, ActionCategory.Destructive) => new SolidColorBrush(MaterialDeleted),
+            (EntityType.Material, ActionCategory.Warning) => new SolidColorBrush(MaterialWarning),
+
+            // Equipment - бирюзовая гамма
+            (EntityType.Equipment, ActionCategory.Creative) => new SolidColorBrush(EquipmentCreated),
+            (EntityType.Equipment, ActionCategory.Change) => new SolidColorBrush(EquipmentUpdated),
+            (EntityType.Equipment, ActionCategory.Destructive) => new SolidColorBrush(EquipmentDeleted),
+            (EntityType.Equipment, ActionCategory.Warning) => new SolidColorBrush(EquipmentWarning),
+
+            // File - розовая гамма
+            (EntityType.File, ActionCategory.Creative) => new SolidColorBrush(FileCreated),
+            (EntityType.File, ActionCategory.Change) => new SolidColorBrush(FileUpdated),
+            (EntityType.File, ActionCategory.Destructive) => new SolidColorBrush(FileDeleted),
+            (EntityType.File, ActionCategory.Warning) => new SolidColorBrush(FileWarning),
+
+            // Image - индиго гамма
+            (EntityType.Image, ActionCategory.Creative) => new SolidColorBrush(ImageCreated),
+            (EntityType.Image, ActionCategory.Change) => new SolidColorBrush(ImageUpdated),
+            (EntityType.Image, ActionCategory.Destructive) => new SolidColorBrush(ImageDeleted),
+            (EntityType.Image, ActionCategory.Warning) => new SolidColorBrush(ImageWarning),
+
+            // Document - оливковая гамма
+            (EntityType.Document, ActionCategory.Creative) => new SolidColorBrush(DocumentCreated),
+            (EntityType.Document, ActionCategory.Change) => new SolidColorBrush(DocumentUpdated),
+            (EntityType.Document, ActionCategory.Destructive) => new SolidColorBrush(DocumentDeleted),
+            (EntityType.Document, ActionCategory.Warning) => new SolidColorBrush(DocumentWarning),
+
+            // Message - фиолетовая гамма
+            (EntityType.Message, ActionCategory.Communication) => new SolidColorBrush(MessageCreated),
+            (EntityType.Message, ActionCategory.Change) => new SolidColorBrush(MessageUpdated),
+            (EntityType.Message, ActionCategory.Destructive) => new SolidColorBrush(MessageDeleted),
+            (EntityType.Message, ActionCategory.Warning) => new SolidColorBrush(MessageWarning),
+
+            // User - серая гамма
+            (EntityType.User, ActionCategory.Creative) => new SolidColorBrush(UserCreated),
+            (EntityType.User, ActionCategory.Change) => new SolidColorBrush(UserUpdated),
+            (EntityType.User, ActionCategory.Destructive) => new SolidColorBrush(UserDeleted),
+            (EntityType.User, ActionCategory.Warning) => new SolidColorBrush(UserWarning),
+
+            // System - нейтральные
+            (_, ActionCategory.System) => log.ActionType switch
+            {
+                MPMS.Models.ActivityActionKind.Login => new SolidColorBrush(SystemLogin),
+                MPMS.Models.ActivityActionKind.Logout => new SolidColorBrush(SystemLogin),
+                MPMS.Models.ActivityActionKind.PasswordChanged => new SolidColorBrush(SystemPassword),
+                MPMS.Models.ActivityActionKind.AvatarChanged => new SolidColorBrush(SystemAvatar),
+                _ => new SolidColorBrush(SystemLogin)
+            },
+
+            // Fallbacks
+            (EntityType.Project, _) => new SolidColorBrush(ProjectUpdated),
+            (EntityType.Task, _) => new SolidColorBrush(TaskUpdated),
+            (EntityType.Stage, _) => new SolidColorBrush(StageUpdated),
+            (EntityType.Material, _) => new SolidColorBrush(MaterialUpdated),
+            (EntityType.Equipment, _) => new SolidColorBrush(EquipmentUpdated),
+            (EntityType.File, _) => new SolidColorBrush(FileUpdated),
+            (EntityType.Image, _) => new SolidColorBrush(ImageUpdated),
+            (EntityType.Document, _) => new SolidColorBrush(DocumentUpdated),
+            (EntityType.Message, _) => new SolidColorBrush(MessageCreated),
+            (EntityType.User, _) => new SolidColorBrush(UserUpdated),
+            (_, _) => DefaultBrush
+        };
     }
 
-    private static SolidColorBrush EntityToBrush(string entityType) => entityType switch
+    private enum ActionCategory
     {
-        "Project" => ProjectBrush,
-        "Task" => TaskBrush,
-        "Stage" => StageBrush,
-        "TaskStage" => StageBrush,
-        "Material" => MaterialBrush,
-        "Equipment" => EquipmentBrush,
-        "File" => FileBrush,
-        "Message" => MessageBrush,
-        _ => DefaultBrush
+        Destructive,
+        Warning,
+        Creative,
+        Change,
+        Communication,
+        System,
+        None
+    }
+
+    private enum EntityType
+    {
+        Project,
+        Task,
+        Stage,
+        Material,
+        Equipment,
+        File,
+        Image,
+        Document,
+        Message,
+        User,
+        None
+    }
+
+    private static ActionCategory GetActionCategory(string? actionType) => actionType switch
+    {
+        MPMS.Models.ActivityActionKind.Deleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.PermanentlyDeleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.UserDeleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.MarkedForDeletion => ActionCategory.Warning,
+        MPMS.Models.ActivityActionKind.UserBlocked => ActionCategory.Warning,
+        MPMS.Models.ActivityActionKind.Created => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UserCreated => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.Restored => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UnmarkedForDeletion => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UserUnblocked => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.Updated => ActionCategory.Change,
+        MPMS.Models.ActivityActionKind.UserEdited => ActionCategory.Change,
+        MPMS.Models.ActivityActionKind.Message => ActionCategory.Communication,
+        MPMS.Models.ActivityActionKind.Login => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.Logout => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.PasswordChanged => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.AvatarChanged => ActionCategory.System,
+        _ => ActionCategory.None
     };
+
+    private static EntityType GetEntityType(string? entityType) => entityType switch
+    {
+        "Project" => EntityType.Project,
+        "Task" => EntityType.Task,
+        "Stage" or "TaskStage" => EntityType.Stage,
+        "Material" => EntityType.Material,
+        "Equipment" => EntityType.Equipment,
+        "File" => EntityType.File,
+        "Image" => EntityType.Image,
+        "Document" => EntityType.Document,
+        "Message" => EntityType.Message,
+        "User" => EntityType.User,
+        _ => EntityType.None
+    };
+
+    private static EntityType GetEntityTypeFromFileExtension(LocalActivityLog log)
+    {
+        if (log.EntityType != "File") return GetEntityType(log.EntityType);
+
+        // Определяем тип файла по расширению из ActionText
+        var fileName = log.ActionText;
+        var extension = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
+
+        var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".svg" };
+        var documentExtensions = new[] { ".doc", ".docx", ".pdf", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf", ".odt", ".ods", ".odp" };
+
+        if (imageExtensions.Contains(extension))
+            return EntityType.Image;
+        if (documentExtensions.Contains(extension))
+            return EntityType.Document;
+
+        return EntityType.File;
+    }
+
+    private static bool IsProjectClosed(LocalActivityLog log)
+    {
+        return string.Equals(log.EntityType, "Project", StringComparison.Ordinal) &&
+               log.ActionText.Contains("закрыт", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>Maps LocalActivityLog to Brush for Admin Activity panel — simple palette by ActionType (login/logout/password/avatar/user actions).</summary>
+public class ActivityLogToAdminActivityBrushConverter : IValueConverter
+{
+    public static readonly ActivityLogToAdminActivityBrushConverter Instance = new();
+
+    private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x6B, 0x72, 0x80));
+    private static readonly SolidColorBrush LoginBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));      // зелёный
+    private static readonly SolidColorBrush LogoutBrush = new(Color.FromRgb(0x6B, 0x72, 0x80));     // серый
+    private static readonly SolidColorBrush PasswordBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));  // оранжевый
+    private static readonly SolidColorBrush AvatarBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));     // фиолетовый
+    private static readonly SolidColorBrush UserCreatedBrush = new(Color.FromRgb(0x25, 0x63, 0xEB)); // синий
+    private static readonly SolidColorBrush UserEditedBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));  // оранжевый
+    private static readonly SolidColorBrush UserDeletedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));  // красный
+    private static readonly SolidColorBrush UserBlockedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44)); // красный
+    private static readonly SolidColorBrush UserUnblockedBrush = new(Color.FromRgb(0x10, 0xB9, 0x81)); // зелёный
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not MPMS.Models.LocalActivityLog log)
+            return DefaultBrush;
+
+        return log.ActionType switch
+        {
+            MPMS.Models.ActivityActionKind.Login => LoginBrush,
+            MPMS.Models.ActivityActionKind.Logout => LogoutBrush,
+            MPMS.Models.ActivityActionKind.PasswordChanged => PasswordBrush,
+            MPMS.Models.ActivityActionKind.AvatarChanged => AvatarBrush,
+            MPMS.Models.ActivityActionKind.UserCreated => UserCreatedBrush,
+            MPMS.Models.ActivityActionKind.UserEdited => UserEditedBrush,
+            MPMS.Models.ActivityActionKind.UserDeleted => UserDeletedBrush,
+            MPMS.Models.ActivityActionKind.UserBlocked => UserBlockedBrush,
+            MPMS.Models.ActivityActionKind.UserUnblocked => UserUnblockedBrush,
+            _ => DefaultBrush
+        };
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
@@ -795,6 +1088,8 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
             "Material" => "Материал",
             "Equipment" => "Оборудование",
             "File" => "Файл",
+            "Image" => "Изображение",
+            "Document" => "Документ",
             "Message" => "Сообщение",
             "User" => "Пользователь",
             _ => "—"

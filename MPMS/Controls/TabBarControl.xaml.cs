@@ -16,6 +16,9 @@ public class TabItemModel
     /// <summary>Строковый ключ, который возвращается в TabBarControl.SelectedTab.</summary>
     public string Tag { get; set; } = "";
 
+    /// <summary>Видимость вкладки (по умолчанию Visible).</summary>
+    public bool IsVisible { get; set; } = true;
+
     // Внутреннее — устанавливается контролом
     internal TabBarControl? Owner { get; set; }
 

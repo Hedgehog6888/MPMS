@@ -1148,7 +1148,7 @@
 
                                     <Button Click="OpenFullTask_Click"
 
-                                            Style="{StaticResource EditButton}" Margin="0,0,8,0">
+                                            Style="{StaticResource OutlineBtn}" Margin="0,0,8,0">
 
                                         <StackPanel Orientation="Horizontal">
 
@@ -1164,7 +1164,7 @@
 
                                     <Button Click="GoToTaskProject_Click"
 
-                                            Style="{StaticResource EditButton}">
+                                            Style="{StaticResource OutlineBtn}">
 
                                         <StackPanel Orientation="Horizontal">
 
@@ -1368,7 +1368,7 @@
 
                                     <Button Click="OpenFullStage_Click"
 
-                                            Style="{StaticResource EditButton}" Margin="0,0,8,0">
+                                            Style="{StaticResource OutlineBtn}" Margin="0,0,8,0">
 
                                         <StackPanel Orientation="Horizontal">
 
@@ -1384,7 +1384,7 @@
 
                                     <Button Click="OpenFullTaskFromStage_Click"
 
-                                            Style="{StaticResource EditButton}" Margin="0,0,8,0">
+                                            Style="{StaticResource OutlineBtn}" Margin="0,0,8,0">
 
                                         <StackPanel Orientation="Horizontal">
 
@@ -1400,7 +1400,7 @@
 
                                     <Button Click="GoToStageProject_Click"
 
-                                            Style="{StaticResource EditButton}">
+                                            Style="{StaticResource OutlineBtn}" Margin="0,0,8,0">
 
                                         <StackPanel Orientation="Horizontal">
 

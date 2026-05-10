@@ -36,6 +36,7 @@ public record SyncedActivityLogResponse(
     string UserColor,
     string? ActionType,
     string ActionText,
+    string? DetailsText,
     string EntityType,
     Guid EntityId,
     DateTime CreatedAt);
@@ -49,6 +50,7 @@ public record CreateSyncedActivityLogRequest(
     string UserColor,
     string? ActionType,
     [Required] string ActionText,
+    string? DetailsText,
     [Required] string EntityType,
     Guid EntityId,
     DateTime CreatedAt);

@@ -22,6 +22,7 @@ public partial class AdminPage : UserControl
             oldVm.OpenCreateFormRequested -= OnOpenCreateForm;
             oldVm.OpenEditFormRequested -= OnOpenEditForm;
             oldVm.OpenUserInfoRequested -= OnOpenUserInfo;
+            oldVm.OpenActivityDetailRequested -= OnOpenActivityDetail;
         }
 
         if (e.NewValue is not AdminViewModel vm) return;
@@ -30,6 +31,7 @@ public partial class AdminPage : UserControl
         vm.OpenCreateFormRequested += OnOpenCreateForm;
         vm.OpenEditFormRequested += OnOpenEditForm;
         vm.OpenUserInfoRequested += OnOpenUserInfo;
+        vm.OpenActivityDetailRequested += OnOpenActivityDetail;
     }
 
     // ── Drawer openers ────────────────────────────────────────────────────
@@ -51,6 +53,12 @@ public partial class AdminPage : UserControl
     private void OnOpenUserInfo(AdminUserRow row)
     {
         var overlay = new AdminUserInfoOverlay(row, _vm!);
+        MainWindow.Instance?.ShowDrawer(overlay);
+    }
+
+    private void OnOpenActivityDetail(MPMS.Models.LocalActivityLog log)
+    {
+        var overlay = new AdminActivityDetailOverlay(log);
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 

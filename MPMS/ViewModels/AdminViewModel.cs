@@ -108,6 +108,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     public event Action<AdminUserRow>? OpenUserInfoRequested;
     public event Action? OpenCreateFormRequested;
     public event Action<AdminUserRow>? OpenEditFormRequested;
+    public event Action<LocalActivityLog>? OpenActivityDetailRequested;
 
     // Static filter options
     public static readonly IReadOnlyList<string> RoleFilterOptions = ["Все", "Администратор", "Менеджер", "Прораб", "Работник"];
@@ -119,7 +120,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private static readonly Dictionary<string, string[]> HistoryActionMap = new()
     {
         ["Создано"] = [ActivityActionKind.Created],
-        ["Изменено"] = [ActivityActionKind.Updated, ActivityActionKind.UserEdited],
+        ["Изменено"] = [ActivityActionKind.Updated],
         ["Удалено/Архив"] = [ActivityActionKind.Deleted, ActivityActionKind.MarkedForDeletion, ActivityActionKind.UserDeleted, ActivityActionKind.PermanentlyDeleted],
         ["Восстановлено"] = [ActivityActionKind.Restored, ActivityActionKind.UnmarkedForDeletion, ActivityActionKind.UserUnblocked],
         ["Сообщение"] = [ActivityActionKind.Message],
@@ -127,13 +128,14 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     // Activity event type options
     public static readonly IReadOnlyList<string> ActivityEventOptions =
-        ["Все", "Вход", "Выход", "Смена пароля", "Смена аватара", "Заблокирован"];
+        ["Все", "Вход", "Выход", "Смена пароля", "Смена аватара", "Изменение профиля", "Заблокирован"];
     private static readonly Dictionary<string, string[]> ActivityEventMap = new()
     {
         ["Вход"] = [ActivityActionKind.Login],
         ["Выход"] = [ActivityActionKind.Logout],
         ["Смена пароля"] = [ActivityActionKind.PasswordChanged],
         ["Смена аватара"] = [ActivityActionKind.AvatarChanged],
+        ["Изменение профиля"] = [ActivityActionKind.UserEdited],
         ["Заблокирован"] = [ActivityActionKind.UserBlocked, ActivityActionKind.UserUnblocked],
     };
 
@@ -337,6 +339,12 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private void ViewUserInfo(AdminUserRow? row)
     {
         if (row is not null) OpenUserInfoRequested?.Invoke(row);
+    }
+
+    [RelayCommand]
+    private void ViewActivityDetail(LocalActivityLog? log)
+    {
+        if (log is not null) OpenActivityDetailRequested?.Invoke(log);
     }
 
     // ── Block/Unblock ─────────────────────────────────────────────────────
@@ -930,7 +938,8 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private static readonly HashSet<string> ActivityKinds = new()
     {
         ActivityActionKind.Login, ActivityActionKind.Logout,
-        ActivityActionKind.PasswordChanged, ActivityActionKind.AvatarChanged
+        ActivityActionKind.PasswordChanged, ActivityActionKind.AvatarChanged,
+        ActivityActionKind.UserEdited
     };
 
     private async Task LoadHistoryAsync()
@@ -1147,6 +1156,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             UserColor = "#C0392B",
             ActionType = actionType,
             ActionText = text,
+            DetailsText = ActivityDetailsService.BuildGenericDetails(text, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow

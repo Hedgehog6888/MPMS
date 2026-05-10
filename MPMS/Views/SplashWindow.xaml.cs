@@ -35,15 +35,6 @@ public partial class SplashWindow : Window
 
     public void CloseWithFadeOut()
     {
-        var fadeOut = new DoubleAnimation
-        {
-            From = 1,
-            To = 0,
-            Duration = TimeSpan.FromMilliseconds(300),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-        };
-
-        fadeOut.Completed += (s, e) => Close();
-        BeginAnimation(OpacityProperty, fadeOut);
+        Close();
     }
 }

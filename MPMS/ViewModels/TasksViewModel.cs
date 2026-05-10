@@ -386,6 +386,9 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
+
+        var oldStatus = project.Status;
+
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
@@ -408,6 +411,32 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        // Логируем изменение статуса проекта (без аватарки - системное действие)
+        if (oldStatus != project.Status)
+        {
+            var statusText = project.Status switch
+            {
+                ProjectStatus.Planning => "Запланирован",
+                ProjectStatus.InProgress => "Выполняется",
+                ProjectStatus.Completed => "Завершён",
+                ProjectStatus.Cancelled => "Отменён",
+                ProjectStatus.Closed => "Закрыт",
+                _ => project.Status.ToString()
+            };
+            db.ActivityLogs.Add(new LocalActivityLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = null, // Системное действие - без аватарки
+                ActorRole = "System",
+                ActionType = ActivityActionKind.StatusChanged,
+                ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",
+                EntityType = "Project",
+                EntityId = project.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
     }
 
     public async Task SaveUpdatedTaskAsync(Guid id, UpdateTaskRequest req)
@@ -427,6 +456,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
+        var details = ActivityDetailsService.BuildTaskUpdateDetails(task, req, assignedName, includeStatus: true);
 
         task.Name = req.Name;
         task.Description = req.Description;
@@ -446,7 +476,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             IsArchived = task.IsArchived
         };
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, syncReq);
-        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated, details);
         await LoadAsync();
     }
 
@@ -518,12 +548,11 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         await LoadAsync();
     }
 
-    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null, string? detailsText = null)
     {
-        var session = await db.AuthSessions.FindAsync(1);
-        var userName = session?.UserName ?? "Система";
-        var userId = session?.UserId;
-        var actorRole = session?.UserRole;
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -539,6 +568,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             UserColor = "#0F2038",
             ActionType = actionType,
             ActionText = actionText,
+            DetailsText = detailsText ?? ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow

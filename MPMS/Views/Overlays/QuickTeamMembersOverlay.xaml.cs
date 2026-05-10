@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
 
 namespace MPMS.Views.Overlays;
 
@@ -320,6 +321,26 @@ public partial class QuickTeamMembersOverlay : UserControl
             });
         }
 
+        // Логируем добавление участников проекта
+        var project = await db.Projects.FindAsync(_projectId);
+        var totalMembers = _selectedForemanIds.Count + _selectedWorkerIds.Count;
+        if (totalMembers > 0 && project != null)
+        {
+            var memberNames = new List<string>();
+            foreach (var foremanId in _selectedForemanIds)
+            {
+                var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
+                if (foreman != null) memberNames.Add(foreman.Name);
+            }
+            foreach (var workerId in _selectedWorkerIds)
+            {
+                var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
+                if (worker != null) memberNames.Add(worker.Name);
+            }
+            var namesText = string.Join(", ", memberNames);
+            await LogActivityAsync(db, $"В проект «{project.Name}» добавлены участники: {namesText}", "Project", _projectId, ActivityActionKind.MemberAdded);
+        }
+
         if (removedIds.Count > 0)
         {
             var taskIds = await db.Tasks.Where(t => t.ProjectId == _projectId).Select(t => t.Id).ToListAsync();
@@ -335,6 +356,27 @@ public partial class QuickTeamMembersOverlay : UserControl
             db.StageAssignees.RemoveRange(toRemoveStageAssignees);
         }
 
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string actionType)
+    {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        var userName = auth.UserName ?? "Система";
+        var userId = auth.UserId;
+        var userRole = auth.UserRole;
+
+        db.ActivityLogs.Add(new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = userRole,
+            ActionType = actionType,
+            ActionText = actionText,
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
     }
 

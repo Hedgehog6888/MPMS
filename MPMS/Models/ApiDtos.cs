@@ -299,8 +299,8 @@ public record CreateDiscussionMessageRequest(Guid? Id, Guid? TaskId, Guid? Proje
 
 public record SyncedActivityLogResponse(
     Guid Id, Guid? UserId, string? ActorRole, string UserName, string UserInitials, string UserColor,
-    string? ActionType, string ActionText, string EntityType, Guid EntityId, DateTime CreatedAt);
+    string? ActionType, string ActionText, string? DetailsText, string EntityType, Guid EntityId, DateTime CreatedAt);
 
 public record CreateSyncedActivityLogRequest(
     Guid Id, Guid? UserId, string? ActorRole, string UserName, string UserInitials, string UserColor,
-    string? ActionType, string ActionText, string EntityType, Guid EntityId, DateTime CreatedAt);
+    string? ActionType, string ActionText, string? DetailsText, string EntityType, Guid EntityId, DateTime CreatedAt);

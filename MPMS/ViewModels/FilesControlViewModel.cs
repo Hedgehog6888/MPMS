@@ -31,6 +31,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private bool _isDraggingOver;
     [ObservableProperty] private bool _isSuccessToastVisible;
     [ObservableProperty] private string _successToastMessage = string.Empty;
+    [ObservableProperty] private bool _isWorkerRole;
 
     public string ViewMode
     {
@@ -52,6 +53,8 @@ public partial class FilesControlViewModel : ViewModelBase
     public int DocumentsCount => AllFiles.Count(f => !IsImage(f.FileName));
 
     private Guid? _projectId;
+    private Guid? _taskId;
+    private Guid? _stageId;
     private List<LocalFile> _cachedImagesFiles = new();
     private List<LocalFile> _cachedDocumentsFiles = new();
 
@@ -64,11 +67,19 @@ public partial class FilesControlViewModel : ViewModelBase
         _sync = sync;
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
+        _isWorkerRole = auth.UserRole == "Worker" || auth.UserRole == "Работник";
+        // Для работников скрываем вкладку документов
+        if (_isWorkerRole)
+        {
+            _currentTab = "Images";
+        }
     }
 
-    public void Initialize(Guid? projectId = null)
+    public void Initialize(Guid? projectId = null, Guid? taskId = null, Guid? stageId = null)
     {
         _projectId = projectId;
+        _taskId = taskId;
+        _stageId = stageId;
         _ = LoadFilesAsync();
     }
 
@@ -115,26 +126,39 @@ public partial class FilesControlViewModel : ViewModelBase
             }
             else
             {
-                // Оптимизированный запрос: загружаем только активные проекты и их связанные файлы
-                var activeProjectIds = db.Projects
-                    .Where(p => !p.IsArchived && !p.IsClosed)
-                    .Select(p => p.Id)
-                    .ToList();
+                // Фильтрация по ролям
+                var userRole = _auth.UserRole;
+                var userId = _auth.UserId;
 
-                var activeTaskIds = db.Tasks
-                    .Where(t => !t.IsArchived && activeProjectIds.Contains(t.ProjectId))
-                    .Select(t => t.Id)
-                    .ToList();
+                if (userRole == "Administrator" || userRole == "Admin")
+                {
+                    // Админ видит все файлы
+                }
+                else if (userRole == "Worker" || userRole == "Работник")
+                {
+                    // Работник видит только изображения с этапов на которых он стоит
+                    var userStageIds = db.StageAssignees
+                        .Where(sa => sa.UserId == userId)
+                        .Select(sa => sa.StageId)
+                        .ToList();
 
-                var activeStageIds = db.TaskStages
-                    .Where(s => !s.IsArchived && activeTaskIds.Contains(s.TaskId))
-                    .Select(s => s.Id)
-                    .ToList();
+                    query = query.Where(f =>
+                        IsImage(f.FileName) &&
+                        f.StageId.HasValue &&
+                        userStageIds.Contains(f.StageId.Value));
+                }
+                else
+                {
+                    // Менеджер и прораб видят файлы своих проектов + глобальные файлы
+                    var userProjectIds = db.ProjectMembers
+                        .Where(pm => pm.UserId == userId)
+                        .Select(pm => pm.ProjectId)
+                        .ToList();
 
-                query = query.Where(f =>
-                    (!f.ProjectId.HasValue || activeProjectIds.Contains(f.ProjectId.Value)) &&
-                    (!f.TaskId.HasValue || activeTaskIds.Contains(f.TaskId.Value)) &&
-                    (!f.StageId.HasValue || activeStageIds.Contains(f.StageId.Value)));
+                    query = query.Where(f =>
+                        !f.ProjectId.HasValue || // Глобальные файлы
+                        userProjectIds.Contains(f.ProjectId.Value));
+                }
             }
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
@@ -240,6 +264,19 @@ public partial class FilesControlViewModel : ViewModelBase
         return ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp";
     }
 
+    private string GetFileEntityType(string fileName)
+    {
+        var ext = Path.GetExtension(fileName)?.ToLower();
+        var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".svg" };
+        var documentExtensions = new[] { ".doc", ".docx", ".pdf", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf", ".odt", ".ods", ".odp" };
+
+        if (imageExtensions.Contains(ext))
+            return "Image";
+        if (documentExtensions.Contains(ext))
+            return "Document";
+        return "File";
+    }
+
     [RelayCommand]
     private void SwitchTab(string tab)
     {
@@ -306,6 +343,8 @@ public partial class FilesControlViewModel : ViewModelBase
                     FilePath = filePath,
                     FileData = fileData,
                     ProjectId = _projectId,
+                    TaskId = _taskId,
+                    StageId = _stageId,
                     UploadedById = _auth.UserId ?? Guid.Empty,
                     UploadedByName = _auth.UserName ?? "Unknown",
                     CreatedAt = DateTime.UtcNow,
@@ -315,14 +354,53 @@ public partial class FilesControlViewModel : ViewModelBase
                 db.Files.Add(newFile);
                 await db.SaveChangesAsync();
 
-                // Queue for server upload
                 var dto = new FileDto(newFile.Id, newFile.FileName, newFile.FileType ?? "", newFile.FileSize,
                     newFile.UploadedById, newFile.UploadedByName, newFile.ProjectId, newFile.TaskId, newFile.StageId,
                     newFile.CreatedAt, newFile.OriginalCreatedAt);
                 await _sync.QueueOperationAsync("File", newFile.Id, SyncOperation.Create, dto);
 
-                var logText = _projectId.HasValue ? $"Загружен файл «{newFile.FileName}» в проект" : $"Загружен файл «{newFile.FileName}»";
-                await LogActivityAsync(db, logText, "File", newFile.Id, ActivityActionKind.Created);
+                var entityType = GetFileEntityType(newFile.FileName);
+                var entityLabel = entityType switch
+                {
+                    "Image" => "изображение",
+                    "Document" => "документ",
+                    _ => "файл"
+                };
+
+                // Получаем названия проекта, задачи и этапа для лога
+                string? projectName = null;
+                string? taskName = null;
+                string? stageName = null;
+                if (_projectId.HasValue)
+                {
+                    var project = await db.Projects.FindAsync(_projectId.Value);
+                    projectName = project?.Name;
+                }
+                if (_taskId.HasValue)
+                {
+                    var task = await db.Tasks.FindAsync(_taskId.Value);
+                    taskName = task?.Name;
+                }
+                if (_stageId.HasValue)
+                {
+                    var stage = await db.TaskStages.FindAsync(_stageId.Value);
+                    stageName = stage?.Name;
+                }
+
+                string locationText;
+                if (stageName != null && projectName != null)
+                    locationText = $"в этап «{stageName}» проекта «{projectName}»";
+                else if (taskName != null && projectName != null)
+                    locationText = $"в задачу «{taskName}» проекта «{projectName}»";
+                else if (projectName != null)
+                    locationText = $"в проект «{projectName}»";
+                else
+                    locationText = "";
+
+                var logText = string.IsNullOrEmpty(locationText)
+                    ? $"Загружен {entityLabel} «{newFile.FileName}»"
+                    : $"Загружен {entityLabel} «{newFile.FileName}» {locationText}";
+                await LogActivityAsync(db, logText, entityType, newFile.Id, ActivityActionKind.Created);
 
                 successfullyUploaded++;
             }
@@ -376,7 +454,48 @@ public partial class FilesControlViewModel : ViewModelBase
                     await _sync.QueueOperationAsync("File", file.Id, SyncOperation.Delete, new { });
                 }
                 db.Files.Remove(dbFile);
-                await LogActivityAsync(db, $"Удалён файл «{file.FileName}»", "File", file.Id, ActivityActionKind.Deleted);
+                var entityType = GetFileEntityType(file.FileName);
+                var entityLabel = entityType switch
+                {
+                    "Image" => "изображение",
+                    "Document" => "документ",
+                    _ => "файл"
+                };
+
+                // Получаем названия проекта, задачи и этапа для лога
+                string? projectName = null;
+                string? taskName = null;
+                string? stageName = null;
+                if (dbFile.ProjectId.HasValue)
+                {
+                    var project = await db.Projects.FindAsync(dbFile.ProjectId.Value);
+                    projectName = project?.Name;
+                }
+                if (dbFile.TaskId.HasValue)
+                {
+                    var task = await db.Tasks.FindAsync(dbFile.TaskId.Value);
+                    taskName = task?.Name;
+                }
+                if (dbFile.StageId.HasValue)
+                {
+                    var stage = await db.TaskStages.FindAsync(dbFile.StageId.Value);
+                    stageName = stage?.Name;
+                }
+
+                string locationText;
+                if (stageName != null && projectName != null)
+                    locationText = $"из этапа «{stageName}» проекта «{projectName}»";
+                else if (taskName != null && projectName != null)
+                    locationText = $"из задачи «{taskName}» проекта «{projectName}»";
+                else if (projectName != null)
+                    locationText = $"из проекта «{projectName}»";
+                else
+                    locationText = "";
+
+                var logText = string.IsNullOrEmpty(locationText)
+                    ? $"Удалён {entityLabel} «{file.FileName}»"
+                    : $"Удалён {entityLabel} «{file.FileName}» {locationText}";
+                await LogActivityAsync(db, logText, entityType, file.Id, ActivityActionKind.Deleted);
                 await LoadFilesAsync();
             }
         }
@@ -438,9 +557,29 @@ public partial class FilesControlViewModel : ViewModelBase
             finally { IsLoading = false; }
         }
 
+        // Load uploader avatar data
+        byte[]? uploaderAvatarData = null;
+        string? uploaderAvatarPath = null;
+        if (file.UploadedById != Guid.Empty)
+        {
+            try
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var uploader = await db.Users.Where(u => u.Id == file.UploadedById)
+                    .Select(u => new { u.AvatarData, u.AvatarPath })
+                    .FirstOrDefaultAsync();
+                if (uploader != null)
+                {
+                    uploaderAvatarData = uploader.AvatarData;
+                    uploaderAvatarPath = uploader.AvatarPath;
+                }
+            }
+            catch { }
+        }
+
         if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
         {
-            MainWindow.Instance?.ShowPhotoViewer(filePath, file.FileName, file.Description,
+            MainWindow.Instance?.ShowPhotoViewer(filePath, file.FileName, file.Description, file.UploadedByName, file.UploadedById, uploaderAvatarData, uploaderAvatarPath, file.ProjectId ?? Guid.Empty,
                 (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(file.Id, savedPath, savedFileName, savedDescription, filePath));
         }
         else
@@ -742,6 +881,7 @@ public partial class FilesControlViewModel : ViewModelBase
             UserColor = "#1B6EC2",
             ActionType = actionType,
             ActionText = actionText,
+            DetailsText = ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow

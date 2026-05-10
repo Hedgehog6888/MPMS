@@ -984,6 +984,7 @@
             <infra:BlockedToStatusBrushConverter        x:Key="BlockedToStatusBrush"/>
             <infra:ActionKindToLabelConverter           x:Key="ActionKindToLabel"/>
             <infra:ActionKindToBrushConverter           x:Key="ActionKindToBrush"/>
+            <infra:ActivityLogToAdminActivityBrushConverter x:Key="ActivityLogToAdminActivityBrush"/>
             <infra:NullToVisibilityConverter            x:Key="NullToVis"/>
             <infra:NullToVisibilityConverter            x:Key="NullToVisInv" Invert="True"/>
             <infra:InitialsToBrushConverter             x:Key="InitialsToBrush"/>

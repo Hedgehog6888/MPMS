@@ -18,6 +18,62 @@
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVis" />
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True" />
         <infrastructure:FileTypeToIsDocumentConverter x:Key="FileTypeToIsDocument" />
+        <infrastructure:NullToVisibilityConverter x:Key="NullToVis" />
+
+        <!-- Premium Tooltip Style -->
+        <Style x:Key="PremiumTooltip" TargetType="ToolTip">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#DFE1E6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TooltipHeaderSection" TargetType="Border">
+            <Setter Property="CornerRadius" Value="10,10,0,0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Background" Value="#F8F9FA"/>
+        </Style>
+
+        <Style x:Key="TooltipHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="TooltipContentSection" TargetType="Border">
+            <Setter Property="Padding" Value="16,12"/>
+        </Style>
+
+        <Style x:Key="TooltipInfoRow" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+
+        <Style x:Key="TooltipLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Setter Property="Width" Value="80"/>
+        </Style>
+
+        <Style x:Key="TooltipValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#172B4D"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
                 
         <!-- Style for the circular delete button that appears on hover -->
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
@@ -162,6 +218,43 @@
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,6,6"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
                     Cursor="Hand">
+                <Border.ToolTip>
+                    <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
+                        <StackPanel>
+                            <Border Style="{StaticResource TooltipHeaderSection}">
+                                <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+                            </Border>
+                            <Border Style="{StaticResource TooltipContentSection}">
+                                <StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Тип:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding FileType, StringFormat='{}\{0\}'}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}">
+                                        <TextBlock Text="Проект:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding ProjectName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}">
+                                        <TextBlock Text="Этап:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding StageName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Загружен:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding UploadedByName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Изменен:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ToolTip>
+                </Border.ToolTip>
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenPhotoViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                 </Border.InputBindings>
@@ -286,6 +379,43 @@
         <!-- Template for Document List -->
         <DataTemplate x:Key="DocumentListTemplate">
             <Border Style="{StaticResource FileListItemStyle}">
+                <Border.ToolTip>
+                    <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
+                        <StackPanel>
+                            <Border Style="{StaticResource TooltipHeaderSection}">
+                                <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+                            </Border>
+                            <Border Style="{StaticResource TooltipContentSection}">
+                                <StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Тип:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding FileType, StringFormat='{}\{0\}'}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}">
+                                        <TextBlock Text="Проект:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding ProjectName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}">
+                                        <TextBlock Text="Этап:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding StageName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Загружен:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding UploadedByName}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}">
+                                        <TextBlock Text="Изменен:" Style="{StaticResource TooltipLabel}"/>
+                                        <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" Style="{StaticResource TooltipValue}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ToolTip>
+                </Border.ToolTip>
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                 </Border.InputBindings>

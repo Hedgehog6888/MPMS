@@ -522,6 +522,7 @@ public partial class ProfilePage : UserControl
                     UserColor = "#0F2038",
                     ActionType = ActivityActionKind.AvatarChanged,
                     ActionText = "Изменил фото профиля",
+                    DetailsText = ActivityDetailsService.BuildGenericDetails("Изменил фото профиля", "User", ActivityActionKind.AvatarChanged),
                     EntityType = "User",
                     EntityId = _user.Id,
                     CreatedAt = DateTime.UtcNow

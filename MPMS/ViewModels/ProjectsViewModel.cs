@@ -272,6 +272,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             .Where(u => u.Id == req.ManagerId)
             .Select(u => u.Name)
             .FirstOrDefaultAsync() ?? project.ManagerName;
+        var details = ActivityDetailsService.BuildProjectUpdateDetails(project, req, managerName);
 
         project.Name = req.Name;
         project.Description = req.Description;
@@ -291,7 +292,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
-        await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id, ActivityActionKind.Updated);
+        await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id, ActivityActionKind.Updated, details);
         await LoadAsync();
     }
 
@@ -422,12 +423,11 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText,
-        string entityType, Guid entityId, string? actionType = null)
+        string entityType, Guid entityId, string? actionType = null, string? detailsText = null)
     {
-        var session = await db.AuthSessions.FindAsync(1);
-        var userName = session?.UserName ?? "Система";
-        var userId = session?.UserId;
-        var actorRole = session?.UserRole;
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -443,6 +443,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             UserColor = "#1B6EC2",
             ActionType = actionType,
             ActionText = actionText,
+            DetailsText = detailsText ?? ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow

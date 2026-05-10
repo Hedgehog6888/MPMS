@@ -41,7 +41,10 @@
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <StackPanel>
                 <TextBlock Text="Закрытые проекты" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
-                <TextBlock Text="Просмотр завершенных проектов" FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
+                <TextBlock FontSize="13" Foreground="#64748B" Margin="0,3,0,0">
+                    <Run Text="Проектов: "/>
+                    <Run Text="{Binding Projects.Count, Mode=OneWay}"/>
+                </TextBlock>
             </StackPanel>
         </Border>
 

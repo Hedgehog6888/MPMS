@@ -339,6 +339,9 @@ public partial class StageDetailOverlay : UserControl
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
+
+        var oldStatus = project.Status;
+
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
@@ -361,6 +364,32 @@ public partial class StageDetailOverlay : UserControl
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        // Логируем изменение статуса проекта (без аватарки - системное действие)
+        if (oldStatus != project.Status)
+        {
+            var statusText = project.Status switch
+            {
+                ProjectStatus.Planning => "Запланирован",
+                ProjectStatus.InProgress => "Выполняется",
+                ProjectStatus.Completed => "Завершён",
+                ProjectStatus.Cancelled => "Отменён",
+                ProjectStatus.Closed => "Закрыт",
+                _ => project.Status.ToString()
+            };
+            db.ActivityLogs.Add(new LocalActivityLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = null, // Системное действие - без аватарки
+                ActorRole = "System",
+                ActionType = ActivityActionKind.StatusChanged,
+                ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",
+                EntityType = "Project",
+                EntityId = project.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
     }
 
     private async void MarkDeletion_Click(object sender, RoutedEventArgs e)

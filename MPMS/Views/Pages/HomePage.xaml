@@ -28,6 +28,8 @@
         <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
+        <infra:SeparatorToVisibilityConverter x:Key="SeparatorToVis"/>
+        <infra:SeparatorToVisibilityInvertedConverter x:Key="SeparatorToVisInv"/>
         <infra:IntToStarGridLengthConverter x:Key="IntToStar"/>
 
         <!-- Stat Card Style -->
@@ -753,13 +755,41 @@
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Padding="16,12" MinHeight="300">
                         <DockPanel>
-                            <StackPanel DockPanel.Dock="Top">
-                                <TextBlock Text="Последние действия"
-                                           FontSize="14" FontWeight="SemiBold" Foreground="#000000"
-                                           Margin="0,0,0,2"/>
-                                <TextBlock Text="Недавняя активность в системе"
-                                           FontSize="12" Foreground="#64748B" Margin="0,0,0,14"/>
-                            </StackPanel>
+                            <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Последние действия"
+                                               FontSize="14" FontWeight="SemiBold" Foreground="#000000"
+                                               Margin="0,0,0,2"/>
+                                    <TextBlock Text="Недавняя активность в системе"
+                                               FontSize="12" Foreground="#64748B"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Width="32" Height="32" Padding="0"
+                                        Background="Transparent" BorderThickness="0"
+                                        Cursor="Hand" ToolTip="Справка по цветам действий"
+                                        Click="ActivityHelpButton_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                                    CornerRadius="8">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <Image Source="{svgc:SvgImage Source=/icons/activity_help.svg, AppName=MPMS}" Width="18" Height="18"/>
+                                </Button>
+                            </Grid>
 
                             <Grid>
                                 <!-- Activity list -->
@@ -769,7 +799,91 @@
                                             <DataTemplate>
                                                 <Border Margin="0,0,0,6" CornerRadius="6"
                                                         Background="#F8F9FA"
-                                                        BorderBrush="#EEF0F3" BorderThickness="1">
+                                                        BorderBrush="#EEF0F3" BorderThickness="1"
+                                                        ToolTipService.InitialShowDelay="300"
+                                                        ToolTipService.ShowDuration="30000">
+                                                    <Border.ToolTip>
+                                                        <ToolTip Style="{StaticResource PremiumTooltip}">
+                                                            <Border Width="380" Background="White" CornerRadius="10">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
+                                                                    <Border Grid.Row="0" Background="#F8FAFC" Padding="14,12" CornerRadius="10,10,0,0">
+                                                                        <StackPanel>
+                                                                            <TextBlock Text="{Binding ActivityTooltipTitle}"
+                                                                                       FontSize="13"
+                                                                                       FontWeight="SemiBold"
+                                                                                       Foreground="#172B4D"
+                                                                                       TextWrapping="Wrap"/>
+                                                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                                                <Border CornerRadius="4" Padding="6,2" Margin="0,0,6,0"
+                                                                                        Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}">
+                                                                                    <TextBlock Text="{Binding ActivityTooltipEntityLabel}"
+                                                                                               FontSize="10"
+                                                                                               FontWeight="SemiBold"
+                                                                                               Foreground="White"/>
+                                                                                </Border>
+                                                                                <Border CornerRadius="4" Padding="6,2" Background="#EEF2FF">
+                                                                                    <TextBlock Text="{Binding ActivityTooltipActionLabel}"
+                                                                                               FontSize="10"
+                                                                                               FontWeight="SemiBold"
+                                                                                               Foreground="#2563EB"/>
+                                                                                </Border>
+                                                                            </StackPanel>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                    <Border Grid.Row="1" Padding="14,12">
+                                                                        <StackPanel>
+                                                                            <Grid Margin="0,0,0,8">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <TextBlock Text="Автор"
+                                                                                           FontSize="11"
+                                                                                           Foreground="#64748B"
+                                                                                           Margin="0,0,10,0"/>
+                                                                                <TextBlock Grid.Column="1"
+                                                                                           Text="{Binding UserName}"
+                                                                                           FontSize="11"
+                                                                                           FontWeight="SemiBold"
+                                                                                           Foreground="#0F172A"/>
+                                                                            </Grid>
+                                                                            <ItemsControl ItemsSource="{Binding ActivityTooltipDetailLines}">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <Grid Margin="0,0,0,6">
+                                                                                            <!-- Separator line for grouped actions -->
+                                                                                            <Border Height="1" Background="#E2E8F0" Margin="0,8,0,4"
+                                                                                                    Visibility="{Binding Converter={StaticResource SeparatorToVis}}"/>
+                                                                                            <!-- Regular detail line -->
+                                                                                            <Grid Visibility="{Binding Converter={StaticResource SeparatorToVisInv}}">
+                                                                                                <Grid.ColumnDefinitions>
+                                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                                    <ColumnDefinition Width="*"/>
+                                                                                                </Grid.ColumnDefinitions>
+                                                                                                <Ellipse Width="5" Height="5"
+                                                                                                         Fill="{Binding DataContext, Converter={StaticResource ActivityLogToAccentBrush}, RelativeSource={RelativeSource AncestorType=ToolTip}}"
+                                                                                                         Margin="0,6,8,0"
+                                                                                                         VerticalAlignment="Top"/>
+                                                                                                <TextBlock Grid.Column="1"
+                                                                                                           Text="{Binding}"
+                                                                                                           FontSize="12"
+                                                                                                           Foreground="#334155"
+                                                                                                           TextWrapping="Wrap"/>
+                                                                                            </Grid>
+                                                                                        </Grid>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
+                                                        </ToolTip>
+                                                    </Border.ToolTip>
                                                     <Grid>
                                                         <!-- Colored left accent based on action type (delete, mark, etc.) or entity type -->
                                                         <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
@@ -789,27 +903,43 @@
                                                                             <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
                                                                                 <Setter Property="Background" Value="Transparent"/>
                                                                             </DataTrigger>
+                                                                            <!-- Системное действие - цвет действия -->
+                                                                            <DataTrigger Binding="{Binding UserId}" Value="{x:Null}">
+                                                                                <Setter Property="Background" Value="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
+                                                                            </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </Border.Style>
-                                                                <Grid>
-                                                                    <Image Style="{StaticResource AvatarImage}"
-                                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                           Width="28" Height="28"
-                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                                    <TextBlock Text="{Binding UserInitials}"
-                                                                               FontSize="10" FontWeight="Bold" Foreground="White"
-                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                                </Grid>
+                                                                <Image Style="{StaticResource AvatarImage}"
+                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                       Width="28" Height="28"
+                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
                                                             </Border>
                                                             <!-- Entity badge + role badge + action text -->
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                                                     <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0"
                                                                             Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}">
-                                                                        <TextBlock Text="{Binding EntityType, Converter={StaticResource EntityTypeToLabel}}"
-                                                                                   FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="{Binding EntityType, Converter={StaticResource EntityTypeToLabel}}"
+                                                                                       FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                                                                            <StackPanel Orientation="Horizontal">
+                                                                                <StackPanel.Style>
+                                                                                    <Style TargetType="StackPanel">
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding GroupCount}" Value="1">
+                                                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </StackPanel.Style>
+                                                                                <TextBlock Text="×"
+                                                                                           FontSize="10" FontWeight="SemiBold" Foreground="White"
+                                                                                           Margin="4,0,0,0"/>
+                                                                                <TextBlock Text="{Binding GroupCount}"
+                                                                                           FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                                                                            </StackPanel>
+                                                                        </StackPanel>
                                                                     </Border>
                                                                     <Border CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
                                                                             Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"

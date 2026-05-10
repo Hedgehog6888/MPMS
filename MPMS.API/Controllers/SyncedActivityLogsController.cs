@@ -56,6 +56,7 @@ public class SyncedActivityLogsController : ControllerBase
         var entry = _mapper.Map<SyncedActivityLog>(request);
         entry.UserName = entry.UserName.Trim();
         entry.ActionText = entry.ActionText.Trim();
+        entry.DetailsText = string.IsNullOrWhiteSpace(entry.DetailsText) ? null : entry.DetailsText.Trim();
         entry.EntityType = entry.EntityType.Trim();
 
         _db.SyncedActivityLogs.Add(entry);

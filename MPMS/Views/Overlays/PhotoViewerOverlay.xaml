@@ -550,6 +550,21 @@
                             </StackPanel>
                         </Grid>
 
+                        <!-- Uploaded by info -->
+                        <Grid Margin="0,0,0,10" Cursor="Hand" MouseLeftButtonUp="UploadedByAvatar_Click">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="UploadedByAvatarBorder" Width="24" Height="24" CornerRadius="12" Background="#34495E" VerticalAlignment="Center">
+                                <Image x:Name="UploadedByAvatarImage" Width="24" Height="24" Stretch="UniformToFill"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource InfoLabel}" Text="Загружено"/>
+                                <TextBlock x:Name="UploadedByText" Style="{StaticResource InfoValue}"/>
+                            </StackPanel>
+                        </Grid>
+
 
                     </StackPanel>
                 </ScrollViewer>

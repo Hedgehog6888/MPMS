@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using MPMS.Infrastructure;
+using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
 
@@ -384,5 +385,10 @@ public partial class HomePage : UserControl
         // If the scrollviewer/richtextbox reached its limit, WPF doesn't mark the event as handled,
         // so it bubbles up to the parent scrollviewer. We mark it handled to stop this.
         e.Handled = true;
+    }
+
+    private void ActivityHelpButton_Click(object sender, RoutedEventArgs e)
+    {
+        MainWindow.Instance?.ShowCenteredOverlay(new ActivityHelpOverlay(), 760);
     }
 }

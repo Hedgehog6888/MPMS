@@ -62,6 +62,7 @@ public partial class ChangePasswordOverlay : UserControl
                 UserColor = "#0F2038",
                 ActionType = ActivityActionKind.PasswordChanged,
                 ActionText = "Изменил пароль своего аккаунта",
+                DetailsText = ActivityDetailsService.BuildGenericDetails("Изменил пароль своего аккаунта", "User", ActivityActionKind.PasswordChanged),
                 EntityType = "User",
                 EntityId = _userId,
                 CreatedAt = DateTime.UtcNow

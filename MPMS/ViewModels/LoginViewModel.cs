@@ -127,6 +127,7 @@ public partial class LoginViewModel : ViewModelBase
                 UserColor = color,
                 ActionType = ActivityActionKind.Login,
                 ActionText = $"Вход в систему",
+                DetailsText = ActivityDetailsService.BuildGenericDetails("Вход в систему", "User", ActivityActionKind.Login),
                 EntityType = "User",
                 EntityId = _auth.UserId ?? Guid.Empty,
                 CreatedAt = DateTime.UtcNow

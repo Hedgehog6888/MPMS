@@ -121,8 +121,15 @@ public partial class MainWindow : Window
 
     private void SaveWindowSize()
     {
-        // Save window state
-        LocalSettings.Set("MainWindow_State", WindowState.ToString());
+        // Save window state (but not minimized - always restore as Normal or Maximized)
+        if (WindowState != WindowState.Minimized)
+        {
+            LocalSettings.Set("MainWindow_State", WindowState.ToString());
+        }
+        else
+        {
+            LocalSettings.Set("MainWindow_State", WindowState.Normal.ToString());
+        }
 
         // Save size only in normal state
         if (WindowState == WindowState.Normal)
@@ -311,9 +318,6 @@ public partial class MainWindow : Window
             ModalOverlayPanel.Visibility = Visibility.Collapsed;
             OverlayLayer.Visibility = Visibility.Collapsed;
             _overlayMode = OverlayPresentationMode.None;
-            // Обновить данные текущей страницы при закрытии drawer (проект, задачи и т.д.)
-            if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
-                _ = loadable.LoadAsync();
         }
 
         if (_overlayMode == OverlayPresentationMode.Modal)
@@ -362,8 +366,6 @@ public partial class MainWindow : Window
         ModalOverlayPanel.Visibility = Visibility.Collapsed;
         OverlayLayer.Visibility = Visibility.Collapsed;
         _overlayMode = OverlayPresentationMode.None;
-        if (DataContext is MainViewModel mainVm && mainVm.CurrentPageViewModel is ILoadable loadable)
-            _ = loadable.LoadAsync();
     }
 
     private void HideStackedModalOnly()
@@ -431,9 +433,9 @@ public partial class MainWindow : Window
         host.Clip = new RectangleGeometry(new Rect(0, 0, w, h), radius, radius);
     }
 
-    public void ShowPhotoViewer(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
+    public void ShowPhotoViewer(string filePath, string? displayFileName = null, string? description = null, string? uploadedByName = null, Guid uploadedById = default, byte[]? uploadedByAvatarData = null, string? uploadedByAvatarPath = null, Guid projectId = default, Func<string, string, string?, Task>? savedFileHandler = null)
     {
-        var viewer = new Views.Overlays.PhotoViewerOverlay(filePath, displayFileName, description, savedFileHandler);
+        var viewer = new Views.Overlays.PhotoViewerOverlay(filePath, displayFileName, description, uploadedByName, uploadedById, uploadedByAvatarData, uploadedByAvatarPath, projectId, savedFileHandler);
         PhotoViewerLayer.Content = viewer;
         PhotoViewerLayer.Visibility = Visibility.Visible;
 

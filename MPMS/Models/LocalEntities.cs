@@ -594,6 +594,21 @@ public static class ActivityActionKind
     // Archive / restore
     public const string Restored = "Restored";
     public const string PermanentlyDeleted = "PermanentlyDeleted";
+
+    // Status changes
+    public const string StatusChanged = "StatusChanged";
+    public const string TaskStatusChanged = "TaskStatusChanged";
+    public const string StageStatusChanged = "StageStatusChanged";
+
+    // Project member events
+    public const string MemberAdded = "MemberAdded";
+    public const string MemberRemoved = "MemberRemoved";
+
+    // Stage material/service events
+    public const string MaterialAdded = "MaterialAdded";
+    public const string MaterialRemoved = "MaterialRemoved";
+    public const string ServiceAdded = "ServiceAdded";
+    public const string ServiceRemoved = "ServiceRemoved";
 }
 
 /// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>
@@ -609,9 +624,18 @@ public class LocalActivityLog
     [MaxLength(20)] public string UserColor { get; set; } = "#0F2038";
     [MaxLength(50)] public string? ActionType { get; set; }
     [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
+    public string? DetailsText { get; set; }
     [MaxLength(50)] public string EntityType { get; set; } = string.Empty;
     public Guid EntityId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [NotMapped] public string ActivityTooltipText => string.IsNullOrWhiteSpace(DetailsText) ? ActionText : DetailsText;
+    [NotMapped] public string ActivityTooltipTitle => ActivityDetailsService.GetTooltipTitle(this);
+    [NotMapped] public string ActivityTooltipActionLabel => ActivityDetailsService.GetActionDisplay(ActionType);
+    [NotMapped] public string ActivityTooltipEntityLabel => ActivityDetailsService.GetEntityDisplay(EntityType);
+    [NotMapped] public IReadOnlyList<string> ActivityTooltipDetailLines => ActivityDetailsService.GetTooltipDetailLines(this);
+
+    /// <summary>Number of items in this group (computed at display time, not stored in DB).</summary>
+    [NotMapped] public int GroupCount { get; set; } = 1;
 
     /// <summary>Avatar from Users — populated when loading for display.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }

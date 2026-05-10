@@ -172,12 +172,11 @@ public partial class TaskDetailViewModel : ViewModelBase
         Messages.Add(msg);
     }
 
-    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null, string? detailsText = null)
     {
-        var session = await db.AuthSessions.FindAsync(1);
-        var userName = session?.UserName ?? "Система";
-        var userId = session?.UserId;
-        var actorRole = session?.UserRole;
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -193,6 +192,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             UserColor = "#0F2038",
             ActionType = actionType,
             ActionText = actionText,
+            DetailsText = detailsText ?? ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
@@ -272,10 +272,16 @@ public partial class TaskDetailViewModel : ViewModelBase
         if (stage is null) return;
         if (stage.Status == StageStatus.Completed) return;
         var wasReservedByStage = ShouldReserveStageEquipment(stage);
+        var assignedName = req.AssignedUserId.HasValue
+            ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
+                  .Select(u => u.Name).FirstOrDefaultAsync()
+            : null;
+        var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.ServiceItems is not null);
 
         stage.Name = req.Name;
         stage.Description = req.Description;
         stage.AssignedUserId = req.AssignedUserId;
+        stage.AssignedUserName = assignedName;
         stage.Status = req.Status;
         stage.DueDate = req.DueDate;
         stage.ServiceTemplateId = req.ServiceTemplateId;
@@ -308,28 +314,30 @@ public partial class TaskDetailViewModel : ViewModelBase
             IsArchived = stage.IsArchived
         };
         await _sync.QueueOperationAsync("Stage", id, SyncOperation.Update, syncStageReq);
-        await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated);
+        await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated, details);
         await LoadAsync();
         await UpdateTaskProgressAsync();
     }
 
-    private static async System.Threading.Tasks.Task ReplaceLocalStageServicesAsync(
+    private async System.Threading.Tasks.Task ReplaceLocalStageServicesAsync(
         LocalDbContext db, Guid stageId, IReadOnlyList<StageServiceItemRequest>? items)
     {
         var existing = await db.StageServices.Where(x => x.StageId == stageId).ToListAsync();
         db.StageServices.RemoveRange(existing);
         if (items is null || items.Count == 0) return;
 
+        var addedServices = new List<string>();
         foreach (var item in items)
         {
             var tpl = await db.ServiceTemplates.FindAsync(item.ServiceTemplateId);
             var price = item.PricePerUnit ?? tpl?.BasePrice ?? 0m;
+            var serviceName = tpl?.Name ?? "—";
             db.StageServices.Add(new LocalStageService
             {
                 Id = Guid.NewGuid(),
                 StageId = stageId,
                 ServiceTemplateId = item.ServiceTemplateId,
-                ServiceName = tpl?.Name ?? "—",
+                ServiceName = serviceName,
                 ServiceDescription = tpl?.Description,
                 Unit = tpl?.Unit,
                 Quantity = item.Quantity,
@@ -337,6 +345,15 @@ public partial class TaskDetailViewModel : ViewModelBase
                 IsSynced = false,
                 LastModifiedLocally = DateTime.UtcNow
             });
+            addedServices.Add(serviceName);
+        }
+
+        // Логируем добавление услуг
+        if (addedServices.Count > 0)
+        {
+            var stage = await db.TaskStages.FindAsync(stageId);
+            var serviceNames = string.Join(", ", addedServices);
+            await LogActivityAsync(db, $"В этап «{stage?.Name}» добавлены услуги: {serviceNames}", "Stage", stageId, ActivityActionKind.ServiceAdded);
         }
     }
 
@@ -439,6 +456,13 @@ public partial class TaskDetailViewModel : ViewModelBase
             db.StageMaterials.Add(m);
         }
         await db.SaveChangesAsync();
+
+        // Логируем добавление материалов
+        if (materials.Count > 0)
+        {
+            var materialNames = string.Join(", ", materials.Select(m => m.MaterialName));
+            await LogActivityAsync(db, $"В этап «{stage.Name}» добавлены материалы: {materialNames}", "Stage", stageId, ActivityActionKind.MaterialAdded);
+        }
     }
 
     public async Task ReplaceStageEquipmentsAsync(Guid stageId, IReadOnlyList<LocalStageEquipment> equipments)
@@ -598,7 +622,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
-
+        var details = ActivityDetailsService.BuildTaskUpdateDetails(task, req, assignedName, includeStatus: false);
         task.Name = req.Name;
         task.Description = req.Description;
         task.AssignedUserId = req.AssignedUserId;
@@ -610,6 +634,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         task.TotalStages = stages.Count;
         task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
         task.InProgressStages = stages.Count(s => s.Status == StageStatus.InProgress);
+        var oldStatus = task.Status;
         if (stages.Count > 0)
             task.Status = StatusCalculator.GetTaskStatusFromStages(stages);
         task.IsSynced = false;
@@ -622,7 +647,21 @@ public partial class TaskDetailViewModel : ViewModelBase
             IsArchived = task.IsArchived
         };
         await _sync.QueueOperationAsync("Task", taskId, SyncOperation.Update, syncTaskReq);
-        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", taskId, ActivityActionKind.Updated);
+        await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", taskId, ActivityActionKind.Updated, details);
+
+        // Логируем изменение статуса задачи отдельно
+        if (oldStatus != task.Status)
+        {
+            var statusText = task.Status switch
+            {
+                Models.TaskStatus.Planned => "Запланирована",
+                Models.TaskStatus.InProgress => "В процессе",
+                Models.TaskStatus.Completed => "Завершена",
+                Models.TaskStatus.Paused => "Приостановлена",
+                _ => task.Status.ToString()
+            };
+            await LogActivityAsync(db, $"Статус задачи «{task.Name}» изменён на {statusText}", "Task", taskId, ActivityActionKind.TaskStatusChanged);
+        }
         await LoadAsync();
     }
 
@@ -783,6 +822,9 @@ public partial class TaskDetailViewModel : ViewModelBase
     {
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return;
+
+        var oldStatus = project.Status;
+
         var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
@@ -805,5 +847,31 @@ public partial class TaskDetailViewModel : ViewModelBase
         project.IsSynced = false;
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+
+        // Логируем изменение статуса проекта (без аватарки - системное действие)
+        if (oldStatus != project.Status)
+        {
+            var statusText = project.Status switch
+            {
+                ProjectStatus.Planning => "Запланирован",
+                ProjectStatus.InProgress => "Выполняется",
+                ProjectStatus.Completed => "Завершён",
+                ProjectStatus.Cancelled => "Отменён",
+                ProjectStatus.Closed => "Закрыт",
+                _ => project.Status.ToString()
+            };
+            db.ActivityLogs.Add(new LocalActivityLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = null, // Системное действие - без аватарки
+                ActorRole = "System",
+                ActionType = ActivityActionKind.StatusChanged,
+                ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",
+                EntityType = "Project",
+                EntityId = project.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
     }
 }

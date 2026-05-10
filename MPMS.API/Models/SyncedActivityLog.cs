@@ -16,6 +16,7 @@ public class SyncedActivityLog
     [MaxLength(20)] public string UserColor { get; set; } = "#1B6EC2";
     [MaxLength(50)] public string? ActionType { get; set; }
     [MaxLength(500)] public string ActionText { get; set; } = string.Empty;
+    public string? DetailsText { get; set; }
     [MaxLength(50)] public string EntityType { get; set; } = string.Empty;
     public Guid EntityId { get; set; }
     public DateTime CreatedAt { get; set; }

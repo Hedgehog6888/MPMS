@@ -58,21 +58,40 @@ public class SocialSyncer : IEntitySyncer
         {
             foreach (var a in remoteActs)
             {
-                if (await db.ActivityLogs.AnyAsync(x => x.Id == a.Id)) continue;
-                db.ActivityLogs.Add(new LocalActivityLog
+                var existing = await db.ActivityLogs.FindAsync(a.Id);
+                if (existing is not null)
                 {
-                    Id = a.Id,
-                    UserId = a.UserId,
-                    ActorRole = a.ActorRole,
-                    UserName = a.UserName,
-                    UserInitials = a.UserInitials,
-                    UserColor = a.UserColor,
-                    ActionType = a.ActionType,
-                    ActionText = a.ActionText,
-                    EntityType = a.EntityType,
-                    EntityId = a.EntityId,
-                    CreatedAt = NormalizeUtcInstant(a.CreatedAt)
-                });
+                    // Update existing log with correct data from server
+                    existing.UserId = a.UserId;
+                    existing.ActorRole = a.ActorRole;
+                    existing.UserName = a.UserName;
+                    existing.UserInitials = a.UserInitials;
+                    existing.UserColor = a.UserColor;
+                    existing.ActionType = a.ActionType;
+                    existing.ActionText = a.ActionText;
+                    existing.DetailsText = a.DetailsText;
+                    existing.EntityType = a.EntityType;
+                    existing.EntityId = a.EntityId;
+                    existing.CreatedAt = NormalizeUtcInstant(a.CreatedAt);
+                }
+                else
+                {
+                    db.ActivityLogs.Add(new LocalActivityLog
+                    {
+                        Id = a.Id,
+                        UserId = a.UserId,
+                        ActorRole = a.ActorRole,
+                        UserName = a.UserName,
+                        UserInitials = a.UserInitials,
+                        UserColor = a.UserColor,
+                        ActionType = a.ActionType,
+                        ActionText = a.ActionText,
+                        DetailsText = a.DetailsText,
+                        EntityType = a.EntityType,
+                        EntityId = a.EntityId,
+                        CreatedAt = NormalizeUtcInstant(a.CreatedAt)
+                    });
+                }
             }
         }
     }

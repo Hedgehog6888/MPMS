@@ -24,6 +24,7 @@ public static class LocalSchemaMigrator
         AddAvatarPathColumn(conn);
         AddActionTypeToActivityLogs(conn);
         AddUserIdToActivityLogs(conn);
+        AddDetailsTextToActivityLogs(conn);
         AddUserBlockingColumns(conn);
         AddAvatarDataColumn(conn);
         AddIsArchivedColumn(conn);
@@ -166,6 +167,11 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"ActorRole\" TEXT NULL;");
     }
 
+    private static void AddDetailsTextToActivityLogs(SqliteConnection conn)
+    {
+        TryAlterTable(conn, "ALTER TABLE \"ActivityLogs\" ADD COLUMN \"DetailsText\" TEXT NULL;");
+    }
+
     private static void CreateRecentAccountsTable(SqliteConnection conn)
     {
         Execute(conn, """
@@ -215,6 +221,7 @@ public static class LocalSchemaMigrator
                 "UserInitials" TEXT   NOT NULL DEFAULT '?',
                 "UserColor"   TEXT    NOT NULL DEFAULT '#0F2038',
                 "ActionText"  TEXT    NOT NULL DEFAULT '',
+                "DetailsText" TEXT    NULL,
                 "EntityType"  TEXT    NOT NULL DEFAULT '',
                 "EntityId"    TEXT    NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
                 "CreatedAt"   TEXT    NOT NULL DEFAULT '0001-01-01 00:00:00'

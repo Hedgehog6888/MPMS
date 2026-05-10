@@ -9,6 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MPMS.Views.Overlays;
 
@@ -19,6 +20,11 @@ public partial class PhotoViewerOverlay : UserControl
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
     private string? _description;
+    private string? _uploadedByName;
+    private Guid _uploadedById = Guid.Empty;
+    private byte[]? _uploadedByAvatarData;
+    private string? _uploadedByAvatarPath;
+    private Guid _projectId = Guid.Empty;
     private bool _hasUnsavedChanges;
     private bool _hasImageChanges;
     private readonly Func<string, string, string?, Task>? _savedFileHandler;
@@ -70,12 +76,17 @@ public partial class PhotoViewerOverlay : UserControl
         Color.FromRgb(0xFF,0x69,0xB4), Color.FromRgb(0x8A,0x2B,0xE2),
     ];
 
-    public PhotoViewerOverlay(string filePath, string? displayFileName = null, string? description = null, Func<string, string, string?, Task>? savedFileHandler = null)
+    public PhotoViewerOverlay(string filePath, string? displayFileName = null, string? description = null, string? uploadedByName = null, Guid uploadedById = default, byte[]? uploadedByAvatarData = null, string? uploadedByAvatarPath = null, Guid projectId = default, Func<string, string, string?, Task>? savedFileHandler = null)
     {
         InitializeComponent();
         _filePath = filePath;
         _fileName = string.IsNullOrWhiteSpace(displayFileName) ? System.IO.Path.GetFileName(filePath) : displayFileName;
         _description = description;
+        _uploadedByName = uploadedByName;
+        _uploadedById = uploadedById;
+        _uploadedByAvatarData = uploadedByAvatarData;
+        _uploadedByAvatarPath = uploadedByAvatarPath;
+        _projectId = projectId;
         _savedFileHandler = savedFileHandler;
         LoadImage(filePath);
         BuildColorPalette();
@@ -173,6 +184,30 @@ public partial class PhotoViewerOverlay : UserControl
 
         // Read EXIF camera info
         CameraText.Text = GetCameraInfo();
+
+        // Set uploaded by info
+        var uploadedByText = FindName("UploadedByText") as TextBlock;
+        if (uploadedByText != null)
+            uploadedByText.Text = _uploadedByName ?? "—";
+
+        // Set uploaded by avatar
+        var uploadedByAvatarImage = FindName("UploadedByAvatarImage") as Image;
+        var uploadedByAvatarBorder = FindName("UploadedByAvatarBorder") as Border;
+
+        if (uploadedByAvatarImage != null && uploadedByAvatarBorder != null)
+        {
+            var avatarSource = Services.AvatarHelper.GetImageSource(_uploadedByAvatarData, _uploadedByAvatarPath, _uploadedByName, 32);
+            if (avatarSource != null)
+            {
+                uploadedByAvatarImage.Source = avatarSource;
+                uploadedByAvatarBorder.Background = Brushes.Transparent;
+            }
+            else
+            {
+                uploadedByAvatarImage.Source = null;
+                uploadedByAvatarBorder.Background = new SolidColorBrush(Color.FromRgb(0x34, 0x49, 0x5E));
+            }
+        }
     }
 
     private string GetCameraInfo()
@@ -287,6 +322,22 @@ public partial class PhotoViewerOverlay : UserControl
     {
         ConfirmPopupBorder.Visibility = Visibility.Collapsed;
         MainWindow.Instance?.HidePhotoViewer();
+    }
+
+    // ── Open User Peek ──────────────────────────────────────────────────────
+    private void UploadedByAvatar_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (_uploadedById == Guid.Empty) return;
+
+        // Check if current user is a worker - workers cannot view other users' profiles
+        var auth = App.Services.GetRequiredService<MPMS.Services.IAuthService>();
+        string role = auth.UserRole ?? "";
+        if (string.Equals(role, "Worker", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var overlay = new UserPeekOverlay();
+        overlay.SetUser(_uploadedById, _projectId);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 480);
     }
 
     // ── File name ──────────────────────────────────────────────────────────

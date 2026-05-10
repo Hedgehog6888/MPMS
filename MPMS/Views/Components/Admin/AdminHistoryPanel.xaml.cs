@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using MPMS.ViewModels;
+using MPMS.Models;
 
 namespace MPMS.Views.Components.Admin
 {
@@ -22,6 +24,14 @@ namespace MPMS.Views.Components.Admin
         {
             if (DataContext is AdminViewModel vm)
                 vm.HistorySearchText = string.Empty;
+        }
+
+        private void HistoryRow_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.DataContext is LocalActivityLog log && DataContext is AdminViewModel vm)
+            {
+                vm.ViewActivityDetailCommand.Execute(log);
+            }
         }
     }
 }

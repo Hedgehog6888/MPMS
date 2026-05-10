@@ -382,10 +382,9 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
     {
-        var session = await db.AuthSessions.FindAsync(1);
-        var userName = session?.UserName ?? "Система";
-        var userId = session?.UserId;
-        var actorRole = session?.UserRole;
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
         var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var initials = parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
@@ -401,6 +400,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
             UserColor = "#1B6EC2",
             ActionType = actionType,
             ActionText = actionText,
+            DetailsText = ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
             EntityType = entityType,
             EntityId = entityId,
             CreatedAt = DateTime.UtcNow
