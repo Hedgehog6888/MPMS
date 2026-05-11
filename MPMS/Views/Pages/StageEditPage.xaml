@@ -145,7 +145,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding PageTitle}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Отмена" Style="{StaticResource OutlineBtn}" Command="{Binding GoBackCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Отмена" Style="{StaticResource BackButton}" Command="{Binding GoBackCommand}" Margin="0,0,8,0"/>
                     <Button Content="{Binding SaveButtonText}" Style="{StaticResource BlackBtn}" Command="{Binding SaveCommand}"/>
                 </StackPanel>
             </Grid>

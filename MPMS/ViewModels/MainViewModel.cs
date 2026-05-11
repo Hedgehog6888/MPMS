@@ -31,6 +31,10 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string? _userAvatarPath;
     [ObservableProperty] private byte[]? _userAvatarData;
 
+    private readonly System.Collections.Generic.Stack<string> _navigationHistory = new();
+
+    public bool CanGoBack => _navigationHistory.Count > 0;
+
     public string SwitchAccountTooltip => "Сменить аккаунт";
 
     public string UserName => _auth.UserName ?? "—";
@@ -166,11 +170,76 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    private void PushNavigationHistory(string page)
+    {
+        if (CurrentPage != page && !string.IsNullOrEmpty(CurrentPage))
+        {
+            _navigationHistory.Push(CurrentPage);
+            OnPropertyChanged(nameof(CanGoBack));
+        }
+    }
+
+    [RelayCommand]
+    private void GoBack()
+    {
+        if (_navigationHistory.Count > 0)
+        {
+            var previousPage = _navigationHistory.Pop();
+            OnPropertyChanged(nameof(CanGoBack));
+            NavigateInternal(previousPage, addToHistory: false);
+        }
+    }
+
+    private void NavigateInternal(string page, bool addToHistory)
+    {
+        if (addToHistory)
+            PushNavigationHistory(page);
+
+        CurrentPage = page;
+        ViewModelBase? vm = page switch
+        {
+            "Home" => _sp.GetRequiredService<HomeViewModel>(),
+            "Projects" => _sp.GetRequiredService<ProjectsViewModel>(),
+            "ClosedProjects" => _sp.GetRequiredService<ClosedProjectsViewModel>(),
+            "Tasks" => _sp.GetRequiredService<TasksViewModel>(),
+            "Files" => _sp.GetRequiredService<FilesPageViewModel>(),
+            "Calendar" => _sp.GetRequiredService<CalendarViewModel>(),
+            "Timeline" => _sp.GetRequiredService<TimelineViewModel>(),
+            "Warehouse" => _sp.GetRequiredService<WarehouseViewModel>(),
+            "Stages" => _sp.GetRequiredService<StagesViewModel>(),
+            "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
+            "Admin" => _sp.GetRequiredService<AdminViewModel>(),
+            "Settings" => null, // handled via overlay
+            _ => null
+        };
+
+        if (vm is ILoadable loadable)
+            _ = loadable.LoadAsync();
+
+        CurrentPageViewModel = vm;
+
+        // Refresh sync counts when navigating
+        _ = RefreshSyncCountsAsync();
+
+        // Show/hide PhotoViewerLayer and DocumentViewerLayer based on current page
+        if (page == "Files")
+        {
+            MainWindow.Instance?.RestorePhotoViewerVisibility();
+            MainWindow.Instance?.RestoreDocumentViewerVisibility();
+        }
+        else
+        {
+            MainWindow.Instance?.HidePhotoViewerTemporarily();
+            MainWindow.Instance?.HideDocumentViewerTemporarily();
+        }
+    }
+
     public void NavigateToProject(Models.LocalProject project)
     {
+        PushNavigationHistory("ProjectDetail");
         CurrentPage = "ProjectDetail";
         var vm = _sp.GetRequiredService<ProjectDetailViewModel>();
-        vm.SetProject(project, () => Navigate("Projects"));
+        vm.SetProject(project, () => GoBackCommand.Execute(null));
         _ = vm.LoadAsync();
         CurrentPageViewModel = vm;
 
@@ -181,6 +250,7 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>Встроенный редактор этапа (полноэкранная страница, как карточка проекта).</summary>
     public void NavigateToStageEditor(StageEditViewModel vm)
     {
+        PushNavigationHistory("StageEdit");
         CurrentPage = "StageEdit";
         CurrentPageViewModel = vm;
         _ = vm.LoadAsync();

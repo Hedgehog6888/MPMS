@@ -232,7 +232,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel>
+                <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding Project.Name}" FontSize="22" FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal">
@@ -262,7 +262,7 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Border>
-                        
+
                         <Border CornerRadius="4" Padding="6,2" Margin="12,0,0,0"
                                 Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
                                 VerticalAlignment="Center"
@@ -271,7 +271,7 @@
                                        Foreground="#DC2626"/>
                         </Border>
                     </StackPanel>
-                    </StackPanel>
+                </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Create task button -->
                     <Button Click="CreateTask_Click"
@@ -350,14 +350,18 @@
                 Padding="24,4,24,0">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="White"
+                <Button Grid.Column="0" Content="Назад" Style="{StaticResource BackButton}"
+                        Command="{Binding BackCommand}" VerticalAlignment="Center"/>
+                <Border Grid.Column="1" Background="White"
                         BorderBrush="#DFE1E6"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="6,4"
+                        Margin="6,0,0,0"
                         HorizontalAlignment="Left">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton Content="Общая информация" Tag="Info" IsChecked="True"
@@ -380,7 +384,7 @@
                                      Click="Tab_Click"/>
                     </StackPanel>
                 </Border>
-                <Border x:Name="StageViewModeSwitcher" Grid.Column="1"
+                <Border x:Name="StageViewModeSwitcher" Grid.Column="2"
                         Background="White"
                         BorderBrush="#DFE1E6"
                         BorderThickness="1"

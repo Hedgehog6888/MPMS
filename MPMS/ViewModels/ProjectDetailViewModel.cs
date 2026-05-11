@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -22,6 +23,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private Action? _goBackAction;
 
     [ObservableProperty] private LocalProject? _project;
+    public ICommand? BackCommand { get; private set; }
 
     // ─── Tasks collections ──────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
@@ -139,6 +141,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     {
         Project = project;
         _goBackAction = goBackAction;
+        BackCommand = goBackAction is null ? null : new RelayCommand(() => goBackAction());
     }
 
     public async Task LoadAsync()
