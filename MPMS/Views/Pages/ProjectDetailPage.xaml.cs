@@ -336,7 +336,8 @@ public partial class ProjectDetailPage : UserControl
 
     private void Stage_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskStage stage || VM is null) return;
+        if (sender is not FrameworkElement fe || fe.DataContext is not ViewModels.StageItem stageItem || VM is null) return;
+        var stage = stageItem.Stage;
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
 
@@ -345,7 +346,6 @@ public partial class ProjectDetailPage : UserControl
 
         var overlay = new StageDetailOverlay();
         var vm = VM;
-        var stageItem = new ViewModels.StageItem { Stage = stage, TaskName = stage.TaskName };
         var taskId = task.Id;
         overlay.SetStage(stageItem, task, () =>
         {

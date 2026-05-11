@@ -157,13 +157,13 @@ public partial class AdminUserInfoOverlay : UserControl
     private void Block_Click(object sender, RoutedEventArgs e)
     {
         MainWindow.Instance?.HideDrawer();
-        _adminVm.OpenBlockOverlayCommand.Execute(_row);
+        _adminVm.ToggleBlockUserCommand.Execute(_row);
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
         MainWindow.Instance?.HideDrawer();
-        _adminVm.OpenDeleteUserConfirmCommand.Execute(_row);
+        _adminVm.DeleteUserCommand.Execute(_row);
     }
 
     private static Border CreateSpecBadge(string text, Brush background, Brush foreground) =>

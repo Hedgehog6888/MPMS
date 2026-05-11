@@ -240,9 +240,9 @@ public partial class ArchiveItemInfoOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
         switch (_row.EntityType)
         {
-            case "Project": _vm.OpenRestoreProjectConfirmCommand.Execute(_row); break;
-            case "Task": _vm.OpenRestoreTaskConfirmCommand.Execute(_row); break;
-            case "Stage": _vm.OpenRestoreStageConfirmCommand.Execute(_row); break;
+            case "Project": _vm.RestoreProjectCommand.Execute(_row); break;
+            case "Task": _vm.RestoreTaskCommand.Execute(_row); break;
+            case "Stage": _vm.RestoreStageCommand.Execute(_row); break;
         }
     }
 

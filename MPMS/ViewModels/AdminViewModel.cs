@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
+using MPMS.Views;
 
 namespace MPMS.ViewModels;
 
@@ -197,31 +198,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private int _activityLoadedCount = PageSize;
     private List<LocalActivityLog> _allActivityLogs = new();
 
-    // ── Block overlay ─────────────────────────────────────────────────────
-    [ObservableProperty] private bool _isBlockOverlayOpen;
-    [ObservableProperty] private bool _isUnblockOverlayOpen;
-    [ObservableProperty] private string _blockTargetName = string.Empty;
-    [ObservableProperty] private string _blockTargetReason = string.Empty; // reason when unblocking (read-only)
-    [ObservableProperty] private string _blockReason = string.Empty;
-    private AdminUserRow? _blockTargetRow;
-
-    // ── Confirm overlay ───────────────────────────────────────────────────
-    [ObservableProperty] private bool _isConfirmOverlayOpen;
-    [ObservableProperty] private string _confirmTitle = string.Empty;
-    [ObservableProperty] private string _confirmEntityName = string.Empty;
-    [ObservableProperty] private string _confirmButtonText = "Подтвердить";
-    [ObservableProperty] private bool _confirmIsDestructive;
-    private Func<Task>? _confirmAction;
-
-    private void SetupConfirm(string title, string entityName, string buttonText, bool destructive, Func<Task> action)
-    {
-        ConfirmTitle = title;
-        ConfirmEntityName = entityName;
-        ConfirmButtonText = buttonText;
-        ConfirmIsDestructive = destructive;
-        _confirmAction = action;
-        IsConfirmOverlayOpen = true;
-    }
+    // ── Block/Unblock helpers ─────────────────────────────────────────────
 
     public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, ISyncService sync)
     {
@@ -350,7 +327,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // ── Block/Unblock ─────────────────────────────────────────────────────
 
     [RelayCommand]
-    private void OpenBlockOverlay(AdminUserRow? row)
+    private async Task ToggleBlockUserAsync(AdminUserRow? row)
     {
         if (row is null) return;
         if (UserPeekAccess.IsAdministrator(row.RoleName) && !row.IsBlocked)
@@ -359,35 +336,18 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             return;
         }
 
-        _blockTargetRow = row;
-        BlockTargetName = row.Name;
-        BlockTargetReason = row.BlockedReason ?? string.Empty;
-        BlockReason = string.Empty;
+        var owner = Application.Current.MainWindow;
         if (row.IsBlocked)
         {
-            IsUnblockOverlayOpen = true;
-            IsBlockOverlayOpen = false;
+            var confirmed = ConfirmDeleteDialog.ShowUnblockUserConfirmation(owner, row.Name, row.BlockedReason);
+            if (!confirmed) return;
         }
         else
         {
-            IsBlockOverlayOpen = true;
-            IsUnblockOverlayOpen = false;
+            var (confirmed, blockReason) = ConfirmDeleteDialog.ShowBlockUserConfirmation(owner, row.Name);
+            if (!confirmed) return;
+            row.BlockedReason = blockReason;
         }
-    }
-
-    [RelayCommand]
-    private void CancelBlockOverlay() => IsBlockOverlayOpen = false;
-
-    [RelayCommand]
-    private void CancelUnblockOverlay() => IsUnblockOverlayOpen = false;
-
-    [RelayCommand]
-    private async Task SubmitBlockAsync()
-    {
-        if (_blockTargetRow is null) return;
-        var row = _blockTargetRow;
-        IsBlockOverlayOpen = false;
-        IsUnblockOverlayOpen = false;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
         var user = await db.Users.FindAsync(row.Id);
@@ -402,7 +362,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
         user.IsBlocked = newBlocked;
         user.BlockedAt = newBlocked ? DateTime.UtcNow : null;
-        user.BlockedReason = newBlocked ? BlockReason.Trim() : null;
+        user.BlockedReason = newBlocked ? row.BlockedReason?.Trim() : null;
         user.LastModifiedLocally = DateTime.UtcNow;
 
         var userName = !string.IsNullOrWhiteSpace(user.Name) ? user.Name : $"{user.FirstName} {user.LastName}".Trim();
@@ -415,7 +375,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var blockLog = AddAdminLog(db,
             newBlocked ? ActivityActionKind.UserBlocked : ActivityActionKind.UserUnblocked,
             newBlocked
-                ? $"Заблокировал пользователя {user.Name} ({user.Username}). Причина: {BlockReason}"
+                ? $"Заблокировал пользователя {user.Name} ({user.Username}). Причина: {row.BlockedReason}"
                 : $"Разблокировал пользователя {user.Name} ({user.Username})",
             "User", user.Id);
         await db.SaveChangesAsync();
@@ -425,7 +385,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             NewPassword: null,
             user.SubRole, user.AdditionalSubRoles, user.BirthDate, user.HomeAddress,
             IsBlocked: newBlocked,
-            BlockedReason: newBlocked ? BlockReason.Trim() : null);
+            BlockedReason: newBlocked ? row.BlockedReason?.Trim() : null);
         await _sync.QueueOperationAsync("UserProfile", user.Id, SyncOperation.Update, updateReq);
         await LoadUsersAsync();
         SetStatus(newBlocked ? $"Пользователь {user.Name} заблокирован" : $"Пользователь {user.Name} разблокирован");
@@ -434,7 +394,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     // ── Delete user ───────────────────────────────────────────────────────
 
     [RelayCommand]
-    private void OpenDeleteUserConfirm(AdminUserRow? row)
+    private async Task DeleteUserAsync(AdminUserRow? row)
     {
         if (row is null) return;
         if (row.Id == _auth.UserId) { SetStatus("Нельзя удалить текущего пользователя"); return; }
@@ -444,69 +404,48 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             return;
         }
 
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "пользователя", row.Name);
+        if (!confirmed) return;
+
         var userId = row.Id;
-        SetupConfirm(
-            "Удалить пользователя?",
-            row.Name,
-            "Удалить",
-            destructive: true,
-            async () =>
-            {
-                await using var db = await _dbFactory.CreateDbContextAsync();
-                var user = await db.Users.FindAsync(userId);
-                if (user is null) return;
-                try
-                {
-                    // Удалить в API (если онлайн), чтобы синхронизация не вернула пользователя
-                    var apiDeleted = !_api.IsOnline || await _api.DeleteUserAsync(userId);
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var user = await db.Users.FindAsync(userId);
+        if (user is null) return;
+        try
+        {
+            // Удалить в API (если онлайн), чтобы синхронизация не вернула пользователя
+            var apiDeleted = !_api.IsOnline || await _api.DeleteUserAsync(userId);
 
-                    // Запомнить ID — синхронизация не должна вернуть пользователя
-                    if (!await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
-                        db.DeletedUserIds.Add(new DeletedUserId { Id = userId });
+            // Запомнить ID — синхронизация не должна вернуть пользователя
+            if (!await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
+                db.DeletedUserIds.Add(new DeletedUserId { Id = userId });
 
-                    // Обновить имя в связанных записях (оставляем их, вместо имени — «Удалённый пользователь»)
-                    const string deletedLabel = "Удалённый пользователь";
-                    foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
-                        m.UserName = deletedLabel;
-                    foreach (var t in await db.TaskAssignees.Where(x => x.UserId == userId).ToListAsync())
-                        t.UserName = deletedLabel;
-                    foreach (var s in await db.StageAssignees.Where(x => x.UserId == userId).ToListAsync())
-                        s.UserName = deletedLabel;
-                    foreach (var m in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
-                        m.UserName = deletedLabel;
+            // Обновить имя в связанных записях (оставляем их, вместо имени — «Удалённый пользователь»)
+            const string deletedLabel = "Удалённый пользователь";
+            foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
+                m.UserName = deletedLabel;
+            foreach (var t in await db.TaskAssignees.Where(x => x.UserId == userId).ToListAsync())
+                t.UserName = deletedLabel;
+            foreach (var s in await db.StageAssignees.Where(x => x.UserId == userId).ToListAsync())
+                s.UserName = deletedLabel;
+            foreach (var m in await db.Messages.Where(x => x.UserId == userId).ToListAsync())
+                m.UserName = deletedLabel;
 
-                    var delLog = AddAdminLog(db, ActivityActionKind.UserDeleted,
-                        $"Удалил пользователя {user.Name} ({user.Username})", "User", user.Id);
+            var delLog = AddAdminLog(db, ActivityActionKind.UserDeleted,
+                $"Удалил пользователя {user.Name} ({user.Username})", "User", user.Id);
 
-                    // Удалить напрямую через SQL (обходит возможные проблемы с трекером EF)
-                    await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
-                    await db.SaveChangesAsync();
-                    await _sync.QueueLocalActivityLogAsync(delLog);
-                    await LoadUsersAsync();
-                    SetStatus(apiDeleted ? $"Пользователь {user.Name} удалён" : $"Пользователь {user.Name} удалён локально (на сервере — возможно, руководитель проекта)");
-                }
-                catch (Exception ex)
-                {
-                    SetStatus($"Ошибка удаления: {ex.Message}");
-                }
-            });
-    }
-
-    // ── Confirm overlay ───────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task ExecuteConfirmAsync()
-    {
-        IsConfirmOverlayOpen = false;
-        if (_confirmAction is not null) await _confirmAction();
-        _confirmAction = null;
-    }
-
-    [RelayCommand]
-    private void CancelConfirm()
-    {
-        IsConfirmOverlayOpen = false;
-        _confirmAction = null;
+            // Удалить напрямую через SQL (обходит возможные проблемы с трекером EF)
+            await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
+            await db.SaveChangesAsync();
+            await _sync.QueueLocalActivityLogAsync(delLog);
+            await LoadUsersAsync();
+            SetStatus(apiDeleted ? $"Пользователь {user.Name} удалён" : $"Пользователь {user.Name} удалён локально (на сервере — возможно, руководитель проекта)");
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Ошибка удаления: {ex.Message}");
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -646,6 +585,16 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private async Task RestoreProjectAsync(ArchiveRow? row)
     {
         if (row is null) return;
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.ShowNonDestructiveConfirmation(owner, "Восстановить проект?", row.Name, "Восстановить");
+        if (!confirmed) return;
+
+        await RestoreProjectInternalAsync(row);
+    }
+
+    private async Task RestoreProjectInternalAsync(ArchiveRow? row)
+    {
+        if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
         p.IsArchived = false;
@@ -682,42 +631,45 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void OpenPermanentDeleteProjectConfirm(ArchiveRow? row)
+    private async Task PermanentDeleteProjectAsync(ArchiveRow? row)
     {
         if (row is null) return;
-        SetupConfirm("Удалить навсегда?", row.Name, "Удалить навсегда", destructive: true, async () =>
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
-            var taskIds = await db.Tasks.Where(t => t.ProjectId == p.Id).Select(t => t.Id).ToListAsync();
-            var stageIds = taskIds.Count == 0
-                ? new List<Guid>()
-                : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
-            var pendingScope = new HashSet<Guid> { p.Id };
-            foreach (var tid in taskIds) pendingScope.Add(tid);
-            foreach (var sid in stageIds) pendingScope.Add(sid);
-            await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "проект", row.Name, "Это действие удалит проект и все связанные задачи и этапы навсегда.");
+        if (!confirmed) return;
 
-            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда проект «{p.Name}»", "Project", p.Id);
-            await _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Delete, new { });
-            await LocalDbGraphDeletion.PermanentlyDeleteProjectGraphAsync(db, p.Id);
-            await db.SaveChangesAsync();
-            await _sync.QueueLocalActivityLogAsync(log);
-            await LoadArchiveAsync();
-            SetStatus($"Проект «{p.Name}» удалён навсегда");
-        });
-    }
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var p = await db.Projects.FindAsync(row.Id); if (p is null) return;
+        var taskIds = await db.Tasks.Where(t => t.ProjectId == p.Id).Select(t => t.Id).ToListAsync();
+        var stageIds = taskIds.Count == 0
+            ? new List<Guid>()
+            : await db.TaskStages.Where(s => taskIds.Contains(s.TaskId)).Select(s => s.Id).ToListAsync();
+        var pendingScope = new HashSet<Guid> { p.Id };
+        foreach (var tid in taskIds) pendingScope.Add(tid);
+        foreach (var sid in stageIds) pendingScope.Add(sid);
+        await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
 
-    [RelayCommand]
-    private void OpenRestoreProjectConfirm(ArchiveRow? row)
-    {
-        if (row is null) return;
-        SetupConfirm("Восстановить проект?", row.Name, "Восстановить", destructive: false,
-            () => RestoreProjectAsync(row));
+        var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда проект «{p.Name}»", "Project", p.Id);
+        await _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Delete, new { });
+        await LocalDbGraphDeletion.PermanentlyDeleteProjectGraphAsync(db, p.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync();
+        SetStatus($"Проект «{p.Name}» удалён навсегда");
     }
 
     [RelayCommand]
     private async Task RestoreTaskAsync(ArchiveRow? row)
+    {
+        if (row is null) return;
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.ShowNonDestructiveConfirmation(owner, "Восстановить задачу?", row.Name, "Восстановить");
+        if (!confirmed) return;
+
+        await RestoreTaskInternalAsync(row);
+    }
+
+    private async Task RestoreTaskInternalAsync(ArchiveRow? row)
     {
         if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -746,38 +698,41 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void OpenPermanentDeleteTaskConfirm(ArchiveRow? row)
+    private async Task PermanentDeleteTaskAsync(ArchiveRow? row)
     {
         if (row is null) return;
-        SetupConfirm("Удалить навсегда?", row.Name, "Удалить навсегда", destructive: true, async () =>
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
-            var stageIds = await db.TaskStages.Where(s => s.TaskId == t.Id).Select(s => s.Id).ToListAsync();
-            var pendingScope = new HashSet<Guid> { t.Id };
-            foreach (var sid in stageIds) pendingScope.Add(sid);
-            await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "задачу", row.Name, "Это действие удалит задачу и все связанные этапы навсегда.");
+        if (!confirmed) return;
 
-            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда задачу «{t.Name}»", "Task", t.Id);
-            await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Delete, new { });
-            await LocalDbGraphDeletion.PermanentlyDeleteTaskGraphAsync(db, t.Id);
-            await db.SaveChangesAsync();
-            await _sync.QueueLocalActivityLogAsync(log);
-            await LoadArchiveAsync();
-            SetStatus($"Задача «{t.Name}» удалена навсегда");
-        });
-    }
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var t = await db.Tasks.FindAsync(row.Id); if (t is null) return;
+        var stageIds = await db.TaskStages.Where(s => s.TaskId == t.Id).Select(s => s.Id).ToListAsync();
+        var pendingScope = new HashSet<Guid> { t.Id };
+        foreach (var sid in stageIds) pendingScope.Add(sid);
+        await db.PendingOperations.Where(o => pendingScope.Contains(o.EntityId)).ExecuteDeleteAsync();
 
-    [RelayCommand]
-    private void OpenRestoreTaskConfirm(ArchiveRow? row)
-    {
-        if (row is null) return;
-        SetupConfirm("Восстановить задачу?", row.Name, "Восстановить", destructive: false,
-            () => RestoreTaskAsync(row));
+        var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда задачу «{t.Name}»", "Task", t.Id);
+        await _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Delete, new { });
+        await LocalDbGraphDeletion.PermanentlyDeleteTaskGraphAsync(db, t.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync();
+        SetStatus($"Задача «{t.Name}» удалена навсегда");
     }
 
     [RelayCommand]
     private async Task RestoreStageAsync(ArchiveRow? row)
+    {
+        if (row is null) return;
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.ShowNonDestructiveConfirmation(owner, "Восстановить этап?", row.Name, "Восстановить");
+        if (!confirmed) return;
+
+        await RestoreStageInternalAsync(row);
+    }
+
+    private async Task RestoreStageInternalAsync(ArchiveRow? row)
     {
         if (row is null) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -868,67 +823,62 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void OpenPermanentDeleteStageConfirm(ArchiveRow? row)
+    private async Task PermanentDeleteStageAsync(ArchiveRow? row)
     {
         if (row is null) return;
-        SetupConfirm("Удалить навсегда?", row.Name, "Удалить навсегда", destructive: true, async () =>
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            var s = await db.TaskStages.FindAsync(row.Id); if (s is null) return;
-            await db.PendingOperations.Where(o => o.EntityId == s.Id).ExecuteDeleteAsync();
-            AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда этап «{s.Name}»", "Stage", s.Id);
-            await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Delete, new { });
-            await LocalDbGraphDeletion.PermanentlyDeleteStageGraphAsync(db, s.Id);
-            await db.SaveChangesAsync();
-            await LoadArchiveAsync();
-            SetStatus($"Этап «{s.Name}» удалён навсегда");
-        });
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "этап", row.Name, "Это действие удалит этап навсегда.");
+        if (!confirmed) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var s = await db.TaskStages.FindAsync(row.Id); if (s is null) return;
+        await db.PendingOperations.Where(o => o.EntityId == s.Id).ExecuteDeleteAsync();
+        AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда этап «{s.Name}»", "Stage", s.Id);
+        await _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Delete, new { });
+        await LocalDbGraphDeletion.PermanentlyDeleteStageGraphAsync(db, s.Id);
+        await db.SaveChangesAsync();
+        await LoadArchiveAsync();
+        SetStatus($"Этап «{s.Name}» удалён навсегда");
     }
 
     [RelayCommand]
-    private void OpenPermanentDeleteMaterialConfirm(ArchiveRow? row)
+    private async Task PermanentDeleteMaterialAsync(ArchiveRow? row)
     {
         if (row is null) return;
-        SetupConfirm("Удалить материал навсегда?", row.Name, "Удалить навсегда", destructive: true, async () =>
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            var m = await db.Materials.FindAsync(row.Id); if (m is null) return;
-            await db.PendingOperations.Where(o => o.EntityId == m.Id).ExecuteDeleteAsync();
-            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда материал «{m.Name}»", "Material", m.Id);
-            await _sync.QueueOperationAsync("Material", m.Id, SyncOperation.Delete, new { });
-            await LocalDbGraphDeletion.PermanentlyDeleteMaterialGraphAsync(db, m.Id);
-            await db.SaveChangesAsync();
-            await _sync.QueueLocalActivityLogAsync(log);
-            await LoadArchiveAsync();
-            SetStatus($"Материал «{m.Name}» удалён навсегда");
-        });
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "материал", row.Name, "Это действие удалит материал навсегда.");
+        if (!confirmed) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var m = await db.Materials.FindAsync(row.Id); if (m is null) return;
+        await db.PendingOperations.Where(o => o.EntityId == m.Id).ExecuteDeleteAsync();
+        var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда материал «{m.Name}»", "Material", m.Id);
+        await _sync.QueueOperationAsync("Material", m.Id, SyncOperation.Delete, new { });
+        await LocalDbGraphDeletion.PermanentlyDeleteMaterialGraphAsync(db, m.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync();
+        SetStatus($"Материал «{m.Name}» удалён навсегда");
     }
 
     [RelayCommand]
-    private void OpenPermanentDeleteEquipmentConfirm(ArchiveRow? row)
+    private async Task PermanentDeleteEquipmentAsync(ArchiveRow? row)
     {
         if (row is null) return;
-        SetupConfirm("Удалить оборудование навсегда?", row.Name, "Удалить навсегда", destructive: true, async () =>
-        {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            var e = await db.Equipments.FindAsync(row.Id); if (e is null) return;
-            await db.PendingOperations.Where(o => o.EntityId == e.Id).ExecuteDeleteAsync();
-            var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда оборудование «{e.Name}»", "Equipment", e.Id);
-            await _sync.QueueOperationAsync("Equipment", e.Id, SyncOperation.Delete, new { });
-            await LocalDbGraphDeletion.PermanentlyDeleteEquipmentGraphAsync(db, e.Id);
-            await db.SaveChangesAsync();
-            await _sync.QueueLocalActivityLogAsync(log);
-            await LoadArchiveAsync();
-            SetStatus($"Оборудование «{e.Name}» удалено навсегда");
-        });
-    }
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "оборудование", row.Name, "Это действие удалит оборудование навсегда.");
+        if (!confirmed) return;
 
-    [RelayCommand]
-    private void OpenRestoreStageConfirm(ArchiveRow? row)
-    {
-        if (row is null) return;
-        SetupConfirm("Восстановить этап?", row.Name, "Восстановить", destructive: false,
-            () => RestoreStageAsync(row));
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var e = await db.Equipments.FindAsync(row.Id); if (e is null) return;
+        await db.PendingOperations.Where(o => o.EntityId == e.Id).ExecuteDeleteAsync();
+        var log = AddAdminLog(db, ActivityActionKind.PermanentlyDeleted, $"Удалил навсегда оборудование «{e.Name}»", "Equipment", e.Id);
+        await _sync.QueueOperationAsync("Equipment", e.Id, SyncOperation.Delete, new { });
+        await LocalDbGraphDeletion.PermanentlyDeleteEquipmentGraphAsync(db, e.Id);
+        await db.SaveChangesAsync();
+        await _sync.QueueLocalActivityLogAsync(log);
+        await LoadArchiveAsync();
+        SetStatus($"Оборудование «{e.Name}» удалено навсегда");
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -1019,19 +969,23 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void OpenClearHistoryConfirm()
+    private async Task ClearHistoryAsync()
     {
-        SetupConfirm(
-            "Очистить историю?",
-            "Все записи истории действий будут удалены навсегда",
-            "Очистить",
-            destructive: true,
-            async () =>
-            {
-                await using var db = await _dbFactory.CreateDbContextAsync();
-                await db.ActivityLogs.Where(l => l.ActionType == null || !ActivityKinds.Contains(l.ActionType)).ExecuteDeleteAsync();
-                await LoadHistoryAsync(); SetStatus("История действий очищена");
-            });
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "историю", "Все записи истории действий будут удалены навсегда");
+        if (!confirmed) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.ActivityLogs.Where(l => l.ActionType == ActivityActionKind.Created
+            || l.ActionType == ActivityActionKind.Updated
+            || l.ActionType == ActivityActionKind.Deleted
+            || l.ActionType == ActivityActionKind.MarkedForDeletion
+            || l.ActionType == ActivityActionKind.Restored
+            || l.ActionType == ActivityActionKind.UnmarkedForDeletion
+            || l.ActionType == ActivityActionKind.PermanentlyDeleted).ExecuteDeleteAsync();
+        await db.SaveChangesAsync();
+        await LoadHistoryAsync();
+        SetStatus("История очищена");
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -1126,19 +1080,16 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void OpenClearActivityConfirm()
+    private async Task ClearActivityAsync()
     {
-        SetupConfirm(
-            "Очистить журнал активности?",
-            "Все записи активности будут удалены навсегда",
-            "Очистить",
-            destructive: true,
-            async () =>
-            {
-                await using var db = await _dbFactory.CreateDbContextAsync();
-                await db.ActivityLogs.Where(l => l.ActionType != null && ActivityKinds.Contains(l.ActionType)).ExecuteDeleteAsync();
-                await LoadActivityAsync(); SetStatus("Журнал активности очищен");
-            });
+        var owner = Application.Current.MainWindow;
+        var confirmed = ConfirmDeleteDialog.Show(owner, "журнал активности", "Все записи активности будут удалены навсегда");
+        if (!confirmed) return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await db.ActivityLogs.Where(l => l.ActionType != null && ActivityKinds.Contains(l.ActionType)).ExecuteDeleteAsync();
+        await LoadActivityAsync();
+        SetStatus("Журнал активности очищен");
     }
 
     // ══════════════════════════════════════════════════════════════════════

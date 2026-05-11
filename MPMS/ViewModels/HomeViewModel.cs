@@ -339,40 +339,112 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 var workerTaskIds = await db.TaskAssignees.Where(ta => ta.UserId == userId).Select(ta => ta.TaskId).ToListAsync();
                 var foremanProjectIds = isForeman ? await db.ProjectMembers.Where(m => m.UserId == userId).Select(m => m.ProjectId).ToListAsync() : new List<Guid>();
 
-                // All stages assigned to user (directly or via parent task/project)
-                var stagesQuery = from s in db.TaskStages
-                                  join t in db.Tasks on s.TaskId equals t.Id
-                                  join p in db.Projects on t.ProjectId equals p.Id
-                                  where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) ||
-                                         t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                         (isForeman && foremanProjectIds.Contains(p.Id)))
-                                     && !s.IsMarkedForDeletion && !s.IsArchived
-                                     && !t.IsMarkedForDeletion && !t.IsArchived
-                                     && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
-                                  select s;
+                if (isWorker)
+                {
+                    // Workers: count only stages assigned to them
+                    var stagesQuery = from s in db.TaskStages
+                                      join t in db.Tasks on s.TaskId equals t.Id
+                                      join p in db.Projects on t.ProjectId equals p.Id
+                                      where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id))
+                                         && !s.IsMarkedForDeletion && !s.IsArchived
+                                         && !t.IsMarkedForDeletion && !t.IsArchived
+                                         && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
+                                      select s;
 
-                // Tasks assigned to user (if they have no stages, they are distinct work items)
-                var tasksQuery = from t in db.Tasks
-                                 join p in db.Projects on t.ProjectId equals p.Id
-                                 where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                        (isForeman && foremanProjectIds.Contains(p.Id)))
-                                    && !db.TaskStages.Any(s => s.TaskId == t.Id) // Only tasks WITHOUT stages (others are counted via stages)
-                                    && !t.IsMarkedForDeletion && !t.IsArchived
-                                    && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
-                                 select t;
+                    Card1Completed = await stagesQuery.CountAsync(s => s.Status == StageStatus.Completed);
+                    Card1InProgress = await stagesQuery.CountAsync(s => s.Status == StageStatus.InProgress);
+                    Card1Planned = await stagesQuery.CountAsync(s => s.Status == StageStatus.Planned);
+                    Card1Total = Card1Completed + Card1InProgress + Card1Planned;
 
-                int stagesCompleted = await stagesQuery.CountAsync(s => s.Status == StageStatus.Completed);
-                int stagesInProgress = await stagesQuery.CountAsync(s => s.Status == StageStatus.InProgress);
-                int stagesPlanned = await stagesQuery.CountAsync(s => s.Status == StageStatus.Planned);
+                    Card1Value = GetPlural(Card1Total, "этап", "этапа", "этапов");
+                    Card1SubValue = "ваша нагрузка";
+                    Card1TooltipDesc = "Ваши этапы по статусам:";
 
-                int tasksCompleted = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.Completed);
-                int tasksInProgress = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.InProgress || t.Status == Models.TaskStatus.Paused);
-                int tasksPlanned = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.Planned);
+                    // Card 2: Next Action for worker (stages only)
+                    var nextStage = await stagesQuery.Where(s => s.Status != StageStatus.Completed)
+                        .OrderBy(s => s.DueDate == null).ThenBy(s => s.DueDate).FirstOrDefaultAsync();
 
-                Card1Completed = stagesCompleted + tasksCompleted;
-                Card1InProgress = stagesInProgress + tasksInProgress;
-                Card1Planned = stagesPlanned + tasksPlanned;
-                Card1Total = Card1Completed + Card1InProgress + Card1Planned;
+                    Card2Title = "Ближайшее";
+                    if (nextStage != null)
+                    {
+                        Card2Value = nextStage.Name;
+                        Card2SubValue = nextStage.DueDate?.ToString("dd.MM.yyyy") ?? "Срок не задан";
+
+                        if (nextStage.DueDate.HasValue)
+                        {
+                            var days = (nextStage.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
+                            Card2TooltipDesc = days switch
+                            {
+                                0 => "Крайний срок — СЕГОДНЯ. Нужно завершить как можно скорее.",
+                                1 => "Крайний срок — завтра. Пора приступать к финализации.",
+                                > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
+                                _ => "Срок выполнения уже ИСТЕК. Требуется срочное завершение."
+                            };
+                        }
+                        else
+                        {
+                            Card2TooltipDesc = "Срок выполнения не установлен.";
+                        }
+                    }
+                    else
+                    {
+                        Card2Value = "Нет этапов";
+                        Card2SubValue = "—";
+                        Card2TooltipDesc = "На данный момент у вас нет активных этапов с установленным сроком.";
+                    }
+                }
+                else // Foreman
+                {
+                    // Foremen: count only tasks assigned to them
+                    var tasksQuery = from t in db.Tasks
+                                     join p in db.Projects on t.ProjectId equals p.Id
+                                     where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id))
+                                        && !t.IsMarkedForDeletion && !t.IsArchived
+                                        && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
+                                     select t;
+
+                    Card1Completed = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.Completed);
+                    Card1InProgress = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.InProgress || t.Status == Models.TaskStatus.Paused);
+                    Card1Planned = await tasksQuery.CountAsync(t => t.Status == Models.TaskStatus.Planned);
+                    Card1Total = Card1Completed + Card1InProgress + Card1Planned;
+
+                    Card1Value = GetPlural(Card1Total, "задача", "задачи", "задач");
+                    Card1SubValue = "задачи проектов";
+                    Card1TooltipDesc = "Задачи в ваших проектах по статусам:";
+
+                    // Card 2: Next Action for foreman (tasks only)
+                    var nextTask = await tasksQuery.Where(t => t.Status != Models.TaskStatus.Completed)
+                        .OrderBy(t => t.DueDate == null).ThenBy(t => t.DueDate).FirstOrDefaultAsync();
+
+                    Card2Title = "Ближайшее";
+                    if (nextTask != null)
+                    {
+                        Card2Value = nextTask.Name;
+                        Card2SubValue = nextTask.DueDate?.ToString("dd.MM.yyyy") ?? "Срок не задан";
+
+                        if (nextTask.DueDate.HasValue)
+                        {
+                            var days = (nextTask.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
+                            Card2TooltipDesc = days switch
+                            {
+                                0 => "Крайний срок — СЕГОДНЯ. Не забудьте отметить выполнение.",
+                                1 => "Крайний срок — завтра. Рекомендуется проверить готовность.",
+                                > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
+                                _ => "Срок выполнения уже ИСТЕК. Задача находится в просрочке."
+                            };
+                        }
+                        else
+                        {
+                            Card2TooltipDesc = "Срок выполнения не установлен.";
+                        }
+                    }
+                    else
+                    {
+                        Card2Value = "Нет задач";
+                        Card2SubValue = "—";
+                        Card2TooltipDesc = "На данный момент у вас нет активных задач с установленным сроком.";
+                    }
+                }
 
                 // Calculate offsets for gradient (0.0 to 1.0)
                 if (Card1Total > 0)
@@ -386,92 +458,26 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card1InProgressOffset = 0;
                 }
 
-                // Terminology: for workers/foremen we show tasks/stages
-                Card1Value = GetPlural(Card1Total, "задача", "задачи", "задач");
-                Card1SubValue = isWorker ? "ваша нагрузка" : "задачи и этапы проектов";
-                Card1TooltipDesc = isWorker
-                    ? "Ваш текущий план работ (задачи и этапы):"
-                    : "Общая нагрузка по всем вашим проектам:";
-
-                // Card 2: Next Action
-                var nextStage = await stagesQuery.Where(s => s.Status != StageStatus.Completed)
-                    .OrderBy(s => s.DueDate == null).ThenBy(s => s.DueDate).FirstOrDefaultAsync();
-                var nextTask = await tasksQuery.Where(t => t.Status != Models.TaskStatus.Completed)
-                    .OrderBy(t => t.DueDate == null).ThenBy(t => t.DueDate).FirstOrDefaultAsync();
-
-                Card2Title = "Ближайшее";
-                if (nextStage != null && (nextTask == null || (nextStage.DueDate ?? DateOnly.MaxValue) <= (nextTask.DueDate ?? DateOnly.MaxValue)))
-                {
-                    Card2Value = nextStage.Name;
-                    Card2SubValue = nextStage.DueDate?.ToString("dd.MM.yyyy") ?? "Срок не задан";
-
-                    if (nextStage.DueDate.HasValue)
-                    {
-                        var days = (nextStage.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                        Card2TooltipDesc = days switch
-                        {
-                            0 => "Крайний срок — СЕГОДНЯ. Нужно завершить как можно скорее.",
-                            1 => "Крайний срок — завтра. Пора приступать к финализации.",
-                            > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
-                            _ => "Срок выполнения уже ИСТЕК. Требуется срочное завершение."
-                        };
-                    }
-                    else
-                    {
-                        Card2TooltipDesc = "Срок выполнения не установлен.";
-                    }
-                }
-                else if (nextTask != null)
-                {
-                    Card2Value = nextTask.Name;
-                    Card2SubValue = nextTask.DueDate?.ToString("dd.MM.yyyy") ?? "Срок не задан";
-
-                    if (nextTask.DueDate.HasValue)
-                    {
-                        var days = (nextTask.DueDate.Value.ToDateTime(TimeOnly.MinValue) - DateTime.Today).Days;
-                        Card2TooltipDesc = days switch
-                        {
-                            0 => "Крайний срок — СЕГОДНЯ. Не забудьте отметить выполнение.",
-                            1 => "Крайний срок — завтра. Рекомендуется проверить готовность.",
-                            > 1 => $"До дедлайна осталось {GetPlural(days, "день", "дня", "дней")}.",
-                            _ => "Срок выполнения уже ИСТЕК. Задача находится в просрочке."
-                        };
-                    }
-                    else
-                    {
-                        Card2TooltipDesc = "Срок выполнения не установлен.";
-                    }
-                }
-                else
-                {
-                    Card2Value = isWorker ? "Нет этапов" : "Нет задач";
-                    Card2SubValue = "—";
-                    Card2TooltipDesc = "На данный момент у вас нет активных задач с установленным сроком.";
-                }
-
                 // For Attention, we count ALL overdue tasks assigned to user
                 var overdueTasksCount = await (from t in db.Tasks
                                                join p in db.Projects on t.ProjectId equals p.Id
-                                               where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                                      (isForeman && foremanProjectIds.Contains(p.Id)))
+                                               where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id))
                                                   && t.Status != Models.TaskStatus.Completed
                                                   && t.DueDate < today
-                                                  && !t.IsArchived
-                                                  && !p.IsArchived && !p.IsClosed
+                                                  && !t.IsMarkedForDeletion && !t.IsArchived
+                                                  && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
                                                select t.Id).CountAsync();
 
                 // For Attention, we count ALL overdue stages assigned to user
                 var overdueStagesCount = await (from s in db.TaskStages
                                                 join t in db.Tasks on s.TaskId equals t.Id
                                                 join p in db.Projects on t.ProjectId equals p.Id
-                                                where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id) ||
-                                                       t.AssignedUserId == userId || workerTaskIds.Contains(t.Id) ||
-                                                       (isForeman && foremanProjectIds.Contains(p.Id)))
+                                                where (s.AssignedUserId == userId || workerStageIds.Contains(s.Id))
                                                    && s.Status != StageStatus.Completed
                                                    && s.DueDate < today
-                                                   && !s.IsArchived
-                                                   && !t.IsArchived
-                                                   && !p.IsArchived && !p.IsClosed
+                                                   && !s.IsMarkedForDeletion && !s.IsArchived
+                                                   && !t.IsMarkedForDeletion && !t.IsArchived
+                                                   && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
                                                 select s.Id).CountAsync();
 
                 Card3Value = overdueStagesCount + overdueTasksCount;
@@ -510,10 +516,14 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 }
                 else // Foreman
                 {
-                    // For foreman, also count unassigned tasks in their projects
-                    int unassigned = await db.Tasks.CountAsync(t => foremanProjectIds.Contains(t.ProjectId) &&
-                                                                   t.AssignedUserId == null &&
-                                                                   !t.IsMarkedForDeletion && !t.IsArchived);
+                    // For foreman, also count unassigned tasks in their projects (management concern)
+                    int unassigned = await (from t in db.Tasks
+                                             join p in db.Projects on t.ProjectId equals p.Id
+                                             where foremanProjectIds.Contains(p.Id)
+                                                && t.AssignedUserId == null
+                                                && !t.IsMarkedForDeletion && !t.IsArchived
+                                                && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
+                                             select t.Id).CountAsync();
                     Card3Value = overdueStagesCount + overdueTasksCount + unassigned;
                     Card3Segment1 = overdueTasksCount;
                     Card3Segment2 = overdueStagesCount;

@@ -95,7 +95,7 @@
                 <Button Grid.Column="6"
                         Content="Очистить журнал"
                         Style="{StaticResource OutlineBtn}"
-                        Command="{Binding OpenClearActivityConfirmCommand}"/>
+                        Command="{Binding ClearActivityCommand}"/>
             </Grid>
         </Border>
 

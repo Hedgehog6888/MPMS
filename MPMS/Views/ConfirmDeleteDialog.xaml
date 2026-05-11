@@ -21,6 +21,106 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
+        
+        <Style x:Key="RedDialogBtn" TargetType="Button" BasedOn="{StaticResource DialogBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#EF4444" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#DC2626"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="GrayDialogBtn" TargetType="Button" BasedOn="{StaticResource DialogBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#000000" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#1a1a1a"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AmberDialogBtn" TargetType="Button" BasedOn="{StaticResource DialogBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#D97706" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#B45309"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GreenDialogBtn" TargetType="Button" BasedOn="{StaticResource DialogBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#00875A" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#006B47"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BlueDialogBtn" TargetType="Button" BasedOn="{StaticResource DialogBtn}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="#2563EB" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="White"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Drop shadow border wrapping -->
@@ -34,20 +134,15 @@
         <StackPanel>
 
             <!-- Header -->
-            <Border Background="#FEF2F2" CornerRadius="12,12,0,0" Padding="24,20,24,16">
+            <Border x:Name="HeaderBorder" Background="White" CornerRadius="12,12,0,0" Padding="24,20,24,16"
+                    BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                 <Grid>
-                    <StackPanel Orientation="Horizontal">
-                        <!-- Warning icon -->
-                        <Border Width="40" Height="40" CornerRadius="20" Background="#FEF2F2"
-                                Margin="0,0,14,0" VerticalAlignment="Center">
-                            <TextBlock Text="⚠" FontSize="18" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" Foreground="#EF4444"/>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel>
                             <TextBlock x:Name="TitleText" Text="Удалить элемент?"
                                        FontSize="16" FontWeight="Bold" Foreground="#000000"/>
                             <TextBlock x:Name="SubtitleText" Text="Это действие нельзя отменить" FontSize="12"
-                                       Foreground="#6B778C" Margin="0,3,0,0"/>
+                                       Foreground="#EF4444" Margin="0,3,0,0"/>
                         </StackPanel>
                     </StackPanel>
                     <!-- Close button -->
@@ -106,6 +201,32 @@
                     <TextBlock Text="Укажите причину закрытия проекта."
                                FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
                 </StackPanel>
+
+                <!-- Block reason field (for block user) -->
+                <StackPanel x:Name="BlockReasonPanel" Visibility="Collapsed" Margin="0,14,0,0">
+                    <TextBlock Text="Причина блокировки (необязательно)" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#344563" Margin="0,0,0,6"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,0,0,4">
+                        <TextBox x:Name="BlockReasonTextBox"
+                                 BorderThickness="0" Background="Transparent"
+                                 Foreground="#000000" FontSize="13"
+                                 Height="72" TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalContentAlignment="Top"/>
+                    </Border>
+                    <TextBlock Text="Причина будет показана пользователю при входе."
+                               FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
+                </StackPanel>
+
+                <!-- Block reason display (for unblock user) -->
+                <StackPanel x:Name="BlockReasonDisplayPanel" Visibility="Collapsed" Margin="0,14,0,0">
+                    <TextBlock Text="Причина блокировки" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#344563" Margin="0,0,0,6"/>
+                    <Border Background="#F4F5F7" CornerRadius="8" Padding="12,10" Margin="0,0,0,0">
+                        <TextBlock x:Name="BlockReasonDisplayText" FontSize="13" Foreground="#6B778C"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+                </StackPanel>
             </StackPanel>
 
             <!-- Footer -->
@@ -133,24 +254,8 @@
                     </Button>
                     <Button x:Name="ConfirmBtn" HorizontalAlignment="Right"
                             Click="Confirm_Click"
-                            Style="{StaticResource DialogBtn}"
-                            Content="Удалить">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Bg" Background="#EF4444" CornerRadius="8"
-                                        Padding="{TemplateBinding Padding}" Height="{TemplateBinding Height}">
-                                    <TextBlock Text="{TemplateBinding Content}" Foreground="White"
-                                               FontSize="13" FontWeight="SemiBold"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bg" Property="Background" Value="#DC2626"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                            Style="{StaticResource RedDialogBtn}"
+                            Content="Удалить"/>
                 </Grid>
             </Border>
         </StackPanel>

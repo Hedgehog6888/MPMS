@@ -32,6 +32,8 @@ public partial class CreateTaskOverlay : UserControl
     private List<AssigneePickerItem> _workerItems = [];
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private TaskPriority _selectedPriority = TaskPriority.Medium;
+    private bool _isCurrentUserForeman = false;
+    private Guid? _currentUserId = null;
 
     public CreateTaskOverlay()
     {
@@ -81,7 +83,25 @@ public partial class CreateTaskOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        var projects = await db.Projects.OrderBy(p => p.Name).ToListAsync();
+        var authService = App.Services.GetRequiredService<IAuthService>();
+        var currentUserId = authService.UserId;
+
+        // Filter projects: not archived, not marked for deletion, not closed, and user is a member
+        var projectQuery = db.Projects
+            .Where(p => !p.IsArchived && !p.IsMarkedForDeletion && !p.IsClosed);
+
+        if (currentUserId.HasValue)
+        {
+            // Only show projects where current user is a member (including managers)
+            var userProjectIds = await db.ProjectMembers
+                .Where(pm => pm.UserId == currentUserId.Value)
+                .Select(pm => pm.ProjectId)
+                .Distinct()
+                .ToListAsync();
+            projectQuery = projectQuery.Where(p => userProjectIds.Contains(p.Id));
+        }
+
+        var projects = await projectQuery.OrderBy(p => p.Name).ToListAsync();
         ProjectCombo.ItemsSource = projects;
 
         // Preselect project
@@ -133,6 +153,13 @@ public partial class CreateTaskOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
+        var authService = App.Services.GetRequiredService<IAuthService>();
+        _currentUserId = authService.UserId;
+        var currentUserRole = authService.UserRole ?? "";
+
+        // Check if current user is a foreman or manager
+        _isCurrentUserForeman = currentUserRole is "Foreman" or "Прораб";
+        var isCurrentUserManager = currentUserRole is "ProjectManager" or "Manager" or "Project Manager";
 
         // Only project members can be assigned to tasks (foremen + workers), exclude blocked users
         var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
@@ -167,10 +194,38 @@ public partial class CreateTaskOverlay : UserControl
             .Where(m => m.UserRole is "Foreman" or "Прораб")
             .Select(BuildItem)
             .ToList();
+
+        // If current user is a foreman or manager in the project, only show them and auto-select
+        if (_currentUserId.HasValue)
+        {
+            var currentUserInForemen = _foremanItems.FirstOrDefault(item => item.UserId == _currentUserId.Value);
+            if (currentUserInForemen != null)
+            {
+                _foremanItems = [currentUserInForemen];
+                // Auto-select the current user
+                if (!_selectedAssigneeIds.Contains(_currentUserId.Value))
+                    _selectedAssigneeIds.Add(_currentUserId.Value);
+            }
+        }
+
         _workerItems = members
             .Where(m => m.UserRole is "Worker" or "Работник")
             .Select(BuildItem)
             .ToList();
+
+        // If current user is a worker in the project, only show them and auto-select
+        if (_currentUserId.HasValue)
+        {
+            var currentUserInWorkers = _workerItems.FirstOrDefault(item => item.UserId == _currentUserId.Value);
+            if (currentUserInWorkers != null)
+            {
+                _workerItems = [currentUserInWorkers];
+                // Auto-select the current user
+                if (!_selectedAssigneeIds.Contains(_currentUserId.Value))
+                    _selectedAssigneeIds.Add(_currentUserId.Value);
+            }
+        }
+
         _allAssigneeItems = [.. _foremanItems, .. _workerItems];
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -188,8 +243,8 @@ public partial class CreateTaskOverlay : UserControl
             {
                 NoProjHint.Visibility = Visibility.Collapsed;
                 ForemanPickerBorder.Visibility = _foremanItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                WorkerPickerBorder.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 ForemanSectionTitle.Visibility = _foremanItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                WorkerPickerBorder.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 WorkerSectionTitle.Visibility = _workerItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
             RefreshAssigneeItems();
@@ -253,10 +308,19 @@ public partial class CreateTaskOverlay : UserControl
             Margin = new Thickness(4, 0, 0, 0),
             Tag = item.UserId
         };
+        // Don't allow removing current user themselves
+        if (item.UserId == _currentUserId)
+        {
+            removeBtn.IsEnabled = false;
+            removeBtn.Opacity = 0.3;
+        }
         removeBtn.Click += (s, _) =>
         {
             if (s is Button b && b.Tag is Guid uid)
             {
+                // Prevent removing current user themselves
+                if (uid == _currentUserId)
+                    return;
                 _selectedAssigneeIds.Remove(uid);
                 RefreshAssigneeItems();
                 RefreshAssigneeChips();
@@ -270,6 +334,9 @@ public partial class CreateTaskOverlay : UserControl
     private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
+        // Prevent current user from toggling themselves
+        if (item.UserId == _currentUserId)
+            return;
         if (_selectedAssigneeIds.Contains(item.UserId))
             _selectedAssigneeIds.Remove(item.UserId);
         else

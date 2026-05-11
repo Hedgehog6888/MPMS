@@ -1542,14 +1542,25 @@
                             <!-- Empty state -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                         Visibility="{Binding FilteredTasks.Count, Converter={StaticResource IntToVisInv}}">
-                                <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}" 
+                                <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
                                        Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                                <TextBlock Text="Задачи не найдены" 
-                                           FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                                <TextBlock Text="Задачи не найдены"
+                                           FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
                                            HorizontalAlignment="Center"/>
-                                <TextBlock Text="Создайте первую задачу для этого проекта" 
-                                           FontSize="12" Foreground="#64748B" TextAlignment="Center" 
-                                           Margin="0,8,0,0" LineHeight="18"/>
+                                <TextBlock Text="Создайте первую задачу для этого проекта"
+                                           FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                           Margin="0,8,0,0" LineHeight="18">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Project.IsClosed}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -1790,7 +1801,6 @@
                                                                         <Setter Property="BorderBrush" Value="#EF4444"/>
                                                                     </DataTrigger>
                                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="Background" Value="#F1F5F9"/>
                                                                         <Setter Property="BorderBrush" Value="#111111"/>
                                                                     </Trigger>
                                                                     <EventTrigger RoutedEvent="Loaded">
@@ -1874,7 +1884,7 @@
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </StackPanel.Style>
-                                                                <Button Tag="{Binding}"
+                                                                <Button Tag="{Binding Stage}"
                                                                         Click="StartStageFromProject_Click" Margin="0,0,4,0"
                                                                         Style="{StaticResource IconButton}" FontSize="12"
                                                                         Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Planned}">
@@ -1886,7 +1896,7 @@
                                                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
                                                                     </StackPanel>
                                                                 </Button>
-                                                                <Button Tag="{Binding}"
+                                                                <Button Tag="{Binding Stage}"
                                                                         Click="CompleteStageFromProject_Click" Margin="0,0,4,0"
                                                                         Style="{StaticResource IconButton}" FontSize="12"
                                                                         Visibility="{Binding Stage.Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
@@ -1933,7 +1943,7 @@
                                                                         VerticalAlignment="Center" HorizontalAlignment="Right"
                                                                         Visibility="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
                                                                 <!-- Edit (Foreman+, hidden when marked) -->
-                                                                <Button ToolTip="Редактировать" Tag="{Binding}"
+                                                                <Button ToolTip="Редактировать" Tag="{Binding Stage}"
                                                                         Click="EditStageFromProject_Click" Margin="0,0,4,0">
                                                                     <Button.Style>
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
@@ -1950,7 +1960,7 @@
                                                                            VerticalAlignment="Center"/>
                                                                 </Button>
                                                                 <!-- Mark/unmark for deletion (Worker+) -->
-                                                                <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
+                                                                <Button Tag="{Binding Stage}" Click="MarkStageForDeletion_Click"
                                                                         Margin="0,0,4,0">
                                                                     <Button.Style>
                                                                         <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
@@ -2010,7 +2020,7 @@
                                                                 </Button>
                                                                 <!-- Delete stage (Foreman+) -->
                                                                 <Button ToolTip="Удалить этап"
-                                                                        Tag="{Binding}" Click="DeleteStageFromProject_Click">
+                                                                        Tag="{Binding Stage}" Click="DeleteStageFromProject_Click">
                                                                     <Button.Style>
                                                                         <Style TargetType="Button" BasedOn="{StaticResource DangerIconButton}">
                                                                             <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
@@ -2050,16 +2060,27 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     <!-- Empty state -->
-                    <StackPanel Visibility="{Binding ProjectStageGroups.Count, Converter={StaticResource IntToVisInv}}"
+                    <StackPanel Visibility="{Binding AllStages.Count, Converter={StaticResource IntToVisInv}}"
                                 HorizontalAlignment="Center" Margin="0,40,0,40">
                         <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}"
                                Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                        <TextBlock Text="Этапы не найдены" 
-                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                        <TextBlock Text="Этапы не найдены"
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Создайте первый этап" 
-                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
-                                   Margin="0,8,0,0" LineHeight="18"/>
+                        <TextBlock Text="Создайте первый этап"
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                   Margin="0,8,0,0" LineHeight="18">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Project.IsClosed}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                     </StackPanel>
                     </ScrollViewer>
@@ -2274,7 +2295,18 @@
                                                Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
                                     <TextBlock Text="Начните обсуждение проекта" FontSize="13"
                                                Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
-                                               Margin="0,6,0,0" TextAlignment="Center"/>
+                                               Margin="0,6,0,0" TextAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Project.IsClosed}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
@@ -2354,7 +2386,18 @@
                                    Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Добавьте материалы к этапам задач проекта" FontSize="13"
                                    Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
-                                   Margin="0,6,0,0"/>
+                                   Margin="0,6,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Project.IsClosed}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

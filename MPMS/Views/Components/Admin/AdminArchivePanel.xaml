@@ -188,12 +188,12 @@
                                             <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
-                                                        Command="{Binding DataContext.OpenRestoreProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.RestoreProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
-                                                        Command="{Binding DataContext.OpenPermanentDeleteProjectConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.PermanentDeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
@@ -262,12 +262,12 @@
                                             <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
-                                                        Command="{Binding DataContext.OpenRestoreTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.RestoreTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
-                                                        Command="{Binding DataContext.OpenPermanentDeleteTaskConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.PermanentDeleteTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
@@ -336,12 +336,12 @@
                                             <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Восстановить"
-                                                        Command="{Binding DataContext.OpenRestoreStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.RestoreStageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
-                                                        Command="{Binding DataContext.OpenPermanentDeleteStageConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.PermanentDeleteStageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
@@ -410,7 +410,7 @@
                                             <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
-                                                        Command="{Binding DataContext.OpenPermanentDeleteMaterialConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.PermanentDeleteMaterialCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>
@@ -479,7 +479,7 @@
                                             <TextBlock Grid.Column="3" Text="{Binding DeletedAt, Converter={StaticResource UtcToLocalDateTime}, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="#6B778C" VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                 <Button Style="{StaticResource RowIconBtn}" ToolTip="Удалить навсегда"
-                                                        Command="{Binding DataContext.OpenPermanentDeleteEquipmentConfirmCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding DataContext.PermanentDeleteEquipmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}">
                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14"/>
                                                 </Button>

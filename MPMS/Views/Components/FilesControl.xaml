@@ -655,14 +655,25 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <Image Source="{svgc:SvgImage Source=/icons/empty_images.svg, AppName=MPMS}" 
+                        <Image Source="{svgc:SvgImage Source=/icons/empty_images.svg, AppName=MPMS}"
                                Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                        <TextBlock Text="Изображения не найдены" 
-                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                        <TextBlock Text="Изображения не найдены"
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Загрузите первое изображение" 
-                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
-                                   Margin="0,8,0,0" LineHeight="18"/>
+                        <TextBlock Text="Загрузите первое изображение"
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                   Margin="0,8,0,0" LineHeight="18">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
 
                     <!-- Files Grid/List for Images -->
@@ -711,14 +722,25 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <Image Source="{svgc:SvgImage Source=/icons/empty_documents.svg, AppName=MPMS}" 
+                        <Image Source="{svgc:SvgImage Source=/icons/empty_documents.svg, AppName=MPMS}"
                                Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                        <TextBlock Text="Документы не найдены" 
-                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A" 
+                        <TextBlock Text="Документы не найдены"
+                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Загрузите первый документ" 
-                                   FontSize="12" Foreground="#64748B" TextAlignment="Center" 
-                                   Margin="0,8,0,0" LineHeight="18"/>
+                        <TextBlock Text="Загрузите первый документ"
+                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                                   Margin="0,8,0,0" LineHeight="18">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
 
                     <!-- Files List/Grid for Documents -->

@@ -32,6 +32,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private bool _isSuccessToastVisible;
     [ObservableProperty] private string _successToastMessage = string.Empty;
     [ObservableProperty] private bool _isWorkerRole;
+    [ObservableProperty] private LocalProject? _project;
 
     public string ViewMode
     {
@@ -120,12 +121,15 @@ public partial class FilesControlViewModel : ViewModelBase
             await using var db = await _dbFactory.CreateDbContextAsync();
             IQueryable<LocalFile> query = db.Files;
 
+            // Load project if projectId is set
             if (_projectId.HasValue)
             {
+                Project = await db.Projects.FindAsync(_projectId.Value);
                 query = query.Where(f => f.ProjectId == _projectId.Value);
             }
             else
             {
+                Project = null;
                 // Фильтрация по ролям
                 var userRole = _auth.UserRole;
                 var userId = _auth.UserId;

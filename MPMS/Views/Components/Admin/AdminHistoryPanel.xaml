@@ -96,7 +96,7 @@
                 <Button Grid.Column="6"
                         Content="Очистить историю"
                         Style="{StaticResource OutlineBtn}"
-                        Command="{Binding OpenClearHistoryConfirmCommand}"/>
+                        Command="{Binding ClearHistoryCommand}"/>
             </Grid>
         </Border>
 

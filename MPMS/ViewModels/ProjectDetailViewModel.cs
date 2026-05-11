@@ -177,9 +177,25 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 }
             }
 
-            projectEntity.ManagerAvatarData = mgrAvatarData;
-            projectEntity.ManagerAvatarPath = mgrAvatarPath;
-            Project = projectEntity;
+            // Update existing Project object in-place to preserve UI bindings
+            Project.Name = projectEntity.Name;
+            Project.Description = projectEntity.Description;
+            Project.Client = projectEntity.Client;
+            Project.Address = projectEntity.Address;
+            Project.StartDate = projectEntity.StartDate;
+            Project.EndDate = projectEntity.EndDate;
+            Project.Status = projectEntity.Status;
+            Project.ManagerId = projectEntity.ManagerId;
+            Project.ManagerName = projectEntity.ManagerName;
+            Project.IsMarkedForDeletion = projectEntity.IsMarkedForDeletion;
+            Project.IsArchived = projectEntity.IsArchived;
+            Project.IsClosed = projectEntity.IsClosed;
+            Project.UpdatedAt = projectEntity.UpdatedAt;
+            Project.ManagerAvatarData = mgrAvatarData;
+            Project.ManagerAvatarPath = mgrAvatarPath;
+
+            // Force UI refresh for all project properties
+            OnPropertyChanged(nameof(Project));
         }
 
         var userId = _auth.UserId;

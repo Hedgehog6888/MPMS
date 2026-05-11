@@ -249,7 +249,7 @@ public class ActionKindToBrushConverter : IValueConverter
     private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
     private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(0xEF, 0x44, 0x44));
     private static readonly SolidColorBrush OrangeBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
-    private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush PurpleBrush = new(Color.FromRgb(0x54, 0x74, 0xA6));
     private static readonly SolidColorBrush GrayBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -726,7 +726,7 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
     private static readonly SolidColorBrush MaterialBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
     private static readonly SolidColorBrush EquipmentBrush = new(Color.FromRgb(0x0D, 0x94, 0x88));
     private static readonly SolidColorBrush FileBrush = new(Color.FromRgb(0xF4, 0x3F, 0x5E));
-    private static readonly SolidColorBrush MessageBrush = new(Color.FromRgb(0x8B, 0x5C, 0xF6));
+    private static readonly SolidColorBrush MessageBrush = new(Color.FromRgb(0x54, 0x74, 0xA6));
     private static readonly SolidColorBrush DefaultBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -768,23 +768,23 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     private static readonly Color TaskDeleted = Color.FromRgb(0x34, 0xD3, 0x99);         // светло-зелёный
     private static readonly Color TaskWarning = Color.FromRgb(0x6E, 0xE7, 0xB7);           // мятный
 
-    // === STAGE (пурпурная гамма) ===
-    private static readonly Color StageCreated = Color.FromRgb(0x7E, 0x22, 0xCE);       // тёмно-пурпурный
-    private static readonly Color StageUpdated = Color.FromRgb(0x9F, 0x12, 0x3B);         // пурпурный
-    private static readonly Color StageDeleted = Color.FromRgb(0xBE, 0x18, 0x5D);         // розово-пурпурный
-    private static readonly Color StageWarning = Color.FromRgb(0xE1, 0x1D, 0x48);         // светло-пурпурный
+    // === STAGE (красная гамма) ===
+    private static readonly Color StageCreated = Color.FromRgb(0x99, 0x1B, 0x1B);       // тёмно-красный
+    private static readonly Color StageUpdated = Color.FromRgb(0xDC, 0x26, 0x26);         // красный
+    private static readonly Color StageDeleted = Color.FromRgb(0xEF, 0x44, 0x44);         // ярко-красный
+    private static readonly Color StageWarning = Color.FromRgb(0xF8, 0x71, 0x71);         // светло-красный
 
-    // === MATERIAL (жёлтая гамма) ===
-    private static readonly Color MaterialCreated = Color.FromRgb(0xCA, 0x8A, 0x04);     // тёмно-жёлтый
-    private static readonly Color MaterialUpdated = Color.FromRgb(0xE1, 0xB1, 0x2C);     // жёлто-оранжевый
-    private static readonly Color MaterialDeleted = Color.FromRgb(0xF4, 0x82, 0x1C);     // оранжевый
-    private static readonly Color MaterialWarning = Color.FromRgb(0xF9, 0x73, 0x16);     // ярко-оранжевый
+    // === MATERIAL (жёлто-оранжевая гамма) ===
+    private static readonly Color MaterialCreated = Color.FromRgb(0xCA, 0x8A, 0x04);     // тёмно-жёлто-оранжевый
+    private static readonly Color MaterialUpdated = Color.FromRgb(0xF5, 0x9E, 0x0B);     // жёлто-оранжевый
+    private static readonly Color MaterialDeleted = Color.FromRgb(0xFB, 0x92, 0x34);     // оранжевый
+    private static readonly Color MaterialWarning = Color.FromRgb(0xFD, 0xB7, 0x4C);     // светло-оранжевый
 
-    // === EQUIPMENT (тёмно-бирюзовая гамма) ===
-    private static readonly Color EquipmentCreated = Color.FromRgb(0x0E, 0x7A, 0x86);   // тёмно-бирюзовый
-    private static readonly Color EquipmentUpdated = Color.FromRgb(0x08, 0x91, 0x82);   // бирюзовый
-    private static readonly Color EquipmentDeleted = Color.FromRgb(0x11, 0x5E, 0x59);   // тёмно-зелёно-бирюзовый
-    private static readonly Color EquipmentWarning = Color.FromRgb(0x0F, 0x76, 0x67);   // тёмный бирюзовый
+    // === EQUIPMENT (бирюзовая гамма) ===
+    private static readonly Color EquipmentCreated = Color.FromRgb(0x0F, 0x76, 0x67);   // тёмно-бирюзовый
+    private static readonly Color EquipmentUpdated = Color.FromRgb(0x0D, 0x94, 0x88);   // бирюзовый
+    private static readonly Color EquipmentDeleted = Color.FromRgb(0x14, 0xB8, 0xA6);   // светло-бирюзовый
+    private static readonly Color EquipmentWarning = Color.FromRgb(0x5E, 0xEE, 0xD4);   // очень светлый бирюзовый
 
     // === FILE (розовая гамма) ===
     private static readonly Color FileCreated = Color.FromRgb(0xBE, 0x18, 0x5D);          // тёмно-розовый
@@ -804,11 +804,8 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     private static readonly Color DocumentDeleted = Color.FromRgb(0xA3, 0xE6, 0x35);    // светло-оливковый
     private static readonly Color DocumentWarning = Color.FromRgb(0xBE, 0xF2, 0x64);    // салатовый
 
-    // === MESSAGE (фиолетовая гамма) ===
-    private static readonly Color MessageCreated = Color.FromRgb(0x6D, 0x28, 0xD9);      // тёмно-фиолетовый
-    private static readonly Color MessageUpdated = Color.FromRgb(0x8B, 0x5C, 0xF6);      // фиолетовый
-    private static readonly Color MessageDeleted = Color.FromRgb(0xA7, 0x8B, 0xFA);      // светло-фиолетовый
-    private static readonly Color MessageWarning = Color.FromRgb(0xC0, 0x84, 0xFC);      // лавандовый
+    // === MESSAGE (тёмно-синяя гамма) ===
+    private static readonly Color MessageCreated = Color.FromRgb(0x54, 0x74, 0xA6);      // тёмно-синий
 
     // === USER (серая гамма) ===
     private static readonly Color UserCreated = Color.FromRgb(0x4B, 0x55, 0x63);         // тёмно-серый
@@ -824,7 +821,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
     // === STATUS CHANGED (оттенки для каждого типа сущности) ===
     private static readonly Color ProjectStatusChanged = Color.FromRgb(0x60, 0xA5, 0xFA); // светло-голубой оттенок
     private static readonly Color TaskStatusChanged = Color.FromRgb(0x6E, 0xE7, 0xB7);    // мятный оттенок
-    private static readonly Color StageStatusChanged = Color.FromRgb(0xE1, 0x1D, 0x48);  // светло-пурпурный оттенок
+    private static readonly Color StageStatusChanged = Color.FromRgb(0xF8, 0x71, 0x71);  // светло-красный оттенок
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -904,11 +901,8 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
             (EntityType.Document, ActionCategory.Destructive) => new SolidColorBrush(DocumentDeleted),
             (EntityType.Document, ActionCategory.Warning) => new SolidColorBrush(DocumentWarning),
 
-            // Message - фиолетовая гамма
-            (EntityType.Message, ActionCategory.Communication) => new SolidColorBrush(MessageCreated),
-            (EntityType.Message, ActionCategory.Change) => new SolidColorBrush(MessageUpdated),
-            (EntityType.Message, ActionCategory.Destructive) => new SolidColorBrush(MessageDeleted),
-            (EntityType.Message, ActionCategory.Warning) => new SolidColorBrush(MessageWarning),
+            // Message - оранжево-коричневая гамма (один цвет для всех действий)
+            (EntityType.Message, _) => new SolidColorBrush(MessageCreated),
 
             // User - серая гамма
             (EntityType.User, ActionCategory.Creative) => new SolidColorBrush(UserCreated),
@@ -935,7 +929,6 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
             (EntityType.File, _) => new SolidColorBrush(FileUpdated),
             (EntityType.Image, _) => new SolidColorBrush(ImageUpdated),
             (EntityType.Document, _) => new SolidColorBrush(DocumentUpdated),
-            (EntityType.Message, _) => new SolidColorBrush(MessageCreated),
             (EntityType.User, _) => new SolidColorBrush(UserUpdated),
             (_, _) => DefaultBrush
         };
