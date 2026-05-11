@@ -51,7 +51,7 @@
                                FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
 
-                <!-- "Сегодня" + month nav — same layout as Calendar header -->
+                <!-- "Сегодня" + month nav + help — same layout as Calendar header -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Height="30" Padding="14,0" Margin="0,0,10,0"
                             Command="{Binding GoToTodayCommand}" Cursor="Hand">
@@ -93,6 +93,29 @@
                             </Button>
                         </StackPanel>
                     </Border>
+
+                    <Button Width="32" Height="32" Margin="10,0,0,0" Padding="0"
+                            Background="Transparent" BorderThickness="0"
+                            Cursor="Hand" ToolTip="Справка по цветам таймлайна"
+                            Click="Help_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bg" Background="{TemplateBinding Background}"
+                                        CornerRadius="8">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Image Source="{svgc:SvgImage Source=/icons/activity_help.svg, AppName=MPMS}" Width="18" Height="18"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

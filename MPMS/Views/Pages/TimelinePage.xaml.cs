@@ -64,6 +64,11 @@ public partial class TimelinePage : UserControl
         Dispatcher.BeginInvoke(DrawTodayLine);
     }
 
+    private void Help_Click(object sender, RoutedEventArgs e)
+    {
+        MainWindow.Instance?.ShowCenteredOverlay(new TimelineHelpOverlay(), 760);
+    }
+
     private void DrawTodayLine()
     {
         TodayLineCanvas.Children.Clear();
