@@ -16,14 +16,23 @@ namespace MPMS.Views.Pages;
 
 public partial class TimelinePage : UserControl
 {
+    private const double TimelineSkeletonRowHeight = 60;
     private TimelineViewModel? _vm;
 
     public TimelinePage()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
-        Loaded += (_, _) => DrawTodayLine();
-        SizeChanged += (_, _) => DrawTodayLine();
+        Loaded += (_, _) =>
+        {
+            DrawTodayLine();
+            UpdateTimelineFillerRows();
+        };
+        SizeChanged += (_, _) =>
+        {
+            DrawTodayLine();
+            UpdateTimelineFillerRows();
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -47,7 +56,10 @@ public partial class TimelinePage : UserControl
                            or nameof(TimelineViewModel.TaskRows)
                            or nameof(TimelineViewModel.StageRows)
                            or nameof(TimelineViewModel.DayHeaders))
+        {
             Dispatcher.BeginInvoke(DrawTodayLine);
+            Dispatcher.BeginInvoke(new Action(UpdateTimelineFillerRows));
+        }
     }
 
     private void TimelineTab_SelectedTabChanged(object? sender, string tag)
@@ -61,7 +73,47 @@ public partial class TimelinePage : UserControl
         var isTask = _vm?.ActiveTab == "Tasks";
         TasksSection.Visibility = isTask ? Visibility.Visible : Visibility.Collapsed;
         StagesSection.Visibility = isTask ? Visibility.Collapsed : Visibility.Visible;
-        Dispatcher.BeginInvoke(DrawTodayLine);
+        Dispatcher.BeginInvoke(DrawTodayLine, System.Windows.Threading.DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(new Action(UpdateTimelineFillerRows), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    private void TimelineScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        DrawTodayLine();
+        UpdateTimelineFillerRows();
+    }
+
+    private void UpdateTimelineFillerRows()
+    {
+        UpdateTimelineFillerRows(TaskRowsItemsControl, TaskFillerRows);
+        UpdateTimelineFillerRows(StageRowsItemsControl, StageFillerRows);
+    }
+
+    private void UpdateTimelineFillerRows(ItemsControl rows, ItemsControl fillerRows)
+    {
+        var scrollViewer = FindVisualParent<ScrollViewer>(rows);
+        var viewportHeight = scrollViewer?.ViewportHeight ?? 0;
+        if (viewportHeight <= 0)
+            viewportHeight = scrollViewer?.ActualHeight ?? 0;
+
+        var rowsHeight = rows.Items.Count == 0 ? 0 : rows.ActualHeight;
+        var remainingHeight = viewportHeight - rowsHeight;
+        if (remainingHeight < TimelineSkeletonRowHeight / 2)
+        {
+            fillerRows.Visibility = Visibility.Collapsed;
+            fillerRows.ItemsSource = null;
+            fillerRows.Height = 0;
+            return;
+        }
+
+        var fillerCount = Math.Max(1, (int)Math.Ceiling(remainingHeight / TimelineSkeletonRowHeight));
+        var items = new int[fillerCount];
+        for (var i = 0; i < fillerCount; i++)
+            items[i] = i;
+
+        fillerRows.Height = remainingHeight;
+        fillerRows.ItemsSource = items;
+        fillerRows.Visibility = Visibility.Visible;
     }
 
     private void Help_Click(object sender, RoutedEventArgs e)
@@ -77,28 +129,37 @@ public partial class TimelinePage : UserControl
         double fraction = _vm.TodayFraction;
         if (fraction < 0 || fraction > 1) return;
 
-        // Find the timeline column (right of the 260px info column)
-        const double leftColWidth = 260;
-        const double headerHeight = 37; // approx day-header row height
-        double totalWidth = ActualWidth - 16 - 16; // margins 16+16
-        if (totalWidth <= leftColWidth) return;
+        var dayHeaderItems = TasksSection.Visibility == Visibility.Visible
+            ? TasksDayHeaderItems
+            : StagesDayHeaderItems;
 
-        double timelineWidth = totalWidth - leftColWidth;
-        double lineX = leftColWidth + fraction * timelineWidth;
+        if (dayHeaderItems.ActualWidth <= 0) return;
 
-        bool isTasks = _vm.ActiveTab == "Tasks";
-        int rowCount = isTasks ? _vm.TaskRows.Count : _vm.StageRows.Count;
-        double height = headerHeight + rowCount * 52 + 10;
+        var headerOrigin = dayHeaderItems.TransformToVisual(TodayLineCanvas).Transform(new Point(0, 0));
+        double timelineWidth = dayHeaderItems.ActualWidth;
+        double dayColumnCenter = headerOrigin.X + (fraction * timelineWidth);
+        double headerBottom = headerOrigin.Y + dayHeaderItems.ActualHeight;
 
-        TodayLineCanvas.Width = totalWidth;
+        // Get the actual scrollable height from the ScrollViewer
+        var scrollViewer = TasksSection.Visibility == Visibility.Visible
+            ? FindVisualChild<ScrollViewer>(TasksSection)
+            : FindVisualChild<ScrollViewer>(StagesSection);
+
+        double contentHeight = scrollViewer?.ExtentHeight ?? 0;
+        double viewportHeight = scrollViewer?.ViewportHeight ?? 0;
+        
+        // Use viewport + scrollable height to make line extend to bottom of scrollable content
+        double height = headerBottom + Math.Max(contentHeight, viewportHeight);
+
+        TodayLineCanvas.Width = headerOrigin.X + timelineWidth;
         TodayLineCanvas.Height = height;
 
-        // Vertical dashed line (red)
+        // Vertical dashed line (red) - extends to bottom, starts slightly lower
         var line = new Line
         {
-            X1 = lineX,
-            Y1 = headerHeight,
-            X2 = lineX,
+            X1 = dayColumnCenter,
+            Y1 = headerBottom,
+            X2 = dayColumnCenter,
             Y2 = height,
             Stroke = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
             StrokeThickness = 1.5,
@@ -107,7 +168,7 @@ public partial class TimelinePage : UserControl
         };
         TodayLineCanvas.Children.Add(line);
 
-        // "Сегодня" label (red)
+        // "Сегодня" label (red) - centered on today's day column
         var label = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
@@ -123,9 +184,41 @@ public partial class TimelinePage : UserControl
         };
         label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         double lblW = label.DesiredSize.Width;
-        Canvas.SetLeft(label, lineX - lblW / 2);
-        Canvas.SetTop(label, 6);
+        
+        Canvas.SetLeft(label, dayColumnCenter - lblW / 2);
+        Canvas.SetTop(label, 2); // Moved higher
         TodayLineCanvas.Children.Add(label);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        if (parent == null) return null;
+
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T result)
+                return result;
+
+            var resultFromChild = FindVisualChild<T>(child);
+            if (resultFromChild != null)
+                return resultFromChild;
+        }
+        return null;
+    }
+
+    private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        var parent = VisualTreeHelper.GetParent(child);
+        while (parent is not null)
+        {
+            if (parent is T result)
+                return result;
+
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+
+        return null;
     }
 
     private void TaskRow_Click(object sender, MouseButtonEventArgs e)

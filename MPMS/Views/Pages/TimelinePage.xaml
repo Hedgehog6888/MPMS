@@ -28,6 +28,51 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <DataTemplate x:Key="TimelineSkeletonRowTemplate">
+            <Border Padding="20,10,20,10" Background="White" Opacity="0.72">
+                <Grid Height="40">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,20,0" VerticalAlignment="Center">
+                        <Border Height="10" Width="128" CornerRadius="5" Background="#E2E8F0" HorizontalAlignment="Left"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Border Height="16" Width="74" CornerRadius="6" Background="#EEF2F7"/>
+                            <Border Height="14" Width="54" CornerRadius="5" Background="#F1F5F9" Margin="8,1,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Grid Grid.Column="1">
+                        <ItemsControl ItemsSource="{Binding DataContext.DayHeaders,
+                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      IsHitTestVisible="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="1"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#F8FAFC" BorderThickness="0,0,1,0"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="0.06*"/>
+                                <ColumnDefinition Width="0.82*"/>
+                                <ColumnDefinition Width="0.12*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="1" Height="24" CornerRadius="6" Margin="2,0"
+                                    Background="#EEF2F7"/>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid Background="#F8FAFC">
@@ -132,7 +177,7 @@
 
         <!-- ── TIMELINE BODY ────────────────────────────────────────────── -->
         <Border Grid.Row="2" Background="White" Margin="16,8,16,16"
-                CornerRadius="10" BorderBrush="#E2E8F0" BorderThickness="1"
+                CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1"
                 ClipToBounds="True">
             <Grid>
 
@@ -143,20 +188,20 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header row -->
+                    <!-- Modern header with subtle background -->
                     <Border Grid.Row="0" Background="#F8FAFC"
-                            BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                            Padding="20,16,20,12"
+                            CornerRadius="12,12,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="260"/>
+                                <ColumnDefinition Width="280"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
-                                    Padding="16,8">
-                                <TextBlock Text="Задача" FontSize="11" FontWeight="SemiBold"
+                            <Border Grid.Column="0" Padding="16,4">
+                                <TextBlock Text="Задача" FontSize="12" FontWeight="SemiBold"
                                            Foreground="#64748B"/>
                             </Border>
-                            <ItemsControl Grid.Column="1" ItemsSource="{Binding DayHeaders}">
+                            <ItemsControl x:Name="TasksDayHeaderItems" Grid.Column="1" ItemsSource="{Binding DayHeaders}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <UniformGrid Rows="1"/>
@@ -164,19 +209,19 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:TimelineDayHeader}">
-                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
-                                                Padding="0,6">
+                                        <Border Padding="0,6">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsToday}" Value="True">
                                                             <Setter Property="Background" Value="#FEF2F2"/>
+                                                            <Setter Property="CornerRadius" Value="4"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock Text="{Binding DayNumber}"
-                                                       TextAlignment="Center" FontSize="10"
+                                                       TextAlignment="Center" FontSize="11"
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -196,19 +241,22 @@
                         </Grid>
                     </Border>
 
-                    <!-- Task rows -->
+                    <!-- Task rows with modern card design -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding TaskRows}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:TimelineTaskRow}">
-                                    <Border x:Name="RowBorder"
-                                            BorderBrush="#F3F4F6" BorderThickness="0,0,0,1"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  ScrollChanged="TimelineScrollViewer_ScrollChanged">
+                        <StackPanel>
+                            <ItemsControl x:Name="TaskRowsItemsControl" ItemsSource="{Binding TaskRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:TimelineTaskRow}">
+                                        <Border x:Name="RowBorder"
+                                            Padding="20,10,20,10"
                                             Cursor="Hand" Tag="{Binding}"
                                             MouseLeftButtonDown="TaskRow_Click">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="White"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="#F8FAFC"/>
@@ -217,75 +265,40 @@
                                             </Style>
                                         </Border.Style>
 
-                                        <Grid MinHeight="52">
+                                        <Grid MinHeight="40">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="260"/>
+                                                <ColumnDefinition Width="280"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
                                             <!-- Task info (left) -->
-                                            <Border Grid.Column="0" BorderBrush="#E5E7EB"
-                                                    BorderThickness="0,0,1,0" Padding="12,8">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-                                                    <Grid Grid.Row="0">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0"
-                                                                   Text="{Binding Task.Name}"
-                                                                   FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#0F172A"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   VerticalAlignment="Center"/>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
-                                                            <Border CornerRadius="4" Padding="5,2"
-                                                                    Background="{Binding StatusColor, Converter={StaticResource HexToBrush}}">
-                                                                <TextBlock Text="{Binding StatusLabel}"
-                                                                           FontSize="9" FontWeight="SemiBold"
-                                                                           Foreground="White"/>
-                                                            </Border>
-                                                            <Border CornerRadius="3" Padding="4,1" Margin="0,3,0,0"
-                                                                    Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                                                    Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
-                                                                <TextBlock Text="Просрочен" FontSize="8" FontWeight="Bold"
-                                                                           Foreground="#DC2626" HorizontalAlignment="Center"/>
-                                                            </Border>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                    <!-- Project name -->
-                                                    <StackPanel Grid.Row="1" Orientation="Horizontal"
-                                                                Margin="0,3,0,0">
-                                                        <Image Width="11" Height="11"
-                                                               Margin="0,0,4,0" VerticalAlignment="Center"
-                                                               Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
-                                                               Opacity="0.6"/>
-                                                        <TextBlock Text="{Binding Task.ProjectName}"
-                                                                   FontSize="10" Foreground="#64748B"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                            <Border Grid.Column="0" Padding="0,0,20,0"
+                                                    ToolTip="{Binding Task.Name}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Task.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="#0F172A"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                        <Border CornerRadius="6" Padding="6,3"
+                                                                Background="{Binding StatusColor, Converter={StaticResource HexToBrush}}">
+                                                            <TextBlock Text="{Binding StatusLabel}"
+                                                                       FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="White"/>
+                                                        </Border>
+                                                        <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="Просрочен" FontSize="9" FontWeight="Bold"
+                                                                       Foreground="#DC2626" HorizontalAlignment="Center"/>
+                                                        </Border>
                                                     </StackPanel>
-                                                    <!-- Due date -->
-                                                    <StackPanel Grid.Row="2" Orientation="Horizontal"
-                                                                Margin="0,2,0,0"
-                                                                Visibility="{Binding Task.DueDate, Converter={StaticResource NullToVisInv}}">
-                                                        <Image Width="11" Height="11"
-                                                               Margin="0,0,4,0" VerticalAlignment="Center"
-                                                               Source="{svgc:SvgImage Source=/icons/time.svg, AppName=MPMS}"
-                                                               Opacity="0.5"/>
-                                                        <TextBlock Text="{Binding Task.DueDate, StringFormat={}{0:dd.MM.yyyy}}"
-                                                                   FontSize="10" Foreground="#9CA3AF"/>
-                                                    </StackPanel>
-                                                </Grid>
+                                                </StackPanel>
                                             </Border>
 
                                             <!-- Timeline area (right) -->
                                             <Grid Grid.Column="1">
-                                                <!-- Day grid lines background -->
+                                                <!-- Subtle day separators -->
                                                 <ItemsControl ItemsSource="{Binding DataContext.DayHeaders,
                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               IsHitTestVisible="False">
@@ -301,7 +314,7 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
 
-                                                <!-- Proportional bar -->
+                                                <!-- Modern proportional bar -->
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="{Binding BarLeft,     Converter={StaticResource FracToGL}}"/>
@@ -311,9 +324,9 @@
                                                     <Border x:Name="TaskBar"
                                                             Grid.Column="1"
                                                             VerticalAlignment="Center"
-                                                            Height="30"
-                                                            CornerRadius="5" Margin="1,0"
-                                                            Opacity="0.9"
+                                                            Height="32"
+                                                            CornerRadius="6" Margin="2,0"
+                                                            Opacity="0.85"
                                                             Visibility="{Binding HasBar, Converter={StaticResource BoolToVis}}"
                                                             Background="{Binding BarColorHex, Converter={StaticResource HexToBrush}}"
                                                             ToolTipService.Placement="Center"
@@ -324,11 +337,11 @@
                                                             <ToolTip Background="Transparent"
                                                                      BorderThickness="0"
                                                                      Padding="0">
-                                                                <Border CornerRadius="4" Padding="8,4"
+                                                                <Border CornerRadius="6" Padding="10,6"
                                                                         Background="#E6000000"
                                                                         SnapsToDevicePixels="True">
                                                                     <TextBlock Text="{Binding BarRangeLabel}"
-                                                                               FontSize="10"
+                                                                               FontSize="11"
                                                                                FontWeight="SemiBold"
                                                                                Foreground="White"/>
                                                                 </Border>
@@ -338,15 +351,21 @@
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                    </Border>
-                                    <DataTemplate.Triggers>
-                                        <Trigger SourceName="RowBorder" Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="TaskBar" Property="Opacity" Value="1.0"/>
-                                        </Trigger>
-                                    </DataTemplate.Triggers>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <Trigger SourceName="RowBorder" Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="TaskBar" Property="Opacity" Value="1.0"/>
+                                            </Trigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <ItemsControl x:Name="TaskFillerRows"
+                                          ItemTemplate="{StaticResource TimelineSkeletonRowTemplate}"
+                                          Visibility="Collapsed"
+                                          ClipToBounds="True"
+                                          IsHitTestVisible="False"/>
+                        </StackPanel>
                     </ScrollViewer>
 
                     <!-- Empty state -->
@@ -365,20 +384,20 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header row -->
+                    <!-- Modern header with subtle background -->
                     <Border Grid.Row="0" Background="#F8FAFC"
-                            BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                            Padding="20,16,20,12"
+                            CornerRadius="12,12,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="260"/>
+                                <ColumnDefinition Width="280"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
-                                    Padding="16,8">
-                                <TextBlock Text="Этап" FontSize="11" FontWeight="SemiBold"
+                            <Border Grid.Column="0" Padding="16,4">
+                                <TextBlock Text="Этап" FontSize="12" FontWeight="SemiBold"
                                            Foreground="#64748B"/>
                             </Border>
-                            <ItemsControl Grid.Column="1" ItemsSource="{Binding DayHeaders}">
+                            <ItemsControl x:Name="StagesDayHeaderItems" Grid.Column="1" ItemsSource="{Binding DayHeaders}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <UniformGrid Rows="1"/>
@@ -386,19 +405,19 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:TimelineDayHeader}">
-                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,0,1,0"
-                                                Padding="0,6">
+                                        <Border Padding="0,6">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsToday}" Value="True">
                                                             <Setter Property="Background" Value="#FEF2F2"/>
+                                                            <Setter Property="CornerRadius" Value="4"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
                                             <TextBlock Text="{Binding DayNumber}"
-                                                       TextAlignment="Center" FontSize="10"
+                                                       TextAlignment="Center" FontSize="11"
                                                        FontWeight="SemiBold">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
@@ -418,19 +437,22 @@
                         </Grid>
                     </Border>
 
-                    <!-- Stage rows -->
+                    <!-- Stage rows with modern card design -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl ItemsSource="{Binding StageRows}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:TimelineStageRow}">
-                                    <Border x:Name="StageRowBorder"
-                                            BorderBrush="#F3F4F6" BorderThickness="0,0,0,1"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  ScrollChanged="TimelineScrollViewer_ScrollChanged">
+                        <StackPanel>
+                            <ItemsControl x:Name="StageRowsItemsControl" ItemsSource="{Binding StageRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:TimelineStageRow}">
+                                        <Border x:Name="StageRowBorder"
+                                            Padding="20,10,20,10"
                                             Cursor="Hand" Tag="{Binding}"
                                             MouseLeftButtonDown="StageRow_Click">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="White"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="#F8FAFC"/>
@@ -439,74 +461,40 @@
                                             </Style>
                                         </Border.Style>
 
-                                        <Grid MinHeight="52">
+                                        <Grid MinHeight="40">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="260"/>
+                                                <ColumnDefinition Width="280"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
                                             <!-- Stage info (left) -->
-                                            <Border Grid.Column="0" BorderBrush="#E5E7EB"
-                                                    BorderThickness="0,0,1,0" Padding="12,8">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-                                                    <!-- Name + status -->
-                                                    <Grid Grid.Row="0">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Grid.Column="0"
-                                                                   Text="{Binding Stage.Stage.Name}"
-                                                                   FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="#0F172A"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   VerticalAlignment="Center"/>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
-                                                            <Border CornerRadius="4" Padding="5,2"
-                                                                    Background="{Binding StatusColor, Converter={StaticResource HexToBrush}}">
-                                                                <TextBlock Text="{Binding StatusLabel}"
-                                                                           FontSize="9" FontWeight="SemiBold"
-                                                                           Foreground="White"/>
-                                                            </Border>
-                                                            <Border CornerRadius="3" Padding="4,1" Margin="0,3,0,0"
-                                                                    Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                                                    Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
-                                                                <TextBlock Text="Просрочен" FontSize="8" FontWeight="Bold"
-                                                                           Foreground="#DC2626" HorizontalAlignment="Center"/>
-                                                            </Border>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                    <!-- Task + Project in ONE ROW -->
-                                                    <StackPanel Grid.Row="1" Orientation="Horizontal"
-                                                                Margin="0,3,0,0">
-                                                        <Image Width="11" Height="11"
-                                                               Margin="0,0,3,0" VerticalAlignment="Center"
-                                                               Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
-                                                               Opacity="0.6"/>
-                                                        <TextBlock Text="{Binding Stage.TaskName}"
-                                                                   FontSize="10" Foreground="#64748B"
-                                                                   MaxWidth="80"
-                                                                   TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Text=" · " FontSize="10" Foreground="#9CA3AF"/>
-                                                        <Image Width="11" Height="11"
-                                                               Margin="0,0,3,0" VerticalAlignment="Center"
-                                                               Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
-                                                               Opacity="0.6"/>
-                                                        <TextBlock Text="{Binding Stage.ProjectName}"
-                                                                   FontSize="10" Foreground="#9CA3AF"
-                                                                   MaxWidth="80"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                            <Border Grid.Column="0" Padding="0,0,20,0"
+                                                    ToolTip="{Binding Stage.Stage.Name}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Stage.Stage.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="#0F172A"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                        <Border CornerRadius="6" Padding="6,3"
+                                                                Background="{Binding StatusColor, Converter={StaticResource HexToBrush}}">
+                                                            <TextBlock Text="{Binding StatusLabel}"
+                                                                       FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="White"/>
+                                                        </Border>
+                                                        <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="Просрочен" FontSize="9" FontWeight="Bold"
+                                                                       Foreground="#DC2626" HorizontalAlignment="Center"/>
+                                                        </Border>
                                                     </StackPanel>
-                                                </Grid>
+                                                </StackPanel>
                                             </Border>
 
                                             <!-- Timeline area (right) -->
                                             <Grid Grid.Column="1">
-                                                <!-- Day grid lines background -->
+                                                <!-- Subtle day separators -->
                                                 <ItemsControl ItemsSource="{Binding DataContext.DayHeaders,
                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               IsHitTestVisible="False">
@@ -522,7 +510,7 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
 
-                                                <!-- Proportional bar -->
+                                                <!-- Modern proportional bar -->
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="{Binding BarLeft,     Converter={StaticResource FracToGL}}"/>
@@ -532,9 +520,9 @@
                                                     <Border x:Name="StageBar"
                                                             Grid.Column="1"
                                                             VerticalAlignment="Center"
-                                                            Height="30"
-                                                            CornerRadius="5" Margin="1,0"
-                                                            Opacity="0.9"
+                                                            Height="32"
+                                                            CornerRadius="6" Margin="2,0"
+                                                            Opacity="0.85"
                                                             Visibility="{Binding HasBar, Converter={StaticResource BoolToVis}}"
                                                             Background="{Binding BarColorHex, Converter={StaticResource HexToBrush}}"
                                                             ToolTipService.Placement="Center"
@@ -545,11 +533,11 @@
                                                             <ToolTip Background="Transparent"
                                                                      BorderThickness="0"
                                                                      Padding="0">
-                                                                <Border CornerRadius="4" Padding="8,4"
+                                                                <Border CornerRadius="6" Padding="10,6"
                                                                         Background="#E6000000"
                                                                         SnapsToDevicePixels="True">
                                                                     <TextBlock Text="{Binding BarRangeLabel}"
-                                                                               FontSize="10"
+                                                                               FontSize="11"
                                                                                FontWeight="SemiBold"
                                                                                Foreground="White"/>
                                                                 </Border>
@@ -559,15 +547,21 @@
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                    </Border>
-                                    <DataTemplate.Triggers>
-                                        <Trigger SourceName="StageRowBorder" Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="StageBar" Property="Opacity" Value="1.0"/>
-                                        </Trigger>
-                                    </DataTemplate.Triggers>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <Trigger SourceName="StageRowBorder" Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="StageBar" Property="Opacity" Value="1.0"/>
+                                            </Trigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <ItemsControl x:Name="StageFillerRows"
+                                          ItemTemplate="{StaticResource TimelineSkeletonRowTemplate}"
+                                          Visibility="Collapsed"
+                                          ClipToBounds="True"
+                                          IsHitTestVisible="False"/>
+                        </StackPanel>
                     </ScrollViewer>
                 </Grid>
 
@@ -576,7 +570,7 @@
                         IsHitTestVisible="False"
                         VerticalAlignment="Top"
                         HorizontalAlignment="Left"
-                        Panel.ZIndex="20"/>
+                        Panel.ZIndex="5"/>
 
 
             </Grid>
