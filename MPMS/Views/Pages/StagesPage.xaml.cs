@@ -80,6 +80,11 @@ public partial class StagesPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
+        var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+        if (owner is null || !StageStatusChangeDialog.Show(owner, item.Stage.Name, "Запланирован", "Выполняется",
+            currentStatusColor: "#64748B", newStatusColor: "#3B82F6",
+            currentStatusTextColor: "#FFFFFF", newStatusTextColor: "#FFFFFF"))
+            return;
         await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.InProgress));
     }
 
@@ -87,6 +92,13 @@ public partial class StagesPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
+        var currentStatusText = item.Stage.Status == StageStatus.Planned ? "Запланирован" : "Выполняется";
+        var currentStatusColor = item.Stage.Status == StageStatus.Planned ? "#64748B" : "#3B82F6";
+        var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
+        if (owner is null || !StageStatusChangeDialog.Show(owner, item.Stage.Name, currentStatusText, "Завершён",
+            currentStatusColor: currentStatusColor, newStatusColor: "#10B981",
+            currentStatusTextColor: "#FFFFFF", newStatusTextColor: "#FFFFFF"))
+            return;
         await VM.ChangeStageStatusCommand.ExecuteAsync((item, StageStatus.Completed));
     }
 
