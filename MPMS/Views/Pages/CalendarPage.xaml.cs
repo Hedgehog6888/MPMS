@@ -164,4 +164,9 @@ public partial class CalendarPage : UserControl
         if (_vm is not null)
             await _vm.LoadAsync();
     }
+
+    private void Help_Click(object sender, RoutedEventArgs e)
+    {
+        MainWindow.Instance?.ShowCenteredOverlay(new CalendarHelpOverlay(), 760);
+    }
 }
