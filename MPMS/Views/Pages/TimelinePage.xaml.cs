@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,6 +19,7 @@ public partial class TimelinePage : UserControl
 {
     private const double TimelineSkeletonRowHeight = 60;
     private TimelineViewModel? _vm;
+    private bool _updatingFillerRows;
 
     public TimelinePage()
     {
@@ -80,13 +82,23 @@ public partial class TimelinePage : UserControl
     private void TimelineScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         DrawTodayLine();
-        UpdateTimelineFillerRows();
+        if (e.ViewportHeightChange != 0 || e.ExtentHeightChange != 0)
+            UpdateTimelineFillerRows();
     }
 
     private void UpdateTimelineFillerRows()
     {
-        UpdateTimelineFillerRows(TaskRowsItemsControl, TaskFillerRows);
-        UpdateTimelineFillerRows(StageRowsItemsControl, StageFillerRows);
+        if (_updatingFillerRows) return;
+        try
+        {
+            _updatingFillerRows = true;
+            UpdateTimelineFillerRows(TaskRowsItemsControl, TaskFillerRows);
+            UpdateTimelineFillerRows(StageRowsItemsControl, StageFillerRows);
+        }
+        finally
+        {
+            _updatingFillerRows = false;
+        }
     }
 
     private void UpdateTimelineFillerRows(ItemsControl rows, ItemsControl fillerRows)
@@ -100,6 +112,8 @@ public partial class TimelinePage : UserControl
         var remainingHeight = viewportHeight - rowsHeight;
         if (remainingHeight < TimelineSkeletonRowHeight / 2)
         {
+            if (fillerRows.Visibility == Visibility.Collapsed && fillerRows.ItemsSource == null)
+                return;
             fillerRows.Visibility = Visibility.Collapsed;
             fillerRows.ItemsSource = null;
             fillerRows.Height = 0;
@@ -107,6 +121,14 @@ public partial class TimelinePage : UserControl
         }
 
         var fillerCount = Math.Max(1, (int)Math.Ceiling(remainingHeight / TimelineSkeletonRowHeight));
+        if (fillerRows.Visibility == Visibility.Visible
+            && fillerRows.ItemsSource is int[] existing
+            && existing.Length == fillerCount
+            && Math.Abs(fillerRows.Height - remainingHeight) < 0.5)
+        {
+            return;
+        }
+
         var items = new int[fillerCount];
         for (var i = 0; i < fillerCount; i++)
             items[i] = i;

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -191,6 +192,87 @@ public partial class UserPeekOverlay : UserControl
             }
         }
 
+        // Изображения пользователя
+        var imageFilesRaw = await db.Files.AsNoTracking()
+            .Where(f => f.UploadedById == _userId)
+            .ToListAsync();
+
+        var imageFileEntities = imageFilesRaw.Where(f => IsImage(f.FileName)).ToList();
+
+        var taskIdsForImages = imageFileEntities.Where(f => f.TaskId.HasValue).Select(f => f.TaskId!.Value).ToHashSet();
+        var stageIdsForImages = imageFileEntities.Where(f => f.StageId.HasValue).Select(f => f.StageId!.Value).ToHashSet();
+        var projIdsForImages = imageFileEntities.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value).ToHashSet();
+
+        var tasksDictForImages = await db.Tasks.AsNoTracking()
+            .Where(t => taskIdsForImages.Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id);
+
+        var stagesDictForImages = await db.TaskStages.AsNoTracking()
+            .Where(s => stageIdsForImages.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id);
+
+        var projsDictForImages = await db.Projects.AsNoTracking()
+            .Where(p => projIdsForImages.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id);
+
+        var imageRows = new List<UserPeekImageRowVm>();
+        foreach (var f in imageFileEntities)
+        {
+            bool ok = false;
+            string? ctxName = null;
+
+            if (f.StageId.HasValue && stagesDictForImages.TryGetValue(f.StageId.Value, out var stg))
+            {
+                if (tasksDictForImages.TryGetValue(stg.TaskId, out var stTask)
+                    && !stg.IsArchived && !stg.IsMarkedForDeletion
+                    && !stTask.IsArchived && !stTask.IsMarkedForDeletion
+                    && scope.Contains(stTask.ProjectId)
+                    && projById.TryGetValue(stTask.ProjectId, out var stPrj)
+                    && !stPrj.IsMarkedForDeletion)
+                {
+                    ok = true;
+                    ctxName = stPrj.Name;
+                }
+            }
+            else if (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var tsk))
+            {
+                if (!tsk.IsArchived && !tsk.IsMarkedForDeletion
+                    && scope.Contains(tsk.ProjectId)
+                    && projById.TryGetValue(tsk.ProjectId, out var tPrj)
+                    && !tPrj.IsMarkedForDeletion)
+                {
+                    ok = true;
+                    ctxName = tPrj.Name;
+                }
+            }
+            else if (f.ProjectId.HasValue && projsDictForImages.TryGetValue(f.ProjectId.Value, out var prj))
+            {
+                if (scope.Contains(prj.Id) && !prj.IsArchived && !prj.IsClosed && !prj.IsMarkedForDeletion)
+                {
+                    ok = true;
+                    ctxName = prj.Name;
+                }
+            }
+
+            if (ok)
+            {
+                imageRows.Add(new UserPeekImageRowVm
+                {
+                    FileId = f.Id,
+                    FileName = f.FileName,
+                    FileData = f.FileData,
+                    FilePath = f.FilePath,
+                    FileSize = f.FileSize,
+                    Description = f.Description,
+                    ProjectId = f.ProjectId ?? (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var t) ? t.ProjectId : Guid.Empty),
+                    ProjectName = ctxName,
+                    UploadedByName = f.UploadedByName,
+                    UploadedById = f.UploadedById,
+                    CreatedAt = f.OriginalCreatedAt ?? f.CreatedAt,
+                });
+            }
+        }
+
         var bmp = AvatarHelper.GetImageSource(user.AvatarData, user.AvatarPath, displayName);
         var roleBadgeColor = GetRoleBadgeColor(user.RoleName);
         var joinedStr = user.CreatedAt != default
@@ -277,16 +359,19 @@ public partial class UserPeekOverlay : UserControl
             TabProjectsLabel.Text = $"Проекты ({projectRows.Count})";
             TabTasksLabel.Text = $"Задачи ({taskRows.Count})";
             TabStagesLabel.Text = $"Этапы ({stageRows.Count})";
+            TabImagesLabel.Text = $"Изображения ({imageRows.Count})";
             TabStages.Visibility = isForeman ? Visibility.Collapsed : Visibility.Visible;
 
             // Данные списков
             ProjectsList.ItemsSource = projectRows;
             TasksList.ItemsSource = taskRows;
             StagesList.ItemsSource = stageRows;
+            ImagesList.ItemsSource = imageRows;
 
             NoProjectsText.Visibility = projectRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             NoTasksText.Visibility = taskRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             NoStagesText.Visibility = stageRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            NoImagesText.Visibility = imageRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
             TabProjects.IsChecked = true;
             ShowProjectsTab();
@@ -337,6 +422,7 @@ public partial class UserPeekOverlay : UserControl
         ProjectsTabPanel.Visibility = Visibility.Visible;
         TasksTabPanel.Visibility = Visibility.Collapsed;
         StagesTabPanel.Visibility = Visibility.Collapsed;
+        ImagesTabPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ShowTasksTab()
@@ -344,6 +430,7 @@ public partial class UserPeekOverlay : UserControl
         ProjectsTabPanel.Visibility = Visibility.Collapsed;
         TasksTabPanel.Visibility = Visibility.Visible;
         StagesTabPanel.Visibility = Visibility.Collapsed;
+        ImagesTabPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ShowStagesTab()
@@ -351,11 +438,21 @@ public partial class UserPeekOverlay : UserControl
         ProjectsTabPanel.Visibility = Visibility.Collapsed;
         TasksTabPanel.Visibility = Visibility.Collapsed;
         StagesTabPanel.Visibility = Visibility.Visible;
+        ImagesTabPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowImagesTab()
+    {
+        ProjectsTabPanel.Visibility = Visibility.Collapsed;
+        TasksTabPanel.Visibility = Visibility.Collapsed;
+        StagesTabPanel.Visibility = Visibility.Collapsed;
+        ImagesTabPanel.Visibility = Visibility.Visible;
     }
 
     private void TabProjects_Click(object sender, RoutedEventArgs e) => ShowProjectsTab();
     private void TabTasks_Click(object sender, RoutedEventArgs e) => ShowTasksTab();
     private void TabStages_Click(object sender, RoutedEventArgs e) => ShowStagesTab();
+    private void TabImages_Click(object sender, RoutedEventArgs e) => ShowImagesTab();
 
     // ── Клики по строкам ─────────────────────────────────────────────────
 
@@ -378,6 +475,134 @@ public partial class UserPeekOverlay : UserControl
         if (sender is not FrameworkElement fe || fe.DataContext is not UserPeekStageRowVm vm) return;
         e.Handled = true;
         await OpenStageDetailAsync(vm.StageId);
+    }
+
+    private async void ImageRow_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not UserPeekImageRowVm vm) return;
+        e.Handled = true;
+        await OpenPhotoViewerAsync(vm);
+    }
+
+    private async System.Threading.Tasks.Task OpenPhotoViewerAsync(UserPeekImageRowVm vm)
+    {
+        string filePath = string.Empty;
+
+        if (!string.IsNullOrEmpty(vm.FilePath) && File.Exists(vm.FilePath))
+        {
+            filePath = vm.FilePath;
+        }
+        else if (vm.FileData != null && vm.FileData.Length > 0)
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{vm.FileId}");
+            Directory.CreateDirectory(tempDir);
+            filePath = Path.Combine(tempDir, vm.FileName);
+            await File.WriteAllBytesAsync(filePath, vm.FileData);
+        }
+
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+        {
+            MessageBox.Show("Данные файла отсутствуют локально.", "Ошибка",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        byte[]? uploaderAvatarData = null;
+        string? uploaderAvatarPath = null;
+        if (vm.UploadedById != Guid.Empty)
+        {
+            try
+            {
+                await using var db = await App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>().CreateDbContextAsync();
+                var uploader = await db.Users.Where(u => u.Id == vm.UploadedById)
+                    .Select(u => new { u.AvatarData, u.AvatarPath })
+                    .FirstOrDefaultAsync();
+                if (uploader != null)
+                {
+                    uploaderAvatarData = uploader.AvatarData;
+                    uploaderAvatarPath = uploader.AvatarPath;
+                }
+            }
+            catch { }
+        }
+
+        string activeTab;
+        if (ImagesTabPanel.Visibility == Visibility.Visible) activeTab = "Images";
+        else if (StagesTabPanel.Visibility == Visibility.Visible) activeTab = "Stages";
+        else if (TasksTabPanel.Visibility == Visibility.Visible) activeTab = "Tasks";
+        else activeTab = "Projects";
+
+        await MainWindow.Instance!.HideOverlayLayerAnimatedAsync();
+        MainWindow.Instance!.PhotoViewerClosed += OnPhotoViewerClosed;
+
+        MainWindow.Instance?.ShowPhotoViewer(filePath, vm.FileName, vm.Description, vm.UploadedByName, vm.UploadedById, uploaderAvatarData, uploaderAvatarPath, vm.ProjectId,
+            (savedPath, savedFileName, savedDescription) => SaveEditedPhotoAsync(vm.FileId, savedPath, savedFileName, savedDescription, filePath));
+
+        return;
+
+        void OnPhotoViewerClosed()
+        {
+            MainWindow.Instance!.PhotoViewerClosed -= OnPhotoViewerClosed;
+            MainWindow.Instance?.ShowOverlayLayerAnimated();
+            Dispatcher.BeginInvoke(() =>
+            {
+                switch (activeTab)
+                {
+                    case "Images": ShowImagesTab(); break;
+                    case "Stages": ShowStagesTab(); break;
+                    case "Tasks": ShowTasksTab(); break;
+                    default: ShowProjectsTab(); break;
+                }
+            });
+        }
+    }
+
+    private async System.Threading.Tasks.Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string originalTempPath)
+    {
+        try
+        {
+            await using var db = await App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>().CreateDbContextAsync();
+            var file = await db.Files.FindAsync(fileId);
+            if (file is null) return;
+
+            var ext = Path.GetExtension(savedFileName);
+            var fileType = !string.IsNullOrEmpty(ext) ? ext.TrimStart('.').ToLowerInvariant() : "jpg";
+
+            byte[] data;
+            if (File.Exists(savedPath))
+                data = await File.ReadAllBytesAsync(savedPath);
+            else
+                data = [];
+
+            file.FileName = savedFileName;
+            file.FileType = fileType;
+            file.FileSize = data.Length;
+            file.FileData = data;
+            file.Description = savedDescription;
+            file.LastModifiedLocally = DateTime.UtcNow;
+            file.IsSynced = false;
+
+            await db.SaveChangesAsync();
+
+            if (!string.Equals(savedPath, originalTempPath, StringComparison.OrdinalIgnoreCase) && File.Exists(savedPath))
+            {
+                try { File.Move(savedPath, originalTempPath, true); } catch { }
+            }
+
+            try
+            {
+                var info = new FileInfo(originalTempPath);
+                info.CreationTimeUtc = file.OriginalCreatedAt ?? file.CreatedAt;
+                info.LastWriteTimeUtc = DateTime.UtcNow;
+            }
+            catch { }
+
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка сохранения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     // ── Детали задачи ─────────────────────────────────────────────────────
@@ -709,6 +934,12 @@ public partial class UserPeekOverlay : UserControl
         _ => 9
     };
 
+    private static bool IsImage(string fileName)
+    {
+        var ext = Path.GetExtension(fileName)?.ToLowerInvariant();
+        return ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp";
+    }
+
     private static string FormatDueDateLine(DateOnly? dueDate) =>
         dueDate.HasValue
             ? $"Срок: {dueDate.Value.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture)}"
@@ -746,6 +977,7 @@ public partial class UserPeekOverlay : UserControl
             ProjectsTabPanel.Visibility = Visibility.Collapsed;
             TasksTabPanel.Visibility = Visibility.Collapsed;
             StagesTabPanel.Visibility = Visibility.Collapsed;
+            ImagesTabPanel.Visibility = Visibility.Collapsed;
         });
     }
 
@@ -808,5 +1040,20 @@ public partial class UserPeekOverlay : UserControl
         public bool EffectiveMarkedForDeletion { get; init; }
         public bool IsOverdue { get; init; }
         public string DueDateLine { get; init; } = "";
+    }
+
+    public sealed class UserPeekImageRowVm
+    {
+        public Guid FileId { get; init; }
+        public string FileName { get; init; } = "";
+        public byte[]? FileData { get; init; }
+        public string? FilePath { get; init; }
+        public long FileSize { get; init; }
+        public string? Description { get; init; }
+        public Guid ProjectId { get; init; }
+        public string? ProjectName { get; init; }
+        public string UploadedByName { get; init; } = "";
+        public Guid UploadedById { get; init; }
+        public DateTime CreatedAt { get; init; }
     }
 }

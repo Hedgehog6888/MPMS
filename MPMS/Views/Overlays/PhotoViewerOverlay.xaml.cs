@@ -324,22 +324,6 @@ public partial class PhotoViewerOverlay : UserControl
         MainWindow.Instance?.HidePhotoViewer();
     }
 
-    // ── Open User Peek ──────────────────────────────────────────────────────
-    private void UploadedByAvatar_Click(object sender, MouseButtonEventArgs e)
-    {
-        if (_uploadedById == Guid.Empty) return;
-
-        // Check if current user is a worker - workers cannot view other users' profiles
-        var auth = App.Services.GetRequiredService<MPMS.Services.IAuthService>();
-        string role = auth.UserRole ?? "";
-        if (string.Equals(role, "Worker", StringComparison.OrdinalIgnoreCase))
-            return;
-
-        var overlay = new UserPeekOverlay();
-        overlay.SetUser(_uploadedById, _projectId);
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, 480);
-    }
-
     // ── File name ──────────────────────────────────────────────────────────
     private void FileNameBox_TextChanged(object sender, TextChangedEventArgs e)
     {

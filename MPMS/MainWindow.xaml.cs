@@ -443,6 +443,8 @@ public partial class MainWindow : Window
         PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
     }
 
+    public event Action? PhotoViewerClosed;
+
     public void HidePhotoViewer()
     {
         _photoViewerWasVisible = false;
@@ -451,8 +453,37 @@ public partial class MainWindow : Window
         {
             PhotoViewerLayer.Visibility = Visibility.Collapsed;
             PhotoViewerLayer.Content = null;
+            PhotoViewerClosed?.Invoke();
         };
         PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+    }
+
+    public void HideOverlayLayer() => OverlayLayer.Visibility = Visibility.Collapsed;
+    public void ShowOverlayLayer() => OverlayLayer.Visibility = Visibility.Visible;
+
+    public async System.Threading.Tasks.Task HideOverlayLayerAnimatedAsync()
+    {
+        if (OverlayLayer.Visibility != Visibility.Visible) return;
+
+        var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(160));
+        fadeOut.Completed += (_, _) =>
+        {
+            OverlayLayer.Visibility = Visibility.Collapsed;
+            tcs.TrySetResult(true);
+        };
+        OverlayLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        await tcs.Task;
+    }
+
+    public void ShowOverlayLayerAnimated()
+    {
+        if (OverlayLayer.Visibility == Visibility.Visible) return;
+
+        OverlayLayer.Opacity = 0;
+        OverlayLayer.Visibility = Visibility.Visible;
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+        OverlayLayer.BeginAnimation(UIElement.OpacityProperty, fadeIn);
     }
 
     public void HidePhotoViewerTemporarily()
