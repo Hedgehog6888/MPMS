@@ -17,6 +17,7 @@ using Syncfusion.XlsIO;
 namespace MPMS.Views.Overlays;
 
 public partial class DocumentViewerOverlay : UserControl
+{
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
     private string? _description;
