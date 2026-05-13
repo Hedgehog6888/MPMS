@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     public const double TaskOrStageDetailWithLeftTotalWidth = 1000;
     public const double CenteredFormOverlayWidth = 560;
     public const double CenteredProjectFormOverlayWidth = 640;
+    public const double WideFormOverlayWidth = 960;
 
     private enum OverlayPresentationMode { None, Drawer, Modal }
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;

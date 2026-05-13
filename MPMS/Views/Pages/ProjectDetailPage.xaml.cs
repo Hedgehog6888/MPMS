@@ -215,11 +215,12 @@ public partial class ProjectDetailPage : UserControl
             {
                 if (vm != null)
                 {
+                    vm.Invalidate();
                     await vm.LoadAsync();
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void EditProject_Click(object sender, RoutedEventArgs e)
@@ -233,11 +234,12 @@ public partial class ProjectDetailPage : UserControl
             {
                 if (vm != null)
                 {
+                    vm.Invalidate();
                     await vm.LoadAsync();
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void OpenQuickTeamOverlay_Click(object sender, RoutedEventArgs e)
@@ -247,6 +249,7 @@ public partial class ProjectDetailPage : UserControl
         var overlay = new QuickTeamMembersOverlay();
         overlay.SetProject(vm.Project.Id, onSaved: async () =>
         {
+            vm.Invalidate();
             await vm.LoadAsync();
             _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
         });
@@ -262,11 +265,12 @@ public partial class ProjectDetailPage : UserControl
             currentTask,
             onSaved: async () =>
             {
+                VM!.Invalidate();
                 await VM.LoadAsync();
                 _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
             },
             onAfterSave: () => OpenTaskDetail(currentTask));
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async void DeleteTask_Click(object sender, RoutedEventArgs e)

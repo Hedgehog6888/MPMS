@@ -15,14 +15,12 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="Margin" Value="0,2,6,2"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
         <Style x:Key="UserPickerItem" TargetType="Border">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,1"/>
         </Style>
     </UserControl.Resources>
@@ -63,9 +61,17 @@
         </Border>
 
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24,8,24,8">
+            <Grid Margin="24,8,24,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
+                <!-- Левая колонка: Основная информация -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                    <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
                 <TextBlock Text="Название проекта *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
@@ -129,7 +135,14 @@
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Text="КОМАНДА ПРОЕКТА" Style="{StaticResource SectionHeader}"/>
+                </StackPanel>
+
+                <!-- Разделитель -->
+                <Border Grid.Column="1" Background="#E8E9EC" Width="1" Margin="0,20,0,0"/>
+
+                <!-- Правая колонка: Команда проекта -->
+                <StackPanel Grid.Column="2" Margin="16,0,0,0">
+                    <TextBlock Text="КОМАНДА ПРОЕКТА" Style="{StaticResource SectionHeader}"/>
 
                 <TextBlock Text="Менеджер проекта *" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
                 <Border x:Name="ManagerPickerHost" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
@@ -175,15 +188,15 @@
                                                                        Foreground="#000000"/>
                                                         </StackPanel>
                                                     </StackPanel>
-                                                <Border Width="22" Height="22" CornerRadius="11"
-                                                        Background="#111111"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        Visibility="{Binding IsSelectedVis}">
-                                                    <TextBlock Text="✓" FontSize="10" Foreground="White"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
-                                                </Border>
+                                                    <Border Width="22" Height="22" CornerRadius="11"
+                                                            Background="#111111"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Visibility="{Binding IsSelectedVis}">
+                                                        <TextBlock Text="✓" FontSize="10" Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -198,20 +211,10 @@
                     </ScrollViewer>
                 </Border>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Прораб" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <TextBlock Grid.Row="0" Text="Прораб" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
-
-                    <WrapPanel x:Name="SelectedForemenPanel" Grid.Row="1"
-                               Margin="0,0,0,8"
-                               Visibility="Collapsed"/>
-
-                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
@@ -276,21 +279,12 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                </Grid>
+                </StackPanel>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <TextBlock Grid.Row="0" Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
-
-                    <WrapPanel x:Name="SelectedWorkersPanel" Grid.Row="1"
-                               Margin="0,0,0,8" Visibility="Collapsed"/>
-
-                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
@@ -359,7 +353,7 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                </Grid>
+                </StackPanel>
 
                 <StackPanel x:Name="StatusRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="СТАТУС" Style="{StaticResource SectionHeader}"/>
@@ -367,7 +361,8 @@
                               Height="42" Margin="0,0,0,0"/>
                 </StackPanel>
 
-            </StackPanel>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <Border Grid.Row="2" Padding="24,14"

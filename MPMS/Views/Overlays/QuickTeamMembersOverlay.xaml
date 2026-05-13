@@ -59,17 +59,10 @@
             <StackPanel Margin="24,8,24,8">
                 <TextBlock Text="КОМАНДА ПРОЕКТА" Style="{StaticResource SectionHeader}"/>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Прорабы" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <TextBlock Grid.Row="0" Text="Прорабы" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
-                    <WrapPanel x:Name="SelectedForemenPanel" Grid.Row="1" Margin="0,0,0,8" Visibility="Collapsed"/>
-
-                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="220">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
@@ -123,19 +116,12 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                </Grid>
+                </StackPanel>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <TextBlock Grid.Row="0" Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
-                    <WrapPanel x:Name="SelectedWorkersPanel" Grid.Row="1" Margin="0,0,0,8" Visibility="Collapsed"/>
-
-                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="220">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
@@ -192,7 +178,7 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
-                </Grid>
+                </StackPanel>
 
             </StackPanel>
         </ScrollViewer>

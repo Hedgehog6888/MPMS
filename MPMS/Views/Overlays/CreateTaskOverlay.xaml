@@ -15,7 +15,6 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,1"/>
         </Style>
 
@@ -86,8 +85,16 @@
         </Border>
 
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="24,8,24,8">
-                <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
+            <Grid Margin="24,8,24,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Левая колонка: Основная информация -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
                 <TextBlock Text="Название задачи *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
@@ -127,32 +134,24 @@
                     <Button x:Name="BtnPriorityLow" Grid.Column="0" Style="{StaticResource PrioritySegmentedBtn}"
                             Click="PriorityLow_Click">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Width="8" Height="8" CornerRadius="4" Background="#00875A"
-                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Низкий" FontSize="12"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnPriorityMedium" Grid.Column="2" Style="{StaticResource PrioritySegmentedBtn}"
                             Click="PriorityMedium_Click">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Width="8" Height="8" CornerRadius="4" Background="#0082FF"
-                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Средний" FontSize="12"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnPriorityHigh" Grid.Column="4" Style="{StaticResource PrioritySegmentedBtn}"
                             Click="PriorityHigh_Click">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Width="8" Height="8" CornerRadius="4" Background="#FF8B00"
-                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Высокий" FontSize="12"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="BtnPriorityCritical" Grid.Column="6" Style="{StaticResource PrioritySegmentedBtn}"
                             Click="PriorityCritical_Click">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Border Width="8" Height="8" CornerRadius="4" Background="#DE350B"
-                                    Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Критический" FontSize="12"/>
                         </StackPanel>
                     </Button>
@@ -171,7 +170,12 @@
                 <TextBlock Text="Срок выполнения *" Style="{StaticResource FormLabel}"/>
                 <DatePicker x:Name="DueDatePicker" Height="42" FontSize="13" Margin="0,0,0,4"/>
 
-                <TextBlock Text="ИСПОЛНИТЕЛИ" Style="{StaticResource SectionHeader}"/>
+                </StackPanel>
+
+                <Border Grid.Column="1" Background="#E8E9EC" Width="1" Margin="0,20,0,0"/>
+
+                <StackPanel Grid.Column="2" Margin="16,0,0,0">
+                    <TextBlock Text="ИСПОЛНИТЕЛИ" Style="{StaticResource SectionHeader}"/>
 
                 <Border x:Name="NoProjHint" Background="#FFFBEB" CornerRadius="8"
                         Padding="12,10" Margin="0,0,0,12"
@@ -179,8 +183,6 @@
                     <TextBlock x:Name="NoProjHintText" Text="Выберите проект, чтобы увидеть доступных исполнителей"
                                FontSize="12" Foreground="#92400E" TextWrapping="Wrap"/>
                 </Border>
-
-                <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8" Visibility="Collapsed"/>
 
                 <TextBlock x:Name="ForemanSectionTitle" Text="Прорабы" FontSize="11" FontWeight="SemiBold"
                            Foreground="#166534" Margin="0,0,0,6" Visibility="Collapsed"/>
@@ -327,7 +329,8 @@
                     </ScrollViewer>
                 </Border>
 
-            </StackPanel>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <Border Grid.Row="2" Padding="24,14"

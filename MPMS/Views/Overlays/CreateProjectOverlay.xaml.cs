@@ -242,54 +242,6 @@ public partial class CreateProjectOverlay : UserControl
 
     private void RefreshForemanChips()
     {
-        SelectedForemenPanel.Children.Clear();
-        var selectedForemen = _foremanUsers
-            .Where(u => _selectedForemanIds.Contains(u.Id))
-            .ToList();
-
-        SelectedForemenPanel.Visibility = selectedForemen.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var foreman in selectedForemen)
-            SelectedForemenPanel.Children.Add(BuildForemanChip(foreman));
-    }
-
-    private Border BuildForemanChip(LocalUser user)
-    {
-        var chip = new Border
-        {
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 2, 6, 2),
-            Background = new SolidColorBrush(Color.FromRgb(0xEC, 0xFD, 0xF5)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x6E, 0xE7, 0xB7)),
-            BorderThickness = new Thickness(1)
-        };
-        var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        sp.Children.Add(new TextBlock
-        {
-            Text = user.Name,
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        var removeBtn = new Button
-        {
-            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
-            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
-            Margin = new Thickness(4, 0, 0, 0),
-            Tag = user.Id
-        };
-        removeBtn.Click += (s, _) =>
-        {
-            if (s is Button btn && btn.Tag is Guid uid)
-            {
-                _selectedForemanIds.Remove(uid);
-                RefreshForemanItems();
-                RefreshForemanChips();
-            }
-        };
-        sp.Children.Add(removeBtn);
-        chip.Child = sp;
-        return chip;
     }
 
     private async System.Threading.Tasks.Task RemoveWorkerAsync(Guid userId, string workerName)
@@ -371,55 +323,6 @@ public partial class CreateProjectOverlay : UserControl
 
     private void RefreshWorkerChips(List<WorkerChipInfo> workers)
     {
-        SelectedWorkersPanel.Children.Clear();
-        if (workers.Count == 0)
-        {
-            SelectedWorkersPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        SelectedWorkersPanel.Visibility = Visibility.Visible;
-        foreach (var w in workers)
-        {
-            var chip = BuildWorkerChip(w);
-            SelectedWorkersPanel.Children.Add(chip);
-        }
-    }
-
-    private Border BuildWorkerChip(WorkerChipInfo info)
-    {
-        var chip = new Border
-        {
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 2, 6, 2),
-            Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
-            BorderThickness = new Thickness(1)
-        };
-        var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        sp.Children.Add(new TextBlock
-        {
-            Text = info.Name,
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        var removeBtn = new Button
-        {
-            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
-            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
-            Margin = new Thickness(4, 0, 0, 0),
-            Tag = (info.UserId, info.Name)
-        };
-        removeBtn.Click += async (s, _) =>
-        {
-            if (s is Button btn && btn.Tag is (Guid uid, string name))
-                await RemoveWorkerAsync(uid, name);
-        };
-        sp.Children.Add(removeBtn);
-        chip.Child = sp;
-        return chip;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)

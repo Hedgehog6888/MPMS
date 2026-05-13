@@ -52,7 +52,7 @@ public partial class ProjectsPage : UserControl
         if (VM is null) return;
         var overlay = new CreateProjectOverlay();
         overlay.SetCreateMode(VM);
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void EditProject_Click(object sender, RoutedEventArgs e)
@@ -60,7 +60,7 @@ public partial class ProjectsPage : UserControl
         if (sender is not Button btn || btn.Tag is not LocalProject project || VM is null) return;
         var overlay = new CreateProjectOverlay();
         overlay.SetEditMode(VM, project);
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredProjectFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async void DeleteProject_Click(object sender, RoutedEventArgs e)

@@ -267,7 +267,7 @@ public partial class TaskDetailOverlay : UserControl
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async System.Threading.Tasks.Task ReopenTaskDetailDualAsync()

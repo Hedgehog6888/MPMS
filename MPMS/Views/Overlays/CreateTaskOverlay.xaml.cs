@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -90,12 +91,52 @@ public partial class CreateTaskOverlay : UserControl
 
         if (currentUserId.HasValue)
         {
-            var userProjectIds = await db.ProjectMembers
-                .Where(pm => pm.UserId == currentUserId.Value)
-                .Select(pm => pm.ProjectId)
-                .Distinct()
-                .ToListAsync();
-            projectQuery = projectQuery.Where(p => userProjectIds.Contains(p.Id));
+            var currentUserRole = authService.UserRole ?? "";
+            bool isManager = string.Equals(currentUserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(currentUserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(currentUserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+            bool isForeman = string.Equals(currentUserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+            bool isWorker = string.Equals(currentUserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+            if (isManager)
+            {
+                projectQuery = projectQuery.Where(p => p.ManagerId == currentUserId.Value);
+            }
+            else if (isForeman)
+            {
+                var assignedProjectIds = await db.ProjectMembers
+                    .Where(m => m.UserId == currentUserId.Value)
+                    .Select(m => m.ProjectId)
+                    .ToListAsync();
+                projectQuery = projectQuery.Where(p => assignedProjectIds.Contains(p.Id));
+            }
+            else if (isWorker)
+            {
+                var projectIdsFromTaskAssignee = await db.Tasks
+                    .Where(t => t.AssignedUserId == currentUserId.Value)
+                    .Select(t => t.ProjectId)
+                    .ToListAsync();
+                var projectIdsFromTaskAssignees = await db.TaskAssignees
+                    .Where(ta => ta.UserId == currentUserId.Value)
+                    .Join(db.Tasks, ta => ta.TaskId, t => t.Id, (_, t) => t.ProjectId)
+                    .ToListAsync();
+                var projectIdsFromStageAssignees = await db.StageAssignees
+                    .Where(sa => sa.UserId == currentUserId.Value)
+                    .Join(db.TaskStages, sa => sa.StageId, s => s.Id, (_, s) => s.TaskId)
+                    .Join(db.Tasks, tid => tid, t => t.Id, (_, t) => t.ProjectId)
+                    .ToListAsync();
+                var projectIdsFromStageAssigned = await db.TaskStages
+                    .Where(s => s.AssignedUserId == currentUserId.Value)
+                    .Join(db.Tasks, s => s.TaskId, t => t.Id, (_, t) => t.ProjectId)
+                    .ToListAsync();
+                var workerProjectIds = projectIdsFromTaskAssignee
+                    .Concat(projectIdsFromTaskAssignees)
+                    .Concat(projectIdsFromStageAssignees)
+                    .Concat(projectIdsFromStageAssigned)
+                    .Distinct()
+                    .ToList();
+                projectQuery = projectQuery.Where(p => workerProjectIds.Contains(p.Id));
+            }
         }
 
         var projects = await projectQuery.OrderBy(p => p.Name).ToListAsync();
@@ -261,63 +302,6 @@ public partial class CreateTaskOverlay : UserControl
 
     private void RefreshAssigneeChips()
     {
-        SelectedAssigneesPanel.Children.Clear();
-        var selected = _allAssigneeItems.Where(i => _selectedAssigneeIds.Contains(i.UserId)).ToList();
-        SelectedAssigneesPanel.Visibility = selected.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        foreach (var item in selected)
-        {
-            var chip = BuildChip(item);
-            SelectedAssigneesPanel.Children.Add(chip);
-        }
-    }
-
-    private Border BuildChip(AssigneePickerItem item)
-    {
-        var chip = new Border
-        {
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 2, 6, 2),
-            Background = new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
-            BorderThickness = new Thickness(1)
-        };
-        var sp = new StackPanel { Orientation = Orientation.Horizontal };
-        sp.Children.Add(new TextBlock
-        {
-            Text = item.Name,
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        var removeBtn = new Button
-        {
-            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
-            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
-            Margin = new Thickness(4, 0, 0, 0),
-            Tag = item.UserId
-        };
-
-        if (item.UserId == _currentUserId)
-        {
-            removeBtn.IsEnabled = false;
-            removeBtn.Opacity = 0.3;
-        }
-        removeBtn.Click += (s, _) =>
-        {
-            if (s is Button b && b.Tag is Guid uid)
-            {
-                if (uid == _currentUserId)
-                    return;
-                _selectedAssigneeIds.Remove(uid);
-                RefreshAssigneeItems();
-                RefreshAssigneeChips();
-            }
-        };
-        sp.Children.Add(removeBtn);
-        chip.Child = sp;
-        return chip;
     }
 
     private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
@@ -358,7 +342,6 @@ public partial class CreateTaskOverlay : UserControl
         if (ProjectCombo.SelectedValue is Guid projectId)
         {
             _selectedAssigneeIds.Clear();
-            SelectedAssigneesPanel.Visibility = Visibility.Collapsed;
             await LoadAssigneesForProjectAsync(projectId);
         }
     }

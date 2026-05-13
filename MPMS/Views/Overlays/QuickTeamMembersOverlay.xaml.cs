@@ -150,12 +150,6 @@ public partial class QuickTeamMembersOverlay : UserControl
             item.RefreshSelected(_selectedForemanIds);
         ForemanPickerList.ItemsSource = null;
         ForemanPickerList.ItemsSource = _foremanItems;
-
-        SelectedForemenPanel.Children.Clear();
-        var selected = _foremanUsers.Where(u => _selectedForemanIds.Contains(u.Id)).ToList();
-        SelectedForemenPanel.Visibility = selected.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var foreman in selected)
-            SelectedForemenPanel.Children.Add(BuildChip(foreman.Id, foreman.Name, true));
     }
 
     private void RefreshWorkerItemsAndChips()
@@ -164,79 +158,6 @@ public partial class QuickTeamMembersOverlay : UserControl
             item.RefreshSelected(_selectedWorkerIds);
         WorkerPickerList.ItemsSource = null;
         WorkerPickerList.ItemsSource = _workerItems;
-
-        SelectedWorkersPanel.Children.Clear();
-        var selected = _workerUsers.Where(u => _selectedWorkerIds.Contains(u.Id)).ToList();
-        SelectedWorkersPanel.Visibility = selected.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var worker in selected)
-            SelectedWorkersPanel.Children.Add(BuildChip(worker.Id, worker.Name, false));
-    }
-
-    private Border BuildChip(Guid userId, string userName, bool isForeman)
-    {
-        var chip = new Border
-        {
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 5, 10, 5),
-            Margin = new Thickness(0, 2, 6, 2),
-            Background = isForeman
-                ? new SolidColorBrush(Color.FromRgb(0xEC, 0xFD, 0xF5))
-                : new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
-            BorderBrush = isForeman
-                ? new SolidColorBrush(Color.FromRgb(0x6E, 0xE7, 0xB7))
-                : new SolidColorBrush(Color.FromRgb(0xBF, 0xDB, 0xFE)),
-            BorderThickness = new Thickness(1)
-        };
-
-        var stack = new StackPanel { Orientation = Orientation.Horizontal };
-        stack.Children.Add(new TextBlock
-        {
-            Text = userName,
-            FontSize = 11,
-            Foreground = isForeman
-                ? new SolidColorBrush(Color.FromRgb(0x16, 0x65, 0x34))
-                : new SolidColorBrush(Color.FromRgb(0x1D, 0x4E, 0xD8)),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-
-        var removeButton = new Button
-        {
-            Style = (Style)Application.Current.FindResource("ChipRemoveButton"),
-            Content = new TextBlock { Text = "✕", FontSize = 9, Foreground = Brushes.Gray },
-            Margin = new Thickness(4, 0, 0, 0),
-            Tag = (isForeman, userId)
-        };
-
-        removeButton.Click += (s, _) =>
-        {
-            if (s is not Button btn || btn.Tag is not ValueTuple<bool, Guid> tuple)
-                return;
-
-            if (tuple.Item1)
-            {
-                if (_selectedForemanIds.Count <= 1)
-                {
-                    ShowError("В проекте должен остаться хотя бы один прораб.");
-                    return;
-                }
-                _selectedForemanIds.Remove(tuple.Item2);
-                RefreshForemanItemsAndChips();
-            }
-            else
-            {
-                if (_selectedWorkerIds.Count <= 1)
-                {
-                    ShowError("В проекте должен остаться хотя бы один работник.");
-                    return;
-                }
-                _selectedWorkerIds.Remove(tuple.Item2);
-                RefreshWorkerItemsAndChips();
-            }
-        };
-
-        stack.Children.Add(removeButton);
-        chip.Child = stack;
-        return chip;
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
