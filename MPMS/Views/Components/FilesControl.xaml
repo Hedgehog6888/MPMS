@@ -1,809 +1,1666 @@
 <UserControl x:Class="MPMS.Views.Components.FilesControl"
+
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+
              xmlns:viewmodels="clr-namespace:MPMS.ViewModels"
+
              xmlns:controls="clr-namespace:MPMS.Controls"
+
              xmlns:infrastructure="clr-namespace:MPMS.Infrastructure"
+
              mc:Ignorable="d" 
+
              d:DesignHeight="600" d:DesignWidth="800"
+
              d:DataContext="{d:DesignInstance Type=viewmodels:FilesControlViewModel, IsDesignTimeCreatable=False}"
+
              UseLayoutRounding="True"
+
              SnapsToDevicePixels="True">
 
+
+
     <UserControl.Resources>
+
         <infrastructure:FileSizeConverter x:Key="FileSizeConverter" />
+
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVis" />
+
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True" />
+
         <infrastructure:FileTypeToIsDocumentConverter x:Key="FileTypeToIsDocument" />
+
         <infrastructure:NullToVisibilityConverter x:Key="NullToVis" />
 
+
+
         <!-- Стиль премиум всплывающей подсказки -->
+
         <Style x:Key="PremiumTooltip" TargetType="ToolTip">
+
             <Setter Property="Background" Value="White"/>
+
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
+
             <Setter Property="BorderThickness" Value="1"/>
+
             <Setter Property="Padding" Value="0"/>
+
             <Setter Property="OverridesDefaultStyle" Value="True"/>
+
             <Setter Property="Template">
+
                 <Setter.Value>
+
                     <ControlTemplate TargetType="ToolTip">
+
                         <Border Background="{TemplateBinding Background}"
+
                                 BorderBrush="{TemplateBinding BorderBrush}"
+
                                 BorderThickness="{TemplateBinding BorderThickness}"
+
                                 CornerRadius="10">
+
                             <ContentPresenter />
+
                         </Border>
+
                     </ControlTemplate>
+
                 </Setter.Value>
+
             </Setter>
+
         </Style>
+
+
 
         <Style x:Key="TooltipHeaderSection" TargetType="Border">
+
             <Setter Property="CornerRadius" Value="10,10,0,0"/>
+
             <Setter Property="Padding" Value="16,12"/>
+
             <Setter Property="Background" Value="#F8F9FA"/>
+
         </Style>
+
+
 
         <Style x:Key="TooltipHeader" TargetType="TextBlock">
+
             <Setter Property="FontWeight" Value="SemiBold"/>
+
             <Setter Property="FontSize" Value="13"/>
+
             <Setter Property="Foreground" Value="#172B4D"/>
+
             <Setter Property="TextWrapping" Value="Wrap"/>
+
         </Style>
+
+
 
         <Style x:Key="TooltipContentSection" TargetType="Border">
+
             <Setter Property="Padding" Value="16,12"/>
+
         </Style>
+
+
 
         <Style x:Key="TooltipInfoRow" TargetType="StackPanel">
+
             <Setter Property="Orientation" Value="Horizontal"/>
+
             <Setter Property="Margin" Value="0,4,0,0"/>
+
         </Style>
+
+
 
         <Style x:Key="TooltipLabel" TargetType="TextBlock">
+
             <Setter Property="FontSize" Value="11"/>
+
             <Setter Property="Foreground" Value="#6B778C"/>
+
             <Setter Property="Width" Value="80"/>
+
         </Style>
+
+
 
         <Style x:Key="TooltipValue" TargetType="TextBlock">
+
             <Setter Property="FontSize" Value="11"/>
+
             <Setter Property="Foreground" Value="#172B4D"/>
+
             <Setter Property="TextWrapping" Value="Wrap"/>
+
         </Style>
+
                 
+
         <!-- Стиль круглой кнопки удаления, появляющейся при наведении -->
+
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
+
             <Setter Property="Background" Value="White"/>
+
             <Setter Property="Cursor" Value="Hand"/>
+
             <Setter Property="Width" Value="28"/>
+
             <Setter Property="Height" Value="28"/>
+
             <Setter Property="Visibility" Value="Collapsed"/>
+
             <Setter Property="Template">
+
                 <Setter.Value>
+
                     <ControlTemplate TargetType="Button">
+
                         <Border x:Name="Bg"
+
                                 Background="{TemplateBinding Background}"
+
                                 CornerRadius="6"
+
                                 Opacity="0.95">
+
                             <Border.Effect>
+
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
+
                             </Border.Effect>
+
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
                         </Border>
+
                         <ControlTemplate.Triggers>
+
                             <Trigger Property="IsMouseOver" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+
                                 <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+
                             </Trigger>
+
                             <Trigger Property="IsPressed" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
+
                                 <Setter TargetName="Bg" Property="Opacity" Value="1"/>
+
                             </Trigger>
+
                         </ControlTemplate.Triggers>
+
                     </ControlTemplate>
+
                 </Setter.Value>
+
             </Setter>
+
             <Style.Triggers>
+
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+
                     <Setter Property="Visibility" Value="Visible"/>
+
                 </DataTrigger>
+
             </Style.Triggers>
+
         </Style>
+
+
 
         <!-- Стиль круглой кнопки скачивания, появляющейся при наведении -->
+
         <Style x:Key="CircularDownloadButtonStyle" TargetType="Button">
+
             <Setter Property="Background" Value="White"/>
+
             <Setter Property="Cursor" Value="Hand"/>
+
             <Setter Property="Width" Value="28"/>
+
             <Setter Property="Height" Value="28"/>
+
             <Setter Property="Visibility" Value="Collapsed"/>
+
             <Setter Property="Template">
+
                 <Setter.Value>
+
                     <ControlTemplate TargetType="Button">
+
                         <Border x:Name="Bg"
+
                                 Background="{TemplateBinding Background}"
+
                                 CornerRadius="6"
+
                                 Opacity="0.95">
+
                             <Border.Effect>
+
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
+
                             </Border.Effect>
+
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
                         </Border>
+
                         <ControlTemplate.Triggers>
+
                             <Trigger Property="IsMouseOver" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+
                                 <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+
                             </Trigger>
+
                             <Trigger Property="IsPressed" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
+
                                 <Setter TargetName="Bg" Property="Opacity" Value="1"/>
+
                             </Trigger>
+
                         </ControlTemplate.Triggers>
+
                     </ControlTemplate>
+
                 </Setter.Value>
+
             </Setter>
+
             <Style.Triggers>
+
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+
                     <Setter Property="Visibility" Value="Visible"/>
+
                 </DataTrigger>
+
             </Style.Triggers>
+
         </Style>
+
+
 
         <!-- Стиль круглой кнопки просмотра, появляющейся при наведении -->
+
         <Style x:Key="CircularViewButtonStyle" TargetType="Button">
+
             <Setter Property="Background" Value="White"/>
+
             <Setter Property="Cursor" Value="Hand"/>
+
             <Setter Property="Width" Value="28"/>
+
             <Setter Property="Height" Value="28"/>
+
             <Setter Property="Visibility" Value="Collapsed"/>
+
             <Setter Property="Template">
+
                 <Setter.Value>
+
                     <ControlTemplate TargetType="Button">
+
                         <Border x:Name="Bg"
+
                                 Background="{TemplateBinding Background}"
+
                                 CornerRadius="6"
+
                                 Opacity="0.95">
+
                             <Border.Effect>
+
                                 <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.12" Direction="270"/>
+
                             </Border.Effect>
+
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
                         </Border>
+
                         <ControlTemplate.Triggers>
+
                             <Trigger Property="IsMouseOver" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="{StaticResource BackgroundBrush}"/>
+
                                 <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+
                             </Trigger>
+
                             <Trigger Property="IsPressed" Value="True">
+
                                 <Setter TargetName="Bg" Property="Background" Value="#EBECF0"/>
+
                                 <Setter TargetName="Bg" Property="Opacity" Value="1"/>
+
                             </Trigger>
+
                         </ControlTemplate.Triggers>
+
                     </ControlTemplate>
+
                 </Setter.Value>
+
             </Setter>
+
             <Style.Triggers>
+
                 <MultiDataTrigger>
+
                     <MultiDataTrigger.Conditions>
+
                         <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
+
                         <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsDocument}}" Value="Visible"/>
+
                     </MultiDataTrigger.Conditions>
+
                     <Setter Property="Visibility" Value="Visible"/>
+
                 </MultiDataTrigger>
+
             </Style.Triggers>
+
         </Style>
+
+
 
         <!-- Стиль элементов списка в FilesControl, имитирующий стиль WarehouseRow -->
+
         <Style x:Key="FileListItemStyle" TargetType="Border">
+
             <Setter Property="Background" Value="White"/>
+
             <Setter Property="CornerRadius" Value="8"/>
+
             <Setter Property="Margin" Value="0,0,0,6"/>
+
             <Setter Property="Padding" Value="16,12"/>
+
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
+
             <Setter Property="BorderThickness" Value="1.5"/>
+
             <Setter Property="Cursor" Value="Hand"/>
+
             <Style.Triggers>
+
                 <Trigger Property="IsMouseOver" Value="True">
+
                     <Setter Property="Background" Value="#F8F9FA"/>
+
                     <Setter Property="BorderBrush" Value="#111111"/>
+
                 </Trigger>
+
             </Style.Triggers>
+
         </Style>
 
+
+
         <!-- Шаблон для карточек изображений -->
+
         <DataTemplate x:Key="ImageCardTemplate">
+
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,6,6"
+
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+
                     Cursor="Hand">
+
                 <Border.ToolTip>
+
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
+
                         <StackPanel>
+
                             <Border Style="{StaticResource TooltipHeaderSection}">
+
                                 <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+
                             </Border>
+
                             <Border Style="{StaticResource TooltipContentSection}">
+
                                 <StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Тип:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding FileType, StringFormat='{}\{0\}'}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}">
+
                                         <TextBlock Text="Проект:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding ProjectName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}">
+
                                         <TextBlock Text="Этап:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding StageName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Загружен:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding UploadedByName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Изменен:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                 </StackPanel>
+
                             </Border>
+
                         </StackPanel>
+
                     </ToolTip>
+
                 </Border.ToolTip>
+
                 <Border.InputBindings>
+
                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenPhotoViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+
                 </Border.InputBindings>
+
                 <Grid>
+
                     <Grid.RowDefinitions>
+
                         <RowDefinition Height="120"/>
+
                         <RowDefinition Height="*"/>
+
                     </Grid.RowDefinitions>
+
                     
+
                     <!-- Область предпросмотра файла -->
+
                     <Border Grid.Row="0" CornerRadius="8,8,0,0" SnapsToDevicePixels="True"
+
                             Background="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}">
+
                         <Grid UseLayoutRounding="True">
+
                             <Viewbox Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6">
+
                                 <Viewbox.Style>
+
                                     <Style TargetType="Viewbox">
+
                                         <Setter Property="Visibility" Value="Collapsed"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="False">
+
                                                 <Setter Property="Visibility" Value="Visible"/>
+
                                             </DataTrigger>
+
                                             <DataTrigger Binding="{Binding FileData, Converter={StaticResource NullToVisInv}}" Value="Visible">
+
                                                 <Setter Property="Visibility" Value="Visible"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Viewbox.Style>
+
                                 <Canvas Width="24" Height="24">
+
                                     <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+
                                           StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+
                                           Data="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+
                                     <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+
                                           StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+
                                           Data="M14 2v4a2 2 0 0 0 2 2h4"/>
+
                                 </Canvas>
+
                             </Viewbox>
 
+
+
                             <Border CornerRadius="8,8,0,0">
+
                                 <Border.Style>
+
                                     <Style TargetType="Border">
+
                                         <Setter Property="Visibility" Value="Collapsed"/>
+
                                         <Style.Triggers>
+
                                             <MultiDataTrigger>
+
                                                 <MultiDataTrigger.Conditions>
+
                                                     <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="True"/>
+
                                                     <Condition Binding="{Binding FileData, Converter={StaticResource NullToVis}}" Value="Visible"/>
+
                                                 </MultiDataTrigger.Conditions>
+
                                                 <Setter Property="Visibility" Value="Visible"/>
+
                                             </MultiDataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Border.Style>
+
                                 <Border.Background>
+
                                     <ImageBrush ImageSource="{Binding FileData, Converter={StaticResource AvatarBytesToImage}, ConverterParameter=480}" 
+
                                                 Stretch="UniformToFill"
+
                                                 RenderOptions.BitmapScalingMode="HighQuality"/>
+
                                 </Border.Background>
+
                             </Border>
+
                             
+
                             <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,12" Padding="6,2" CornerRadius="4"
+
                                     Background="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}">
+
                                 <Border.Style>
+
                                     <Style TargetType="Border">
+
                                         <Setter Property="Visibility" Value="Visible"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="True">
+
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Border.Style>
+
                                 <TextBlock Text="{Binding FileName, Converter={StaticResource FileExtensionToShortLabel}}" 
+
                                            FontSize="10" FontWeight="Bold" Foreground="White" TextAlignment="Center"/>
+
                             </Border>
+
                         </Grid>
+
                     </Border>
+
                     
+
                     <!-- Наложение действий (видимо при наведении) -->
+
                     <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" Margin="6">
+
                         <Button ToolTip="Просмотр"
+
                                 Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Style="{StaticResource CircularViewButtonStyle}"
+
                                 Margin="0,0,6,0">
+
                             <Image Source="{svgc:SvgImage Source=/icons/view.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+
                         </Button>
+
+
 
                         <Button ToolTip="Скачать"
+
                                 Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Style="{StaticResource CircularDownloadButtonStyle}"
+
                                 Margin="0,0,6,0">
+
                             <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+
                         </Button>
 
+
+
                         <Button ToolTip="Удалить"
+
                                 Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Style="{StaticResource CircularDeleteButtonStyle}">
+
                             <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
+
                         </Button>
+
                     </StackPanel>
+
+
 
                     <StackPanel Grid.Row="1" Margin="8,6">
+
                         <TextBlock Text="{Binding FileName}" FontSize="12" FontWeight="SemiBold" 
+
                                    Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+
                         <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" 
+
                                    FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+
                         <TextBlock Text="{Binding ProjectName, StringFormat=П: \{0\}}" FontSize="10" Foreground="#0052CC" TextTrimming="CharacterEllipsis"
+
                                    Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+
                         <TextBlock Text="{Binding StageName, StringFormat=Э: \{0\}}" FontSize="10" Foreground="#00875A" TextTrimming="CharacterEllipsis"
+
                                    Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
+
                         <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=Изменен: dd.MM.yyyy HH\:mm}" 
+
                                    FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+
                     </StackPanel>
+
                 </Grid>
+
             </Border>
+
         </DataTemplate>
+
+
 
         <!-- Шаблон для списка документов -->
+
         <DataTemplate x:Key="DocumentListTemplate">
+
             <Border Style="{StaticResource FileListItemStyle}">
+
                 <Border.ToolTip>
+
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
+
                         <StackPanel>
+
                             <Border Style="{StaticResource TooltipHeaderSection}">
+
                                 <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+
                             </Border>
+
                             <Border Style="{StaticResource TooltipContentSection}">
+
                                 <StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Тип:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding FileType, StringFormat='{}\{0\}'}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}">
+
                                         <TextBlock Text="Проект:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding ProjectName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}">
+
                                         <TextBlock Text="Этап:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding StageName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Загружен:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding UploadedByName}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
+
                                         <TextBlock Text="Изменен:" Style="{StaticResource TooltipLabel}"/>
+
                                         <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" Style="{StaticResource TooltipValue}"/>
+
                                     </StackPanel>
+
                                 </StackPanel>
+
                             </Border>
+
                         </StackPanel>
+
                     </ToolTip>
+
                 </Border.ToolTip>
+
                 <Border.InputBindings>
+
                     <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+
                 </Border.InputBindings>
+
                 <Grid>
+
                     <Grid.ColumnDefinitions>
+
                         <ColumnDefinition Width="Auto"/>
+
                         <ColumnDefinition Width="*"/>
+
                         <ColumnDefinition Width="Auto"/>
+
                         <ColumnDefinition Width="Auto"/>
+
                     </Grid.ColumnDefinitions>
 
+
+
                     <Border Grid.Column="0" Width="40" Height="40" CornerRadius="8" Margin="0,0,16,0"
+
                             Background="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}">
+
                         <Viewbox Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+
                             <Canvas Width="24" Height="24">
+
                                 <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+
                                       StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+
                                       Data="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+
                                 <Path Stroke="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}" 
+
                                       StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+
                                       Data="M14 2v4a2 2 0 0 0 2 2h4"/>
+
                             </Canvas>
+
                         </Viewbox>
+
                     </Border>
 
+
+
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
+
                         <TextBlock Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold" 
+
                                    Foreground="#000000" TextTrimming="CharacterEllipsis"/>
+
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+
                             <TextBlock Text="{Binding UploadedByName}" FontSize="13" Foreground="#6B778C"/>
+
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C"/>
+
                             <TextBlock Text="{Binding LastModifiedLocally, Converter={StaticResource UtcToLocalDateTime}, StringFormat=dd.MM.yyyy HH\:mm}" 
+
                                        FontSize="13" Foreground="#6B778C"/>
+
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+
                             <TextBlock Text="{Binding ProjectName, StringFormat=Проект: \{0\}}" FontSize="13" Foreground="#0052CC" Visibility="{Binding ProjectName, Converter={StaticResource NullToVis}}"/>
+
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
+
                             <TextBlock Text="{Binding StageName, StringFormat=Этап: \{0\}}" FontSize="13" Foreground="#00875A" Visibility="{Binding StageName, Converter={StaticResource NullToVis}}"/>
+
                         </StackPanel>
+
                     </StackPanel>
+
                     
+
                     <TextBlock Grid.Column="2" Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" FontSize="13" Foreground="#6B778C"
+
                                VerticalAlignment="Center" Margin="0,0,24,0"/>
 
+
+
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+
                         <Button ToolTip="Просмотр"
+
                                 Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Margin="0,0,8,0"
+
                                 Width="28">
+
                             <Button.Style>
+
                                 <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+
                                     <Setter Property="Opacity" Value="0"/>
+
                                     <Setter Property="IsEnabled" Value="False"/>
+
                                     <Style.Triggers>
+
                                         <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsDocument}}" Value="Visible">
+
                                             <Setter Property="Opacity" Value="1"/>
+
                                             <Setter Property="IsEnabled" Value="True"/>
+
                                         </DataTrigger>
+
                                     </Style.Triggers>
+
                                 </Style>
+
                             </Button.Style>
+
                             <Image Source="{svgc:SvgImage Source=/icons/view.svg, AppName=MPMS}"
+
                                    Width="14" Height="14"
+
                                    VerticalAlignment="Center" Opacity="0.9"/>
+
                         </Button>
+
+
 
                         <Button ToolTip="Скачать"
+
                                 Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Style="{StaticResource IconButton}"
+
                                 Margin="0,0,8,0">
+
                             <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}"
+
                                    Width="14" Height="14"
+
                                    VerticalAlignment="Center" Opacity="0.9"/>
+
                         </Button>
+
+
 
                         <Button ToolTip="Удалить"
+
                                 Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+
                                 Style="{StaticResource DangerIconButton}">
+
                             <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
+
                                    Width="14" Height="14"
+
                                    VerticalAlignment="Center" Opacity="0.9"/>
+
                         </Button>
+
                     </StackPanel>
+
                 </Grid>
+
             </Border>
+
         </DataTemplate>
+
+
 
         <!-- Шаблоны представления файлов -->
+
         <DataTemplate x:Key="FilesGridViewTemplate">
-            <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}">
+
+            <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}"
+
+                          VirtualizingPanel.IsVirtualizing="True"
+
+                          ScrollViewer.CanContentScroll="True">
+
                 <ItemsControl.ItemsPanel>
+
                     <ItemsPanelTemplate>
+
                         <WrapPanel Orientation="Horizontal"/>
+
                     </ItemsPanelTemplate>
+
                 </ItemsControl.ItemsPanel>
+
                 <ItemsControl.ItemContainerStyle>
+
                     <Style TargetType="ContentPresenter">
+
                         <Setter Property="Margin" Value="0"/>
+
                     </Style>
+
                 </ItemsControl.ItemContainerStyle>
+
             </ItemsControl>
+
         </DataTemplate>
+
+
 
         <DataTemplate x:Key="FilesListViewTemplate">
-            <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource DocumentListTemplate}">
-                <ItemsControl.ItemsPanel>
+
+            <ListBox ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource DocumentListTemplate}"
+
+                     BorderThickness="0" Background="Transparent"
+
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+
+                     ScrollViewer.CanContentScroll="True"
+
+                     VirtualizingPanel.IsVirtualizing="True"
+
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+
+                <ListBox.ItemsPanel>
+
                     <ItemsPanelTemplate>
-                        <StackPanel/>
+
+                        <VirtualizingStackPanel />
+
                     </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+
+                </ListBox.ItemsPanel>
+
+                <ListBox.ItemContainerStyle>
+
+                    <Style TargetType="ListBoxItem">
+
+                        <Setter Property="IsTabStop" Value="False"/>
+
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+
+                        <Setter Property="Padding" Value="0"/>
+
+                        <Setter Property="Margin" Value="0"/>
+
+                        <Setter Property="Background" Value="Transparent"/>
+
+                        <Setter Property="BorderThickness" Value="0"/>
+
+                        <Setter Property="Template">
+
+                            <Setter.Value>
+
+                                <ControlTemplate TargetType="ListBoxItem">
+
+                                    <ContentPresenter />
+
+                                </ControlTemplate>
+
+                            </Setter.Value>
+
+                        </Setter>
+
+                    </Style>
+
+                </ListBox.ItemContainerStyle>
+
+            </ListBox>
+
         </DataTemplate>
+
     </UserControl.Resources>
 
+
+
     <Grid>
+
         <Grid.RowDefinitions>
+
             <RowDefinition Height="Auto"/>
+
             <RowDefinition Height="*"/>
+
         </Grid.RowDefinitions>
 
+
+
         <!-- ── Вкладки и переключатель представления ── -->
+
         <Grid Grid.Row="0" Margin="0,0,0,16" Background="Transparent">
+
             <Grid.ColumnDefinitions>
+
                 <ColumnDefinition Width="*"/>
+
                 <ColumnDefinition Width="Auto"/>
+
             </Grid.ColumnDefinitions>
 
+
+
             <!-- TabBar: Изображения / Документы -->
+
             <controls:TabBarControl Grid.Column="0"
+
                                     SelectedTab="{Binding CurrentTab, Mode=TwoWay}"
+
                                     GroupName="FilesTabs">
+
                 <controls:TabBarControl.Tabs>
+
                     <controls:TabItemModel Text="Изображения" Tag="Images"/>
+
                     <controls:TabItemModel Text="Документы"   Tag="Documents"/>
+
                 </controls:TabBarControl.Tabs>
+
             </controls:TabBarControl>
 
+
+
             <!-- Переключатель режима представления (Список / Плитка) -->
+
             <Border Grid.Column="1" Background="White"
+
                     BorderBrush="#DFE1E6" BorderThickness="1"
+
                     CornerRadius="8" Padding="4,4" VerticalAlignment="Center">
+
                 <StackPanel Orientation="Horizontal">
+
                     <RadioButton Tag="List" GroupName="FilesViewMode"
+
                                  Style="{StaticResource ViewToggleButton}"
+
                                  IsChecked="{Binding ViewMode, Mode=TwoWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=List}"
+
                                  ToolTip="Список">
+
                         <Grid Width="20" Height="20">
+
                             <Image Width="18" Height="18" Source="{svgc:SvgImage Source=/icons/list.svg, AppName=MPMS}">
+
                                 <Image.Style>
+
                                     <Style TargetType="Image">
+
                                         <Setter Property="Visibility" Value="Visible"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Image.Style>
+
                             </Image>
+
                             <Image Width="18" Height="18" Source="{svgc:SvgImage Source=/icons/list_white.svg, AppName=MPMS}">
+
                                 <Image.Style>
+
                                     <Style TargetType="Image">
+
                                         <Setter Property="Visibility" Value="Collapsed"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+
                                                 <Setter Property="Visibility" Value="Visible"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Image.Style>
+
                             </Image>
+
                         </Grid>
+
                     </RadioButton>
+
                     <RadioButton Tag="Grid" GroupName="FilesViewMode"
+
                                  Style="{StaticResource ViewToggleButton}"
+
                                  IsChecked="{Binding ViewMode, Mode=TwoWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=Grid}"
+
                                  ToolTip="Плитка">
+
                         <Grid Width="20" Height="20">
+
                             <Image Width="18" Height="18" Source="{svgc:SvgImage Source=/icons/kanban.svg, AppName=MPMS}">
+
                                 <Image.Style>
+
                                     <Style TargetType="Image">
+
                                         <Setter Property="Visibility" Value="Visible"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Image.Style>
+
                             </Image>
+
                             <Image Width="18" Height="18" Source="{svgc:SvgImage Source=/icons/kanban_white.svg, AppName=MPMS}">
+
                                 <Image.Style>
+
                                     <Style TargetType="Image">
+
                                         <Setter Property="Visibility" Value="Collapsed"/>
+
                                         <Style.Triggers>
+
                                             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+
                                                 <Setter Property="Visibility" Value="Visible"/>
+
                                             </DataTrigger>
+
                                         </Style.Triggers>
+
                                     </Style>
+
                                 </Image.Style>
+
                             </Image>
+
                         </Grid>
+
                     </RadioButton>
+
                 </StackPanel>
+
             </Border>
+
         </Grid>
+
+
 
         <!-- ── Область содержимого ── -->
+
         <Grid Grid.Row="1">
+
             <!-- ScrollViewer изображений -->
+
             <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+
                 <ScrollViewer.Style>
+
                     <Style TargetType="ScrollViewer">
+
                         <Setter Property="Visibility" Value="Visible"/>
+
                         <Style.Triggers>
+
                             <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
+
                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                             </DataTrigger>
+
                         </Style.Triggers>
+
                     </Style>
+
                 </ScrollViewer.Style>
+
                 <Grid Margin="0,10,0,24">
+
                     <!-- Пустое состояние (изображения) -->
+
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
+
                         <StackPanel.Style>
+
                             <Style TargetType="StackPanel">
+
                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                                 <Style.Triggers>
+
                                     <MultiDataTrigger>
+
                                         <MultiDataTrigger.Conditions>
+
                                             <Condition Binding="{Binding CurrentTab}" Value="Images"/>
+
                                             <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
+
                                             <Condition Binding="{Binding IsLoading}" Value="False"/>
+
                                         </MultiDataTrigger.Conditions>
+
                                         <Setter Property="Visibility" Value="Visible"/>
+
                                     </MultiDataTrigger>
+
                                 </Style.Triggers>
+
                             </Style>
+
                         </StackPanel.Style>
+
                         <Image Source="{svgc:SvgImage Source=/icons/empty_images.svg, AppName=MPMS}"
+
                                Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+
                         <TextBlock Text="Изображения не найдены"
+
                                    FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+
                                    HorizontalAlignment="Center"/>
+
                         <TextBlock Text="Загрузите первое изображение"
+
                                    FontSize="12" Foreground="#64748B" TextAlignment="Center"
+
                                    Margin="0,8,0,0" LineHeight="18">
+
                             <TextBlock.Style>
+
                                 <Style TargetType="TextBlock">
+
                                     <Setter Property="Visibility" Value="Visible"/>
+
                                     <Style.Triggers>
+
                                         <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+
                                             <Setter Property="Visibility" Value="Collapsed"/>
+
                                         </DataTrigger>
+
                                     </Style.Triggers>
+
                                 </Style>
+
                             </TextBlock.Style>
+
                         </TextBlock>
+
                     </StackPanel>
+
+
 
                     <!-- Сетка/список файлов для изображений -->
+
                     <ContentControl Content="{Binding}">
+
                         <ContentControl.Style>
+
                             <Style TargetType="ContentControl">
+
                                 <Setter Property="ContentTemplate" Value="{StaticResource FilesGridViewTemplate}"/>
+
                                 <Style.Triggers>
+
                                     <DataTrigger Binding="{Binding ViewMode}" Value="List">
+
                                         <Setter Property="ContentTemplate" Value="{StaticResource FilesListViewTemplate}"/>
+
                                     </DataTrigger>
+
                                 </Style.Triggers>
+
                             </Style>
+
                         </ContentControl.Style>
+
                     </ContentControl>
+
                 </Grid>
+
             </ScrollViewer>
+
+
 
             <!-- ScrollViewer документов -->
+
             <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+
                 <ScrollViewer.Style>
+
                     <Style TargetType="ScrollViewer">
+
                         <Setter Property="Visibility" Value="Collapsed"/>
+
                         <Style.Triggers>
+
                             <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
+
                                 <Setter Property="Visibility" Value="Visible"/>
+
                             </DataTrigger>
+
                         </Style.Triggers>
+
                     </Style>
+
                 </ScrollViewer.Style>
+
                 <Grid Margin="0,10,0,24">
+
                     <!-- Пустое состояние (документы) -->
+
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
+
                         <StackPanel.Style>
+
                             <Style TargetType="StackPanel">
+
                                 <Setter Property="Visibility" Value="Collapsed"/>
+
                                 <Style.Triggers>
+
                                     <MultiDataTrigger>
+
                                         <MultiDataTrigger.Conditions>
+
                                             <Condition Binding="{Binding CurrentTab}" Value="Documents"/>
+
                                             <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
+
                                             <Condition Binding="{Binding IsLoading}" Value="False"/>
+
                                         </MultiDataTrigger.Conditions>
+
                                         <Setter Property="Visibility" Value="Visible"/>
+
                                     </MultiDataTrigger>
+
                                 </Style.Triggers>
+
                             </Style>
+
                         </StackPanel.Style>
+
                         <Image Source="{svgc:SvgImage Source=/icons/empty_documents.svg, AppName=MPMS}"
+
                                Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+
                         <TextBlock Text="Документы не найдены"
+
                                    FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+
                                    HorizontalAlignment="Center"/>
+
                         <TextBlock Text="Загрузите первый документ"
+
                                    FontSize="12" Foreground="#64748B" TextAlignment="Center"
+
                                    Margin="0,8,0,0" LineHeight="18">
+
                             <TextBlock.Style>
+
                                 <Style TargetType="TextBlock">
+
                                     <Setter Property="Visibility" Value="Visible"/>
+
                                     <Style.Triggers>
+
                                         <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+
                                             <Setter Property="Visibility" Value="Collapsed"/>
+
                                         </DataTrigger>
+
                                     </Style.Triggers>
+
                                 </Style>
+
                             </TextBlock.Style>
+
                         </TextBlock>
+
                     </StackPanel>
 
+
+
                     <!-- Список/сетка файлов для документов -->
+
                     <ContentControl Content="{Binding}">
+
                         <ContentControl.Style>
+
                             <Style TargetType="ContentControl">
+
                                 <Setter Property="ContentTemplate" Value="{StaticResource FilesListViewTemplate}"/>
+
                                 <Style.Triggers>
+
                                     <DataTrigger Binding="{Binding ViewMode}" Value="Grid">
+
                                         <Setter Property="ContentTemplate" Value="{StaticResource FilesGridViewTemplate}"/>
+
                                     </DataTrigger>
+
                                 </Style.Triggers>
+
                             </Style>
+
                         </ContentControl.Style>
+
                     </ContentControl>
+
                 </Grid>
+
             </ScrollViewer>
 
+
+
             <!-- ── Плавающая панель поиска ── -->
+
             <controls:SearchFilterBarControl
+
                 VerticalAlignment="Top" Panel.ZIndex="1"
+
                 HorizontalAlignment="Stretch"
+
                 IsFloating="True"
+
                 ScrollTarget="{Binding ElementName=ImagesScroll}"
+
                 SearchText="{Binding SearchText, Mode=TwoWay}"
+
                 Placeholder="Поиск по названию файла...">
+
                 <controls:SearchFilterBarControl.Style>
+
                     <Style TargetType="controls:SearchFilterBarControl">
+
                         <Setter Property="ScrollTarget" Value="{Binding ElementName=ImagesScroll}"/>
+
                         <Style.Triggers>
+
                             <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
+
                                 <Setter Property="ScrollTarget" Value="{Binding ElementName=DocumentsScroll}"/>
+
                             </DataTrigger>
+
                         </Style.Triggers>
+
                     </Style>
+
                 </controls:SearchFilterBarControl.Style>
+
                 <controls:SearchFilterBarControl.Filters>
+
                     <!-- Фильтр расширений -->
+
                     <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
+
                                SelectedItem="{Binding ExtensionFilter}"
+
                                Style="{StaticResource FormCombo}"
+
                                Width="160" VerticalAlignment="Center"/>
+
                 </controls:SearchFilterBarControl.Filters>
+
             </controls:SearchFilterBarControl>
+
         </Grid>
 
+
+
         <!-- ── Уведомление об успехе ── -->
+
         <Border x:Name="SuccessToast" 
+
                 Grid.Row="0" Grid.RowSpan="2"
+
                 Background="#F0FDF4" 
+
                 BorderBrush="#86EFAC" 
+
                 BorderThickness="1"
+
                 CornerRadius="8" 
+
                 Padding="12,8" 
+
                 Margin="24,0,24,16"
+
                 VerticalAlignment="Bottom"
+
                 HorizontalAlignment="Center"
+
                 MinWidth="320"
+
                 MaxWidth="600"
+
                 Visibility="{Binding IsSuccessToastVisible, Converter={StaticResource BoolToVis}}"
+
                 Panel.ZIndex="1000">
+
             <TextBlock Text="{Binding SuccessToastMessage}" 
+
                        Foreground="#15803D" 
+
                        FontSize="12"
+
                        TextWrapping="Wrap"
+
                        TextAlignment="Center"
+
                        VerticalAlignment="Center"/>
+
         </Border>
 
+
+
     </Grid>
+
 </UserControl>
+

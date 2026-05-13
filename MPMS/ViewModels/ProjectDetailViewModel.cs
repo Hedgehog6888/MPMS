@@ -21,6 +21,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
     private readonly IUserSettingsService _settings;
     private Action? _goBackAction;
+    private bool _isLoaded;
 
     [ObservableProperty] private LocalProject? _project;
     public ICommand? BackCommand { get; private set; }
@@ -118,7 +119,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         AllStages = [];
         FilteredStages = [];
         FilesControlVM.AllFiles.Clear();
-        FilesControlVM.DisplayedFiles.Clear();
+        FilesControlVM.DisplayedFiles = [];
         Members = [];
         ForemanMembers = [];
         WorkerMembers = [];
@@ -146,7 +147,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        if (Project is null) return;
+        if (Project is null || _isLoaded) return;
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
@@ -450,7 +451,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             }
         }
         Messages = new ObservableCollection<LocalMessage>(messages);
+        _isLoaded = true;
     }
+
+    public void Invalidate() => _isLoaded = false;
 
     private void ApplyTaskFilter()
     {

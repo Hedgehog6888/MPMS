@@ -26,4 +26,6 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
         }
         await Task.CompletedTask;
     }
+
+    public void Invalidate() => _isLoaded = false;
 }

@@ -43,6 +43,7 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
+    private bool _isLoaded;
 
     private List<LocalTask>? _cachedAllTasks;
     private List<LocalTaskStage>? _cachedStagesForCalendar;
@@ -77,7 +78,10 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
     partial void OnCurrentDateChanged(DateTime value)
     {
         UpdateMonthTitle();
-        _ = LoadAsync();
+        if (_cachedAllTasks is not null && _cachedStagesForCalendar is not null)
+            BuildCells(_cachedAllTasks, _cachedStagesForCalendar);
+        else
+            _ = LoadAsync();
     }
 
     private void UpdateMonthTitle()
@@ -93,6 +97,11 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
+        if (_isLoaded && _cachedAllTasks is not null && _cachedStagesForCalendar is not null)
+        {
+            BuildCells(_cachedAllTasks, _cachedStagesForCalendar);
+            return;
+        }
         IsBusy = true;
         try
         {
@@ -157,7 +166,10 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         {
             IsBusy = false;
         }
+        _isLoaded = true;
     }
+
+    public void Invalidate() => _isLoaded = false;
 
     private void BuildCells(List<LocalTask> allTasks, List<LocalTaskStage> stagesWithDueDate)
     {

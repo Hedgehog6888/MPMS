@@ -31,6 +31,7 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
     private List<AssigneePickerItem> _workerAssigneeItems = [];
     private CancellationTokenSource? _errorMessageCts;
     private Guid? _peekProjectId;
+    private bool _isLoaded;
 
     [ObservableProperty] private string _pageTitle = "Добавить этап";
     [ObservableProperty] private string _saveButtonText = "Добавить этап";
@@ -323,11 +324,15 @@ public partial class StageEditViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
+        if (_isLoaded) return;
         await LoadServiceCatalogAsync();
         await LoadMaterialCatalogAsync();
         await LoadEquipmentCatalogAsync();
         RecalculateTotals();
+        _isLoaded = true;
     }
+
+    public void Invalidate() => _isLoaded = false;
 
     private async Task LoadExistingServicesAndMaterialsAsync(Guid stageId)
     {

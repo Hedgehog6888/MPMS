@@ -45,6 +45,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
+    private bool _isLoaded;
 
     [ObservableProperty] private DateTime _currentDate = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     [ObservableProperty] private string _monthTitle = string.Empty;
@@ -87,6 +88,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
+        if (_isLoaded) return;
         IsBusy = true;
         try
         {
@@ -248,7 +250,10 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         {
             IsBusy = false;
         }
+        _isLoaded = true;
     }
+
+    public void Invalidate() => _isLoaded = false;
 
     /// <summary>Цвет на основе прогресса, совпадающий с ProgressPercentToBrushConverter.</summary>
     private static string ProgressToHex(int pct) => pct >= 100 ? "#10B981"

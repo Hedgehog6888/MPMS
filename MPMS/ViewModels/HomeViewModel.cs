@@ -93,6 +93,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
     private string _originalTitle = string.Empty;
     private string _originalXaml = string.Empty;
+    private bool _isLoaded;
 
     [ObservableProperty] private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
     public string WelcomeMessage => $"Добрый день, {_auth.UserName?.Split(' ').FirstOrDefault() ?? "пользователь"}!";
@@ -286,7 +287,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        if (IsBusy) return;
+        if (IsBusy || _isLoaded) return;
         IsBusy = true;
         ClearMessages();
 
@@ -771,5 +772,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         {
             IsBusy = false;
         }
+        _isLoaded = true;
     }
+
+    public void Invalidate() => _isLoaded = false;
 }

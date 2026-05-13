@@ -128,6 +128,8 @@ public partial class TaskDetailViewModel : ViewModelBase
         Messages = new ObservableCollection<LocalMessage>(messages);
     }
 
+    public void Invalidate() { }
+
     public async Task SendMessageAsync(string text)
     {
         if (Task is null || string.IsNullOrWhiteSpace(text)) return;
