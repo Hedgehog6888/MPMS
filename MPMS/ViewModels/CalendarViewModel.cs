@@ -25,7 +25,7 @@ public sealed class CalendarDayStage
     public LocalTask ParentTask { get; init; } = null!;
 }
 
-/// <summary>Data for a single calendar grid cell.</summary>
+/// <summary>Данные для одной ячейки сетки календаря.</summary>
 public sealed class CalendarCell
 {
     public bool IsEmpty { get; init; }
@@ -168,7 +168,6 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         var today = DateTime.Today;
         var taskById = allTasks.ToDictionary(t => t.Id);
 
-        // Monday-based: DayOfWeek.Monday=1 → 0 empty, Sunday=0 → 6 empty
         var dow = (int)monthStart.DayOfWeek;
         var empty = dow == 0 ? 6 : dow - 1;
 
@@ -218,7 +217,6 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
             });
         }
 
-        // Pad to full weeks
         var rem = (7 - cells.Count % 7) % 7;
         for (int i = 1; i <= rem; i++)
             cells.Add(new CalendarCell { IsEmpty = true, Date = monthStart.AddMonths(1).AddDays(i - 1) });

@@ -6,16 +6,11 @@ namespace MPMS.API.Data;
 
 public static class DatabaseSeeder
 {
-    /// <summary>
-    /// Seeds 4 test users (one per role) if no users exist yet.
-    /// Safe to call on every startup — does nothing if data is already present.
-    /// </summary>
     public static async Task SeedAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // Apply pending migrations automatically
         await db.Database.MigrateAsync();
 
         await SeedServicesAsync(db);
@@ -244,7 +239,6 @@ public static class DatabaseSeeder
         Add("Пуско-наладка", "Пусконаладка электрощита", "Проверка защит, фазировки и нагрузок.", 8500m);
         Add("Пуско-наладка", "Пусконаладка вентиляции", "Проверка работы вентиляции и балансировка.", 12000m);
 
-        // Монтажные системы — расширенный профильный блок
         Add("Монтажные системы", "Монтаж кабельного лотка до 100 мм", "Установка лотка на стену/потолок с крепежом.", 420m, "м");
         Add("Монтажные системы", "Монтаж кабельного лотка 100-300 мм", "Монтаж среднего лотка с подвесами.", 560m, "м");
         Add("Монтажные системы", "Монтаж лестничного лотка", "Монтаж лестничного лотка с кронштейнами.", 690m, "м");

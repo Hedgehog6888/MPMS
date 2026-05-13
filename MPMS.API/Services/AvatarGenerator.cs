@@ -2,9 +2,6 @@ using SkiaSharp;
 
 namespace MPMS.API.Services;
 
-/// <summary>
-/// Generates initials-based avatars for users (server-side, no WPF dependency).
-/// </summary>
 public static class AvatarGenerator
 {
     private static readonly string[] PaletteColors =
@@ -31,7 +28,6 @@ public static class AvatarGenerator
             : char.ToUpper(name[0]).ToString();
     }
 
-    /// <summary>Generates PNG bytes for an initials avatar. Works on any thread.</summary>
     public static byte[] GenerateInitialsAvatar(string name, string? hexColor = null, int size = 256)
     {
         hexColor ??= GetColorForName(name);

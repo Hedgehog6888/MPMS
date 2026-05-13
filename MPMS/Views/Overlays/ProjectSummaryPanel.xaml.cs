@@ -37,12 +37,12 @@ public partial class ProjectSummaryPanel : UserControl
 
     private async System.Threading.Tasks.Task LoadAsync(LocalProject project, int loadVersion)
     {
-        // Basic info
+        // Базовая информация
         ProjectNameText.Text = project.Name;
         ClientText.Text = project.Client ?? "—";
         AddressText.Text = project.Address ?? "—";
 
-        // Dates
+        // Даты
         if (project.StartDate.HasValue && project.EndDate.HasValue)
         {
             DatesText.Text = $"{project.StartDate.Value:dd.MM.yyyy} – {project.EndDate.Value:dd.MM.yyyy}";
@@ -67,16 +67,15 @@ public partial class ProjectSummaryPanel : UserControl
             DaysLeftText.Text = "";
         }
 
-        // Progress bar (дробные % через ProgressCalculator)
         var pct = project.ProgressPercent;
         ProgressText.Text = $"{pct}%";
         CompletedTasksText.Text = project.CompletedTasks.ToString();
         TotalTasksText.Text = project.TotalTasks.ToString();
 
-        // Animate progress fill asynchronously
+        // Анимация заполнения прогресса асинхронно
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            // Update fill width after layout pass
+            // Обновить ширину заполнения после прохода компоновки
             ProgressFill.Loaded += (_, _) => UpdateProgressWidth(pct);
             UpdateProgressWidth(pct);
         });
@@ -89,7 +88,7 @@ public partial class ProjectSummaryPanel : UserControl
             ? ProjectStatus.Completed
             : project.Status;
 
-        // Status
+        // Статус
         var statusBrush = ProjectStatusToBrushConverter.Instance.Convert(
             displayStatus, typeof(Brush), null!, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;
@@ -97,7 +96,7 @@ public partial class ProjectSummaryPanel : UserControl
         StatusText.Text = ProjectStatusToStringConverter.Instance.Convert(
             displayStatus, typeof(string), null!, CultureInfo.InvariantCulture) as string ?? "—";
 
-        // Header band color based on status
+        // Цвет шапки по статусу
         StatusHeaderBand.Background = displayStatus switch
         {
             ProjectStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
@@ -107,7 +106,7 @@ public partial class ProjectSummaryPanel : UserControl
             _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
         };
 
-        // Manager
+        // Менеджер
         ManagerInitialsText.Text = project.ManagerInitials;
         ManagerNameText.Text = project.ManagerName ?? "—";
         var managerBmp = AvatarHelper.GetImageSource(project.ManagerAvatarData, project.ManagerAvatarPath, project.ManagerName);
@@ -123,7 +122,7 @@ public partial class ProjectSummaryPanel : UserControl
             ManagerInitialsText.Visibility = Visibility.Visible;
         }
 
-        // Load project members from DB
+        // Загрузить участников проекта из БД
         try
         {
             var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
@@ -178,7 +177,7 @@ public partial class ProjectSummaryPanel : UserControl
         if (available <= 0) available = 220;
         ProgressFill.Width = Math.Max(0, available * pct / 100.0);
 
-        // Color by progress
+        // Цвет по прогрессу
         ProgressFill.Background = pct >= 100
             ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
             : pct >= 60

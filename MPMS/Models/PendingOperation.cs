@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace MPMS.Models;
 
 /// <summary>
-/// Offline sync queue. Every local change that hasn't reached the server
-/// gets a record here, and SyncService processes them when online.
+/// Очередь офлайн синхронизации. Каждое локальное изменение, которое не дошло до сервера,
+/// получает запись здесь, и SyncService обрабатывает их при онлайн.
 /// </summary>
 public class PendingOperation
 {
@@ -15,7 +15,7 @@ public class PendingOperation
 
     public SyncOperation OperationType { get; set; }
 
-    /// <summary>JSON payload — serialised request body to send to API</summary>
+    /// <summary>JSON нагрузка — сериализованное тело запроса для отправки в API</summary>
     public string Payload { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

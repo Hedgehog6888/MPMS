@@ -30,7 +30,6 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
-        <!-- Action button style -->
         <Style x:Key="ActionBtn" TargetType="Button">
             <Setter Property="Height" Value="34"/>
             <Setter Property="Padding" Value="14,0"/>
@@ -56,7 +55,6 @@
             </Setter>
         </Style>
 
-        <!-- Outline button -->
         <Style x:Key="OutlineBtn" TargetType="Button">
             <Setter Property="Height" Value="34"/>
             <Setter Property="Padding" Value="14,0"/>
@@ -85,7 +83,6 @@
             </Setter>
         </Style>
 
-        <!-- Danger outline button -->
         <Style x:Key="DangerOutlineBtn" TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
             <Setter Property="Foreground" Value="#DE350B"/>
             <Setter Property="BorderBrush" Value="#FFCDD2"/>
@@ -94,11 +91,10 @@
 
     <Grid Background="White">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Header bar -->
-            <RowDefinition Height="*"/>     <!-- Scrollable body -->
+            <RowDefinition Height="Auto"/>  
+            <RowDefinition Height="*"/>    
         </Grid.RowDefinitions>
 
-        <!-- ═══ Drawer header ═══════════════════════════════════════════════ -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -127,16 +123,13 @@
             </Grid>
         </Border>
 
-        <!-- ═══ Body ═════════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
-                <!-- Photo section -->
                 <Border Height="220" Background="#F4F5F7"
                         BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
                         ClipToBounds="True">
                     <Grid>
-                        <!-- Placeholder (shown when no image) -->
                         <StackPanel x:Name="PhotoPlaceholder"
                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Border Width="64" Height="64" CornerRadius="32"
@@ -149,12 +142,10 @@
                             <TextBlock Text="Фото не добавлено" FontSize="12" Foreground="#6B778C"
                                        HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         </StackPanel>
-                        <!-- Actual image (Uniform — whole image visible, no cropping) -->
                         <Image x:Name="MaterialPhoto" Stretch="Uniform"
                                Visibility="Collapsed" MaxHeight="220"
                                RenderOptions.BitmapScalingMode="Fant"/>
 
-                        <!-- Written off overlay -->
                         <Border x:Name="WrittenOffBanner"
                                 Background="#BF000000" Visibility="Collapsed"
                                 VerticalAlignment="Bottom" Padding="16,10">
@@ -164,10 +155,8 @@
                     </Grid>
                 </Border>
 
-                <!-- Info + actions -->
                 <StackPanel Margin="24,16,24,0">
 
-                    <!-- Name + badges -->
                     <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -184,11 +173,9 @@
                         </Border>
                     </Grid>
 
-                    <!-- Category -->
                     <TextBlock x:Name="CategoryText"
                                FontSize="12" Foreground="#6B778C" Margin="0,0,0,16"/>
 
-                    <!-- Info grid -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -219,7 +206,6 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Description -->
                     <StackPanel x:Name="DescriptionPanel" Margin="0,14,0,0">
                         <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionLabel}" Margin="0,0,0,6"/>
                         <TextBlock x:Name="DescriptionText"
@@ -227,7 +213,6 @@
                                    TextWrapping="Wrap" LineHeight="20"/>
                     </StackPanel>
 
-                    <!-- Write-off info -->
                     <Border x:Name="WriteOffInfoPanel" Margin="0,14,0,0" Visibility="Collapsed"
                             Background="#FFF8F8" BorderBrush="#FFCDD2" BorderThickness="1"
                             CornerRadius="6" Padding="12,10">
@@ -241,7 +226,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal"
                                Margin="0,16,0,0">
                         <Button x:Name="AddQuantityBtn" Content="Добавить" Style="{StaticResource ActionBtn}"
@@ -255,18 +239,15 @@
                                 Visibility="Collapsed"/>
                     </WrapPanel>
 
-                    <!-- History section (role-filtered) -->
                     <Border x:Name="HistorySection" Margin="0,0,0,24">
                         <StackPanel>
                             <TextBlock Text="ИСТОРИЯ ДВИЖЕНИЯ" Style="{StaticResource SectionLabel}"
                                        Margin="0,6,0,8"/>
 
-                            <!-- Loading -->
                             <TextBlock x:Name="HistoryLoading" Text="Загрузка..."
                                        FontSize="12" Foreground="#6B778C" Margin="0,0,0,8"
                                        Visibility="Collapsed"/>
 
-                            <!-- Empty -->
                             <TextBlock x:Name="HistoryEmpty" Text="История отсутствует"
                                        FontSize="12" Foreground="#6B778C"
                                        Visibility="Collapsed"/>
@@ -284,7 +265,6 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <!-- Delta indicator -->
                                                 <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
                                                         VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
@@ -328,7 +308,6 @@
                                                     </TextBlock>
                                                 </Border>
 
-                                                <!-- Info -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#000000">
                                                         <TextBlock.Style>
@@ -358,7 +337,6 @@
                                                                TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                 </StackPanel>
 
-                                                <!-- Date + quantity after -->
                                                 <StackPanel Grid.Column="2" HorizontalAlignment="Right">
                                                     <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>

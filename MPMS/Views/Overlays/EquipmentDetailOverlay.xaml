@@ -122,7 +122,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -151,11 +150,9 @@
             </Grid>
         </Border>
 
-        <!-- Body -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
-                <!-- Photo -->
                 <Border Height="220" Background="#F4F5F7"
                         BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
                         ClipToBounds="True">
@@ -184,10 +181,8 @@
                     </Grid>
                 </Border>
 
-                <!-- Info -->
                 <StackPanel Margin="24,16,24,0">
 
-                    <!-- Name + badge -->
                     <Grid Margin="0,0,0,4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -214,7 +209,6 @@
                                    TextWrapping="Wrap"/>
                     </Border>
 
-                    <!-- Info grid -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -237,7 +231,6 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Description -->
                     <StackPanel x:Name="DescriptionPanel" Margin="0,14,0,0">
                         <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionLabel}" Margin="0,0,0,6"/>
                         <TextBlock x:Name="DescriptionText"
@@ -245,7 +238,6 @@
                                    TextWrapping="Wrap" LineHeight="20"/>
                     </StackPanel>
 
-                    <!-- Write-off info -->
                     <Border x:Name="WriteOffInfoPanel" Margin="0,14,0,0" Visibility="Collapsed"
                             Background="#FFF8F8" BorderBrush="#FFCDD2" BorderThickness="1"
                             CornerRadius="6" Padding="12,10">
@@ -259,7 +251,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Action buttons (admin/manager only, not written off) -->
                     <WrapPanel x:Name="ActionPanel" Orientation="Horizontal" Margin="0,16,0,0">
                         <Button x:Name="EditBtn" Content="Редактировать" Style="{StaticResource OutlineBtn}"
                                 Margin="0,0,8,8" Click="Edit_Click"/>
@@ -302,7 +293,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- History -->
                     <Border x:Name="HistorySection" Margin="0,0,0,24">
                         <StackPanel>
                             <TextBlock Text="ИСТОРИЯ ИСПОЛЬЗОВАНИЯ" Style="{StaticResource SectionLabel}"
@@ -325,7 +315,6 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <!-- Event icon -->
                                                 <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
                                                         VerticalAlignment="Top" Margin="0,0,8,0">
                                                     <Border.Style>
@@ -376,7 +365,6 @@
                                                     </TextBlock>
                                                 </Border>
 
-                                                <!-- Info -->
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding EventTypeDisplay}"
                                                                FontSize="12" FontWeight="SemiBold" Foreground="#000000"/>
@@ -387,7 +375,6 @@
                                                                TextWrapping="Wrap" Margin="0,1,0,0"/>
                                                 </StackPanel>
 
-                                                <!-- Date -->
                                                 <StackPanel Grid.Column="2" HorizontalAlignment="Right">
                                                     <TextBlock Text="{Binding OccurredAt, StringFormat='{}{0:dd.MM.yyyy}'}"
                                                                FontSize="11" Foreground="#6B778C" HorizontalAlignment="Right"/>

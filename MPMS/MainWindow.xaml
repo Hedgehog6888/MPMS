@@ -18,7 +18,6 @@
         <infra:BoolToVisibilityConverter x:Key="StringToVis" IsStringMode="True"/>
         <infra:EqualityToBoolConverter x:Key="EqualityToBool"/>
 
-        <!-- Sidebar width animation -->
         <Storyboard x:Key="SidebarExpandAnimation">
             <infra:GridLengthAnimation Storyboard.TargetName="SidebarColumn"
                                        Storyboard.TargetProperty="Width"
@@ -43,7 +42,6 @@
             </infra:GridLengthAnimation>
         </Storyboard>
 
-        <!-- Nav button style (light theme, white sidebar) -->
         <Style x:Key="NavButton" TargetType="RadioButton">
             <Setter Property="Background"     Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -71,7 +69,7 @@
                                 <Setter Property="Foreground" Value="#000000"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <!-- Активный пункт без синего цвета -->
+
                                 <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
                                 <Setter Property="Foreground" Value="#000000"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
@@ -82,7 +80,6 @@
             </Setter>
         </Style>
 
-        <!-- Black create button for top bar -->
         <Style x:Key="TopCreateButton" TargetType="Button">
             <Setter Property="Background"      Value="Black"/>
             <Setter Property="Foreground"      Value="White"/>
@@ -116,43 +113,32 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- Top bar spanning full width -->
             <RowDefinition Height="56"/>
-            <!-- Main content -->
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <!-- Sidebar -->
             <ColumnDefinition x:Name="SidebarColumn" Width="220"/>
-            <!-- Content -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- MAIN NAVIGATION BAR (общая верхняя панель) -->
         <comp:MainTopBar Grid.Row="0" Grid.ColumnSpan="2"/>
-
-        <!-- SITE NAVIGATION BAR (боковая панель) -->
         <comp:MainSidebar Grid.Row="1" Grid.Column="0"/>
 
-        <!-- Основной контент -->
         <ContentControl Grid.Row="1" Grid.Column="1"
                         Content="{Binding CurrentPageViewModel}"
                         Background="{StaticResource BackgroundBrush}"/>
 
-        <!-- ═══════ OVERLAY / DRAWER LAYER ════════════════════════════ -->
         <Grid x:Name="OverlayLayer"
               Grid.Row="0" Grid.Column="0"
               Grid.RowSpan="2" Grid.ColumnSpan="2"
               Panel.ZIndex="400"
               Visibility="Collapsed">
 
-            <!-- Backdrop -->
             <Border x:Name="OverlayBackdrop"
                     Background="#80000000"
                     Opacity="0"
                     MouseLeftButtonDown="Backdrop_Click"/>
 
-            <!-- Drawer panel slides from right -->
             <Border x:Name="DrawerPanel"
                     Background="White"
                     HorizontalAlignment="Right"
@@ -167,7 +153,6 @@
                 <ContentPresenter x:Name="DrawerContentPresenter"/>
             </Border>
 
-            <!-- Center modal -->
             <Border x:Name="ModalOverlayPanel"
                     Background="Transparent"
                     HorizontalAlignment="Center"
@@ -200,13 +185,11 @@
             </Border>
         </Grid>
 
-        <!-- ═══════ PHOTO VIEWER LAYER (только область контента) ══════════ -->
         <ContentPresenter x:Name="PhotoViewerLayer"
                           Grid.Row="1" Grid.Column="1"
                           Panel.ZIndex="500"
                           Visibility="Collapsed"/>
 
-        <!-- ═══════ DOCUMENT VIEWER LAYER (только область контента) ════════ -->
         <ContentPresenter x:Name="DocumentViewerLayer"
                           Grid.Row="1" Grid.Column="1"
                           Panel.ZIndex="300"

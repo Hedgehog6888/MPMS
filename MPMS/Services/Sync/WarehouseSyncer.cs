@@ -208,7 +208,6 @@ public class WarehouseSyncer : IEntitySyncer
 
     public async Task PullAsync(LocalDbContext db)
     {
-        // 1. Categories
         var matCats = await _api.GetMaterialCategoriesAsync();
         if (matCats is not null)
         {
@@ -235,7 +234,6 @@ public class WarehouseSyncer : IEntitySyncer
             }
         }
 
-        // 2. Materials
         var materials = await _api.GetMaterialsAsync();
         if (materials is not null)
         {
@@ -297,7 +295,6 @@ public class WarehouseSyncer : IEntitySyncer
                 await LocalDbGraphDeletion.PermanentlyDeleteMaterialGraphAsync(db, mid);
         }
 
-        // 3. Stock movements
         var stockMoves = await _api.GetAllMaterialStockMovementsAsync();
         if (stockMoves is not null)
         {
@@ -320,7 +317,6 @@ public class WarehouseSyncer : IEntitySyncer
             }
         }
 
-        // 4. Equipment
         var equips = await _api.GetAllEquipmentAsync();
         if (equips is not null)
         {
@@ -384,7 +380,6 @@ public class WarehouseSyncer : IEntitySyncer
                 await LocalDbGraphDeletion.PermanentlyDeleteEquipmentGraphAsync(db, eid);
         }
 
-        // 5. Equipment history
         var eqHistory = await _api.GetAllEquipmentHistoryAsync();
         if (eqHistory is not null)
         {
@@ -516,7 +511,6 @@ public class WarehouseSyncer : IEntitySyncer
         return await _api.RecordEquipmentEventAsync(op.EntityId, req) is not null;
     }
 
-    // Helper methods moved from SyncService
     private static string NormalizeEquipmentStatus(string? status) => status switch
     {
         "3" => "Unavailable",

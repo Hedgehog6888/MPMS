@@ -1,8 +1,5 @@
 namespace MPMS.API.Models;
 
-/// <summary>
-/// Stores dependencies between tasks for the Timeline (section 6.4.3 of TZ)
-/// </summary>
 public class TaskDependency
 {
     public Guid Id { get; set; }

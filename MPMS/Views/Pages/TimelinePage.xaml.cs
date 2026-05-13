@@ -162,21 +162,18 @@ public partial class TimelinePage : UserControl
         double dayColumnCenter = headerOrigin.X + (fraction * timelineWidth);
         double headerBottom = headerOrigin.Y + dayHeaderItems.ActualHeight;
 
-        // Get the actual scrollable height from the ScrollViewer
         var scrollViewer = TasksSection.Visibility == Visibility.Visible
             ? FindVisualChild<ScrollViewer>(TasksSection)
             : FindVisualChild<ScrollViewer>(StagesSection);
 
         double contentHeight = scrollViewer?.ExtentHeight ?? 0;
         double viewportHeight = scrollViewer?.ViewportHeight ?? 0;
-        
-        // Use viewport + scrollable height to make line extend to bottom of scrollable content
+
         double height = headerBottom + Math.Max(contentHeight, viewportHeight);
 
         TodayLineCanvas.Width = headerOrigin.X + timelineWidth;
         TodayLineCanvas.Height = height;
 
-        // Vertical dashed line (red) - extends to bottom, starts slightly lower
         var line = new Line
         {
             X1 = dayColumnCenter,
@@ -190,7 +187,6 @@ public partial class TimelinePage : UserControl
         };
         TodayLineCanvas.Children.Add(line);
 
-        // "Сегодня" label (red) - centered on today's day column
         var label = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
@@ -208,7 +204,7 @@ public partial class TimelinePage : UserControl
         double lblW = label.DesiredSize.Width;
         
         Canvas.SetLeft(label, dayColumnCenter - lblW / 2);
-        Canvas.SetTop(label, 2); // Moved higher
+        Canvas.SetTop(label, 2); 
         TodayLineCanvas.Children.Add(label);
     }
 

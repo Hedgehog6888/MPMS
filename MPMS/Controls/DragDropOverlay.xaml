@@ -14,9 +14,6 @@
              PreviewDrop="OnDrop"
              IsHitTestVisible="True"
              Visibility="Collapsed">
-    <!-- Note: Visibility is controlled by internal logic or external binding, 
-         but we want it to capture events even when "inactive" if possible. 
-         Actually, it must be visible to capture events, but we can make it transparent. -->
     
     <UserControl.Resources>
         <Storyboard x:Key="OverlayShowStoryboard">
@@ -39,10 +36,8 @@
             <Point X="0.5" Y="0.5"/>
         </Grid.RenderTransformOrigin>
 
-        <!-- Semi-transparent background -->
         <Border Background="#AAFFFFFF" IsHitTestVisible="False"/>
 
-        <!-- Central Drop Zone Card -->
         <Border VerticalAlignment="Center" HorizontalAlignment="Center"
                 Width="480" Height="320"
                 Background="White" CornerRadius="32">
@@ -51,7 +46,6 @@
             </Border.Effect>
             
             <Grid Margin="12">
-                <!-- Animated Dashed Border -->
                 <Rectangle x:Name="DashedBorder"
                            Stroke="{StaticResource PrimaryBrush}" 
                            StrokeThickness="2" 

@@ -25,7 +25,6 @@ public static class RichTextHelper
 
         string xaml = (string)e.NewValue;
 
-        // Avoid infinite loop
         if (GetIsUpdating(richTextBox)) return;
 
         if (string.IsNullOrEmpty(xaml))
@@ -57,14 +56,12 @@ public static class RichTextHelper
         }
     }
 
-    // IsUpdating attached property to prevent re-entry
     private static readonly DependencyProperty IsUpdatingProperty =
         DependencyProperty.RegisterAttached("IsUpdating", typeof(bool), typeof(RichTextHelper), new PropertyMetadata(false));
 
     private static bool GetIsUpdating(DependencyObject obj) => (bool)obj.GetValue(IsUpdatingProperty);
     private static void SetIsUpdating(DependencyObject obj, bool value) => obj.SetValue(IsUpdatingProperty, value);
 
-    // Command to handle text change
     public static void RegisterRichTextBox(RichTextBox rtb)
     {
         rtb.TextChanged += (s, e) => UpdateDocumentXaml(rtb);

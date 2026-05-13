@@ -2,10 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MPMS.API.Data;
 
-/// <summary>
-/// Полное удаление проекта и зависимостей на сервере (локальный клиент делает то же в SQLite).
-/// Простой Remove(Project) не проходит из‑за FK с NoAction (обсуждения, файлы этапов, связи задач).
-/// </summary>
 public static class ProjectCascadeDelete
 {
     public static async Task<bool> TryDeleteProjectGraphAsync(ApplicationDbContext db, Guid projectId,

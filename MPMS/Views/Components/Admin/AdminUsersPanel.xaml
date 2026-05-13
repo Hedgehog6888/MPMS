@@ -18,14 +18,14 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Stat cards -->
+            <RowDefinition Height="Auto"/> 
             <RowDefinition Height="10"/>
-            <RowDefinition Height="Auto"/>  <!-- Toolbar -->
+            <RowDefinition Height="Auto"/> 
             <RowDefinition Height="8"/>
-            <RowDefinition Height="*"/>     <!-- Table -->
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Stat cards (only in Users tab) -->
+        <!-- Карточки статистики (только на вкладке Пользователи) -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -57,7 +57,7 @@
             </Border>
         </Grid>
 
-        <!-- Users toolbar -->
+        <!-- Панель инструментов пользователей -->
         <Border Grid.Row="2" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
             <Grid>
@@ -71,7 +71,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Search -->
+                <!-- Поиск -->
                 <Border Grid.Column="0" x:Name="UserSearchBorder"
                         Background="#F4F5F7" CornerRadius="6"
                         Padding="10,0" Height="36"
@@ -121,19 +121,19 @@
                     </Grid>
                 </Border>
 
-                <!-- Role filter -->
+                <!-- Фильтр ролей -->
                 <ComboBox Grid.Column="2"
                           ItemsSource="{x:Static vm:AdminViewModel.RoleFilterOptions}"
                           SelectedItem="{Binding UserRoleFilter}"
                           Style="{StaticResource FormCombo}"/>
 
-                <!-- Status filter -->
+                <!-- Фильтр статуса -->
                 <ComboBox Grid.Column="4"
                           ItemsSource="{x:Static vm:AdminViewModel.StatusFilterOptions}"
                           SelectedItem="{Binding UserStatusFilter}"
                           Style="{StaticResource FormCombo}"/>
 
-                <!-- Add user button -->
+                <!-- Кнопка добавления пользователя -->
                 <Button Grid.Column="6" Style="{StaticResource BlackBtn}"
                         Height="38" Padding="18,0"
                         Click="CreateUser_Click">
@@ -147,7 +147,7 @@
             </Grid>
         </Border>
 
-        <!-- Users table -->
+        <!-- Таблица пользователей -->
         <Border Grid.Row="4" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1">
             <Grid>
@@ -155,7 +155,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <!-- Header -->
+                <!-- Заголовок -->
                 <Border Grid.Row="0" Background="#F4F5F7" CornerRadius="8,8,0,0"
                         BorderBrush="#DFE1E6" BorderThickness="0,0,0,1" Padding="16,10">
                     <Grid>
@@ -173,7 +173,7 @@
                         <TextBlock Grid.Column="4" Text="Действия"     Style="{StaticResource ThCell}" HorizontalAlignment="Center"/>
                     </Grid>
                 </Border>
-                <!-- Rows -->
+                <!-- Строки -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding FilteredUsers}">
                         <ItemsControl.ItemTemplate>
@@ -201,7 +201,7 @@
                                             <ColumnDefinition Width="100"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Avatar + name -->
+                                        <!-- Аватар + имя -->
                                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Border Style="{StaticResource AvatarCircle36}"
                                                     Background="{Binding Initials, Converter={StaticResource InitialsToBrush}}"
@@ -229,7 +229,7 @@
                                                    Text="{Binding Email}" FontSize="12" Foreground="#344563"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-                                        <!-- Role badge -->
+                                        <!-- Бейдж роли -->
                                         <Border Grid.Column="2"
                                                 Background="{Binding RoleColor}"
                                                 CornerRadius="4" Padding="8,3"
@@ -239,7 +239,7 @@
                                                        Foreground="{Binding RoleForeground}"/>
                                         </Border>
 
-                                        <!-- Status badge -->
+                                        <!-- Бейдж статуса -->
                                         <Border Grid.Column="3" CornerRadius="4" Padding="8,3"
                                                 HorizontalAlignment="Left" VerticalAlignment="Center">
                                             <Border.Style>
@@ -266,7 +266,7 @@
                                             </TextBlock>
                                         </Border>
 
-                                        <!-- Actions -->
+                                        <!-- Действия -->
                                         <StackPanel Grid.Column="4" Orientation="Horizontal"
                                                     HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <Button Style="{StaticResource RowIconBtn}" ToolTip="Редактировать"

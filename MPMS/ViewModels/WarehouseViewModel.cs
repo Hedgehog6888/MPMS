@@ -139,7 +139,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         matFilterOpts.AddRange(cats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
 
-        // Обновляем только если список реально изменился, чтобы не сбивать UI
         if (MaterialCategoryFilterOptions.Count != matFilterOpts.Count)
             MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
 
@@ -236,7 +235,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             .OrderByDescending(m => m.OccurredAt)
             .ToListAsync();
 
-        // Populate UserName from Users table if missing
+        // Заполняем UserName из таблицы Users, если отсутствует
         var userIds = entries.Where(e => e.UserId.HasValue && e.UserName == null)
             .Select(e => e.UserId!.Value).Distinct().ToList();
         if (userIds.Count > 0)
@@ -257,7 +256,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             return entries.Where(e => e.UserId == wUid).ToList();
         }
 
-        // Админ и менеджер проекта — полная история по материалу
         return entries;
     }
 
@@ -289,7 +287,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             return entries.Where(e => e.UserId == wUid).ToList();
         }
 
-        // Админ и менеджер проекта — полная история по оборудованию
         return entries;
     }
 
@@ -297,7 +294,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         LocalDbContext db, List<LocalMaterialStockMovement> entries)
     {
         if (_auth.UserId is not { } uid) return [];
-        // Прораб видит историю своих работников и прорабов на общих проектах
         var myProjects = await db.ProjectMembers
             .Where(m => m.UserId == uid)
             .Select(m => m.ProjectId).Distinct().ToListAsync();
@@ -323,8 +319,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         allowedUsers.Add(uid);
         return entries.Where(e => e.UserId.HasValue && allowedUsers.Contains(e.UserId.Value)).ToList();
     }
-
-    // ── Material operations ───────────────────────────────────────────────────
 
     /// <summary>Следующий инв. номер для отображения в форме (без резервирования).</summary>
     public async Task<string> PeekNextMaterialInventoryNumberAsync()
@@ -765,7 +759,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         await LoadAsync();
     }
 
-    /// <summary>Partial quantity write-off (Consumption) — does not mark the material as written off.</summary>
     public async Task ConsumeMaterialAsync(Guid materialId, decimal amount, string? comment)
     {
         if (amount <= 0) return;

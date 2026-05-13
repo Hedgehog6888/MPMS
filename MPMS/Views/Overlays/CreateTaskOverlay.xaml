@@ -57,7 +57,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -86,14 +85,9 @@
             </Grid>
         </Border>
 
-        <!-- Form content -->
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,8,24,8">
-
-                <!-- Section: Основная информация -->
                 <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
-
-                <!-- Task name -->
                 <TextBlock Text="Название задачи *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
@@ -102,7 +96,6 @@
                              Padding="0"/>
                 </Border>
 
-                <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
@@ -113,7 +106,6 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
-                <!-- Project -->
                 <TextBlock Text="Проект *" Style="{StaticResource FormLabel}"/>
                 <ComboBox x:Name="ProjectCombo" Style="{StaticResource FormCombo}"
                           Height="42" Margin="0,0,0,12"
@@ -121,7 +113,6 @@
                           SelectedValuePath="Id"
                           SelectionChanged="ProjectCombo_SelectionChanged"/>
 
-                <!-- Priority — четыре прямоугольные кнопки -->
                 <TextBlock Text="Приоритет *" Style="{StaticResource FormLabel}"/>
                 <Grid Margin="0,6,0,12">
                     <Grid.ColumnDefinitions>
@@ -167,7 +158,6 @@
                     </Button>
                 </Grid>
 
-                <!-- Status row (edit mode only) -->
                 <StackPanel x:Name="StatusRow" Visibility="Collapsed" Margin="0,0,0,12">
                     <TextBlock Text="Статус" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}" Height="42">
@@ -178,14 +168,11 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Due date -->
                 <TextBlock Text="Срок выполнения *" Style="{StaticResource FormLabel}"/>
                 <DatePicker x:Name="DueDatePicker" Height="42" FontSize="13" Margin="0,0,0,4"/>
 
-                <!-- Section: Исполнители -->
                 <TextBlock Text="ИСПОЛНИТЕЛИ" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Info hint when no project selected -->
                 <Border x:Name="NoProjHint" Background="#FFFBEB" CornerRadius="8"
                         Padding="12,10" Margin="0,0,0,12"
                         BorderBrush="#FCD34D" BorderThickness="1">
@@ -193,7 +180,6 @@
                                FontSize="12" Foreground="#92400E" TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- Selected assignees chips -->
                 <WrapPanel x:Name="SelectedAssigneesPanel" Margin="0,0,0,8" Visibility="Collapsed"/>
 
                 <TextBlock x:Name="ForemanSectionTitle" Text="Прорабы" FontSize="11" FontWeight="SemiBold"
@@ -344,7 +330,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Footer -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

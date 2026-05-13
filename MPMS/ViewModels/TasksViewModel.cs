@@ -144,7 +144,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var list = await query.ToListAsync();
 
-        // Populate ProjectName from Projects table
+        // Заполняем ProjectName из таблицы Projects
         var projectIds = list.Select(t => t.ProjectId).Distinct().ToList();
         var projectNames = await db.Projects
             .Where(p => projectIds.Contains(p.Id))
@@ -178,7 +178,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             _suppressProjectFilterReload = false;
         }
 
-        // Load stages and recalculate task status/progress from active stages
+        // Загружаем этапы и пересчитываем статус/прогресс задачи из активных этапов
         var taskIds = list.Select(t => t.Id).ToList();
         var stages = await db.TaskStages
             .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived)
@@ -208,7 +208,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 list = list.Where(t => t.Status == status.Value && !t.EffectiveTaskMarkedForDeletion).ToList();
         }
 
-        // Populate AssignedUserAvatarData for tasks from Users
+        // Заполняем AssignedUserAvatarData для задач из Users
         var taskAssigneeIds = list.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
         if (taskAssigneeIds.Count > 0)
         {
@@ -412,7 +412,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        // Логируем изменение статуса проекта (без аватарки - системное действие)
         if (oldStatus != project.Status)
         {
             var statusText = project.Status switch
@@ -427,7 +426,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             db.ActivityLogs.Add(new LocalActivityLog
             {
                 Id = Guid.NewGuid(),
-                UserId = null, // Системное действие - без аватарки
+                UserId = null, 
                 ActorRole = "System",
                 ActionType = ActivityActionKind.StatusChanged,
                 ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",
@@ -445,7 +444,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var task = await db.Tasks.FindAsync(id);
         if (task is null) return;
 
-        // Validate due date only if it was actually changed
+        // Проверяем срок выполнения только если он был изменён
         if (req.DueDate != task.DueDate)
         {
             if (!DueDatePolicy.IsAllowed(req.DueDate))
@@ -503,7 +502,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await RecalcProjectStatusAsync(db, entity.ProjectId);
-        // Queue updates without await to avoid blocking
+        // Ставим обновления в очередь без await, чтобы избежать блокировки
         _ = _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         foreach (var s in stages)
             _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
@@ -597,7 +596,7 @@ public partial class ProjectTaskGroup : ObservableObject
         TaskCount = tasks.Count;
         StageCount = tasks.Sum(t => t.TotalStages);
 
-        // Load saved state
+        // Загружаем сохранённое состояние
         var key = $"TasksPage_ProjectExpanded_{projectId}";
         _isExpanded = Infrastructure.LocalSettings.GetBool(key, true);
     }

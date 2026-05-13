@@ -15,7 +15,7 @@ namespace MPMS.Views.Overlays;
 
 public partial class PhotoViewerOverlay : UserControl
 {
-    // ── File ───────────────────────────────────────────────────────────────
+    // ── Файл 
     private BitmapSource? _source;
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
@@ -29,7 +29,7 @@ public partial class PhotoViewerOverlay : UserControl
     private bool _hasImageChanges;
     private readonly Func<string, string, string?, Task>? _savedFileHandler;
 
-    // ── Zoom / Pan ─────────────────────────────────────────────────────────
+    // ── Масштаб / Панорамирование
     private double _zoomFactor = 1.0;
     private double _panX = 0, _panY = 0;
     private bool _isPanning = false;
@@ -37,22 +37,22 @@ public partial class PhotoViewerOverlay : UserControl
     private double _panStartX = 0, _panStartY = 0;
     private bool _viewportReady = false;
 
-    // ── Rotation ───────────────────────────────────────────────────────────
+    // ── Вращение
     private double _rotationAngle = 0;
 
-    // ── Drawing ────────────────────────────────────────────────────────────
+    // ── Рисование
     private enum DrawTool { Pencil, Marker, Eraser }
     private DrawTool _currentTool = DrawTool.Pencil;
     private Color _currentColor = Color.FromRgb(0x1E, 0x90, 0xFF);
     private double _brushSize = 3;
     private bool _isDrawing = false;
-    private bool _drawingActive = false;   // true when a draw tool is selected
+    private bool _drawingActive = false; 
     private Polyline? _currentStroke;
     private readonly Stack<UIElement> _undoStack = new();
     private readonly Stack<UIElement> _redoStack = new();
     private Point? _lastEraserPoint;
 
-    // ── Crop ───────────────────────────────────────────────────────────────
+    // ── Обрезка
     private bool _cropMode = false;
     private bool _isDraggingCrop = false;
     private Rect _cropRect = new(50, 50, 400, 300);
@@ -63,7 +63,7 @@ public partial class PhotoViewerOverlay : UserControl
     private enum AspectRatio { Free, Original, Square, Ratio_9_16, Ratio_16_9, Ratio_4_5, Ratio_5_4, Ratio_3_4, Ratio_4_3, Ratio_1_1, Ratio_3_2 }
     private AspectRatio _currentAspectRatio = AspectRatio.Free;
 
-    // ── Color palette ──────────────────────────────────────────────────────
+    // ── Палитра цветов
     private static readonly Color[] Palette =
     [
         Color.FromRgb(0xFF,0xD7,0x00), Color.FromRgb(0xFF,0xA5,0x00),
@@ -95,13 +95,11 @@ public partial class PhotoViewerOverlay : UserControl
         DescriptionBox.Text = _description ?? string.Empty;
         UpdateZoomDisplay();
         _hasUnsavedChanges = false;
-        // Fit after first layout pass (viewport size is available)
         Loaded += (_, _) =>
         {
             FitImageToViewport();
             SyncDrawToolIcons();
         };
-        // Handle Escape key to deactivate tools
         KeyDown += PhotoViewerOverlay_KeyDown;
     }
 
@@ -127,7 +125,7 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Image loading ──────────────────────────────────────────────────────
+    // ── Загрузка изображения
     private void LoadImage(string path)
     {
         try
@@ -140,15 +138,13 @@ public partial class PhotoViewerOverlay : UserControl
             bmp.Freeze();
             _source = bmp;
 
-            // Pin the image element to the exact pixel dimensions so the
-            // ScaleTransform on ImageContainer operates predictably.
             double pw = bmp.PixelWidth;
             double ph = bmp.PixelHeight;
             MainImage.Source = bmp;
             MainImage.Width = pw;
             MainImage.Height = ph;
 
-            // ImageContainer and DrawCanvas must match so the Canvas covers the image.
+            // ImageContainer и DrawCanvas должны совпадать, чтобы Canvas покрывал изображение.
             ImageContainer.Width = pw;
             ImageContainer.Height = ph;
             DrawCanvas.Width = pw;
@@ -182,15 +178,12 @@ public partial class PhotoViewerOverlay : UserControl
         ModifiedText.Text = info.LastWriteTime.ToString("d MMMM yyyy г. HH:mm",
             new System.Globalization.CultureInfo("ru-RU"));
 
-        // Read EXIF camera info
         CameraText.Text = GetCameraInfo();
 
-        // Set uploaded by info
         var uploadedByText = FindName("UploadedByText") as TextBlock;
         if (uploadedByText != null)
             uploadedByText.Text = _uploadedByName ?? "—";
 
-        // Set uploaded by avatar
         var uploadedByAvatarImage = FindName("UploadedByAvatarImage") as Image;
         var uploadedByAvatarBorder = FindName("UploadedByAvatarBorder") as Border;
 
@@ -243,12 +236,12 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Fit to viewport ────────────────────────────────────────────────────
+    // ── Подгонка к вьюпорту
     private void FitImageToViewport()
     {
         if (_source == null) return;
 
-        // Wait until the viewport has been measured.
+        // Подождать, пока вьюпорт будет измерен.
         double vw = ViewportGrid.ActualWidth;
         double vh = ViewportGrid.ActualHeight;
         if (vw < 1 || vh < 1) return;
@@ -263,7 +256,6 @@ public partial class PhotoViewerOverlay : UserControl
 
         _zoomFactor = scale;
 
-        // Exact formula to perfectly center a visual that has RenderTransformOrigin="0.5,0.5"
         _panX = (vw - _source.PixelWidth) / 2.0;
         _panY = (vh - _source.PixelHeight) / 2.0;
 
@@ -278,7 +270,7 @@ public partial class PhotoViewerOverlay : UserControl
             FitImageToViewport();
     }
 
-    // ── Transform ──────────────────────────────────────────────────────────
+    // ── Преобразование
     private void ApplyTransform()
     {
         ImgScale.ScaleX = _zoomFactor;
@@ -292,13 +284,13 @@ public partial class PhotoViewerOverlay : UserControl
     {
         if (ZoomText == null || ZoomSlider == null) return;
         ZoomText.Text = $"{(int)(_zoomFactor * 100)} %";
-        // Prevent recursive ValueChanged
+        // Предотвратить рекурсивный ValueChanged
         ZoomSlider.ValueChanged -= ZoomSlider_ValueChanged;
         ZoomSlider.Value = Math.Clamp(_zoomFactor * 100, ZoomSlider.Minimum, ZoomSlider.Maximum);
         ZoomSlider.ValueChanged += ZoomSlider_ValueChanged;
     }
 
-    // ── Close ──────────────────────────────────────────────────────────────
+    // ── Закрытие
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         if (_hasUnsavedChanges)
@@ -324,14 +316,14 @@ public partial class PhotoViewerOverlay : UserControl
         MainWindow.Instance?.HidePhotoViewer();
     }
 
-    // ── File name ──────────────────────────────────────────────────────────
+    // ── Имя файла
     private void FileNameBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _hasUnsavedChanges = true;
         if (SaveBtn != null) SaveBtn.IsEnabled = true;
     }
 
-    // ── Description ────────────────────────────────────────────────────────
+    // ── Описание 
     private void DescriptionBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _hasUnsavedChanges = true;
@@ -369,7 +361,7 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Zoom (slider + buttons) ────────────────────────────────────────────
+    // ── Масштаб (слайдер + кнопки)
     private void ZoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (ZoomText == null) return;
@@ -385,7 +377,7 @@ public partial class PhotoViewerOverlay : UserControl
     private void ZoomOut_Click(object sender, RoutedEventArgs e)
         => ZoomBy(1.0 / 1.15, null);
 
-    // Zoom centred on an optional viewport point; null = viewport centre
+    // Масштабирование с центрированием на опциональной точке вьюпорта; null = центр вьюпорта
     private void ZoomBy(double factor, Point? viewportPoint)
     {
         double newZoom = Math.Clamp(_zoomFactor * factor, 0.05, 10.0);
@@ -394,22 +386,17 @@ public partial class PhotoViewerOverlay : UserControl
         {
             double ratio = newZoom / _zoomFactor;
 
-            // Image center before transform (because RenderTransformOrigin="0.5,0.5")
             double cx = _source.PixelWidth / 2.0;
             double cy = _source.PixelHeight / 2.0;
 
-            // Target point on the viewport
             double vx = viewportPoint.Value.X;
             double vy = viewportPoint.Value.Y;
 
-            // Pan shifts the center. Scale pushes everything outward from the center.
-            // This mathematically preserves the point 'vx, vy' on the screen.
             _panX = _panX * ratio + (vx - cx) * (1 - ratio);
             _panY = _panY * ratio + (vy - cy) * (1 - ratio);
         }
         else if (_source != null)
         {
-            // If zooming by buttons (no mouse point), zoom to viewport center
             double ratio = newZoom / _zoomFactor;
             double cx = _source.PixelWidth / 2.0;
             double cy = _source.PixelHeight / 2.0;
@@ -425,17 +412,17 @@ public partial class PhotoViewerOverlay : UserControl
         UpdateZoomDisplay();
     }
 
-    // ── Mouse wheel: zoom to cursor ────────────────────────────────────────
+    // ── Колёсико мыши: масштабирование к курсору
     private void DrawCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        // Position relative to ViewportGrid
+        // Позиция относительно ViewportGrid
         var pos = e.GetPosition(ViewportGrid);
         double factor = e.Delta > 0 ? 1.12 : 1.0 / 1.12;
         ZoomBy(factor, pos);
         e.Handled = true;
     }
 
-    // ── Rotation ───────────────────────────────────────────────────────────
+    // ── Вращение
     private void RotateCW_Click(object sender, RoutedEventArgs e)
     {
         _rotationAngle = (_rotationAngle + 90) % 360;
@@ -457,7 +444,7 @@ public partial class PhotoViewerOverlay : UserControl
         if (SaveBtn != null) SaveBtn.IsEnabled = true;
     }
 
-    // ── Print ──────────────────────────────────────────────────────────────
+    // ── Печать
     private void Print_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -476,7 +463,7 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Drawing tool selection ─────────────────────────────────────────────
+    // ── Выбор инструмента рисования
     private void SelectPencil_Click(object sender, RoutedEventArgs e)
     {
         if (_currentTool == DrawTool.Pencil && _drawingActive)
@@ -575,10 +562,10 @@ public partial class PhotoViewerOverlay : UserControl
         double size = _currentTool switch
         {
             DrawTool.Marker => _brushSize * 3,
-            DrawTool.Eraser => FixedEraserSize, // Fixed large eraser size
+            DrawTool.Eraser => FixedEraserSize,
             _ => _brushSize
         };
-        size = Math.Max(size, 8); // Minimum visible size for cursor circle
+        size = Math.Max(size, 8);
         CursorCircle.Width = size;
         CursorCircle.Height = size;
         CursorCircle.Visibility = Visibility.Visible;
@@ -602,7 +589,7 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Mouse events on DrawCanvas ─────────────────────────────────────────
+    // ── События мыши на DrawCanvas
     private void DrawCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed) return;
@@ -617,7 +604,6 @@ public partial class PhotoViewerOverlay : UserControl
         {
             if (_currentTool == DrawTool.Eraser)
             {
-                // Eraser: start erasing
                 _isDrawing = true;
                 _redoStack.Clear();
                 _lastEraserPoint = e.GetPosition(DrawCanvas);
@@ -627,7 +613,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
             else
             {
-                // Pencil/Marker: start drawing stroke
                 _isDrawing = true;
                 _redoStack.Clear();
                 var pos = e.GetPosition(DrawCanvas);
@@ -649,7 +634,7 @@ public partial class PhotoViewerOverlay : UserControl
         }
         else
         {
-            // Pan mode
+            // Режим панорамирования
             _isPanning = true;
             _panStartPoint = e.GetPosition(ViewportGrid);
             _panStartX = _panX;
@@ -664,7 +649,7 @@ public partial class PhotoViewerOverlay : UserControl
     {
         if (_cropMode) { CropCanvas_MouseMove(sender, e); return; }
 
-        // Update cursor circle position
+        // Обновить позицию круга курсора
         if (_drawingActive && CursorCircle != null)
         {
             var pos = e.GetPosition(DrawCanvas);
@@ -723,8 +708,8 @@ public partial class PhotoViewerOverlay : UserControl
         }
     }
 
-    // ── Eraser logic ───────────────────────────────────────────────────────
-    private const double FixedEraserSize = 50; // Fixed large eraser size
+    // ── Логика ластика
+    private const double FixedEraserSize = 50; 
 
     private void EraseAtPoint(Point point)
     {
@@ -760,7 +745,7 @@ public partial class PhotoViewerOverlay : UserControl
         var distance = Math.Sqrt(Math.Pow(end.X - start.X, 2) + Math.Pow(end.Y - start.Y, 2));
         if (distance < 1) return;
 
-        int steps = Math.Min((int)Math.Ceiling(distance / (eraserRadius * 0.3)), 15); // More steps for smoother erasing
+        int steps = Math.Min((int)Math.Ceiling(distance / (eraserRadius * 0.3)), 15); 
         for (int i = 0; i <= steps; i++)
         {
             double t = i / (double)steps;
@@ -777,7 +762,7 @@ public partial class PhotoViewerOverlay : UserControl
                 return true;
         }
 
-        // Check line segments
+        // Проверить линейные сегменты
         for (int i = 0; i < stroke.Points.Count - 1; i++)
         {
             Point p1 = stroke.Points[i];
@@ -826,7 +811,6 @@ public partial class PhotoViewerOverlay : UserControl
         {
             if (eraserRect.Contains(pt))
             {
-                // Point is inside eraser - end current segment
                 if (currentSegment.Count > 1)
                 {
                     result.Add(CreateStrokeFromPoints(currentSegment, stroke));
@@ -839,7 +823,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
         }
 
-        // Add remaining segment
         if (currentSegment.Count > 1)
         {
             result.Add(CreateStrokeFromPoints(currentSegment, stroke));
@@ -862,7 +845,7 @@ public partial class PhotoViewerOverlay : UserControl
         };
     }
 
-    // ── Undo / Redo ────────────────────────────────────────────────────────
+    // ── Отмена / Повтор
     private void Undo_Click(object sender, RoutedEventArgs e)
     {
         if (_undoStack.Count == 0) return;
@@ -879,7 +862,7 @@ public partial class PhotoViewerOverlay : UserControl
         _undoStack.Push(el);
     }
 
-    // ── Color palette ──────────────────────────────────────────────────────
+    // ── Палитра цветов
     private void BuildColorPalette()
     {
         ColorPalettePanel.Children.Clear();
@@ -899,25 +882,21 @@ public partial class PhotoViewerOverlay : UserControl
             var c = color;
             border.MouseLeftButtonDown += (_, _) =>
             {
-                // Animate shrink
                 border.Width = 20;
                 border.Height = 20;
                 _currentColor = c;
                 HighlightSelectedColor(border);
                 SaveBrushColor(c);
-                // Auto-activate pencil on colour pick
                 if (!_drawingActive) ActivateTool(DrawTool.Pencil);
             };
             border.MouseLeftButtonUp += (_, _) =>
             {
-                // Animate back to normal
                 border.Width = 24;
                 border.Height = 24;
             };
             ColorPalettePanel.Children.Add(border);
         }
 
-        // Load saved color
         LoadSavedBrushColor();
     }
 
@@ -942,7 +921,6 @@ public partial class PhotoViewerOverlay : UserControl
                 var color = (Color)ColorConverter.ConvertFromString(savedColor);
                 _currentColor = color;
 
-                // Find and highlight the matching color in palette
                 for (int i = 0; i < Palette.Length; i++)
                 {
                     if (Palette[i].R == color.R && Palette[i].G == color.G && Palette[i].B == color.B)
@@ -955,7 +933,6 @@ public partial class PhotoViewerOverlay : UserControl
         }
         catch
         {
-            // Fallback to default blue
             SelectColorByIndex(9);
         }
     }
@@ -977,7 +954,7 @@ public partial class PhotoViewerOverlay : UserControl
         selected.BorderBrush = new SolidColorBrush(Colors.Black);
     }
 
-    // ── Crop Mode ──────────────────────────────────────────────────────────
+    // ── Режим обрезки
     private void ToggleCrop_Click(object sender, RoutedEventArgs e)
     {
         if (_cropMode)
@@ -996,9 +973,7 @@ public partial class PhotoViewerOverlay : UserControl
         DrawingToolsPanel.Visibility = Visibility.Collapsed;
         CropToolsPanel.Visibility = Visibility.Visible;
         DrawCanvas.Cursor = Cursors.Cross;
-        // No aspect ratio constraint by default
         _currentAspectRatio = AspectRatio.Free;
-        // Uncheck all aspect ratio buttons
         foreach (var buttonName in new[] { "Aspect9_16", "Aspect16_9", "Aspect4_5", "Aspect5_4", "Aspect3_4", "Aspect4_3", "Aspect1_1", "Aspect3_2" })
         {
             var btn = FindName(buttonName) as RadioButton;
@@ -1057,7 +1032,6 @@ public partial class PhotoViewerOverlay : UserControl
         PlaceCropHandle(HandleBL, _cropRect.Left, _cropRect.Bottom);
         PlaceCropHandle(HandleL, _cropRect.Left, _cropRect.Top + _cropRect.Height / 2.0);
 
-        // Apply inverse scale to handles to keep them fixed size on screen
         double inverseScale = 1.0 / _zoomFactor;
         HandleTLScale.ScaleX = inverseScale; HandleTLScale.ScaleY = inverseScale;
         HandleTScale.ScaleX = inverseScale; HandleTScale.ScaleY = inverseScale;
@@ -1102,11 +1076,10 @@ public partial class PhotoViewerOverlay : UserControl
         DrawCanvas.CaptureMouse();
         DrawCanvas.Cursor = GetCursorForCropHandle(_cropDragHandle);
 
-        // Reset aspect ratio when manually adjusting crop
+        // Сбросить соотношение сторон при ручной настройке обрезки
         if (_currentAspectRatio != AspectRatio.Free)
         {
             _currentAspectRatio = AspectRatio.Free;
-            // Uncheck all aspect ratio buttons
             foreach (var buttonName in new[] { "Aspect9_16", "Aspect16_9", "Aspect4_5", "Aspect5_4", "Aspect3_4", "Aspect4_3", "Aspect1_1", "Aspect3_2" })
             {
                 var btn = FindName(buttonName) as RadioButton;
@@ -1193,7 +1166,6 @@ public partial class PhotoViewerOverlay : UserControl
             double right = Math.Max(startPoint.X, currentPoint.X);
             double bottom = Math.Max(startPoint.Y, currentPoint.Y);
 
-            // Apply aspect ratio constraint if not Free
             if (_currentAspectRatio != AspectRatio.Free)
             {
                 double targetRatio = GetTargetAspectRatio();
@@ -1202,7 +1174,6 @@ public partial class PhotoViewerOverlay : UserControl
 
                 if (width / height > targetRatio)
                 {
-                    // Width is too large, adjust height
                     double newHeight = width / targetRatio;
                     if (currentPoint.Y < startPoint.Y)
                         top = bottom - newHeight;
@@ -1211,7 +1182,6 @@ public partial class PhotoViewerOverlay : UserControl
                 }
                 else
                 {
-                    // Height is too large, adjust width
                     double newWidth = height * targetRatio;
                     if (currentPoint.X < startPoint.X)
                         left = right - newWidth;
@@ -1257,7 +1227,6 @@ public partial class PhotoViewerOverlay : UserControl
         if (handle is CropHandle.TL or CropHandle.T or CropHandle.TR) t = Math.Clamp(t, bounds.Top, b - min);
         if (handle is CropHandle.BL or CropHandle.B or CropHandle.BR) b = Math.Clamp(b, t + min, bounds.Bottom);
 
-        // Apply aspect ratio constraint for resize handles
         if (_currentAspectRatio != AspectRatio.Free && handle != CropHandle.Move)
         {
             double targetRatio = GetTargetAspectRatio();
@@ -1265,10 +1234,9 @@ public partial class PhotoViewerOverlay : UserControl
             double height = b - t;
             double currentRatio = width / height;
 
-            // Adjust based on which handle is being dragged
             if (handle is CropHandle.TL or CropHandle.TR or CropHandle.T)
             {
-                // Top handles - adjust width based on height change
+
                 double newWidth = height * targetRatio;
                 if (handle is CropHandle.TL)
                     l = r - newWidth;
@@ -1277,7 +1245,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
             else if (handle is CropHandle.BL or CropHandle.BR or CropHandle.B)
             {
-                // Bottom handles - adjust width based on height change
                 double newWidth = height * targetRatio;
                 if (handle is CropHandle.BL)
                     l = r - newWidth;
@@ -1286,7 +1253,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
             else if (handle is CropHandle.TL or CropHandle.BL or CropHandle.L)
             {
-                // Left handles - adjust height based on width change
                 double newHeight = width / targetRatio;
                 if (handle is CropHandle.TL)
                     t = b - newHeight;
@@ -1295,7 +1261,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
             else if (handle is CropHandle.TR or CropHandle.BR or CropHandle.R)
             {
-                // Right handles - adjust height based on width change
                 double newHeight = width / targetRatio;
                 if (handle is CropHandle.TR)
                     t = b - newHeight;
@@ -1303,7 +1268,7 @@ public partial class PhotoViewerOverlay : UserControl
                     b = t + newHeight;
             }
 
-            // Re-clamp after aspect ratio adjustment
+            // Повторно ограничить после корректировки соотношения сторон
             l = Math.Clamp(l, bounds.Left, r - min);
             r = Math.Clamp(r, l + min, bounds.Right);
             t = Math.Clamp(t, bounds.Top, b - min);
@@ -1322,7 +1287,7 @@ public partial class PhotoViewerOverlay : UserControl
 
         return _currentAspectRatio switch
         {
-            AspectRatio.Free => 0, // 0 means no constraint
+            AspectRatio.Free => 0, 
             AspectRatio.Original => (double)_source.PixelWidth / _source.PixelHeight,
             AspectRatio.Square => 1.0,
             AspectRatio.Ratio_9_16 => 9.0 / 16.0,
@@ -1357,7 +1322,6 @@ public partial class PhotoViewerOverlay : UserControl
                 _ => AspectRatio.Free
             };
 
-            // If not Free, adjust current crop rect to match aspect ratio
             if (_currentAspectRatio != AspectRatio.Free && _cropMode)
             {
                 AdjustCropRectToAspectRatio();
@@ -1372,21 +1336,17 @@ public partial class PhotoViewerOverlay : UserControl
         double targetRatio = GetTargetAspectRatio();
         if (targetRatio <= 0) return;
 
-        // Calculate the maximum possible size for the target aspect ratio within bounds
         double newWidth, newHeight;
 
-        // Try fitting by width first
         newWidth = bounds.Width;
         newHeight = newWidth / targetRatio;
 
-        // If height exceeds bounds, fit by height instead
         if (newHeight > bounds.Height)
         {
             newHeight = bounds.Height;
             newWidth = newHeight * targetRatio;
         }
 
-        // Apply minimum size constraint
         const double minSize = 48.0;
         if (newWidth < minSize || newHeight < minSize)
         {
@@ -1402,7 +1362,6 @@ public partial class PhotoViewerOverlay : UserControl
             }
         }
 
-        // Center the new rect in bounds
         double centerX = bounds.X + bounds.Width / 2;
         double centerY = bounds.Y + bounds.Height / 2;
         double newX = Math.Clamp(centerX - newWidth / 2, bounds.Left, bounds.Right - newWidth);

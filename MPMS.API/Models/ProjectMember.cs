@@ -1,8 +1,5 @@
 namespace MPMS.API.Models;
 
-/// <summary>
-/// Many-to-many: users assigned to projects (besides manager)
-/// </summary>
 public class ProjectMember
 {
     public Guid Id { get; set; }

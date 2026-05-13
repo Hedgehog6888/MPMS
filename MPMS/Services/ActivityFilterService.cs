@@ -6,10 +6,9 @@ using System.Text;
 
 namespace MPMS.Services;
 
-/// <summary>Filters activity log by role: Admin=all, Manager=all except admin, Foreman=self+collaborators, Worker=self+foremen on shared tasks/stages.</summary>
+/// <summary>Фильтрация лога активности по роли: Admin=all, Manager=all кроме admin, Foreman=self+collaborators, Worker=self+foremen на общих задачах/этапах.</summary>
 public static class ActivityFilterService
 {
-    /// <summary>Action types shown only in admin History/Activity tabs (excluded from recent activity).</summary>
     private static readonly HashSet<string> AdminOnlyEventKinds = new()
     {
         ActivityActionKind.Login, ActivityActionKind.Logout,
@@ -18,19 +17,14 @@ public static class ActivityFilterService
         ActivityActionKind.UserBlocked, ActivityActionKind.UserUnblocked
     };
 
-    /// <summary>Time window for grouping messages (seconds).</summary>
     private const int MessageGroupingWindowSeconds = 60;
 
-    /// <summary>Worker filter data: task/stage IDs and collaborator user IDs for context-based filtering.</summary>
     private class WorkerFilterData
     {
         public HashSet<Guid> TaskIds { get; set; } = new();
         public HashSet<Guid> StageIds { get; set; } = new();
-        // All user IDs who work on same tasks/stages (including foremen)
         public HashSet<Guid> CollaboratorIds { get; set; } = new();
-        // File IDs linked to worker's tasks/stages
         public HashSet<Guid> RelatedFileIds { get; set; } = new();
-        // Message IDs linked to worker's tasks/projects
         public HashSet<Guid> RelatedMessageIds { get; set; } = new();
     }
 
@@ -44,7 +38,6 @@ public static class ActivityFilterService
         if (excludeAuthEvents)
             query = query.Where(a => a.ActionType == null || !AdminOnlyEventKinds.Contains(a.ActionType));
 
-        // Admin: no post-filter — a single query is enough
         if (IsAdminRole(userRole))
         {
             var adminList = await query.Take(take).ToListAsync(ct);
@@ -53,8 +46,6 @@ public static class ActivityFilterService
             return GroupActivities(adminList);
         }
 
-        // Other roles: filtering can drop most recent rows (e.g. many admin actions, then login as manager).
-        // Scan chronologically in batches until we have `take` visible entries or hit a scan cap.
         HashSet<Guid>? managerVisibleIds = null;
         if (IsManagerRole(userRole) && currentUserId.HasValue)
         {
@@ -102,7 +93,6 @@ public static class ActivityFilterService
         return GroupActivities(result);
     }
 
-    /// <summary>Groups all activities by user + action type within a short time window (60 seconds).</summary>
     private static List<LocalActivityLog> GroupActivities(List<LocalActivityLog> activities)
     {
         if (activities.Count == 0) return activities;
@@ -110,7 +100,6 @@ public static class ActivityFilterService
         var grouped = new List<LocalActivityLog>();
         var actionGroups = new Dictionary<string, List<LocalActivityLog>>();
 
-        // Group all activities by user + action type + entity type
         foreach (var activity in activities)
         {
             var userId = activity.UserId ?? Guid.Empty;
@@ -122,7 +111,6 @@ public static class ActivityFilterService
             actionGroups[key].Add(activity);
         }
 
-        // Process each action group
         foreach (var group in actionGroups.Values)
         {
             if (group.Count == 1)
@@ -172,7 +160,6 @@ public static class ActivityFilterService
         return grouped.OrderByDescending(a => a.CreatedAt).ToList();
     }
 
-    /// <summary>Creates a single grouped activity entry from multiple activities.</summary>
     private static LocalActivityLog CreateGroupedEntry(List<LocalActivityLog> activities)
     {
         var first = activities[0];
@@ -201,7 +188,6 @@ public static class ActivityFilterService
         };
     }
 
-    /// <summary>Generates a descriptive text for grouped activities.</summary>
     private static string GenerateGroupedActionText(List<LocalActivityLog> activities)
     {
         if (activities.Count == 0) return string.Empty;
@@ -211,10 +197,8 @@ public static class ActivityFilterService
         var entityType = first.EntityType;
         var count = activities.Count;
 
-        // Extract context (task/project name) from first action
         var context = ExtractContextFromActionText(first.ActionText);
 
-        // Extract entity names for enumeration
         var entityNames = activities
             .Select(a => ExtractEntityName(a.ActionText))
             .Where(n => !string.IsNullOrEmpty(n))
@@ -224,7 +208,6 @@ public static class ActivityFilterService
         var isSingleEntity = uniqueNames.Count == 1;
         var namesList = FormatNamesList(uniqueNames);
 
-        // Files, Images, Documents
         if ((entityType == "File" || entityType == "Image" || entityType == "Document") && actionType == ActivityActionKind.Created)
         {
             var inProject = first.ActionText.Contains("в проект");
@@ -252,7 +235,6 @@ public static class ActivityFilterService
             return $"Загружено {count} {filesForm}";
         }
 
-        // Messages
         if (entityType == "Message" && actionType == ActivityActionKind.Message)
         {
             var messagesForm = GetPluralForm(count, "сообщение", "сообщения", "сообщений");
@@ -261,7 +243,6 @@ public static class ActivityFilterService
             return $"{count} {messagesForm}";
         }
 
-        // Projects
         if (entityType == "Project")
         {
             if (isSingleEntity && count > 1)
@@ -291,7 +272,6 @@ public static class ActivityFilterService
             return $"{actionText} {count} {projectsForm}";
         }
 
-        // Tasks
         if (entityType == "Task")
         {
             if (isSingleEntity && count > 1)
@@ -335,7 +315,6 @@ public static class ActivityFilterService
             return $"{actionText} {count} {tasksForm}";
         }
 
-        // Stages
         if (entityType == "Stage")
         {
             if (isSingleEntity && count > 1)
@@ -375,7 +354,6 @@ public static class ActivityFilterService
             return $"{actionText} {count} {stagesForm}";
         }
 
-        // Users
         if (entityType == "User")
         {
             if (isSingleEntity && count > 1)
@@ -410,15 +388,12 @@ public static class ActivityFilterService
             return $"{actionText} {count} {usersForm}";
         }
 
-        // Default fallback
         var actionsForm = GetPluralForm(count, "действие", "действия", "действий");
         return $"{count} {actionsForm}";
     }
 
-    /// <summary>Extracts context (task/project name) from action text.</summary>
     private static string ExtractContextFromActionText(string actionText)
     {
-        // Extract from "в задаче «Имя»" or "в проекте «Имя»" or "в обсуждении проекта «Имя»"
         if (actionText.Contains("в задаче «"))
         {
             var start = actionText.IndexOf("в задаче «") + 10;
@@ -443,10 +418,8 @@ public static class ActivityFilterService
         return string.Empty;
     }
 
-    /// <summary>Extracts entity name from action text.</summary>
     private static string ExtractEntityName(string actionText)
     {
-        // Extract from "Создан проект «Имя»" or "Задача «Имя»" etc.
         var start = actionText.IndexOf("«");
         var end = actionText.IndexOf("»");
         if (start > 0 && end > start)
@@ -454,7 +427,6 @@ public static class ActivityFilterService
         return string.Empty;
     }
 
-    /// <summary>Formats a list of names, showing up to 4 names then truncating.</summary>
     private static string FormatNamesList(List<string> names)
     {
         if (names.Count == 0) return string.Empty;
@@ -476,7 +448,6 @@ public static class ActivityFilterService
         return result.ToString();
     }
 
-    /// <summary>Returns the correct plural form for a Russian noun based on count.</summary>
     private static string GetPluralForm(int count, string form1, string form2, string form5)
     {
         var lastTwo = count % 100;
@@ -518,11 +489,9 @@ public static class ActivityFilterService
             if (!currentUserId.HasValue || workerFilterData is null)
                 return true;
 
-            // Worker sees their own actions
             if (a.UserId == currentUserId.Value)
                 return true;
 
-            // Worker sees collaborator actions only if related to their tasks/stages
             if (a.UserId.HasValue && workerFilterData.CollaboratorIds.Contains(a.UserId.Value))
             {
                 return IsActivityRelatedToWorkerTasks(a, workerFilterData);
@@ -537,31 +506,24 @@ public static class ActivityFilterService
         return true;
     }
 
-    /// <summary>Checks if an activity is related to worker's tasks/stages (for foreman actions).</summary>
     private static bool IsActivityRelatedToWorkerTasks(LocalActivityLog a, WorkerFilterData workerData)
     {
         var entityType = a.EntityType;
         var entityId = a.EntityId;
 
-        // Direct task/stage actions
         if (entityType == "Task" && workerData.TaskIds.Contains(entityId))
             return true;
 
         if (entityType == "Stage" && workerData.StageIds.Contains(entityId))
             return true;
 
-        // File/Image/Document actions - check if file is linked to worker's tasks/stages
         if ((entityType == "File" || entityType == "Image" || entityType == "Document") 
             && workerData.RelatedFileIds.Contains(entityId))
             return true;
 
-        // Message actions - check if message is in worker's tasks
         if (entityType == "Message" && workerData.RelatedMessageIds.Contains(entityId))
             return true;
 
-        // Material/Equipment actions - check if linked to worker's tasks/stages
-        // (These may need additional context from DetailsText or extended fields)
-        // For now, only show direct task/stage/file actions
 
         return false;
     }
@@ -588,7 +550,6 @@ public static class ActivityFilterService
         }
     }
 
-    /// <summary>Returns the count of activities visible to the current user (for stats display). Uses a reasonable limit.</summary>
     public static async Task<int> GetFilteredActivityCountAsync(
         LocalDbContext db, IAuthService auth, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
@@ -625,7 +586,6 @@ public static class ActivityFilterService
         if (foremanProjectIds.Count == 0)
             return visible;
 
-        // Add project members
         var memberIds = await db.ProjectMembers
             .Where(m => foremanProjectIds.Contains(m.ProjectId))
             .Select(m => m.UserId)
@@ -633,7 +593,6 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
         foreach (var id in memberIds) visible.Add(id);
 
-        // Add project managers (ManagerId from LocalProject)
         var managerIds = await db.Projects
             .Where(p => foremanProjectIds.Contains(p.Id))
             .Select(p => p.ManagerId)
@@ -673,12 +632,10 @@ public static class ActivityFilterService
         return visible;
     }
 
-    /// <summary>Gets visible user IDs for manager: self + project members + admins in shared projects/tasks/stages.</summary>
     private static async Task<HashSet<Guid>> GetManagerVisibleUserIdsAsync(LocalDbContext db, Guid managerUserId, CancellationToken ct)
     {
         var visible = new HashSet<Guid> { managerUserId };
 
-        // Get projects where manager is the manager
         var managerProjectIds = await db.Projects
             .Where(p => p.ManagerId == managerUserId)
             .Select(p => p.Id)
@@ -688,7 +645,6 @@ public static class ActivityFilterService
         if (managerProjectIds.Count == 0)
             return visible;
 
-        // Add project members
         var memberIds = await db.ProjectMembers
             .Where(m => managerProjectIds.Contains(m.ProjectId))
             .Select(m => m.UserId)
@@ -725,7 +681,6 @@ public static class ActivityFilterService
             }
         }
 
-        // Add admins who are members of manager's projects
         var adminMemberIds = await db.ProjectMembers
             .Join(db.Users, pm => pm.UserId, u => u.Id, (pm, u) => new { pm.ProjectId, pm.UserId, u.RoleName })
             .Where(x => managerProjectIds.Contains(x.ProjectId) && IsAdminRole(x.RoleName))
@@ -737,21 +692,17 @@ public static class ActivityFilterService
         return visible;
     }
 
-    /// <summary>Gets all filter data for worker: task/stage IDs, collaborator user IDs, and related file IDs.</summary>
     private static async Task<WorkerFilterData> GetWorkerFilterDataAsync(
         LocalDbContext db, Guid workerUserId, CancellationToken ct)
     {
         var data = new WorkerFilterData();
 
-        // Get task and stage IDs where worker is assigned
         var (taskIds, stageIds) = await GetWorkerVisibleTaskStageIdsAsync(db, workerUserId, ct);
         data.TaskIds = taskIds;
         data.StageIds = stageIds;
 
-        // Get user IDs who work on the same tasks/stages (strict - only task/stage assignees)
         data.CollaboratorIds = await GetWorkerVisibleCollaboratorIdsAsync(db, taskIds, stageIds, ct);
 
-        // Get file IDs linked to worker's tasks/stages
         if (taskIds.Count > 0 || stageIds.Count > 0)
         {
             var relatedFileIds = await db.Files
@@ -763,7 +714,6 @@ public static class ActivityFilterService
             data.RelatedFileIds = relatedFileIds.ToHashSet();
         }
 
-        // Get message IDs linked to worker's tasks/projects
         if (taskIds.Count > 0)
         {
             var relatedMessageIds = await db.Messages
@@ -777,14 +727,12 @@ public static class ActivityFilterService
         return data;
     }
 
-    /// <summary>Gets task and stage IDs where the worker is assigned (directly or via task assignees).</summary>
     private static async Task<(HashSet<Guid> TaskIds, HashSet<Guid> StageIds)> GetWorkerVisibleTaskStageIdsAsync(
         LocalDbContext db, Guid workerUserId, CancellationToken ct)
     {
         var taskIds = new HashSet<Guid>();
         var stageIds = new HashSet<Guid>();
 
-        // Tasks where worker is directly assigned
         var directTaskIds = await db.Tasks
             .Where(t => t.AssignedUserId == workerUserId)
             .Select(t => t.Id)
@@ -792,7 +740,6 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
         foreach (var id in directTaskIds) taskIds.Add(id);
 
-        // Tasks where worker is in TaskAssignees
         var assigneeTaskIds = await db.TaskAssignees
             .Where(ta => ta.UserId == workerUserId)
             .Select(ta => ta.TaskId)
@@ -800,7 +747,6 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
         foreach (var id in assigneeTaskIds) taskIds.Add(id);
 
-        // Stages where worker is directly assigned
         var directStageIds = await db.TaskStages
             .Where(s => s.AssignedUserId == workerUserId)
             .Select(s => s.Id)
@@ -808,7 +754,6 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
         foreach (var id in directStageIds) stageIds.Add(id);
 
-        // Stages where worker is in StageAssignees
         var assigneeStageIds = await db.StageAssignees
             .Where(sa => sa.UserId == workerUserId)
             .Select(sa => sa.StageId)
@@ -816,7 +761,6 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
         foreach (var id in assigneeStageIds) stageIds.Add(id);
 
-        // Also include stages from worker's tasks
         if (taskIds.Count > 0)
         {
             var taskStageIds = await db.TaskStages
@@ -830,13 +774,11 @@ public static class ActivityFilterService
         return (taskIds, stageIds);
     }
 
-    /// <summary>Gets all user IDs who work on the same tasks or stages as the worker.</summary>
     private static async Task<HashSet<Guid>> GetWorkerVisibleCollaboratorIdsAsync(
         LocalDbContext db, HashSet<Guid> workerTaskIds, HashSet<Guid> workerStageIds, CancellationToken ct)
     {
         var foremanIds = new HashSet<Guid>();
 
-        // Get all user IDs assigned to worker's tasks (including foremen)
         if (workerTaskIds.Count > 0)
         {
             var taskAssigneeIds = await db.TaskAssignees
@@ -848,7 +790,6 @@ public static class ActivityFilterService
 
             foreach (var id in taskAssigneeIds) foremanIds.Add(id);
 
-            // Also check direct AssignedUserId on tasks
             var taskAssignedIds = await db.Tasks
                 .Where(t => workerTaskIds.Contains(t.Id) && t.AssignedUserId.HasValue)
                 .Select(t => t.AssignedUserId!.Value)
@@ -859,7 +800,6 @@ public static class ActivityFilterService
             foreach (var id in taskAssignedIds) foremanIds.Add(id);
         }
 
-        // Get all user IDs assigned to worker's stages (including foremen)
         if (workerStageIds.Count > 0)
         {
             var stageAssigneeIds = await db.StageAssignees
@@ -871,7 +811,6 @@ public static class ActivityFilterService
 
             foreach (var id in stageAssigneeIds) foremanIds.Add(id);
 
-            // Also check direct AssignedUserId on stages
             var stageAssignedIds = await db.TaskStages
                 .Where(s => workerStageIds.Contains(s.Id) && s.AssignedUserId.HasValue)
                 .Select(s => s.AssignedUserId!.Value)

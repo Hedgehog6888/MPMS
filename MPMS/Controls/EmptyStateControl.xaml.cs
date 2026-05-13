@@ -54,9 +54,6 @@ public partial class EmptyStateControl : UserControl
 
     private static void OnIconPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        // SVG иконки подключаются через SharpVectors, но его нельзя использовать в коде напрямую.
-        // Иконка задаётся в XAML через svgc:SvgImage, поэтому мы здесь ничего не делаем.
-        // Для простоты — IconImage остаётся без Source если путь SVG;
-        // страницы могут переопределить через IconImage.Source или использовать BitmapImage для PNG.
+        // SVG иконки задаются в XAML через svgc:SvgImage, здесь ничего не делаем.
     }
 }

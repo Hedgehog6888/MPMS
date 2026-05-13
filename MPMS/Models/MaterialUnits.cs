@@ -1,13 +1,12 @@
 namespace MPMS.Models;
 
-/// <summary>Predefined list of material units with integer/decimal flag.</summary>
+/// <summary>Предопределённый список единиц измерения материалов с флагом integer/decimal.</summary>
 public static class MaterialUnits
 {
     public record UnitInfo(string Display, string Short, bool IsInteger);
 
     public static readonly IReadOnlyList<UnitInfo> All =
     [
-        // Discrete (integer only)
         new("Штуки",            "шт",   true),
         new("Упаковки",         "упак", true),
         new("Рулоны",           "рул",  true),
@@ -17,7 +16,6 @@ public static class MaterialUnits
         new("Бухты",            "бухт", true),
         new("Мешки",            "мешк", true),
 
-        // Continuous (decimal)
         new("Метры",            "м",    false),
         new("Квадратные метры", "м²",   false),
         new("Кубические метры", "м³",   false),
@@ -29,7 +27,7 @@ public static class MaterialUnits
         new("Миллилитры",       "мл",   false),
     ];
 
-    /// <summary>Returns true when the unit only accepts whole numbers (штуки, упаковки, etc.).</summary>
+    /// <summary>Возвращает true когда единица измерения принимает только целые числа (штуки, упаковки и т.д.).</summary>
     public static bool IsIntegerUnit(string? unit)
     {
         if (string.IsNullOrWhiteSpace(unit)) return false;
@@ -38,8 +36,8 @@ public static class MaterialUnits
             string.Equals(u.Display, unit, StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary>Tries to parse a quantity string respecting unit type.
-    /// Returns null when the value is invalid for the given unit.</summary>
+    /// <summary>Пытается распарсить строку количества с учётом типа единицы.
+    /// Возвращает null когда значение неверно для данной единицы.</summary>
     public static decimal? ParseQuantity(string text, string? unit)
     {
         var normalised = text.Replace(',', '.').Trim();

@@ -26,7 +26,6 @@ public partial class CreateTaskOverlay : UserControl
     private Guid? _fixedProjectId;
     private Func<System.Threading.Tasks.Task>? _onSaved;
     private Action? _onAfterSave;
-
     private List<AssigneePickerItem> _allAssigneeItems = [];
     private List<AssigneePickerItem> _foremanItems = [];
     private List<AssigneePickerItem> _workerItems = [];
@@ -71,7 +70,7 @@ public partial class CreateTaskOverlay : UserControl
         TitleLabel.Text = "Редактировать задачу";
         SubtitleLabel.Text = "Измените название, описание, приоритет и исполнителей";
         SaveButton.Content = "Сохранить изменения";
-        StatusRow.Visibility = Visibility.Collapsed; // Status is auto from stages
+        StatusRow.Visibility = Visibility.Collapsed;
 
         NameBox.Text = task.Name;
         DescriptionBox.Text = task.Description ?? "";
@@ -86,13 +85,11 @@ public partial class CreateTaskOverlay : UserControl
         var authService = App.Services.GetRequiredService<IAuthService>();
         var currentUserId = authService.UserId;
 
-        // Filter projects: not archived, not marked for deletion, not closed, and user is a member
         var projectQuery = db.Projects
             .Where(p => !p.IsArchived && !p.IsMarkedForDeletion && !p.IsClosed);
 
         if (currentUserId.HasValue)
         {
-            // Only show projects where current user is a member (including managers)
             var userProjectIds = await db.ProjectMembers
                 .Where(pm => pm.UserId == currentUserId.Value)
                 .Select(pm => pm.ProjectId)
@@ -104,7 +101,6 @@ public partial class CreateTaskOverlay : UserControl
         var projects = await projectQuery.OrderBy(p => p.Name).ToListAsync();
         ProjectCombo.ItemsSource = projects;
 
-        // Preselect project
         if (_fixedProjectId.HasValue)
         {
             ProjectCombo.SelectedValue = _fixedProjectId.Value;
@@ -117,7 +113,7 @@ public partial class CreateTaskOverlay : UserControl
             await LoadAssigneesForProjectAsync(preselectedProjectId.Value);
         }
         if (editTaskId.HasValue)
-            ProjectCombo.IsEnabled = false; // при редактировании задачи проект менять нельзя
+            ProjectCombo.IsEnabled = false; 
 
         if (editTaskId.HasValue && _editTask is not null)
         {
@@ -139,7 +135,6 @@ public partial class CreateTaskOverlay : UserControl
             foreach (var ta in taskAssignees)
                 _selectedAssigneeIds.Add(ta.UserId);
 
-            // Also include legacy single assignee (if not blocked)
             if (_editTask.AssignedUserId.HasValue && !blockedIds.Contains(_editTask.AssignedUserId.Value)
                 && !_selectedAssigneeIds.Contains(_editTask.AssignedUserId.Value))
                 _selectedAssigneeIds.Add(_editTask.AssignedUserId.Value);
@@ -157,11 +152,9 @@ public partial class CreateTaskOverlay : UserControl
         _currentUserId = authService.UserId;
         var currentUserRole = authService.UserRole ?? "";
 
-        // Check if current user is a foreman or manager
         _isCurrentUserForeman = currentUserRole is "Foreman" or "Прораб";
         var isCurrentUserManager = currentUserRole is "ProjectManager" or "Manager" or "Project Manager";
 
-        // Only project members can be assigned to tasks (foremen + workers), exclude blocked users
         var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
         var members = await db.ProjectMembers
             .Where(m => m.ProjectId == projectId && !blockedUserIds.Contains(m.UserId))
@@ -195,7 +188,6 @@ public partial class CreateTaskOverlay : UserControl
             .Select(BuildItem)
             .ToList();
 
-        // If current user is a foreman or manager in the project, only show them and auto-select
         if (_currentUserId.HasValue)
         {
             var currentUserInForemen = _foremanItems.FirstOrDefault(item => item.UserId == _currentUserId.Value);
@@ -213,14 +205,12 @@ public partial class CreateTaskOverlay : UserControl
             .Select(BuildItem)
             .ToList();
 
-        // If current user is a worker in the project, only show them and auto-select
         if (_currentUserId.HasValue)
         {
             var currentUserInWorkers = _workerItems.FirstOrDefault(item => item.UserId == _currentUserId.Value);
             if (currentUserInWorkers != null)
             {
                 _workerItems = [currentUserInWorkers];
-                // Auto-select the current user
                 if (!_selectedAssigneeIds.Contains(_currentUserId.Value))
                     _selectedAssigneeIds.Add(_currentUserId.Value);
             }
@@ -308,7 +298,7 @@ public partial class CreateTaskOverlay : UserControl
             Margin = new Thickness(4, 0, 0, 0),
             Tag = item.UserId
         };
-        // Don't allow removing current user themselves
+
         if (item.UserId == _currentUserId)
         {
             removeBtn.IsEnabled = false;
@@ -318,7 +308,6 @@ public partial class CreateTaskOverlay : UserControl
         {
             if (s is Button b && b.Tag is Guid uid)
             {
-                // Prevent removing current user themselves
                 if (uid == _currentUserId)
                     return;
                 _selectedAssigneeIds.Remove(uid);
@@ -334,7 +323,6 @@ public partial class CreateTaskOverlay : UserControl
     private void ForemanItem_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border b || b.Tag is not AssigneePickerItem item) return;
-        // Prevent current user from toggling themselves
         if (item.UserId == _currentUserId)
             return;
         if (_selectedAssigneeIds.Contains(item.UserId))
@@ -401,7 +389,6 @@ public partial class CreateTaskOverlay : UserControl
         var priority = GetPriority();
         var dueDate = DateOnly.FromDateTime(DueDatePicker.SelectedDate.Value);
 
-        // Validate due date only for new tasks or if the date was actually changed
         if (_editTask is null || dueDate != _editTask.DueDate)
         {
             if (!DueDatePolicy.IsAllowed(dueDate))
@@ -445,7 +432,6 @@ public partial class CreateTaskOverlay : UserControl
                 taskId = _editTask.Id;
             }
 
-            // Save multi-assignees
             await SaveTaskAssigneesAsync(taskId, dbFactory);
 
             if (_onAfterSave is not null)
@@ -468,11 +454,9 @@ public partial class CreateTaskOverlay : UserControl
     {
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        // Remove all existing
         var existing = await db.TaskAssignees.Where(a => a.TaskId == taskId).ToListAsync();
         db.TaskAssignees.RemoveRange(existing);
 
-        // Add selected
         foreach (var uid in _selectedAssigneeIds)
         {
             var item = _allAssigneeItems.FirstOrDefault(i => i.UserId == uid);
@@ -581,17 +565,13 @@ public partial class CreateTaskOverlay : UserControl
         _errorHideTimer.Start();
     }
 }
-
-/// <summary>Item in the assignee picker list with reactive selection state.</summary>
 public sealed class AssigneePickerItem : INotifyPropertyChanged
 {
     public Guid UserId { get; }
     public string Name { get; }
     public string? AvatarPath { get; }
     public byte[]? AvatarData { get; }
-    /// <summary>Короткая роль для внутренней логики (Прораб / Работник).</summary>
     public string RoleDisplay { get; }
-    /// <summary>Подпись под именем: спец. у работника; у прораба и др. — пусто.</summary>
     public string? RoleSubtitle { get; }
     public Visibility RoleSubtitleVis =>
         string.IsNullOrWhiteSpace(RoleSubtitle) ? Visibility.Collapsed : Visibility.Visible;

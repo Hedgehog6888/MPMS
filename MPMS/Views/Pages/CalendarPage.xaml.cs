@@ -35,10 +35,6 @@ public partial class CalendarPage : UserControl
     private void CalendarCardBorder_SizeChanged(object sender, SizeChangedEventArgs e)
         => UpdateMaxChipsFromCalendarWidth();
 
-    /// <summary>
-    /// Плашки по ширине колонки (ширина карточки календаря / 7).
-    /// Окно MinWidth 1280 и сайдбар 220 дают ячейку ~147px — порог для трёх плашек выше этого.
-    /// </summary>
     private static int MaxChipsFromCellWidth(double cellWidth)
     {
         if (double.IsNaN(cellWidth) || cellWidth <= 0) return 2;
@@ -58,7 +54,6 @@ public partial class CalendarPage : UserControl
             _vm.MaxVisibleChipsPerDay = max;
     }
 
-    /// <summary>Click on a day cell → centered overlay with all tasks for that date.</summary>
     private void Cell_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not Border border || border.Tag is not CalendarCell cell) return;

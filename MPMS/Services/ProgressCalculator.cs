@@ -127,7 +127,6 @@ public static class ProgressCalculator
         if (project.TotalTasks <= 0)
             return 0;
 
-        // Ни одна задача не в работе/на паузе/не завершена и нет активных этапов — только «запланировано» → 0%.
         if (project.CompletedTasks == 0
             && project.InProgressTasks == 0
             && project.PausedTasks == 0
@@ -155,7 +154,6 @@ public static class ProgressCalculator
                 plannedStages * GetStageWeight(StageStatus.Planned)) / project.TotalStages;
         }
 
-        // Один «сигнал работы»: этапы по проекту + средний % задач (важно для задач без этапов в том же проекте).
         double workScore = project.TotalStages > 0
             ? Math.Clamp(0.62 * stageAggregateScore + 0.38 * averageTaskScore, 0, 1)
             : averageTaskScore;
@@ -179,7 +177,6 @@ public static class ProgressCalculator
         return (int)Math.Round(Math.Clamp(raw, 0, 100), MidpointRounding.AwayFromZero);
     }
 
-    /// <summary>Строка для отображения: "67.5%" или "100%"</summary>
     public static string FormatPercent(double value)
     {
         return value % 1 == 0 ? $"{(int)value}%" : $"{value:F1}%";

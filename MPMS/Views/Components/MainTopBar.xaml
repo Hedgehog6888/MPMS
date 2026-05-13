@@ -9,7 +9,7 @@
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel}">
     
     <UserControl.Resources>
-        <!-- Logo button style - black rounded rect on hover -->
+        <!-- Стиль кнопки логотипа - чёрный скруглённый прямоугольник при наведении -->
         <Style x:Key="LogoButton" TargetType="Button">
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -67,7 +67,7 @@
             </Setter>
         </Style>
 
-        <!-- Black create button for top bar -->
+        <!-- Чёрная кнопка создания для верхней панели -->
         <Style x:Key="TopCreateButton" TargetType="Button">
             <Setter Property="Background"      Value="Black"/>
             <Setter Property="Foreground"      Value="White"/>
@@ -109,7 +109,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- MPMS logo -->
+            <!-- Логотип MPMS -->
             <Button Grid.Column="0"
                     Command="{Binding ToggleSidebarCommand}"
                     Style="{StaticResource LogoButton}"
@@ -117,7 +117,7 @@
                     VerticalAlignment="Center"
                     Margin="16,0,24,0"/>
 
-            <!-- Search box with focus animation + popup results -->
+            <!-- Поле поиска с анимацией фокуса + всплывающие результаты -->
             <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
                 <Border x:Name="SearchBorder"
                         Background="#F4F5F7"
@@ -170,7 +170,7 @@
                                      KeyDown="GlobalSearch_KeyDown"
                                      TextChanged="GlobalSearch_TextChanged"/>
                         </Grid>
-                        <!-- Clear button -->
+                        <!-- Кнопка очистки -->
                         <Button Grid.Column="2" x:Name="ClearSearchBtn"
                                 Click="ClearSearch_Click"
                                 Visibility="Collapsed"
@@ -181,7 +181,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Search Results Popup -->
+                <!-- Всплывающее окно результатов поиска -->
                 <Popup x:Name="SearchResultsPopup"
                        PlacementTarget="{Binding ElementName=SearchBorder}"
                        Placement="Bottom"
@@ -193,7 +193,7 @@
                             Margin="0,4,0,0" MaxHeight="480">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel x:Name="SearchResultsPanel" Margin="8">
-                                <!-- Projects section -->
+                                <!-- Секция проектов -->
                                 <StackPanel x:Name="SearchProjectsSection" Margin="0,0,0,8">
                                     <TextBlock Text="ПРОЕКТЫ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,8,8,6"/>
@@ -231,7 +231,7 @@
                                 </StackPanel>
                                 <Border x:Name="SearchProjectsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
-                                <!-- Tasks section -->
+                                <!-- Секция задач -->
                                 <StackPanel x:Name="SearchTasksSection" Margin="0,0,0,8">
                                     <TextBlock Text="ЗАДАЧИ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,0,8,6"/>
@@ -272,7 +272,7 @@
                                 </StackPanel>
                                 <Border x:Name="SearchTasksDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
-                                <!-- Stages section -->
+                                <!-- Секция этапов -->
                                 <StackPanel x:Name="SearchStagesSection">
                                     <TextBlock Text="ЭТАПЫ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,0,8,6"/>
@@ -310,7 +310,7 @@
                                 </StackPanel>
                                 <Border x:Name="SearchStagesDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
-                                <!-- Materials section -->
+                                <!-- Секция материалов -->
                                 <StackPanel x:Name="SearchMaterialsSection" Margin="0,0,0,8">
                                     <TextBlock Text="МАТЕРИАЛЫ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,0,8,6"/>
@@ -346,7 +346,7 @@
                                 </StackPanel>
                                 <Border x:Name="SearchMaterialsDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
-                                <!-- Equipment section -->
+                                <!-- Секция оборудования -->
                                 <StackPanel x:Name="SearchEquipmentSection" Margin="0,0,0,8">
                                     <TextBlock Text="ОБОРУДОВАНИЕ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,0,8,6"/>
@@ -382,7 +382,7 @@
                                 </StackPanel>
                                 <Border x:Name="SearchEquipmentDivider" Background="#F0F0F0" Height="1" Margin="8,0,8,8"/>
 
-                                <!-- Files section -->
+                                <!-- Секция файлов -->
                                 <StackPanel x:Name="SearchFilesSection">
                                     <TextBlock Text="ФАЙЛЫ" FontSize="10" FontWeight="Bold"
                                                Foreground="#6B778C" Margin="8,0,8,6"/>
@@ -424,7 +424,7 @@
                                     </ItemsControl>
                                 </StackPanel>
 
-                                <!-- No results -->
+                                <!-- Нет результатов -->
                                 <TextBlock x:Name="NoSearchResultsText"
                                            Text="Ничего не найдено" FontSize="13"
                                            Foreground="#6B778C" HorizontalAlignment="Center"
@@ -435,7 +435,7 @@
                 </Popup>
             </Grid>
 
-            <!-- Right: Create + icons -->
+            <!-- Справа: Создать + иконки -->
             <StackPanel Grid.Column="2" Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <!-- Кнопка без действия (создание — со страниц «Проекты» / «Задачи» и т.д.) -->
@@ -450,10 +450,7 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Divider -->
                 <Border Width="1" Height="20" Background="#DFE1E6" Margin="0,0,8,0" VerticalAlignment="Center"/>
-
-                <!-- Sync/connection status button with popup -->
                 <Border x:Name="SyncStatusBorder" Width="36" Height="36" Margin="0,0,0,0"
                         Cursor="Hand" CornerRadius="6">
                     <Border.Style>
@@ -481,7 +478,7 @@
                                     </Style>
                                 </Image.Style>
                             </Image>
-                            <!-- Online/offline dot -->
+                            <!-- Точка онлайн/офлайн -->
                             <Ellipse Width="7" Height="7" HorizontalAlignment="Right"
                                      VerticalAlignment="Bottom" Margin="0,0,-1,-1">
                                 <Ellipse.Style>
@@ -499,7 +496,6 @@
                     </Button>
                 </Border>
 
-                <!-- Sync popup (Popup control for rich design) -->
                 <Popup x:Name="SyncPopup"
                        PlacementTarget="{Binding ElementName=SyncStatusBorder}"
                        Placement="Bottom"
@@ -510,7 +506,7 @@
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Margin="0,4,0,0">
                         <StackPanel>
-                            <!-- Header -->
+                            <!-- Заголовок -->
                             <Border x:Name="SyncPopupHeader" CornerRadius="10,10,0,0" Padding="16,14">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -531,7 +527,7 @@
                                         <ColumnDefinition Width="*" MinWidth="0"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <!-- Status icon circle -->
+                                    <!-- Круг со значком статуса -->
                                     <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0" VerticalAlignment="Center">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -593,7 +589,7 @@
                                             </TextBlock.Style>
                                         </TextBlock>
                                     </StackPanel>
-                                    <!-- "Актуально" badge -->
+                                    <!-- Бейдж "Актуально" -->
                                     <Border Grid.Column="2" Margin="8,0,0,0" CornerRadius="4" Padding="8,3"
                                             VerticalAlignment="Center"
                                             Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
@@ -625,7 +621,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Stats row (online only) -->
+                            <!-- Строка статистики (только онлайн) -->
                             <Border BorderBrush="#F0F0F0" BorderThickness="0,1,0,0"
                                     Visibility="{Binding IsOnline, Converter={StaticResource BoolToVis}}">
                                 <Grid>
@@ -656,7 +652,7 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Offline warning -->
+                            <!-- Предупреждение офлайн -->
                             <Border Margin="12,8,12,0" CornerRadius="8" Padding="12,10"
                                     Background="#FFFBEB" BorderBrush="#FCD34D" BorderThickness="1"
                                     Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisInv}}">
@@ -668,7 +664,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Footer with auto-sync info and sync button -->
+                            <!-- Футер с информацией об авто-синхронизации и кнопкой синхронизации -->
                             <Border Padding="12,10,12,12" BorderBrush="#F0F0F0" BorderThickness="0,1,0,0" Margin="0,8,0,0">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -712,7 +708,7 @@
                     </Border>
                 </Popup>
 
-                <!-- Settings button -->
+                <!-- Кнопка настроек -->
                 <Border Width="36" Height="36" Margin="4,0,0,0"
                         Cursor="Hand" CornerRadius="6">
                     <Border.Style>
@@ -731,10 +727,7 @@
                     </Button>
                 </Border>
 
-                <!-- Divider -->
                 <Border Width="1" Height="20" Background="#DFE1E6" Margin="4,0,8,0" VerticalAlignment="Center"/>
-
-                <!-- User panel: name + role + avatar — opens popup on click -->
                 <Border x:Name="UserPanelBorder" Cursor="Hand"
                         Margin="0,0,0,0" CornerRadius="6" Padding="8,4">
                     <Border.Style>
@@ -778,10 +771,8 @@
                     <Button x:Name="UserPanelBtn" Click="UserPanel_Click"
                             Style="{StaticResource IconButton}" Padding="0" Background="Transparent">
                         <StackPanel Orientation="Horizontal">
-                            <!-- Avatar circle слева: photo if available, else initials -->
                             <Grid Width="36" Height="36" Margin="0,0,8,0"
                                   VerticalAlignment="Center">
-                                <!-- Initials fallback -->
                                 <Border Background="{StaticResource AvatarPlaceholderBrush}"
                                         CornerRadius="18">
                                     <TextBlock Text="{Binding UserInitials}"
@@ -790,7 +781,6 @@
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"/>
                                 </Border>
-                                <!-- Photo overlay -->
                                 <Border x:Name="TopBarAvatarBorder"
                                         Width="36" Height="36"
                                         CornerRadius="18"
@@ -805,7 +795,7 @@
                                            SnapsToDevicePixels="True"/>
                                 </Border>
                             </Grid>
-                            <!-- Name + Role stacked -->
+                            <!-- Имя + роль друг под другом -->
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{Binding UserName}"
                                            FontSize="12" FontWeight="SemiBold"

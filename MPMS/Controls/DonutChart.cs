@@ -5,8 +5,8 @@ using System.Windows.Media;
 namespace MPMS.Controls;
 
 /// <summary>
-/// A simple donut/pie chart control drawn using WPF Path geometry.
-/// Bind Segments to a list of DonutSegment items.
+/// Простой элемент управления donut/pie chart, рисуемый через WPF Path geometry.
+/// Привяжите Segments к списку DonutSegment.
 /// </summary>
 public class DonutChart : Canvas
 {
@@ -63,14 +63,13 @@ public class DonutChart : Canvas
             return;
         }
 
-        double startAngle = -90.0; // start from top
+        double startAngle = -90.0;
 
         foreach (var seg in segs)
         {
             if (seg.Value <= 0) continue;
             double sweepAngle = 360.0 * seg.Value / total;
 
-            // Cap at 359.99 to prevent full circle degenerate case
             if (sweepAngle >= 360) sweepAngle = 359.99;
 
             var geometry = CreateDonutSlice(center, outerRadius, innerRadius, startAngle, sweepAngle);

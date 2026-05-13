@@ -6,7 +6,6 @@
              Background="#F8F9FA">
 
     <UserControl.Resources>
-        <!-- Slim progress bar template -->
         <ControlTemplate x:Key="SlimProgressBar" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="4">
                 <Border x:Name="PART_Track" CornerRadius="4">
@@ -99,7 +98,6 @@
             </Setter>
         </Style>
 
-        <!-- Прямоугольные кнопки статуса (как в оверлее редактирования) -->
         <Style x:Key="StatusSegmentedBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#6B778C"/>
@@ -132,16 +130,14 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Header -->
-            <RowDefinition Height="*"/>     <!-- Scrollable content -->
-            <RowDefinition Height="Auto"/>  <!-- Footer -->
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="*"/>     
+            <RowDefinition Height="Auto"/> 
         </Grid.RowDefinitions>
 
-        <!-- ── HEADER ──────────────────────────────────────────────── -->
         <Border Grid.Row="0" Background="White" Padding="20,16"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1">
             <Grid>
-                <!-- Left: status badge + task chip -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Border x:Name="StatusBadge" CornerRadius="4" Padding="10,5" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
@@ -160,7 +156,6 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Close button -->
                 <Button HorizontalAlignment="Right" Click="Close_Click"
                         Width="32" Height="32" ToolTip="Закрыть">
                     <Button.Template>
@@ -180,11 +175,9 @@
             </Grid>
         </Border>
 
-        <!-- ── CONTENT ────────────────────────────────────────────── -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
 
-                <!-- Stage title + срок (как блок срока в оверлее задачи) -->
                 <Border Background="White" Padding="20,16,20,16"
                         BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Margin="0,0,0,12">
                     <Grid>
@@ -217,7 +210,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Deletion mark warning -->
                 <Border x:Name="DeletionWarningBorder" CornerRadius="8" Padding="14,10"
                         Background="#FEF2F2" BorderBrush="#FFBDAD" BorderThickness="1"
                         Margin="16,0,16,12" Visibility="Collapsed">
@@ -233,10 +225,8 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Cards area -->
                 <StackPanel Margin="16,0,16,16">
 
-                    <!-- Status change card -->
                     <Border Background="White" CornerRadius="10" Padding="16"
                             BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,12">
                         <StackPanel>
@@ -278,7 +268,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Description card -->
                     <Border Background="White" CornerRadius="10" Padding="16"
                             BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,12">
                         <StackPanel>
@@ -289,7 +278,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Assignees card -->
                     <Border Background="White" CornerRadius="10" Padding="16"
                             BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,12">
                         <StackPanel>
@@ -363,7 +351,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Materials card -->
                     <Border x:Name="MaterialsCard" Background="White" CornerRadius="10" Padding="16"
                             BorderBrush="#E8E9EC" BorderThickness="1">
                         <StackPanel>
@@ -423,7 +410,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ── FOOTER ─────────────────────────────────────────────── -->
         <Border Grid.Row="2" Padding="20,14" Background="White"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0">
             <Grid>

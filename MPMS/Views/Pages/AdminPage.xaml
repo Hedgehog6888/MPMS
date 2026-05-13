@@ -20,20 +20,15 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <!-- Root grid: main content + overlay layers -->
     <Grid>
 
-        <!-- ═══════════════════════════════════════════════════════════════
-             MAIN CONTENT
-        ═══════════════════════════════════════════════════════════════════ -->
         <Grid Margin="24">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>   <!-- Tab bar -->
+                <RowDefinition Height="Auto"/>   
                 <RowDefinition Height="10"/>
-                <RowDefinition Height="*"/>      <!-- Tab panels -->
+                <RowDefinition Height="*"/>    
             </Grid.RowDefinitions>
 
-            <!-- ── Tab bar (matches ProjectDetailPage style) ──────────── -->
             <Border Grid.Row="0"
                     Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
@@ -57,7 +52,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- ── Tab panels ─────────────────────────────────────────── -->
             <Grid Grid.Row="2">
                 <admin:AdminUsersPanel    x:Name="UsersPanel"    Visibility="Visible"/>
                 <admin:AdminArchivePanel  x:Name="ArchivePanel"  Visibility="Collapsed"/>

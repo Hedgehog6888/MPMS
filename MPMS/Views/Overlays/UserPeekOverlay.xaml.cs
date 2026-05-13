@@ -47,7 +47,7 @@ public partial class UserPeekOverlay : UserControl
         _ = LoadAsync();
     }
 
-    // ── Загрузка данных ───────────────────────────────────────────────────
+    // ── Загрузка данных 
 
     private async System.Threading.Tasks.Task LoadAsync()
     {
@@ -380,7 +380,7 @@ public partial class UserPeekOverlay : UserControl
         });
     }
 
-    // ── Переключение режимов хаб/деталь ──────────────────────────────────
+    // ── Переключение режимов хаб/деталь
 
     private void ShowHubMode()
     {
@@ -415,7 +415,7 @@ public partial class UserPeekOverlay : UserControl
         StageDetailPanel.Visibility = Visibility.Visible;
     }
 
-    // ── Табы ─────────────────────────────────────────────────────────────
+    // ── Табы
 
     private void ShowProjectsTab()
     {
@@ -454,7 +454,7 @@ public partial class UserPeekOverlay : UserControl
     private void TabStages_Click(object sender, RoutedEventArgs e) => ShowStagesTab();
     private void TabImages_Click(object sender, RoutedEventArgs e) => ShowImagesTab();
 
-    // ── Клики по строкам ─────────────────────────────────────────────────
+    // ── Клики по строкам
 
     private void ProjectRow_Click(object sender, MouseButtonEventArgs e)
     {
@@ -605,7 +605,7 @@ public partial class UserPeekOverlay : UserControl
         }
     }
 
-    // ── Детали задачи ─────────────────────────────────────────────────────
+    // ── Детали задачи
 
     private async System.Threading.Tasks.Task OpenTaskDetailAsync(Guid taskId)
     {
@@ -667,7 +667,7 @@ public partial class UserPeekOverlay : UserControl
         });
     }
 
-    // ── Детали этапа ──────────────────────────────────────────────────────
+    // ── Детали этапа
 
     private async System.Threading.Tasks.Task OpenStageDetailAsync(Guid stageId)
     {
@@ -718,7 +718,7 @@ public partial class UserPeekOverlay : UserControl
         });
     }
 
-    // ── Быстрые действия: навигация ──────────────────────────────────────
+    // ── Быстрые действия: навигация
 
     private void GoToTaskProject_Click(object sender, RoutedEventArgs e)
     {
@@ -856,7 +856,7 @@ public partial class UserPeekOverlay : UserControl
         });
     }
 
-    // ── Назад / Закрыть ───────────────────────────────────────────────────
+    // ── Назад / Закрыть
 
     private void Back_Click(object sender, RoutedEventArgs e)
     {
@@ -867,7 +867,7 @@ public partial class UserPeekOverlay : UserControl
     private void Close_Click(object sender, RoutedEventArgs e)
         => MainWindow.Instance?.HideDrawer();
 
-    // ── Вспомогательные методы ────────────────────────────────────────────
+    // ── Вспомогательные методы
 
     private static Color GetRoleBadgeColor(string? roleName) => roleName switch
     {
@@ -1007,7 +1007,7 @@ public partial class UserPeekOverlay : UserControl
         return fromMembers.Concat(fromTasks).Concat(fromStages).ToHashSet();
     }
 
-    // ── View models ───────────────────────────────────────────────────────
+    // ── Модели представления
 
     public sealed class UserPeekProjectRowVm
     {

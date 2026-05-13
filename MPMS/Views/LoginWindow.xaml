@@ -15,7 +15,6 @@
         <infra:BoolToVisibilityConverter x:Key="StringToVis" IsStringMode="True"/>
         <infra:HexToBrushConverter       x:Key="HexToBrush"/>
 
-        <!-- Input container border -->
         <Style x:Key="InputContainer" TargetType="Border">
             <Setter Property="Background"      Value="White"/>
             <Setter Property="CornerRadius"    Value="6"/>
@@ -24,7 +23,6 @@
             <Setter Property="Height"          Value="50"/>
         </Style>
 
-        <!-- Transparent TextBox inside InputContainer -->
         <Style x:Key="InnerTextBox" TargetType="TextBox">
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
@@ -45,7 +43,6 @@
             </Setter>
         </Style>
 
-        <!-- Transparent PasswordBox inside InputContainer -->
         <Style x:Key="InnerPasswordBox" TargetType="PasswordBox">
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
@@ -66,7 +63,6 @@
             </Setter>
         </Style>
 
-        <!-- Login button -->
         <Style x:Key="LoginBtn" TargetType="Button">
             <Setter Property="Foreground"      Value="White"/>
             <Setter Property="FontSize"        Value="15"/>
@@ -97,7 +93,6 @@
             </Setter>
         </Style>
 
-        <!-- Account card -->
         <Style x:Key="AccountCard" TargetType="Button">
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -128,7 +123,6 @@
         </Style>
     </Window.Resources>
 
-    <!-- Root: shadow + rounded outer border -->
     <Border Margin="16" CornerRadius="14" Background="White" ClipToBounds="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="40" Opacity="0.22"
@@ -136,12 +130,9 @@
         </Border.Effect>
 
         <Grid MouseLeftButtonDown="DragBar_MouseLeftButtonDown">
-            <!-- ═══════════════════════════════════════════════════
-                 Login form
-            ═══════════════════════════════════════════════════ -->
+
             <Grid Background="{StaticResource BackgroundBrush}">
 
-                <!-- Close button -->
                 <Button x:Name="CloseBtn" Click="CloseButton_Click"
                         HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="0,14,16,0" Width="30" Height="30"
@@ -168,12 +159,10 @@
                     </Button.Template>
                 </Button>
 
-                <!-- Centered form -->
                 <StackPanel VerticalAlignment="Center"
                             Margin="52,0,52,0"
                             MaxWidth="380">
 
-                    <!-- Heading -->
                     <TextBlock Text="Вход в систему"
                                FontSize="26" FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"
@@ -183,7 +172,6 @@
                                FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
                                Margin="0,0,0,20"/>
 
-                    <!-- ── API base URL ───────────────── -->
                     <TextBlock Text="АДРЕС СЕРВЕРА (API)" FontSize="11" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border x:Name="ApiUrlContainer"
@@ -209,7 +197,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- ── Username ───────────────────── -->
                     <TextBlock Text="ЛОГИН" FontSize="11" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border x:Name="UsernameContainer"
@@ -235,7 +222,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- ── Password ───────────────────── -->
                     <TextBlock Text="ПАРОЛЬ" FontSize="11" FontWeight="SemiBold"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border x:Name="PasswordContainer"
@@ -248,7 +234,6 @@
                                 <ColumnDefinition Width="44"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Lock icon -->
                             <TextBlock Grid.Column="0"
                                        Text="&#xE72E;"
                                        FontFamily="Segoe MDL2 Assets"
@@ -256,7 +241,6 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
 
-                            <!-- PasswordBox (hidden mode) -->
                             <PasswordBox x:Name="PwdBox"
                                          Grid.Column="1"
                                          Style="{StaticResource InnerPasswordBox}"
@@ -264,7 +248,6 @@
                                          GotFocus="PwdBox_GotFocus"
                                          LostFocus="PwdBox_LostFocus"/>
 
-                            <!-- TextBox (show mode) -->
                             <TextBox x:Name="PwdVisibleBox"
                                      Grid.Column="1"
                                      Style="{StaticResource InnerTextBox}"
@@ -273,19 +256,18 @@
                                      GotFocus="PwdBox_GotFocus"
                                      LostFocus="PwdBox_LostFocus"/>
 
-                            <!-- Eye toggle using SVG icons -->
                             <Grid Grid.Column="2"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center"
                                   Cursor="Hand"
                                   MouseLeftButtonDown="EyeIcon_Click">
-                                <!-- Password hidden: crossed eye -->
+
                                 <Image x:Name="EyeOffIcon"
                                        Width="18"
                                        Height="18"
                                        Source="{svgc:SvgImage Source=/icons/еуе2.svg, AppName=MPMS}"
                                        Opacity="0.85"/>
-                                <!-- Password visible: normal eye -->
+
                                 <Image x:Name="EyeOnIcon"
                                        Width="18"
                                        Height="18"
@@ -296,7 +278,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- ── Error ──────────────────────── -->
                     <Border Background="#FFF5F5" CornerRadius="8"
                             BorderBrush="#FFCDD2" BorderThickness="1"
                             Padding="14,10" Margin="0,0,0,14"
@@ -318,12 +299,10 @@
                         </Grid>
                     </Border>
 
-                    <!-- ── Login button ───────────────── -->
                     <Button Content="Войти в систему"
                             Style="{StaticResource LoginBtn}"
                             Command="{Binding LoginCommand}"/>
 
-                    <!-- ── Busy ───────────────────────── -->
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 Margin="0,12,0,0"
@@ -336,12 +315,10 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- ── Recent accounts ────────────── -->
                     <StackPanel Margin="0,22,0,0"
                                 Visibility="{Binding HasRecentAccounts,
                                     Converter={StaticResource BoolToVis}}">
 
-                        <!-- Separator with label -->
                         <Grid Margin="0,0,0,14">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -360,7 +337,6 @@
                                        VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Cards -->
                         <ItemsControl ItemsSource="{Binding RecentAccounts}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -376,7 +352,7 @@
                                             CommandParameter="{Binding}">
                                         <StackPanel HorizontalAlignment="Center"
                                                     Width="76">
-                                            <!-- Avatar -->
+
                                             <Grid Width="46" Height="46"
                                                   HorizontalAlignment="Center"
                                                   Margin="0,0,0,7">
@@ -389,14 +365,14 @@
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"/>
                                             </Grid>
-                                            <!-- Username -->
+
                                             <TextBlock
                                                 Text="{Binding Username}"
                                                 FontSize="12" FontWeight="SemiBold"
                                                 Foreground="{StaticResource TextPrimaryBrush}"
                                                 HorizontalAlignment="Center"
                                                 TextTrimming="CharacterEllipsis"/>
-                                            <!-- Role -->
+                                        
                                             <TextBlock
                                                 Text="{Binding Role}"
                                                 FontSize="10"

@@ -24,7 +24,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- PAGE HEADER -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -62,7 +61,6 @@
             </Grid>
         </Border>
 
-        <!-- BODY: скролл справа у края, контент и фильтр с отступом справа -->
         <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
             <ScrollViewer x:Name="MainListScroll"
                           VerticalScrollBarVisibility="Visible"
@@ -71,12 +69,11 @@
                           Panel.ZIndex="0">
                 <StackPanel>
 
-                        <!-- Проекты → задачи → этапы -->
                         <ItemsControl ItemsSource="{Binding ProjectStageGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel ClipToBounds="False">
-                                        <!-- Заголовок проекта -->
+
                                         <Button Margin="0,10,0,6" VerticalAlignment="Center"
                                                 Click="ProjectHeader_Click"
                                                 Cursor="Hand"
@@ -147,7 +144,7 @@
                                                            FontWeight="SemiBold" Foreground="#111111"
                                                            TextTrimming="CharacterEllipsis"
                                                            Text="{Binding ProjectName, Mode=OneWay}"/>
-                                                <!-- Task and stage count -->
+
                                                 <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="11"
                                                            Foreground="#64748B" Margin="8,0,8,0">
                                                     <Run Text="{Binding TaskCount, Mode=OneWay}"/>
@@ -156,7 +153,7 @@
                                                     <Run Text="{Binding StageCount, Mode=OneWay}"/>
                                                     <Run Text="{Binding StageCount, Converter={StaticResource PluralStageConverter}, Mode=OneWay}"/>
                                                 </TextBlock>
-                                                <!-- Chevron icon -->
+
                                                 <Grid Grid.Column="4" Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,8,0">
                                                     <Path Data="M 0 0 L 4 4 L 0 8" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
                                                           Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"/>
@@ -170,7 +167,7 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Margin="0,0,0,0">
-                                                        <!-- Заголовок задачи -->
+
                                                         <Button Margin="0,8,0,4" VerticalAlignment="Center"
                                                                 Click="TaskHeader_Click"
                                                                 Cursor="Hand"
@@ -239,7 +236,7 @@
                                                                            FontWeight="SemiBold" Foreground="#111111"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            Text="{Binding TaskName, Mode=OneWay}"/>
-                                                                <!-- Chevron icon -->
+
                                                                 <Grid Grid.Column="3" Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,8,0">
                                                                     <Path Data="M 0 0 L 4 4 L 0 8" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
                                                                           Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"/>
@@ -248,9 +245,9 @@
                                                                 </Grid>
                                                             </Grid>
                                                         </Button>
-                                        <!-- Заголовки колонок и этапы под этой задачей -->
+
                                         <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
-                                        <!-- Заголовки колонок под этой задачей -->
+
                                         <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,2" Opacity="0.7"
                                                 BorderThickness="1.5" BorderBrush="Transparent">
                                             <Grid>
@@ -278,7 +275,7 @@
                                                            HorizontalAlignment="Right"/>
                                             </Grid>
                                         </Border>
-                                        <!-- Stages in task -->
+
                                         <ItemsControl ItemsSource="{Binding Stages}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -316,7 +313,6 @@
                                                                 <ColumnDefinition Width="*" MinWidth="87"/>
                                                             </Grid.ColumnDefinitions>
 
-                                                            <!-- Name + description -->
                                                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                                                                 <StackPanel Orientation="Horizontal">
                                                                     <TextBlock Text="{Binding Stage.Name}"
@@ -336,7 +332,6 @@
                                                                            Visibility="{Binding Stage.StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                             </StackPanel>
 
-                                                            <!-- Assignee -->
                                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                                         Margin="0,0,8,0"
                                                                         Visibility="{Binding Stage.AssignedUserName, Converter={StaticResource StringToVis}}"
@@ -363,7 +358,6 @@
                                                                            VerticalAlignment="Center"/>
                                                             </StackPanel>
 
-                                                            <!-- Status buttons (left of task, with margin) — скрываются при пометке удаления -->
                                                             <StackPanel Grid.Column="2" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" Margin="0,0,24,0"
                                                                         Visibility="{Binding Stage.EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
@@ -393,7 +387,6 @@
                                                                     </Button>
                                                             </StackPanel>
 
-                                                            <!-- Status badge (rectangle: Запланирован, Выполняется, Завершён) -->
                                                             <Border Grid.Column="3" CornerRadius="4" Padding="8,4"
                                                                     VerticalAlignment="Center" HorizontalAlignment="Center">
                                                                 <Border.Style>
@@ -421,10 +414,9 @@
                                                                 </TextBlock>
                                                             </Border>
 
-                                                            <!-- Action buttons -->
                                                             <StackPanel Grid.Column="4" Orientation="Horizontal"
                                                                         VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                                <!-- Edit (Foreman+, hidden when marked) -->
+
                                                                 <Button ToolTip="Редактировать" Tag="{Binding}"
                                                                         Click="EditStage_Click" Margin="0,0,4,0">
                                                                     <Button.Style>
@@ -441,7 +433,7 @@
                                                                            Width="14" Height="14"
                                                                            VerticalAlignment="Center"/>
                                                                 </Button>
-                                                                <!-- Mark/unmark for deletion (Worker+) -->
+
                                                                 <Button Tag="{Binding}" Click="MarkStage_Click"
                                                                         Margin="0,0,4,0">
                                                                     <Button.Style>
@@ -498,7 +490,7 @@
                                                                         </Image>
                                                                     </Grid>
                                                                 </Button>
-                                                                <!-- Delete (Foreman+) -->
+
                                                                 <Button ToolTip="Удалить этап" Tag="{Binding}"
                                                                         Click="DeleteStage_Click"
                                                                         Style="{StaticResource DangerIconButton}"
@@ -532,7 +524,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Empty state -->
                         <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                     Visibility="{Binding ProjectStageGroups.Count, Converter={StaticResource IntToVisInv}}">
                             <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}" 

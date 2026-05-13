@@ -37,7 +37,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══ Header ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -68,11 +67,9 @@
             </Grid>
         </Border>
 
-        <!-- ═══ Body ═════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,20,24,8">
 
-                <!-- User info -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                     <Border Style="{StaticResource AvatarCircle48}"
                             x:Name="AvatarBorder"
@@ -94,14 +91,12 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Action type badge -->
                 <Border x:Name="ActionBadge" CornerRadius="6" Padding="12,8" Margin="0,0,0,20">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock x:Name="ActionTypeText" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
-                <!-- OPERATION INFO -->
                 <TextBlock Text="ИНФОРМАЦИЯ ОПЕРАЦИИ" Style="{StaticResource SectionHeader}"/>
 
                 <Grid Margin="0,0,0,0">
@@ -135,7 +130,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- DESCRIPTION -->
                 <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionHeader}"/>
                 <Border Background="#F4F5F7" CornerRadius="6" Padding="14,12" Margin="0,0,0,4">
                     <TextBlock x:Name="ActionDescriptionText"
@@ -143,7 +137,6 @@
                                TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- DETAILS -->
                 <TextBlock x:Name="DetailsHeader"
                            Text="ДЕТАЛИ"
                            Style="{StaticResource SectionHeader}"
@@ -156,7 +149,6 @@
                                TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- TOOLTIP DETAILS -->
                 <TextBlock x:Name="TooltipHeader"
                            Text="ДОПОЛНИТЕЛЬНО"
                            Style="{StaticResource SectionHeader}"
@@ -176,7 +168,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
             <Button Content="Закрыть"

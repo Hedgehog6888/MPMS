@@ -10,27 +10,22 @@ using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.ViewModels;
 
-/// <summary>A single row in the Timeline chart (task).</summary>
+/// <summary>Одна строка в диаграмме Timeline (задача).</summary>
 public sealed class TimelineTaskRow
 {
     public LocalTask Task { get; init; } = null!;
-    /// <summary>0–1 fraction: gap before bar.</summary>
     public double BarLeft { get; init; }
-    /// <summary>0–1 fraction: bar width.</summary>
     public double BarWidth { get; init; }
-    /// <summary>0–1 fraction: gap after bar (= 1 - BarLeft - BarWidth).</summary>
     public double BarRemainder { get; init; }
     public bool HasBar { get; init; }
     public string StatusLabel { get; init; } = string.Empty;
     public string StatusColor { get; init; } = "#64748B";
-    /// <summary>Bar colour based on task progress % (same palette as ProgressPercentToBrushConverter).</summary>
     public string BarColorHex { get; init; } = "#EF4444";
-    /// <summary>Срок полосы: от даты начала (создание) до дедлайна, «dd.MM.yyyy — dd.MM.yyyy».</summary>
     public string BarRangeLabel { get; init; } = "";
     public bool IsOverdue { get; init; }
 }
 
-/// <summary>A single row in the Timeline chart (stage).</summary>
+/// <summary>Одна строка в диаграмме Timeline (этап).</summary>
 public sealed class TimelineStageRow
 {
     public StageItem Stage { get; init; } = null!;
@@ -40,11 +35,8 @@ public sealed class TimelineStageRow
     public double BarRemainder { get; init; }
     public bool HasBar { get; init; }
     public string StatusLabel { get; init; } = string.Empty;
-    /// <summary>Badge colour — original stage status palette (gray/blue/green).</summary>
     public string StatusColor { get; init; } = "#64748B";
-    /// <summary>Bar colour — matches task progress palette (red/blue/green).</summary>
     public string BarColorHex { get; init; } = "#EF4444";
-    /// <summary>Срок полосы этапа: от создания до дедлайна.</summary>
     public string BarRangeLabel { get; init; } = "";
     public bool IsOverdue { get; init; }
 }
@@ -62,7 +54,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<TimelineStageRow> _stageRows = [];
     [ObservableProperty] private ObservableCollection<TimelineDayHeader> _dayHeaders = [];
 
-    /// <summary>0–1 fraction for the "today" vertical line (–1 = not in current month).</summary>
+    /// <summary>Дробь 0–1 для вертикальной линии «сегодня» (–1 = не в текущем месяце).</summary>
     [ObservableProperty] private double _todayFraction = -1;
 
     public TimelineViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
@@ -154,14 +146,14 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 stageList = stageList.Where(s => allWs.Contains(s.Id)).ToList();
             }
 
-            // Build month range
+            // Формируем диапазон месяца
             var start = new DateTime(CurrentDate.Year, CurrentDate.Month, 1);
             var daysCount = DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month);
             var end = start.AddDays(daysCount - 1);
             var today = DateTime.Today;
             double totalDays = daysCount;
 
-            // Day headers
+            // Заголовки дней
             var ci = new CultureInfo("ru-RU");
             var headers = new List<TimelineDayHeader>();
             for (int d = 0; d < daysCount; d++)
@@ -176,14 +168,14 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
             }
             DayHeaders = new ObservableCollection<TimelineDayHeader>(headers);
 
-            // Today fraction
+            // Доля для «сегодня»
             TodayFraction = today >= start && today <= end
                 ? ((today - start).TotalDays + 0.5) / totalDays
                 : -1;
 
             var taskDict = allTasks.ToDictionary(t => t.Id);
 
-            // Build task rows (полоса: от даты создания до срока); только пересечение с выбранным месяцем
+            // Формируем строки задач (полоса: от даты создания до срока); только пересечение с выбранным месяцем
             var taskRows = allTasks
                 .Select(t =>
                 {
@@ -212,7 +204,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 .ToList();
             TaskRows = new ObservableCollection<TimelineTaskRow>(taskRows);
 
-            // Build stage rows — только если полоса попадает в месяц; порядок по дате создания этапа
+            // Формируем строки этапов — только если полоса попадает в месяц; порядок по дате создания этапа
             var stageRows = stageList
                 .Select(s =>
                 {
@@ -258,7 +250,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         }
     }
 
-    /// <summary>Progress-based colour matching ProgressPercentToBrushConverter.</summary>
+    /// <summary>Цвет на основе прогресса, совпадающий с ProgressPercentToBrushConverter.</summary>
     private static string ProgressToHex(int pct) => pct >= 100 ? "#10B981"
         : pct >= 60 ? "#3B82F6"
         : pct >= 30 ? "#F59E0B"
@@ -273,7 +265,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         _ => s.ToString()
     };
 
-    // Colors matching TaskStatusToBrushConverter exactly
+    // Цвета, точно совпадающие с TaskStatusToBrushConverter
     private static string TaskStatusColor(TaskStatus s) => s switch
     {
         TaskStatus.Planned => "#64748B",
@@ -291,7 +283,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         _ => s.ToString()
     };
 
-    // Badge colour — original StageStatusToBrushConverter palette
+    // Цвет бейджа — исходная палитра StageStatusToBrushConverter
     private static string StageStatusColor(StageStatus s) => s switch
     {
         StageStatus.Planned => "#64748B",
@@ -300,7 +292,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
         _ => "#64748B"
     };
 
-    // Bar colour — same palette as task progress bars
+    // Цвет полосы — та же палитра, что у полос прогресса задач
     private static string StageBarColor(StageStatus s) => s switch
     {
         StageStatus.Planned => "#EF4444",

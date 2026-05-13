@@ -59,11 +59,11 @@ public class JwtService : IJwtService
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false, // You might want to validate this if you have multiple audiences
+            ValidateAudience = false, 
             ValidateIssuer = false,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"]!)),
-            ValidateLifetime = false // Here we are saying that we don't care about the token's expiration date
+            ValidateLifetime = false 
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();

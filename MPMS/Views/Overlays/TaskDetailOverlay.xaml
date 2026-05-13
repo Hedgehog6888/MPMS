@@ -5,7 +5,6 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/">
 
     <UserControl.Resources>
-        <!-- Slim progress bar template -->
         <ControlTemplate x:Key="SlimProgressBar" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="4">
                 <Border x:Name="PART_Track" CornerRadius="4">
@@ -15,7 +14,6 @@
             </Border>
         </ControlTemplate>
 
-        <!-- Outline button style -->
         <Style x:Key="OutlineBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#000000"/>
@@ -44,7 +42,6 @@
             </Setter>
         </Style>
 
-        <!-- Danger button style (mark for deletion) -->
         <Style x:Key="DangerBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#EF4444"/>
@@ -74,7 +71,6 @@
             </Setter>
         </Style>
 
-        <!-- Black button style -->
         <Style x:Key="BlackBtn" TargetType="Button">
             <Setter Property="Background" Value="#111111"/>
             <Setter Property="Foreground" Value="White"/>
@@ -103,18 +99,15 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>   <!-- Header badges + close -->
-            <RowDefinition Height="*"/>      <!-- Scrollable content -->
-            <RowDefinition Height="Auto"/>   <!-- Footer buttons -->
+            <RowDefinition Height="Auto"/>  
+            <RowDefinition Height="*"/>     
+            <RowDefinition Height="Auto"/>   
         </Grid.RowDefinitions>
 
-        <!-- ── HEADER ──────────────────────────────────────────────── -->
         <Border Grid.Row="0" Padding="20,16"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
-                <!-- Status + Priority badges -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Status badge -->
                     <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -145,7 +138,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Priority badge -->
                     <Border CornerRadius="6" Padding="10,5"
                             BorderThickness="1.5"
                             BorderBrush="{Binding Task.Priority, Converter={StaticResource PriorityToBrush}}">
@@ -155,7 +147,6 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Close button -->
                 <Button HorizontalAlignment="Right" Click="Close_Click"
                         Width="32" Height="32"
                         ToolTip="Закрыть">
@@ -176,31 +167,26 @@
             </Grid>
         </Border>
 
-        <!-- ── CONTENT (no overlay scroll; only tab lists scroll) ───── -->
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Fixed: title, description, progress, assignee, tabs -->
             <StackPanel Grid.Row="0" Margin="20,16,20,12">
 
-                <!-- Task title -->
                 <TextBlock Text="{Binding Task.Name}"
                            FontSize="20" FontWeight="Bold"
                            Foreground="#000000"
                            TextWrapping="Wrap"
                            Margin="0,0,0,6"/>
 
-                <!-- Description -->
                 <TextBlock Text="{Binding Task.Description}"
                            FontSize="13" Foreground="#6B778C"
                            TextWrapping="Wrap"
                            Margin="0,0,0,16"
                            Visibility="{Binding Task.Description, Converter={StaticResource StringToVis}}"/>
 
-                <!-- Deletion mark warning -->
                 <Border CornerRadius="8" Padding="14,10"
                         Background="#FEF2F2" BorderBrush="#FFBDAD" BorderThickness="1"
                         Margin="0,0,0,12"
@@ -220,7 +206,6 @@
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
-                <!-- Progress section -->
                 <Grid Margin="0,0,0,10">
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="ПРОГРЕСС ВЫПОЛНЕНИЯ"
@@ -249,14 +234,12 @@
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
-                <!-- Assignees + Due Date layout -->
                 <Grid Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Assignees (split by role) -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="ИСПОЛНИТЕЛИ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
@@ -387,13 +370,11 @@
                             </ItemsControl>
                         </StackPanel>
 
-                        <!-- Fallback: no assignees -->
                         <TextBlock x:Name="NoAssigneesText"
                                    Text="Не назначено" FontSize="12"
                                    Foreground="#97A0AF" Visibility="Collapsed"/>
                     </StackPanel>
 
-                    <!-- Due Date -->
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
@@ -403,7 +384,6 @@
                         <TextBlock FontSize="12" Foreground="#6B778C"
                                    Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=dayname}"/>
 
-                        <!-- Overdue badge -->
                         <Border x:Name="OverdueBadge" CornerRadius="4" Padding="6,3"
                                 Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
                                 HorizontalAlignment="Left" Margin="0,4,0,0"
@@ -416,7 +396,6 @@
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,0"/>
 
-                <!-- Inner Tabs -->
                 <Border Margin="0,4,0,8">
                     <Border Background="#F4F5F7" CornerRadius="10" Padding="3"
                             HorizontalAlignment="Left">
@@ -443,16 +422,13 @@
 
             </StackPanel>
 
-            <!-- Tab content area: only list scrolls, buttons/input at bottom -->
             <Grid Grid.Row="1" Margin="20,0,20,16" MinHeight="200">
-                <!-- STAGES tab content -->
                 <Grid x:Name="StagesPanel" Margin="0,0,0,0" MinHeight="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Scrollable list / empty state -->
                     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding Stages}">
@@ -485,11 +461,9 @@
                                                 </Style>
                                             </Border.Style>
                                             <StackPanel>
-                                                <!-- Name -->
                                                 <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{StaticResource TextPrimaryBrush}"
                                                            TextWrapping="Wrap"/>
-                                                <!-- Description -->
                                                 <TextBlock Text="{Binding Description}" FontSize="11"
                                                            Foreground="{StaticResource TextSecondaryBrush}"
                                                            Margin="0,2,0,4" TextWrapping="Wrap"
@@ -497,7 +471,6 @@
                                                 <TextBlock Text="{Binding StageInheritedDeletionHint}" FontSize="10"
                                                            Foreground="#B71C1C" Margin="0,2,0,0" TextWrapping="Wrap"
                                                            Visibility="{Binding StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
-                                                <!-- Status | Assignee | Actions row -->
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
@@ -534,10 +507,8 @@
                                                                    Visibility="{Binding AssignedUserName, Converter={StaticResource StringToVis}}"/>
                                                     </StackPanel>
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <!-- Кнопки смены статуса — скрыты при пометке удаления -->
                                                     <StackPanel Orientation="Horizontal"
                                                                 Visibility="{Binding EffectiveMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
-                                                    <!-- Start: Planned → InProgress -->
                                                     <Button Tag="{Binding}" Click="StartStage_Click" Margin="0,0,4,0"
                                                             Style="{StaticResource IconButton}" FontSize="12"
                                                             Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=Planned}">
@@ -549,7 +520,6 @@
                                                                        Foreground="{StaticResource TextPrimaryBrush}"/>
                                                         </StackPanel>
                                                     </Button>
-                                                    <!-- Complete: InProgress → Completed -->
                                                     <Button Tag="{Binding}" Click="CompleteStage_Click" Margin="0,0,4,0"
                                                             Style="{StaticResource IconButton}" FontSize="12"
                                                             Visibility="{Binding Status, Converter={StaticResource EqualityToVis}, ConverterParameter=InProgress}">
@@ -562,7 +532,7 @@
                                                         </StackPanel>
                                                     </Button>
                                                     </StackPanel>
-                                                    <!-- Edit (hidden when marked) -->
+
                                                     <Button ToolTip="Редактировать" Tag="{Binding}"
                                                             Click="EditStage_Click" Margin="0,0,4,0">
                                                         <Button.Style>
@@ -581,7 +551,7 @@
                                                         <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                Width="14" Height="14" VerticalAlignment="Center"/>
                                                     </Button>
-                                                    <!-- Mark/unmark for deletion -->
+
                                                     <Button Tag="{Binding}" Click="MarkStageForDeletion_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
@@ -638,7 +608,7 @@
                                                             </Image>
                                                         </Grid>
                                                     </Button>
-                                                    <!-- Delete stage -->
+
                                                     <Button ToolTip="Удалить этап" Tag="{Binding}"
                                                             Click="DeleteStage_Click"
                                                             Style="{StaticResource DangerIconButton}"
@@ -654,7 +624,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Empty state for stages -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
                                         Visibility="{Binding HasNoStages, Converter={StaticResource BoolToVis}}">
                                 <Border Width="56" Height="56" CornerRadius="28" Background="#F4F5F7"
@@ -670,7 +639,6 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- Add stage button pinned to bottom of tab area -->
                     <Button x:Name="AddStageBtn" Grid.Row="1" Click="AddStage_Click"
                             Margin="0,10,0,0" Height="36" FontSize="13"
                             Style="{StaticResource OutlineBtn}"
@@ -683,7 +651,6 @@
                     </Button>
                 </Grid>
 
-                <!-- MATERIALS tab content: scroll only list -->
                 <Grid x:Name="MaterialsPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
@@ -721,7 +688,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Empty materials -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
                                         Visibility="{Binding HasNoMaterials, Converter={StaticResource BoolToVis}}">
                                 <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
@@ -732,7 +698,6 @@
                     </ScrollViewer>
                 </Grid>
 
-                <!-- FILES tab content: scroll only list, button at bottom -->
                 <Grid x:Name="FilesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -760,7 +725,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Empty files -->
                             <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
                                         Visibility="{Binding HasNoFiles, Converter={StaticResource BoolToVis}}">
                                 <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
@@ -779,7 +743,6 @@
                     </Button>
                 </Grid>
 
-                <!-- MESSAGES tab content: scroll only messages, input at bottom -->
                 <Grid x:Name="MessagesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
                     <Border Background="White" CornerRadius="8"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
@@ -789,7 +752,6 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Messages list -->
                             <ScrollViewer Grid.Row="0" x:Name="MessagesScrollViewer"
                                           VerticalScrollBarVisibility="Auto" Padding="14,12,14,10">
                                 <StackPanel>
@@ -801,7 +763,6 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <!-- Avatar -->
                                                     <Border Style="{StaticResource AvatarCircle34}"
                                                             Margin="0,0,12,0" VerticalAlignment="Top"
                                                             Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
@@ -818,9 +779,7 @@
                                                                        Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
                                                         </Grid>
                                                     </Border>
-                                                    <!-- Message bubble -->
                                                     <StackPanel Grid.Column="1">
-                                                        <!-- Name + role + time row -->
                                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                                             <TextBlock Text="{Binding UserName}"
                                                                        FontSize="12" FontWeight="SemiBold"
@@ -839,7 +798,6 @@
                                                                        FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"
                                                                        VerticalAlignment="Center" Margin="6,0,0,0"/>
                                                         </StackPanel>
-                                                        <!-- Message text bubble -->
                                                         <Border Background="#F4F5F7" CornerRadius="2,10,10,10"
                                                                 BorderBrush="#EBECF0" BorderThickness="1"
                                                                 Padding="10,9" MaxWidth="380" HorizontalAlignment="Left">
@@ -853,7 +811,6 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
 
-                                    <!-- Empty messages state -->
                                     <StackPanel HorizontalAlignment="Center" Margin="0,20,0,24"
                                                 Visibility="{Binding Messages.Count, Converter={StaticResource IntToVisInv}}">
                                         <Border Width="48" Height="48" CornerRadius="24"
@@ -874,7 +831,6 @@
                                 </StackPanel>
                             </ScrollViewer>
 
-                            <!-- Message input -->
                             <Border Grid.Row="1" Background="#FAFBFC" Padding="12,10,12,12"
                                     BorderBrush="#EBECF0" BorderThickness="0,1,0,0"
                                     CornerRadius="0,0,8,8">
@@ -909,7 +865,6 @@
             </Grid>
         </Grid>
 
-        <!-- ── FOOTER ─────────────────────────────────────────────── -->
         <Border Grid.Row="2" Padding="20,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

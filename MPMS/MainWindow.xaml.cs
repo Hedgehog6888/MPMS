@@ -26,17 +26,9 @@ public partial class MainWindow : Window
 
     private bool _photoViewerWasVisible = false;
     private bool _documentViewerWasVisible = false;
-
-    /// <summary>Ширина drawer только карточки задачи или этапа (без левой панели).</summary>
     public const double TaskOrStageDetailDrawerWidth = 700;
-
-    /// <summary>Сводка слева (300) + карточка задачи/этапа (700).</summary>
     public const double TaskOrStageDetailWithLeftTotalWidth = 1000;
-
-    /// <summary>Центрированные формы создания/редактирования (как материал/оборудование).</summary>
     public const double CenteredFormOverlayWidth = 560;
-
-    /// <summary>Форма проекта с блоком команды — чуть шире.</summary>
     public const double CenteredProjectFormOverlayWidth = 640;
 
     private enum OverlayPresentationMode { None, Drawer, Modal }
@@ -52,12 +44,10 @@ public partial class MainWindow : Window
         DataContext = viewModel;
         Instance = this;
 
-        // Load saved window size
         LoadWindowSize();
 
         Loaded += (s, e) =>
         {
-            // Bring window to front on startup
             Topmost = true;
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -66,7 +56,6 @@ public partial class MainWindow : Window
 
             if (DataContext is MainViewModel vm)
             {
-                // Set initial width based on current state
                 SidebarColumn.Width = new GridLength(vm.IsSidebarExpanded ? 220 : 64, GridUnitType.Pixel);
 
                 vm.PropertyChanged += (s, pe) =>
@@ -85,7 +74,6 @@ public partial class MainWindow : Window
 
     private void ScheduleSaveSettings()
     {
-        // Debounce: save settings 500ms after last change
         _saveSettingsTimer?.Stop();
         _saveSettingsTimer = new System.Windows.Threading.DispatcherTimer
         {
@@ -107,11 +95,9 @@ public partial class MainWindow : Window
         double savedWidth = LocalSettings.GetDouble("MainWindow_Width", defaultWidth);
         double savedHeight = LocalSettings.GetDouble("MainWindow_Height", defaultHeight);
 
-        // Ensure minimum size constraints are respected
         Width = Math.Max(savedWidth, MinWidth);
         Height = Math.Max(savedHeight, MinHeight);
 
-        // Load window state (maximized/normal)
         string savedState = LocalSettings.Get("MainWindow_State", "Normal");
         if (Enum.TryParse<WindowState>(savedState, out var state))
         {
@@ -121,7 +107,6 @@ public partial class MainWindow : Window
 
     private void SaveWindowSize()
     {
-        // Save window state (but not minimized - always restore as Normal or Maximized)
         if (WindowState != WindowState.Minimized)
         {
             LocalSettings.Set("MainWindow_State", WindowState.ToString());
@@ -131,7 +116,6 @@ public partial class MainWindow : Window
             LocalSettings.Set("MainWindow_State", WindowState.Normal.ToString());
         }
 
-        // Save size only in normal state
         if (WindowState == WindowState.Normal)
         {
             LocalSettings.SetDouble("MainWindow_Width", ActualWidth);
@@ -158,14 +142,12 @@ public partial class MainWindow : Window
     public void ShowDrawer(UIElement content, double width = 520)
     {
         _drawerModalStack.Clear();
-        // Detach previous content first to avoid "child must be detached from parent Visual" when the same or related element is reparented
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;
         DrawerContentPresenter.Content = content;
         DrawerPanel.Width = width;
         _overlayMode = OverlayPresentationMode.Drawer;
 
-        // Clear any held animations before setting local values
         DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
         ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, null);
@@ -276,10 +258,8 @@ public partial class MainWindow : Window
             ShowCenteredOverlay(overlay, 480);
     }
 
-    /// <summary>Shows a dual-panel drawer: left panel (e.g. project context) + right panel (e.g. task detail).</summary>
     public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 1000)
     {
-        // Clear drawer first so leftContent/rightContent can be reparented if they are the current drawer content
         DrawerContentPresenter.Content = null;
 
         UIElement content;
@@ -416,7 +396,6 @@ public partial class MainWindow : Window
 
     private void ModalOverlayContentClip_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Skip if modal overlay is not visible
         if (ModalOverlayPanel.Visibility != Visibility.Visible)
             return;
 

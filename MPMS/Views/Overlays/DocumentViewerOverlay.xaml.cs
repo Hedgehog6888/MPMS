@@ -17,16 +17,12 @@ using Syncfusion.XlsIO;
 namespace MPMS.Views.Overlays;
 
 public partial class DocumentViewerOverlay : UserControl
-{
-    // ── File ───────────────────────────────────────────────────────────────
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
     private string? _description;
     private bool _hasUnsavedChanges;
     private readonly Func<string, string, string?, Task>? _savedFileHandler;
     private string _fileExtension = string.Empty;
-
-    // ── Document content ─────────────────────────────────────────────────────
     private enum DocumentType { Text, Word, Excel, Unsupported }
     private DocumentType _docType = DocumentType.Unsupported;
     private int _currentPage = 1;
@@ -50,10 +46,9 @@ public partial class DocumentViewerOverlay : UserControl
         _hasUnsavedChanges = false;
         UpdateOpenInAppButtonText();
 
-        // Enable mouse wheel scroll (faster, like Word)
         DocumentScrollViewer.PreviewMouseWheel += (s, e) =>
         {
-            // Scroll by 3 lines per wheel tick for faster scrolling (similar to Word)
+            // Прокручивать на 3 строки за щелчок колёсика для более быстрой прокрутки 
             const int scrollLines = 3;
             if (e.Delta > 0)
             {
@@ -69,7 +64,6 @@ public partial class DocumentViewerOverlay : UserControl
         };
     }
 
-    // ── Document loading ─────────────────────────────────────────────────────
     private void LoadDocument(string path)
     {
         try
@@ -168,7 +162,7 @@ public partial class DocumentViewerOverlay : UserControl
 
     private void LoadWordDocument(string path)
     {
-        // Use Syncfusion DocIO to read Word document
+        // Использовать Syncfusion DocIO для чтения документа Word
         using var doc = new WordDocument();
         doc.Open(path);
 
@@ -182,15 +176,15 @@ public partial class DocumentViewerOverlay : UserControl
         pagesContainer.Items.Clear();
 
         var allBlocks = new List<Block>();
-        var blockSizes = new List<double>(); // Estimated height in pixels
+        var blockSizes = new List<double>(); // Оценочная высота в пикселях
         List? currentList = null;
 
         foreach (IWSection section in doc.Sections)
         {
-            // Process tables first
+            // Обработать таблицы первыми
             foreach (WTable table in section.Tables)
             {
-                // End current list before table
+                // Завершить текущий список перед таблицей
                 if (currentList != null)
                 {
                     allBlocks.Add(currentList);
@@ -201,15 +195,14 @@ public partial class DocumentViewerOverlay : UserControl
                 blockSizes.Add(EstimateTableHeight(table));
             }
 
-            // Process paragraphs
+            // Обработать абзацы
             foreach (IWParagraph paragraph in section.Paragraphs)
             {
                 var para = new Paragraph();
 
-                // Apply paragraph formatting
+                // Применить форматирование абзаца
                 ApplyParagraphFormatting(para, paragraph);
 
-                // Check if this is a list item by checking if paragraph has list formatting
                 bool isListItem = paragraph.ListFormat != null &&
                                   paragraph.ListFormat.ListLevelNumber > 0;
 
@@ -226,7 +219,7 @@ public partial class DocumentViewerOverlay : UserControl
                 }
                 else
                 {
-                    // End current list
+                    // Завершить текущий список
                     if (currentList != null)
                     {
                         allBlocks.Add(currentList);
@@ -266,7 +259,6 @@ public partial class DocumentViewerOverlay : UserControl
                 }
             }
 
-            // End current list at end of section
             if (currentList != null)
             {
                 allBlocks.Add(currentList);
@@ -275,7 +267,6 @@ public partial class DocumentViewerOverlay : UserControl
             }
         }
 
-        // Split into pages based on estimated height
         SplitIntoPagesByHeight(allBlocks, blockSizes, pagesContainer);
     }
 
@@ -283,38 +274,33 @@ public partial class DocumentViewerOverlay : UserControl
     {
         if (hasImage)
         {
-            // Paragraph with image: estimate based on typical image size
-            return 300; // Large image takes significant space
+            return 300; 
         }
         else if (textLength > 0)
         {
-            // Text paragraph: estimate based on line count (~90 chars per line at 14pt with 1.5 line spacing)
             int lineCount = (textLength / 90) + 1;
-            return lineCount * 28; // 28px per line (14pt font + 1.5 line spacing + margins)
+            return lineCount * 28; 
         }
         else
         {
-            // Empty paragraph
-            return 20; // Spacing for empty paragraph with margins
+            return 20; 
         }
     }
 
     private double EstimateTableHeight(WTable table)
     {
-        // Table height: header (40) + data rows (25 each)
         int rowCount = table.Rows.Count;
         return 40 + Math.Max(0, rowCount - 1) * 25;
     }
 
     private double EstimateListHeight(List list)
     {
-        // List height: 35 per list item (including numbering and margins)
         return list.ListItems.Count * 35;
     }
 
     private void SplitIntoPagesByHeight(List<Block> blocks, List<double> sizes, ItemsControl pagesContainer)
     {
-        const double pageHeight = 1050; // Available height per page (1123 - 73 padding)
+        const double pageHeight = 1050;
 
         var currentPageBlocks = new List<Block>();
         double currentHeight = 0;
@@ -324,7 +310,6 @@ public partial class DocumentViewerOverlay : UserControl
         {
             double blockSize = sizes[i];
 
-            // If block is too large for a single page, put it on its own page
             if (blockSize > pageHeight && currentPageBlocks.Count > 0)
             {
                 CreatePageWithBlocks(currentPageBlocks, pageCount + 1, pagesContainer);
@@ -332,7 +317,7 @@ public partial class DocumentViewerOverlay : UserControl
                 currentPageBlocks = new List<Block> { blocks[i] };
                 currentHeight = 0;
             }
-            // If adding block would exceed page height and we have content, start new page
+
             else if (currentHeight + blockSize > pageHeight && currentPageBlocks.Count > 0)
             {
                 CreatePageWithBlocks(currentPageBlocks, pageCount + 1, pagesContainer);
@@ -349,7 +334,7 @@ public partial class DocumentViewerOverlay : UserControl
             }
         }
 
-        // Add last page if it has content
+
         if (currentPageBlocks.Count > 0)
         {
             CreatePageWithBlocks(currentPageBlocks, pageCount + 1, pagesContainer);
@@ -361,7 +346,7 @@ public partial class DocumentViewerOverlay : UserControl
 
     private void ApplyParagraphFormatting(Paragraph para, IWParagraph wordPara)
     {
-        // Text alignment
+        // Выравнивание текста
         var format = wordPara.ParagraphFormat;
         para.TextAlignment = format.HorizontalAlignment switch
         {
@@ -371,7 +356,7 @@ public partial class DocumentViewerOverlay : UserControl
             _ => TextAlignment.Left
         };
 
-        // Indentation
+        // Отступы
         para.Margin = new Thickness(
             format.LeftIndent > 0 ? format.LeftIndent : 0,
             format.BeforeSpacing > 0 ? format.BeforeSpacing / 2 : 0,
@@ -379,13 +364,13 @@ public partial class DocumentViewerOverlay : UserControl
             format.AfterSpacing > 0 ? format.AfterSpacing / 2 : 0
         );
 
-        // First line indent
+        // Отступ первой строки
         if (format.FirstLineIndent != 0)
         {
             para.TextIndent = format.FirstLineIndent;
         }
 
-        // Line spacing
+        // Межстрочный интервал
         if (format.LineSpacing > 0)
         {
             para.LineHeight = format.LineSpacing;
@@ -403,13 +388,12 @@ public partial class DocumentViewerOverlay : UserControl
 
         run.FontSize = format.FontSize > 0 ? format.FontSize : 14;
 
-        // Apply font family from Word document
         if (!string.IsNullOrEmpty(format.FontName))
         {
             run.FontFamily = new FontFamily(format.FontName);
         }
 
-        // Text color
+        // Цвет текста
         var textColor = format.TextColor;
         if (textColor.ToArgb() != System.Drawing.Color.Black.ToArgb())
         {
@@ -417,7 +401,7 @@ public partial class DocumentViewerOverlay : UserControl
                 textColor.R, textColor.G, textColor.B));
         }
 
-        // Highlight color
+        // Цвет выделения
         var highlightColor = format.HighlightColor;
         if (highlightColor.ToArgb() != System.Drawing.Color.Empty.ToArgb())
         {
@@ -432,19 +416,19 @@ public partial class DocumentViewerOverlay : UserControl
         table.BorderBrush = Brushes.Gray;
         table.BorderThickness = new Thickness(1);
 
-        // Get row and column counts
+        // Получить количество строк и столбцов
         int rowCount = wordTable.Rows.Count;
         if (rowCount == 0)
             return table;
         int colCount = wordTable.Rows[0].Cells.Count;
 
-        // Add columns
+        // Добавить столбцы
         for (int c = 0; c < colCount; c++)
         {
             table.Columns.Add(new TableColumn { Width = new GridLength(100) });
         }
 
-        // Add rows
+        // Добавить строки
         for (int r = 0; r < rowCount; r++)
         {
             var rowGroup = new TableRowGroup();
@@ -456,7 +440,7 @@ public partial class DocumentViewerOverlay : UserControl
                 var cell = wordTable.Rows[r].Cells[c];
                 var cellPara = new Paragraph();
 
-                // Apply cell paragraph formatting
+                // Применить форматирование абзаца ячейки
                 if (cell.Paragraphs.Count > 0)
                 {
                     ApplyParagraphFormatting(cellPara, cell.Paragraphs[0]);
@@ -479,7 +463,7 @@ public partial class DocumentViewerOverlay : UserControl
                     Padding = new Thickness(4)
                 };
 
-                // Apply cell formatting
+                // Применить форматирование ячейки
                 ApplyCellFormatting(tableCell, cell, rowIndex: r);
 
                 row.Cells.Add(tableCell);
@@ -489,7 +473,7 @@ public partial class DocumentViewerOverlay : UserControl
             table.RowGroups.Add(rowGroup);
         }
 
-        // Add spacing after table
+        // Добавить отступ после таблицы
         table.Margin = new Thickness(0, 8, 0, 16);
 
         return table;
@@ -497,7 +481,6 @@ public partial class DocumentViewerOverlay : UserControl
 
     private void ApplyCellFormatting(TableCell tableCell, WTableCell wordCell, int rowIndex)
     {
-        // Cell background color
         var cellFormat = wordCell.CellFormat;
         if (cellFormat != null && cellFormat.BackColor.ToArgb() != System.Drawing.Color.Empty.ToArgb())
         {
@@ -505,7 +488,7 @@ public partial class DocumentViewerOverlay : UserControl
                 cellFormat.BackColor.R, cellFormat.BackColor.G, cellFormat.BackColor.B));
         }
 
-        // Bold header row
+        // Жирная строка заголовка
         if (rowIndex == 0)
         {
             tableCell.FontWeight = FontWeights.Bold;
@@ -520,12 +503,12 @@ public partial class DocumentViewerOverlay : UserControl
     {
         try
         {
-            // Get image bytes from Word picture
+            // Получить байты изображения из картинки Word
             var imageBytes = picture.ImageBytes;
             if (imageBytes == null || imageBytes.Length == 0)
                 return null;
 
-            // Create BitmapImage from bytes
+            // Создать BitmapImage из байтов
             var bitmapImage = new BitmapImage();
             bitmapImage.BeginInit();
             bitmapImage.StreamSource = new MemoryStream(imageBytes);
@@ -533,7 +516,7 @@ public partial class DocumentViewerOverlay : UserControl
             bitmapImage.EndInit();
             bitmapImage.Freeze();
 
-            // Create Image control
+            // Создать элемент управления Image
             var image = new System.Windows.Controls.Image
             {
                 Source = bitmapImage,
@@ -611,12 +594,12 @@ public partial class DocumentViewerOverlay : UserControl
         ExcelViewer.Visibility = Visibility.Visible;
         FallbackCard.Visibility = Visibility.Collapsed;
 
-        // Keep workbook open for lazy loading
+        // Оставить книгу открытой для ленивой загрузки
         _excelEngine = new ExcelEngine();
         var application = _excelEngine.Excel;
         _workbook = application.Workbooks.Open(path);
 
-        // Create metadata for each sheet (lazy load data later)
+        // Создать метаданные для каждого листа (ленивая загрузка данных позже)
         foreach (IWorksheet worksheet in _workbook.Worksheets)
         {
             _excelSheets.Add(new ExcelSheetView(worksheet.Name, null, null, worksheet.Index));
@@ -641,7 +624,7 @@ public partial class DocumentViewerOverlay : UserControl
             ExcelSheetTabs.Children.Add(tab);
         }
 
-        // Load first sheet data on demand
+        // Загрузить данные первого листа по требованию
         ShowExcelSheet(_excelSheets[0]);
     }
 
@@ -677,13 +660,11 @@ public partial class DocumentViewerOverlay : UserControl
     {
         _currentExcelSheet = sheet;
 
-        // Lazy load sheet data if not already loaded
         if (sheet.Table == null && _workbook != null)
         {
             var worksheet = _workbook.Worksheets[sheet.WorksheetIndex];
             var loadedSheet = CreateExcelSheetView(worksheet);
 
-            // Update the sheet in place with loaded data
             var index = _excelSheets.IndexOf(sheet);
             if (index >= 0)
             {
@@ -691,7 +672,6 @@ public partial class DocumentViewerOverlay : UserControl
                 _currentExcelSheet = loadedSheet;
                 sheet = loadedSheet;
 
-                // Update ALL tab tags to reference the updated sheet
                 foreach (Button tab in ExcelSheetTabs.Children.OfType<Button>())
                 {
                     if (tab.Tag is ExcelSheetView tabSheet && tabSheet.WorksheetIndex == sheet.WorksheetIndex)
@@ -702,7 +682,7 @@ public partial class DocumentViewerOverlay : UserControl
             }
         }
 
-        // Guard against null table (shouldn't happen after lazy load)
+        // Защита от null таблицы (не должно произойти после ленивой загрузки)
         if (sheet.Table == null)
             return;
 
@@ -775,7 +755,6 @@ public partial class DocumentViewerOverlay : UserControl
 
     private void ExcelGrid_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        // Check if click was on column header
         var dep = (DependencyObject)e.OriginalSource;
         while (dep != null && !(dep is DataGridColumnHeader))
         {
@@ -832,7 +811,6 @@ public partial class DocumentViewerOverlay : UserControl
         FallbackMessage.Text = message;
     }
 
-    // ── Close ───────────────────────────────────────────────────────────────
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         CleanupExcelEngine();
@@ -853,7 +831,6 @@ public partial class DocumentViewerOverlay : UserControl
         }
     }
 
-    // ── Open in App ────────────────────────────────────────────────────────
     private void UpdateOpenInAppButtonText()
     {
         OpenInAppBtnText.Text = _docType switch
@@ -882,7 +859,6 @@ public partial class DocumentViewerOverlay : UserControl
         }
     }
 
-    // ── Download ────────────────────────────────────────────────────────────
     private void Download_Click(object sender, RoutedEventArgs e)
     {
         try

@@ -2,9 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MPMS.API.Models;
 
-/// <summary>
-/// Named ProjectTask to avoid conflict with System.Threading.Tasks.Task
-/// </summary>
 public class ProjectTask
 {
     public Guid Id { get; set; }

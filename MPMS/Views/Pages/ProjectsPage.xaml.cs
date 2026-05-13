@@ -37,8 +37,6 @@ public partial class ProjectsPage : UserControl
     {
         get
         {
-            // After login, Application.Current.MainWindow may still point to LoginWindow.
-            // Resolve MainViewModel from the actual main shell window.
             if (MainWindow.Instance?.DataContext is MainViewModel vm)
                 return vm;
 

@@ -80,14 +80,12 @@ public class SyncCoordinator : ISyncService
         try
         {
             _isSyncing = true;
-            // Connection already prepared above
 
             await using (var dbInit = await _dbFactory.CreateDbContextAsync())
             {
                 await dbInit.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
             }
 
-            // 1. Send local changes to server
             try
             {
                 await ProcessPendingOperationsAsync();
@@ -99,7 +97,6 @@ public class SyncCoordinator : ISyncService
 
             if (!_api.IsOnline) return;
 
-            // 2. Pull latest data from server
             await PullFromServerAsync();
         }
         catch (Exception ex)
@@ -175,7 +172,6 @@ public class SyncCoordinator : ISyncService
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Preparation phase (e.g. warehouse category remapping)
         foreach (var syncer in _syncers)
         {
             try
@@ -212,8 +208,6 @@ public class SyncCoordinator : ISyncService
                 }
                 else
                 {
-                    // If no syncer handles this, we might consider it a success or a permanent failure.
-                    // For now, let's treat it as handled to avoid blocking the queue.
                     success = true;
                 }
 

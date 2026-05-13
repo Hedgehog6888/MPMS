@@ -36,7 +36,6 @@ public partial class ArchiveItemInfoOverlay : UserControl
             DescriptionPanel.Visibility = Visibility.Visible;
         }
 
-        // Type badge color
         (TypeBadge.Background, TypeBadgeText.Text, TypeBadgeText.Foreground) = _row.EntityType switch
         {
             "Project" => (
@@ -65,7 +64,6 @@ public partial class ArchiveItemInfoOverlay : UserControl
                 (Brush)new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C)))
         };
 
-        // Restore info & related panel
         switch (_row.EntityType)
         {
             case "Project":

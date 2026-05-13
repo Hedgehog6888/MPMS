@@ -41,10 +41,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        // Prevent reload during delete operations
+        // Предотвращаем перезагрузку во время операций удаления
         if (_isDeleting) return;
 
-        // Cancel any previous in-flight load
         _loadCts.Cancel();
         _loadCts = new CancellationTokenSource();
         var ct = _loadCts.Token;
@@ -65,12 +64,10 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             {
                 if (isManager)
                 {
-                    // Менеджер видит только проекты, где он ответственный
                     query = query.Where(p => p.ManagerId == userId.Value);
                 }
                 else if (isForeman)
                 {
-                    // Прораб видит только проекты, где он назначен
                     var assignedProjectIds = await db.ProjectMembers
                         .Where(m => m.UserId == userId.Value)
                         .Select(m => m.ProjectId)
@@ -79,7 +76,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 }
                 else if (isWorker)
                 {
-                    // Рабочий видит только проекты, где у него есть назначенные задачи или этапы
                     var projectIdsFromTaskAssignee = await db.Tasks
                         .Where(t => t.AssignedUserId == userId.Value)
                         .Select(t => t.ProjectId)
@@ -109,7 +105,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
             await LoadInternalAsync(db, query, ct);
         }
-        catch (OperationCanceledException) { /* newer call superseded this one */ }
+        catch (OperationCanceledException) { /* новый вызов заменил этот */ }
     }
 
     private async Task LoadInternalAsync(LocalDbContext db, IQueryable<LocalProject> query, CancellationToken ct)
@@ -117,7 +113,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         var list = (await query.ToListAsync(ct)).ToList();
         ct.ThrowIfCancellationRequested();
 
-        // Populate progress stats for each project
+        // Заполняем статистику прогресса для каждого проекта
         var allTasks = await db.Tasks.ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
         var allStages = await db.TaskStages.ToListAsync(ct);
@@ -142,7 +138,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyProjectMetrics(project, projTasks, projStages);
         }
 
-        // Populate ManagerName, ManagerAvatarData/ManagerAvatarPath from Users
+        // Заполняем ManagerName, ManagerAvatarData/ManagerAvatarPath из Users
         var managerIds = list.Select(p => p.ManagerId).Distinct().ToList();
         if (managerIds.Count > 0)
         {
@@ -169,7 +165,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         _allLoadedProjects = list;
 
-        // Calculate total stage count across all projects
+        // Вычисляем общее количество этапов по всем проектам
         TotalStageCount = allStages.Count(s => !s.IsArchived);
 
         ApplyFilter();
@@ -182,7 +178,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
 
         var filtered = _allLoadedProjects.AsEnumerable();
 
-        // Always filter out archived projects (same as LoadAsync)
         filtered = filtered.Where(p => !p.IsArchived && !p.IsClosed);
 
         if (searchTerm is not null)
@@ -191,7 +186,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                                            SearchHelper.ContainsIgnoreCase(p.Client, searchTerm));
         }
 
-        // Apply status filter
+        // Применяем фильтр статуса
         if (statusSnapshot == "Пометка удаления")
         {
             filtered = filtered.Where(p => p.IsMarkedForDeletion);
@@ -209,7 +204,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
                 filtered = filtered.Where(p => p.Status == status.Value && !p.IsMarkedForDeletion);
         }
 
-        // Sort: non-deleted first by status, then by progress desc, then by date
         var sorted = filtered
             .OrderBy(p => p.IsMarkedForDeletion)
             .ThenBy(p => p.Status switch
@@ -280,7 +274,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         project.Address = req.Address;
         project.StartDate = req.StartDate;
         project.EndDate = req.EndDate;
-        // Status is auto-calculated from tasks, do not override from request
+        // Статус вычисляется автоматически из задач, не переопределять из запроса
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
         project.IsMarkedForDeletion = req.IsMarkedForDeletion;
@@ -306,7 +300,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             var entity = await db.Projects.FindAsync(project.Id);
             if (entity is null) return;
 
-            // Delete moves the project graph to archive. Closing is handled separately by IsClosed.
+            // Удаление перемещает граф проекта в архив. Закрытие обрабатывается отдельно через IsClosed.
             entity.IsArchived = true;
             entity.IsSynced = false;
             entity.UpdatedAt = DateTime.UtcNow;
@@ -326,14 +320,13 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             await LogActivityAsync(db, $"Проект «{project.Name}» удалён", "Project", project.Id, ActivityActionKind.Deleted);
             await db.SaveChangesAsync();
 
-            // Queue updates without await to avoid blocking - server doesn't cascade
             _ = _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
             foreach (var t in tasks)
                 _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
             foreach (var s in stages)
                 _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
 
-            // Remove from UI immediately instead of reloading (avoids cache issues)
+            // Удаляем из UI немедленно вместо перезагрузки (избегает проблем с кэшем)
             var toRemove = Projects.FirstOrDefault(p => p.Id == project.Id);
             if (toRemove is not null)
                 Projects.Remove(toRemove);
@@ -408,12 +401,11 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
         await db.SaveChangesAsync();
 
-        // Queue updates without await to avoid blocking - server doesn't cascade
         _ = _sync.QueueOperationAsync("Project", entity.Id, SyncOperation.Update, SyncPayloads.Project(entity));
         foreach (var t in tasks)
             _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
 
-        // Update UI immediately instead of reloading
+        // Обновляем UI немедленно вместо перезагрузки
         var existing = _allLoadedProjects.FirstOrDefault(p => p.Id == project.Id);
         if (existing is not null)
         {

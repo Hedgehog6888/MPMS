@@ -157,7 +157,6 @@ public class TaskStagesController : ControllerBase
         }
         stage.WorkQuantity = request.WorkQuantity;
         stage.WorkPricePerUnit = request.WorkPricePerUnit;
-        // ServiceItems == null — не трогаем строки услуг (частичные обновления, например только статус).
         if (request.ServiceItems is { } serviceItems)
         {
             if (serviceItems.Count > 0)

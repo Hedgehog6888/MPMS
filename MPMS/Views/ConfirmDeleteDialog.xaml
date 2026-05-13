@@ -123,7 +123,6 @@
         </Style>
     </Window.Resources>
 
-    <!-- Drop shadow border wrapping -->
     <Border CornerRadius="12" Background="White"
             BorderBrush="#DFE1E6" BorderThickness="1"
             Padding="0,0,0,0"
@@ -133,7 +132,6 @@
         </Border.Effect>
         <StackPanel>
 
-            <!-- Header -->
             <Border x:Name="HeaderBorder" Background="White" CornerRadius="12,12,0,0" Padding="24,20,24,16"
                     BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                 <Grid>
@@ -145,7 +143,7 @@
                                        Foreground="#EF4444" Margin="0,3,0,0"/>
                         </StackPanel>
                     </StackPanel>
-                    <!-- Close button -->
+
                     <Button Click="Cancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"
                             Width="26" Height="26">
                         <Button.Template>
@@ -165,9 +163,8 @@
                 </Grid>
             </Border>
 
-            <!-- Content -->
             <StackPanel Margin="24,16,24,0">
-                <!-- Item name highlight -->
+
                 <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,8">
                     <StackPanel>
                         <TextBlock x:Name="EntityTypeText" Text="Элемент"
@@ -178,7 +175,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Warning message -->
                 <Border x:Name="CascadeWarning" Background="#FFF8E1" CornerRadius="6" Padding="12,10"
                         BorderBrush="#FFC107" BorderThickness="1" Margin="0,0,0,0"
                         Visibility="Collapsed">
@@ -186,7 +182,6 @@
                                FontSize="12" Foreground="#856404" TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- Closure reason field (for close project) -->
                 <StackPanel x:Name="ClosureReasonPanel" Visibility="Collapsed" Margin="0,14,0,0">
                     <TextBlock Text="Причина закрытия (необязательно)" FontSize="12" FontWeight="SemiBold"
                                Foreground="#344563" Margin="0,0,0,6"/>
@@ -202,7 +197,6 @@
                                FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
                 </StackPanel>
 
-                <!-- Block reason field (for block user) -->
                 <StackPanel x:Name="BlockReasonPanel" Visibility="Collapsed" Margin="0,14,0,0">
                     <TextBlock Text="Причина блокировки (необязательно)" FontSize="12" FontWeight="SemiBold"
                                Foreground="#344563" Margin="0,0,0,6"/>
@@ -218,7 +212,6 @@
                                FontSize="11" Foreground="#8993A4" Margin="0,0,0,0"/>
                 </StackPanel>
 
-                <!-- Block reason display (for unblock user) -->
                 <StackPanel x:Name="BlockReasonDisplayPanel" Visibility="Collapsed" Margin="0,14,0,0">
                     <TextBlock Text="Причина блокировки" FontSize="12" FontWeight="SemiBold"
                                Foreground="#344563" Margin="0,0,0,6"/>
@@ -229,7 +222,6 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Footer -->
             <Border Padding="24,16,24,20">
                 <Grid>
                     <Button Content="Отмена" HorizontalAlignment="Left"

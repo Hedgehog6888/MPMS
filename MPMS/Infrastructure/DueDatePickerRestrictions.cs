@@ -18,7 +18,6 @@ public static class DueDatePickerRestrictions
 
             if (picker.SelectedDate is DateTime sel && sel.Date < today)
             {
-                // Редактирование со сроком в прошлом: не блокируем дни, но не даём уйти месяцами раньше этого месяца.
                 var d = sel.Date;
                 picker.DisplayDateStart = new DateTime(d.Year, d.Month, 1);
                 return;

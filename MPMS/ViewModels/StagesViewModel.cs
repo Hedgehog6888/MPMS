@@ -123,7 +123,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
             var tasks = await tasksQuery.ToListAsync();
 
-            // Populate ProjectName from Projects table if missing
+            // Заполняем ProjectName из таблицы Projects, если отсутствует
             var taskProjectIds = tasks.Select(t => t.ProjectId).Distinct().ToList();
             var projectNames = await db.Projects
                 .Where(p => taskProjectIds.Contains(p.Id))

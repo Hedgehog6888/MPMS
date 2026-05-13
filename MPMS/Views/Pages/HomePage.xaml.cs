@@ -29,10 +29,8 @@ public partial class HomePage : UserControl
         var selection = NotesRTB.Selection;
         if (selection.IsEmpty) return;
 
-        // 1. Clear character formatting
         selection.ClearAllProperties();
 
-        // 2. Clear blockquote formatting
         var paragraphs = GetSelectedParagraphs(selection);
         foreach (var p in paragraphs)
         {
@@ -47,8 +45,6 @@ public partial class HomePage : UserControl
         }
         RefreshBlockquoteFormatting();
 
-        // 3. Remove from lists
-        // If the selection is inside a list, we toggle the active list type to turn it off
         UpdateFormattingButtons();
 
         if (BulletsBtn.IsChecked == true)
@@ -62,7 +58,6 @@ public partial class HomePage : UserControl
 
     private void FormatButton_Click(object sender, RoutedEventArgs e)
     {
-        // Give the command a moment to execute then update UI state
         Dispatcher.BeginInvoke(new Action(() =>
         {
             MergeAdjacentLists(NotesRTB);
@@ -76,25 +71,21 @@ public partial class HomePage : UserControl
         if (doc == null) return;
 
         bool changed = false;
-        // Iterate through top-level blocks to merge adjacent lists of the same type
         for (int i = 0; i < doc.Blocks.Count - 1; i++)
         {
             if (doc.Blocks.ElementAt(i) is List list1 && doc.Blocks.ElementAt(i + 1) is List list2)
             {
-                // Merge if they have the same marker style (e.g., both Decimal or both Disc)
                 if (list1.MarkerStyle == list2.MarkerStyle)
                 {
-                    // Move all items from list2 to list1
                     var items = list2.ListItems.ToList();
                     foreach (var item in items)
                     {
                         list2.ListItems.Remove(item);
                         list1.ListItems.Add(item);
                     }
-                    // Remove the now-empty second list
+
                     doc.Blocks.Remove(list2);
 
-                    // Stay on current index to check if the next block is also a list that should be merged
                     i--;
                     changed = true;
                 }
@@ -103,7 +94,6 @@ public partial class HomePage : UserControl
 
         if (changed)
         {
-            // Update the XAML binding to save changes
             RichTextHelper.UpdateDocumentXaml(rtb);
         }
     }
@@ -162,19 +152,17 @@ public partial class HomePage : UserControl
 
         var paragraphs = GetSelectedParagraphs(selection);
 
-        // Generate a unique ID for this specific formatting action
-        // This ensures that adjacent quotes formatted separately don't merge
         string blockId = System.Guid.NewGuid().ToString();
 
         foreach (var p in paragraphs)
         {
             if (BlockquoteBtn.IsChecked == true)
             {
-                p.BorderBrush = new SolidColorBrush(Color.FromRgb(17, 17, 17)); // Premium Black
+                p.BorderBrush = new SolidColorBrush(Color.FromRgb(17, 17, 17)); 
                 p.BorderThickness = new Thickness(4, 0, 0, 0);
-                p.Background = new SolidColorBrush(Color.FromRgb(249, 250, 251)); // Very light gray-blue
+                p.Background = new SolidColorBrush(Color.FromRgb(249, 250, 251)); 
                 p.FontStyle = FontStyles.Italic;
-                p.Foreground = new SolidColorBrush(Color.FromRgb(74, 85, 104)); // Slate gray #4A5568
+                p.Foreground = new SolidColorBrush(Color.FromRgb(74, 85, 104)); 
                 p.Tag = blockId;
             }
             else
@@ -201,14 +189,12 @@ public partial class HomePage : UserControl
         {
             if (block is Paragraph p)
             {
-                // 1. Always remove old quote icons to avoid duplicates or stale icons
                 var existingFloater = p.Inlines.OfType<Floater>().FirstOrDefault(f => Equals(f.Tag, "QuoteIcon"));
                 if (existingFloater != null) p.Inlines.Remove(existingFloater);
 
                 bool isQuoted = p.BorderThickness.Left > 0;
                 if (isQuoted)
                 {
-                    // Check neighbors to decide on margins and padding
                     bool prevIsQuoted = (p.PreviousBlock is Paragraph prevP) &&
                                         prevP.BorderThickness.Left > 0 &&
                                         Equals(prevP.Tag, p.Tag);
@@ -217,7 +203,6 @@ public partial class HomePage : UserControl
                                         nextP.BorderThickness.Left > 0 &&
                                         Equals(nextP.Tag, p.Tag);
 
-                    // Slightly reduced vertical spacing around the entire block
                     double topMargin = prevIsQuoted ? 0 : 10;
                     double bottomMargin = nextIsQuoted ? 0 : 10;
                     p.Margin = new Thickness(0, topMargin, 0, bottomMargin);
@@ -227,7 +212,6 @@ public partial class HomePage : UserControl
                     double bottomPadding = nextIsQuoted ? 2 : 8;
                     p.Padding = new Thickness(20, topPadding, 0, bottomPadding);
 
-                    // 2. Add a decorative quote icon to the first paragraph of the block
                     if (!prevIsQuoted)
                     {
                         Floater floater = new Floater
@@ -241,7 +225,7 @@ public partial class HomePage : UserControl
 
                         TextBlock quoteIcon = new TextBlock
                         {
-                            Text = "“", // Using opening quote to match the button icon
+                            Text = "“",
                             FontSize = 32,
                             FontFamily = new FontFamily("Georgia"),
                             FontWeight = FontWeights.Bold,
@@ -252,7 +236,7 @@ public partial class HomePage : UserControl
                         };
 
                         var container = new BlockUIContainer(quoteIcon);
-                        container.IsEnabled = false; // Try to make it non-selectable without compilation error
+                        container.IsEnabled = false; 
                         floater.Blocks.Add(container);
 
                         if (p.Inlines.FirstInline != null)
@@ -269,7 +253,6 @@ public partial class HomePage : UserControl
 
     private void Checklist_Click(object sender, RoutedEventArgs e)
     {
-        // Checkbox logic removed as requested
         ChecklistBtn.IsChecked = false;
     }
 
@@ -288,7 +271,6 @@ public partial class HomePage : UserControl
             pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
         }
 
-        // If selection is empty but we are in a paragraph, add it
         if (paragraphs.Count == 0 && selection.Start.Paragraph != null)
         {
             paragraphs.Add(selection.Start.Paragraph);
@@ -310,15 +292,12 @@ public partial class HomePage : UserControl
         var selection = NotesRTB.Selection;
         if (selection == null) return;
 
-        // Bold
         object fontWeight = selection.GetPropertyValue(TextElement.FontWeightProperty);
         BoldBtn.IsChecked = (fontWeight != DependencyProperty.UnsetValue) && (FontWeight)fontWeight == FontWeights.Bold;
 
-        // Italic
         object fontStyle = selection.GetPropertyValue(TextElement.FontStyleProperty);
         ItalicBtn.IsChecked = (fontStyle != DependencyProperty.UnsetValue) && (FontStyle)fontStyle == FontStyles.Italic;
 
-        // Underline & Strikethrough
         object textDecorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
         if (textDecorations != DependencyProperty.UnsetValue && textDecorations is TextDecorationCollection coll)
         {
@@ -331,11 +310,9 @@ public partial class HomePage : UserControl
             StrikethroughBtn.IsChecked = false;
         }
 
-        // Highlight
         object background = selection.GetPropertyValue(TextElement.BackgroundProperty);
         HighlightBtn.IsChecked = (background != DependencyProperty.UnsetValue && background != null);
 
-        // Blockquote (check current paragraph)
         Paragraph p = selection.Start.Paragraph;
         if (p != null)
         {
@@ -347,7 +324,6 @@ public partial class HomePage : UserControl
         }
         ChecklistBtn.IsChecked = false;
 
-        // Lists
         UpdateListButtons(selection);
     }
 
@@ -368,12 +344,12 @@ public partial class HomePage : UserControl
                 if (style == TextMarkerStyle.Disc || style == TextMarkerStyle.Circle || style == TextMarkerStyle.Square)
                 {
                     BulletsBtn.IsChecked = true;
-                    NumberingBtn.IsChecked = false; // Ensure mutual exclusivity
+                    NumberingBtn.IsChecked = false;
                 }
                 else
                 {
                     NumberingBtn.IsChecked = true;
-                    BulletsBtn.IsChecked = false; // Ensure mutual exclusivity
+                    BulletsBtn.IsChecked = false; 
                 }
                 return;
             }
@@ -382,8 +358,6 @@ public partial class HomePage : UserControl
     }
     private void PreventScrollBubbling(object sender, System.Windows.Input.MouseWheelEventArgs e)
     {
-        // If the scrollviewer/richtextbox reached its limit, WPF doesn't mark the event as handled,
-        // so it bubbles up to the parent scrollviewer. We mark it handled to stop this.
         e.Handled = true;
     }
 

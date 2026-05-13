@@ -8,7 +8,6 @@
     <Application.Resources>
         <ResourceDictionary>
 
-            <!-- ── Palette ─────────────────────────────────────────────── -->
             <Color x:Key="PrimaryColor">#2563EB</Color>
             <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
             <Color x:Key="SidebarColor">#111111</Color>
@@ -41,7 +40,7 @@
             <SolidColorBrush x:Key="DangerBrush"           Color="{StaticResource DangerColor}"/>
             <SolidColorBrush x:Key="WarningBrush"          Color="{StaticResource WarningColor}"/>
             <SolidColorBrush x:Key="AvatarPlaceholderBrush" Color="{StaticResource AvatarPlaceholderColor}"/>
-            <!-- Выделение текста / нейтральные hover без системного голубого -->
+
             <SolidColorBrush x:Key="NeutralSelectionBrush" Color="#C5C9D0"/>
 
             <Style TargetType="PasswordBox">
@@ -53,7 +52,6 @@
                 <Setter Property="SelectionTextBrush" Value="{StaticResource TextPrimaryBrush}"/>
             </Style>
 
-            <!-- ── Button: Primary ─────────────────────────────────────── -->
             <Style x:Key="PrimaryButton" TargetType="Button">
                 <Setter Property="Background"   Value="{StaticResource PrimaryBrush}"/>
                 <Setter Property="Foreground"   Value="White"/>
@@ -84,7 +82,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── TextBox ─────────────────────────────────────────────── -->
             <Style x:Key="ModernTextBox" TargetType="TextBox">
                 <Setter Property="Background"      Value="White"/>
                 <Setter Property="Foreground"      Value="{StaticResource TextPrimaryBrush}"/>
@@ -132,7 +129,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── PasswordBox ─────────────────────────────────────────── -->
             <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
                 <Setter Property="Background"   Value="White"/>
                 <Setter Property="Foreground"   Value="{StaticResource TextPrimaryBrush}"/>
@@ -162,7 +158,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── Button: Icon (small ghost) ─────────────────────── -->
             <Style x:Key="IconButton" TargetType="Button">
                 <Setter Property="Background"      Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -184,12 +179,12 @@
                                                   VerticalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <!-- Hover -->
+
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
                                     <Setter TargetName="BtnRoot" Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                 </Trigger>
-                                <!-- Нажатие: такое же выделение, как при ховере -->
+
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
                                     <Setter TargetName="BtnRoot" Property="Background" Value="{StaticResource BackgroundBrush}"/>
@@ -200,7 +195,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── Button: Danger Icon ─────────────────────────────── -->
             <Style x:Key="DangerIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
@@ -209,7 +203,6 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- ── Tab-style RadioButton ──────────────────────────── -->
             <Style x:Key="TabButton" TargetType="RadioButton">
                 <Setter Property="Background"      Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -229,14 +222,14 @@
                                 <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <!-- Active tab: solid black background -->
+
                                 <Trigger Property="IsChecked" Value="True">
                                     <Setter TargetName="Bg" Property="Background" Value="#111111"/>
                                     <Setter TargetName="Bg" Property="Effect" Value="{x:Null}"/>
                                     <Setter Property="Foreground" Value="White"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
-                                <!-- Hover for inactive tab: light background, dark text -->
+
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -251,7 +244,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── View Toggle RadioButton ───────────────────────── -->
             <Style x:Key="ViewToggleButton" TargetType="RadioButton">
                 <Setter Property="Background"      Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -286,9 +278,6 @@
                 </Setter>
             </Style>
 
-            <!-- ══ Form shared styles (used in all overlay panels) ══════════ -->
-
-            <!-- Label -->
             <Style x:Key="FormLabel" TargetType="TextBlock">
                 <Setter Property="FontSize"   Value="12"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
@@ -296,7 +285,6 @@
                 <Setter Property="Margin"     Value="0,0,0,6"/>
             </Style>
 
-            <!-- Кнопка удаления в чипах (без выделения при наведении) -->
             <Style x:Key="ChipRemoveButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -312,7 +300,6 @@
                 </Setter>
             </Style>
 
-            <!-- Single-line / multi-line TextBox - uses default template to avoid text visibility issues -->
             <Style x:Key="FormInput" TargetType="TextBox">
                 <Setter Property="Background"      Value="White"/>
                 <Setter Property="Foreground"      Value="#000000"/>
@@ -328,7 +315,6 @@
 
             <infra:FormComboItemTextConverter x:Key="FormComboItemText"/>
 
-            <!-- ComboBox with rounded corners, custom dropdown popup -->
             <Style x:Key="FormCombo" TargetType="ComboBox">
                 <Setter Property="Background"      Value="White"/>
                 <Setter Property="Foreground"      Value="#000000"/>
@@ -425,7 +411,7 @@
                                               IsHitTestVisible="False"/>
                                     </Grid>
                                 </Border>
-                                <!-- Transparent toggle over the whole control -->
+
                                 <ToggleButton Focusable="False"
                                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
                                                   RelativeSource={RelativeSource TemplatedParent}}">
@@ -435,7 +421,7 @@
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
-                                <!-- Popup: прозрачный слой — без AllowsTransparency=False (даёт системную тёмную рамку) -->
+
                                 <Popup x:Name="PART_Popup"
                                        AllowsTransparency="True"
                                        IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -480,7 +466,6 @@
                 </Setter>
             </Style>
 
-            <!-- Прозрачная «строка» для клика по участнику (карточка peek) -->
             <Style x:Key="PeekRowButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -499,7 +484,6 @@
                 </Setter>
             </Style>
 
-            <!-- Outline (cancel) button -->
             <Style x:Key="OutlineBtn" TargetType="Button">
                 <Setter Property="Background"      Value="White"/>
                 <Setter Property="Foreground"      Value="#000000"/>
@@ -530,7 +514,6 @@
                 </Setter>
             </Style>
 
-            <!-- Back button -->
             <Style x:Key="BackButton" TargetType="Button">
                 <Setter Property="Background"      Value="#111111"/>
                 <Setter Property="Foreground"      Value="White"/>
@@ -561,7 +544,6 @@
                 </Setter>
             </Style>
 
-            <!-- Black (save) button -->
             <Style x:Key="BlackBtn" TargetType="Button">
                 <Setter Property="Background"      Value="#111111"/>
                 <Setter Property="Foreground"      Value="White"/>
@@ -592,7 +574,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── Styled ContextMenu for status changes ──────────── -->
             <Style x:Key="StatusMenu" TargetType="ContextMenu">
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -633,7 +614,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── Styled ScrollBar ──────────────────────────────────── -->
             <Style x:Key="ModernScrollBarThumb" TargetType="Thumb">
                 <Setter Property="SnapsToDevicePixels" Value="True"/>
                 <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -705,7 +685,6 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- ── Modern DatePicker ─────────────────────────────────── -->
             <Style x:Key="ModernCalendarDayButton" TargetType="CalendarDayButton">
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Width"    Value="30"/>
@@ -736,7 +715,7 @@
                                     <Setter TargetName="Content" Property="Foreground" Value="White"/>
                                     <Setter TargetName="Content" Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
-                                <!-- Недоступные дни: IsEnabled=False и/или IsBlackedOut (blackout часто остаётся Enabled=True) -->
+
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Cursor" Value="Arrow"/>
                                     <Setter TargetName="Bg" Property="Background" Value="Transparent"/>
@@ -749,7 +728,7 @@
                                     <Setter TargetName="Content" Property="Foreground" Value="#A8B0BC"/>
                                     <Setter TargetName="Content" Property="Opacity" Value="0.92"/>
                                 </Trigger>
-                                <!-- Подсветка наведения только у реально доступных дней -->
+
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -758,7 +737,7 @@
                                     </MultiTrigger.Conditions>
                                     <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
                                 </MultiTrigger>
-                                <!-- Сегодня: при наведении — нейтральный серый, как у остальных дней -->
+
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -916,7 +895,6 @@
                 </Setter>
             </Style>
 
-            <!-- Плоский шаблон: тема по умолчанию рисует белый «чип» внутри DatePicker -->
             <Style TargetType="DatePickerTextBox">
                 <Setter Property="OverridesDefaultStyle" Value="True"/>
                 <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -947,7 +925,6 @@
                 </Setter>
             </Style>
 
-            <!-- ── ToolTip ─────────────────────────────────────────── -->
             <Style x:Key="ProgramToolTip" TargetType="ToolTip">
                 <Setter Property="ToolTipService.InitialShowDelay" Value="100"/>
                 <Setter Property="ToolTipService.BetweenShowDelay" Value="100"/>
@@ -974,8 +951,6 @@
             </Style>
 
             <Style TargetType="ToolTip" BasedOn="{StaticResource ProgramToolTip}"/>
-
-            <!-- ── Converters ──────────────────────────────────────── -->
 
             <infra:BoolToVisibilityConverter   x:Key="BoolToVis"/>
             <infra:BoolToVisibilityConverter   x:Key="BoolToVisInv"        Invert="True"/>
@@ -1030,7 +1005,6 @@
             <infra:PluralStageConverter x:Key="PluralStageConverter"/>
             <infra:BoolToGridLengthConverter x:Key="BoolToGridLength"/>
 
-            <!-- ── Avatar circle: идеальный круг (EllipseGeometry) + качественное масштабирование ─── -->
             <Style x:Key="AvatarCircle20" TargetType="Border">
                 <Setter Property="Width" Value="20"/>
                 <Setter Property="Height" Value="20"/>
@@ -1128,7 +1102,6 @@
                 <Setter Property="Stretch" Value="Uniform"/>
             </Style>
 
-            <!-- ── Local search Border style with focus animation ─── -->
             <Style x:Key="SearchBoxBorder" TargetType="Border">
                 <Setter Property="Background" Value="#F4F5F7"/>
                 <Setter Property="CornerRadius" Value="6"/>
@@ -1138,7 +1111,6 @@
                 <Setter Property="BorderBrush" Value="Transparent"/>
             </Style>
 
-            <!-- ── DataTemplates: ViewModel → View (UserControl) ─── -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">
                 <pages:HomePage/>
             </DataTemplate>

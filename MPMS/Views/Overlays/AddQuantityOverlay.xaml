@@ -10,7 +10,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -38,10 +37,8 @@
             </Grid>
         </Border>
 
-        <!-- Form -->
         <StackPanel Grid.Row="1" Margin="24,20,24,8">
 
-            <!-- Amount -->
             <TextBlock Text="Количество *" Style="{StaticResource FormLabel}"/>
             <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="12,10" Margin="0,0,0,16" Height="42">
@@ -50,7 +47,6 @@
                          Padding="0" Text="1"/>
             </Border>
 
-            <!-- Comment -->
             <TextBlock Text="Комментарий" Style="{StaticResource FormLabel}"/>
             <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
@@ -61,7 +57,6 @@
                          VerticalScrollBarVisibility="Auto"/>
             </Border>
 
-            <!-- Error -->
             <Border x:Name="ErrorPanel" Background="#FFF0F0"
                     CornerRadius="8" Padding="14,10"
                     Margin="0,0,0,8" Visibility="Collapsed"
@@ -76,7 +71,6 @@
 
         </StackPanel>
 
-        <!-- Footer -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

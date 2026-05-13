@@ -14,8 +14,8 @@ public partial class WriteOffOverlay : UserControl
     private bool _isPartialMode;
 
     /// <summary>
-    /// For equipment (no partial option): pass only fullWriteOffAction.
-    /// For materials: also pass partialWriteOffAction, currentQuantity and unit.
+    /// Для оборудования (без частичного списания): передайте только fullWriteOffAction.
+    /// Для материалов: также передайте partialWriteOffAction, currentQuantity и unit.
     /// </summary>
     public WriteOffOverlay(
         string entityType,

@@ -19,7 +19,6 @@ public partial class App : Application
 
     private async void OnStartup(object sender, StartupEventArgs e)
     {
-        // Show splash screen
         var splash = new SplashWindow();
         splash.Show();
 
@@ -52,12 +51,9 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // ── Local SQLite DB (%LocalAppData%\MPMS\ — не в bin\Debug) ────────────
         services.AddDbContextFactory<LocalDbContext>(options =>
             options.UseSqlite(LocalDbPaths.GetConnectionString()));
 
-        // ── HTTP Client ───────────────────────────────────────────────────────
-        // Базовый URL задаётся в appsettings.json и IAuthService.ApiBaseUrl — запросы собирают полный Uri в ApiService.
         services.AddHttpClient("MPMS", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(15);
@@ -70,11 +66,9 @@ public partial class App : Application
             return new ApiService(http, auth);
         });
 
-        // ── Services ──────────────────────────────────────────────────────────
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IUserSettingsService, UserSettingsService>();
 
-        // Syncers
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);
         services.AddSingleton<IEntitySyncer, ProjectSyncer>();
@@ -83,10 +77,7 @@ public partial class App : Application
         services.AddSingleton<IEntitySyncer, UserSyncer>();
         services.AddSingleton<IEntitySyncer, FileSyncer>();
         services.AddSingleton<IEntitySyncer, SocialSyncer>();
-
         services.AddSingleton<ISyncService, SyncCoordinator>();
-
-        // ── Page ViewModels ───────────────────────────────────────────────────
         services.AddTransient<HomeViewModel>();
         services.AddTransient<ProjectsViewModel>();
         services.AddTransient<ClosedProjectsViewModel>();
@@ -101,14 +92,10 @@ public partial class App : Application
         services.AddTransient<CalendarViewModel>();
         services.AddTransient<TimelineViewModel>();
         services.AddTransient<FilesPageViewModel>();
-
-        // ── Windows ───────────────────────────────────────────────────────────
         services.AddTransient<LoginWindow>();
         services.AddTransient<LoginViewModel>();
         services.AddSingleton<MainWindow>();
         services.AddSingleton<MainViewModel>();
-
-        // ── Dialogs ───────────────────────────────────────────────────────────
         services.AddTransient(sp => new ConfirmDeleteDialog());
     }
 
@@ -119,7 +106,6 @@ public partial class App : Application
         using var db = factory.CreateDbContext();
         db.Database.EnsureCreated();
 
-        // Enable WAL mode for better concurrency
         var connection = db.Database.GetDbConnection();
         if (connection.State != System.Data.ConnectionState.Open)
             connection.Open();
@@ -132,14 +118,12 @@ public partial class App : Application
         LocalSchemaMigrator.Apply(LocalDbPaths.GetConnectionString());
     }
 
-    /// <summary>Сначала полная синхронизация с сервером в SQLite, затем главное окно и навигация — чтобы списки не были пустыми.</summary>
     public static async Task OpenMainWindowAsync(SplashWindow? splash = null)
     {
         await Services.GetRequiredService<ISyncService>().SyncAsync();
         var main = Services.GetRequiredService<MainWindow>();
         Services.GetRequiredService<MainViewModel>().RefreshUserInfoAndNavigateHome();
 
-        // Close splash screen before showing main window
         splash?.CloseWithFadeOut();
 
         main.Show();
@@ -147,8 +131,6 @@ public partial class App : Application
 
     public static void NavigateToLogin()
     {
-        // Show login BEFORE hiding existing windows so the app never has zero visible windows,
-        // which would trigger OnLastWindowClose shutdown.
         var loginWindow = Services.GetRequiredService<LoginWindow>();
         loginWindow.Show();
 

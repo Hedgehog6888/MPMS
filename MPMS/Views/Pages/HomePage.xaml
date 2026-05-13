@@ -7,7 +7,6 @@
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d" >
-             <!-- d:DataContext="{d:DesignInstance Type=vm:HomeViewModel}" -->
 
     <UserControl.Resources>
         <infra:ActivityLogToAccentBrushConverter x:Key="ActivityLogToAccentBrush"/>
@@ -32,7 +31,6 @@
         <infra:SeparatorToVisibilityInvertedConverter x:Key="SeparatorToVisInv"/>
         <infra:IntToStarGridLengthConverter x:Key="IntToStar"/>
 
-        <!-- Stat Card Style -->
         <Style x:Key="StatCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="12"/>
@@ -139,7 +137,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Premium Bento Card Styles -->
         <Style x:Key="BentoCardStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="16"/>
@@ -197,7 +194,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Slim ProgressBar template from projects -->
         <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="3">
                 <Border x:Name="PART_Track" CornerRadius="3">
@@ -207,7 +203,6 @@
             </Border>
         </ControlTemplate>
 
-        <!-- Premium Tooltip Style (Matching Sync Popup) -->
         <Style x:Key="PremiumTooltip" TargetType="ToolTip">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -268,27 +263,22 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <!-- ── WELCOME BANNER ───────────────────────────────────── -->
+
                 <Grid Grid.Row="0" Margin="0,0,0,12">
-                    <!-- Left side: Greeting and Date -->
                     <StackPanel VerticalAlignment="Bottom">
                         <TextBlock Text="{Binding WelcomeMessage}" FontSize="28" FontWeight="Bold" Foreground="#111111"/>
                         <TextBlock Text="{Binding CurrentDateText}" FontSize="14" Foreground="#64748B" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <!-- Right side: Clock (aligned with date row) -->
                     <TextBlock Text="{Binding CurrentTime}" FontSize="28" FontWeight="Light" Foreground="#111111" 
                                HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
                 </Grid>
 
-                <!-- ── ROLE-AWARE STATS PULSE ───────────────────────────── -->
                 <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
-                    <!-- Card 1: Status Line -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}">
                                 <StackPanel Width="280">
-                                    <!-- Header matching Sync Popup -->
                                     <Border Style="{StaticResource TooltipHeaderSection}" Background="#EFF6FF">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Card1TooltipHeader}" Style="{StaticResource TooltipHeader}"/>
@@ -339,8 +329,7 @@
                                     <TextBlock Text="{Binding Card1Value}" Style="{StaticResource BentoValue}"/>
                                 </StackPanel>
                                 <TextBlock Text="{Binding Card1SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
-                                
-                                <!-- Segmented Progress Line (Styled as project SlimPB with non-distorted rounding) -->
+
                                 <ProgressBar Value="100" Maximum="100" Height="6" 
                                              Background="#E9ECEF" Margin="0,8,0,0"
                                              Template="{StaticResource SlimPB}">
@@ -370,7 +359,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Card 2: Next Action / Deletion (Admin) -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}">
@@ -394,15 +382,13 @@
                                     </Border>
                                     <Border Style="{StaticResource TooltipContentSection}">
                                         <Grid>
-                                            <!-- Standard Next Action -->
                                             <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisInv}}">
                                                 <TextBlock Text="СЛЕДУЮЩИЙ ШАГ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                                 <Border Style="{StaticResource TooltipInfoBlock}">
                                                     <TextBlock Text="{Binding Card2Value}" FontSize="12" FontWeight="SemiBold" Foreground="#333333" TextWrapping="Wrap"/>
                                                 </Border>
                                             </StackPanel>
-                                            
-                                            <!-- Admin Deletion Breakdown -->
+
                                             <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
                                                 <TextBlock Text="ДЕТАЛИЗАЦИЯ ПО ТИПАМ" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8"/>
                                                 <Border Style="{StaticResource TooltipInfoBlock}">
@@ -475,7 +461,6 @@
                                                     </Setter.Value>
                                                 </Setter>
                                             </DataTrigger>
-                                            <!-- Explicitly re-add hover trigger since BasedOn might not merge triggers correctly in some XAML contexts -->
                                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard>
@@ -514,7 +499,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Card 3: Attention Required -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White">
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}">
@@ -576,7 +560,6 @@
                                 </StackPanel>
                                 <TextBlock Text="{Binding Card3SubValue}" FontSize="11" Foreground="#64748B" Opacity="0.7"/>
 
-                                <!-- Risk Breakdown Line (Styled as project SlimPB with non-distorted rounding) -->
                                 <ProgressBar Value="100" Maximum="100" Height="6" 
                                              Background="#E9ECEF" Margin="0,8,0,0"
                                              Template="{StaticResource SlimPB}">
@@ -614,7 +597,7 @@
                                                     </Setter.Value>
                                                 </Setter>
                                             </DataTrigger>
-                                            <!-- Explicitly re-add hover trigger -->
+
                                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard>
@@ -652,7 +635,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Card 4: System Status -->
                     <Border Style="{StaticResource BentoCardStyle}" Background="White" Margin="0,0,0,0">
                         <Border.ToolTip>
                             <ToolTip Style="{StaticResource PremiumTooltip}">
@@ -743,14 +725,13 @@
                         </Grid>
                     </Border>
                 </UniformGrid>
-                <!-- ── ACTIVITY FEED SECTION ───────────────────────────────── -->
+
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="60*"/>
                         <ColumnDefinition Width="40*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 60% ACTIVITY FEED -->
                     <Border Grid.Column="0" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Padding="16,12" MinHeight="300">
@@ -792,7 +773,6 @@
                             </Grid>
 
                             <Grid>
-                                <!-- Activity list -->
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" MouseWheel="PreventScrollBubbling">
                                     <ItemsControl ItemsSource="{Binding RecentActivities}">
                                         <ItemsControl.ItemTemplate>
@@ -855,10 +835,10 @@
                                                                                 <ItemsControl.ItemTemplate>
                                                                                     <DataTemplate>
                                                                                         <Grid Margin="0,0,0,6">
-                                                                                            <!-- Separator line for grouped actions -->
+                                                                                       
                                                                                             <Border Height="1" Background="#E2E8F0" Margin="0,8,0,4"
                                                                                                     Visibility="{Binding Converter={StaticResource SeparatorToVis}}"/>
-                                                                                            <!-- Regular detail line -->
+                                                                                        
                                                                                             <Grid Visibility="{Binding Converter={StaticResource SeparatorToVisInv}}">
                                                                                                 <Grid.ColumnDefinitions>
                                                                                                     <ColumnDefinition Width="Auto"/>
@@ -885,7 +865,7 @@
                                                         </ToolTip>
                                                     </Border.ToolTip>
                                                     <Grid>
-                                                        <!-- Colored left accent based on action type (delete, mark, etc.) or entity type -->
+
                                                         <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
                                                                 Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
                                                         <Grid Margin="10,6,8,6">
@@ -894,7 +874,7 @@
                                                                 <ColumnDefinition Width="*"/>
                                                                 <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <!-- Avatar: из БД (AvatarData) или инициалы — EllipseGeometry для идеального круга -->
+
                                                             <Border Margin="0,0,10,0" VerticalAlignment="Top">
                                                                 <Border.Style>
                                                                     <Style TargetType="Border" BasedOn="{StaticResource AvatarCircle28}">
@@ -903,7 +883,7 @@
                                                                             <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
                                                                                 <Setter Property="Background" Value="Transparent"/>
                                                                             </DataTrigger>
-                                                                            <!-- Системное действие - цвет действия -->
+
                                                                             <DataTrigger Binding="{Binding UserId}" Value="{x:Null}">
                                                                                 <Setter Property="Background" Value="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
                                                                             </DataTrigger>
@@ -915,7 +895,7 @@
                                                                        Width="28" Height="28"
                                                                        Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
                                                             </Border>
-                                                            <!-- Entity badge + role badge + action text -->
+
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                                                     <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0"
@@ -958,7 +938,7 @@
                                                                            FontSize="12" Foreground="#000000"
                                                                            TextWrapping="Wrap"/>
                                                             </StackPanel>
-                                                            <!-- Time -->
+
                                                             <TextBlock Grid.Column="2"
                                                                        Text="{Binding CreatedAt, Converter={StaticResource DateTimeToRelative}}"
                                                                        FontSize="11" Foreground="#64748B"
@@ -972,7 +952,6 @@
                                     </ItemsControl>
                                 </ScrollViewer>
 
-                                <!-- Empty activities state -->
                                 <Grid Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <Image Source="{svgc:SvgImage Source=/icons/empty_activities.svg, AppName=MPMS}" 
@@ -989,12 +968,11 @@
                         </DockPanel>
                     </Border>
 
-                    <!-- 40% SIDE PANEL (My Notes) -->
                     <Border Grid.Column="1" Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1"
                             Margin="16,0,0,0" Padding="16,12" MinHeight="300">
                         <Grid>
-                            <!-- ── LIST VIEW ────────────────────────────────────── -->
+
                             <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVisInv}}">
                                 <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
                                     <Grid.ColumnDefinitions>
@@ -1022,10 +1000,10 @@
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Grid x:Name="Root" Background="Transparent">
-                                                                    <!-- Линия-разделитель внизу каждого слота -->
+
                                                                     <Border x:Name="Separator" Height="1" Background="#EEF0F3" VerticalAlignment="Bottom" Margin="12,0"/>
                                                                     
-                                                                    <!-- Основная плашка заметки -->
+                                                         
                                                                     <Border x:Name="NoteBorder" Background="Transparent" CornerRadius="8" Padding="12,10" Margin="0,1">
                                                                         <Grid>
                                                                             <Grid.ColumnDefinitions>
@@ -1038,12 +1016,12 @@
                                                                                 <TextBlock Text="{Binding DisplayDate}" FontSize="11" Foreground="#64748B" Margin="0,4,0,0"/>
                                                                             </StackPanel>
 
-                                                                            <!-- Delete Actions -->
+                                                                        
                                                                             <Grid Grid.Column="1" VerticalAlignment="Center">
-                                                                                <!-- Trigger for Confirm State -->
+                                                                    
                                                                                 <CheckBox x:Name="ConfirmDeleteCheck" Visibility="Collapsed"/>
                                                                                 
-                                                                                <!-- Initial Trash Button -->
+                                                                              
                                                                                 <Button x:Name="DeleteBtn" Style="{StaticResource WhiteNoteButton}" Width="28" Height="28" Padding="0" Visibility="Collapsed" ToolTip="Удалить">
                                                                                     <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.9"/>
                                                                                     <Button.Triggers>
@@ -1059,7 +1037,6 @@
                                                                                     </Button.Triggers>
                                                                                 </Button>
 
-                                                                                <!-- Confirm/Cancel Group -->
                                                                                 <StackPanel x:Name="ConfirmPanel" Orientation="Horizontal" Visibility="Collapsed">
                                                                                     <Button Command="{Binding DataContext.DeleteNoteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                                             CommandParameter="{Binding}"
@@ -1097,7 +1074,7 @@
                                                                     <DataTrigger Binding="{Binding IsChecked, ElementName=ConfirmDeleteCheck}" Value="True">
                                                                         <Setter TargetName="ConfirmPanel" Property="Visibility" Value="Visible"/>
                                                                         <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed"/>
-                                                                        <!-- Keep the hover state visible while confirming -->
+                                                           
                                                                         <Setter Property="Panel.ZIndex" Value="10"/>
                                                                         <Setter TargetName="NoteBorder" Property="Background" Value="#F4F5F7"/>
                                                                         <Setter TargetName="NoteBorder" Property="Margin" Value="0,0"/>
@@ -1113,7 +1090,6 @@
                                         </ItemsControl>
                                     </ScrollViewer>
 
-                                    <!-- Empty state -->
                                     <Grid Visibility="{Binding Notes.Count, Converter={StaticResource IntToVisInv}}">
                                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                             <Image Source="{svgc:SvgImage Source=/icons/empty_notes.svg, AppName=MPMS}" 
@@ -1129,9 +1105,7 @@
                                 </Grid>
                             </DockPanel>
 
-                            <!-- ── EDITOR VIEW ──────────────────────────────────── -->
                             <DockPanel Visibility="{Binding IsNoteEditing, Converter={StaticResource BoolToVis}}">
-                                <!-- Header -->
                                 <Grid DockPanel.Dock="Top" Margin="0,0,0,14">
                                     <Button x:Name="BackBtn" Command="{Binding BackToListCommand}" Style="{StaticResource WhiteNoteButton}" HorizontalAlignment="Left" ToolTip="Назад">
                                         <Image Source="{svgc:SvgImage Source=/icons/back_arrow_thin.svg, AppName=MPMS}" Width="18" Height="18"/>
@@ -1176,7 +1150,6 @@
                                     </Button>
                                 </Grid>
 
-                                <!-- Toolbar -->
                                                                 <Border DockPanel.Dock="Top" Background="#F8F9FA" CornerRadius="6" Padding="2" Margin="0,0,0,10" BorderBrush="#DFE1E6" BorderThickness="1" HorizontalAlignment="Center">
                                      <Border.Style>
                                          <Style TargetType="Border">
@@ -1270,7 +1243,6 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Editor -->
                                 <RichTextBox x:Name="NotesRTB" 
                                              infra:RichTextHelper.DocumentXaml="{Binding CurrentNoteXaml}"
                                              Loaded="NotesRichTextBox_Loaded"
@@ -1292,7 +1264,6 @@
                                 </RichTextBox>
                             </DockPanel>
 
-                            <!-- Confirmation Overlay -->
                             <Border Background="Transparent" CornerRadius="8" Margin="-20,-16"
                                     Visibility="{Binding IsBackConfirmPopupOpen, Converter={StaticResource BoolToVis}}"
                                     UseLayoutRounding="True" SnapsToDevicePixels="True"

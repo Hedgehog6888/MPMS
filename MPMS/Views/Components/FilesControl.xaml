@@ -20,7 +20,7 @@
         <infrastructure:FileTypeToIsDocumentConverter x:Key="FileTypeToIsDocument" />
         <infrastructure:NullToVisibilityConverter x:Key="NullToVis" />
 
-        <!-- Premium Tooltip Style -->
+        <!-- Стиль премиум всплывающей подсказки -->
         <Style x:Key="PremiumTooltip" TargetType="ToolTip">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -75,7 +75,7 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
                 
-        <!-- Style for the circular delete button that appears on hover -->
+        <!-- Стиль круглой кнопки удаления, появляющейся при наведении -->
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -114,7 +114,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style for the circular download button that appears on hover -->
+        <!-- Стиль круглой кнопки скачивания, появляющейся при наведении -->
         <Style x:Key="CircularDownloadButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -153,7 +153,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style for the circular view button that appears on hover -->
+        <!-- Стиль круглой кнопки просмотра, появляющейся при наведении -->
         <Style x:Key="CircularViewButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -196,7 +196,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style for list items in FilesControl, mimicking WarehouseRow style -->
+        <!-- Стиль элементов списка в FilesControl, имитирующий стиль WarehouseRow -->
         <Style x:Key="FileListItemStyle" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="8"/>
@@ -213,7 +213,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Template for Image Cards -->
+        <!-- Шаблон для карточек изображений -->
         <DataTemplate x:Key="ImageCardTemplate">
             <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,6,6"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
@@ -264,21 +264,18 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- File Preview Area -->
+                    <!-- Область предпросмотра файла -->
                     <Border Grid.Row="0" CornerRadius="8,8,0,0" SnapsToDevicePixels="True"
                             Background="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}">
                         <Grid UseLayoutRounding="True">
-                            <!-- Large Icon for Documents (Visible when not an image or image data missing) -->
                             <Viewbox Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6">
                                 <Viewbox.Style>
                                     <Style TargetType="Viewbox">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <!-- If not an image, show icon -->
                                             <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="False">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
-                                            <!-- If image but no data, show icon -->
                                             <DataTrigger Binding="{Binding FileData, Converter={StaticResource NullToVisInv}}" Value="Visible">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
@@ -295,7 +292,6 @@
                                 </Canvas>
                             </Viewbox>
 
-                            <!-- Actual Image (Visible when it IS an image AND data is present) -->
                             <Border CornerRadius="8,8,0,0">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -318,7 +314,6 @@
                                 </Border.Background>
                             </Border>
                             
-                            <!-- Extension Label for non-images (Center-Bottom) -->
                             <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,12" Padding="6,2" CornerRadius="4"
                                     Background="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}">
                                 <Border.Style>
@@ -337,7 +332,7 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Actions Overlay (visible on hover) -->
+                    <!-- Наложение действий (видимо при наведении) -->
                     <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" Margin="6">
                         <Button ToolTip="Просмотр"
                                 Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
@@ -376,7 +371,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- Template for Document List -->
+        <!-- Шаблон для списка документов -->
         <DataTemplate x:Key="DocumentListTemplate">
             <Border Style="{StaticResource FileListItemStyle}">
                 <Border.ToolTip>
@@ -502,7 +497,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- Files View Templates -->
+        <!-- Шаблоны представления файлов -->
         <DataTemplate x:Key="FilesGridViewTemplate">
             <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}">
                 <ItemsControl.ItemsPanel>
@@ -535,7 +530,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Tabs & View Switcher ── -->
+        <!-- ── Вкладки и переключатель представления ── -->
         <Grid Grid.Row="0" Margin="0,0,0,16" Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -552,7 +547,7 @@
                 </controls:TabBarControl.Tabs>
             </controls:TabBarControl>
 
-            <!-- View Mode Switcher (List / Grid) -->
+            <!-- Переключатель режима представления (Список / Плитка) -->
             <Border Grid.Column="1" Background="White"
                     BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="4,4" VerticalAlignment="Center">
@@ -623,9 +618,9 @@
             </Border>
         </Grid>
 
-        <!-- ── Content Area ── -->
+        <!-- ── Область содержимого ── -->
         <Grid Grid.Row="1">
-            <!-- Images ScrollViewer -->
+            <!-- ScrollViewer изображений -->
             <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
@@ -638,7 +633,7 @@
                     </Style>
                 </ScrollViewer.Style>
                 <Grid Margin="0,10,0,24">
-                    <!-- Empty State (Images) -->
+                    <!-- Пустое состояние (изображения) -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
@@ -676,7 +671,7 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- Files Grid/List for Images -->
+                    <!-- Сетка/список файлов для изображений -->
                     <ContentControl Content="{Binding}">
                         <ContentControl.Style>
                             <Style TargetType="ContentControl">
@@ -692,7 +687,7 @@
                 </Grid>
             </ScrollViewer>
 
-            <!-- Documents ScrollViewer -->
+            <!-- ScrollViewer документов -->
             <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
@@ -705,7 +700,7 @@
                     </Style>
                 </ScrollViewer.Style>
                 <Grid Margin="0,10,0,24">
-                    <!-- Empty State (Documents) -->
+                    <!-- Пустое состояние (документы) -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
@@ -743,7 +738,7 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <!-- Files List/Grid for Documents -->
+                    <!-- Список/сетка файлов для документов -->
                     <ContentControl Content="{Binding}">
                         <ContentControl.Style>
                             <Style TargetType="ContentControl">
@@ -759,7 +754,7 @@
                 </Grid>
             </ScrollViewer>
 
-            <!-- ── Floating Search Panel ── -->
+            <!-- ── Плавающая панель поиска ── -->
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
                 HorizontalAlignment="Stretch"
@@ -778,7 +773,7 @@
                     </Style>
                 </controls:SearchFilterBarControl.Style>
                 <controls:SearchFilterBarControl.Filters>
-                    <!-- Extension Filter -->
+                    <!-- Фильтр расширений -->
                     <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
                                SelectedItem="{Binding ExtensionFilter}"
                                Style="{StaticResource FormCombo}"
@@ -787,7 +782,7 @@
             </controls:SearchFilterBarControl>
         </Grid>
 
-        <!-- ── Success Toast Notification ── -->
+        <!-- ── Уведомление об успехе ── -->
         <Border x:Name="SuccessToast" 
                 Grid.Row="0" Grid.RowSpan="2"
                 Background="#F0FDF4" 

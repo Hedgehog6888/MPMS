@@ -9,7 +9,6 @@
         <infra:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
 
-        <!-- Nav button -->
         <Style x:Key="CalNavBtn" TargetType="Button">
             <Setter Property="Width"           Value="30"/>
             <Setter Property="Height"          Value="30"/>
@@ -35,11 +34,10 @@
 
     <Grid Background="#F4F5F7">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- header -->
-            <RowDefinition Height="*"/>     <!-- calendar fills rest -->
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="*"/> 
         </Grid.RowDefinitions>
 
-        <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -54,7 +52,6 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Today button -->
                     <Button Height="30" Padding="14,0" Margin="0,0,10,0"
                             Command="{Binding GoToTodayCommand}" Cursor="Hand">
                         <Button.Template>
@@ -74,7 +71,6 @@
                         </Button.Template>
                     </Button>
 
-                    <!-- Month selector -->
                     <Border Background="White" CornerRadius="8"
                             BorderBrush="#DFE1E6" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -123,7 +119,6 @@
             </Grid>
         </Border>
 
-        <!-- ── CALENDAR (fills remaining space) ─────────────────────── -->
         <Border x:Name="CalendarCardBorder" Grid.Row="1" Background="White" Margin="16,10,16,14"
                 CornerRadius="10" BorderBrush="#DFE1E6" BorderThickness="1"
                 ClipToBounds="True"
@@ -131,11 +126,10 @@
                 Loaded="CalendarCardBorder_Loaded">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>  <!-- weekday headers -->
-                    <RowDefinition Height="*"/>     <!-- cells stretch -->
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>   
                 </Grid.RowDefinitions>
 
-                <!-- Weekday headers -->
                 <UniformGrid Grid.Row="0" Columns="7" Background="#F9FAFB">
                     <Border BorderBrush="#E5E7EB" BorderThickness="0,0,1,1" Padding="0,8">
                         <TextBlock Text="Пн" TextAlignment="Center" FontSize="11"
@@ -167,7 +161,6 @@
                     </Border>
                 </UniformGrid>
 
-                <!-- Calendar cells — stretch to fill -->
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding CalendarCells}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -205,9 +198,7 @@
                                 </Border.Style>
 
                                 <StackPanel>
-                                    <!-- Day number -->
                                     <Grid Margin="0,0,0,3" HorizontalAlignment="Left">
-                                        <!-- Today: нейтральный акцент -->
                                         <Border Width="22" Height="22" Background="#4B5563"
                                                 CornerRadius="11"
                                                 Visibility="{Binding IsToday, Converter={StaticResource BoolToVis}}">
@@ -217,7 +208,6 @@
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"/>
                                         </Border>
-                                        <!-- Normal or empty day -->
                                         <TextBlock Text="{Binding Date.Day}"
                                                    FontSize="11" FontWeight="SemiBold"
                                                    Margin="2,2,0,0">
@@ -238,7 +228,6 @@
                                         </TextBlock>
                                     </Grid>
 
-                                    <!-- Задачи и этапы (2–4 плашки по ширине ячейки; остальное — MoreLabel) -->
                                     <ItemsControl ItemsSource="{Binding DisplayChips}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate DataType="{x:Type vm:CalendarChipItem}">

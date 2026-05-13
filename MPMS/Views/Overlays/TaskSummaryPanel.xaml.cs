@@ -51,7 +51,7 @@ public partial class TaskSummaryPanel : UserControl
             _ = RefreshTaskMetricsAsync(task.Id, metricsVersion);
         }
 
-        // Days left / overdue
+        // Дней осталось / просрочено
         if (task.DueDate.HasValue)
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
@@ -74,7 +74,7 @@ public partial class TaskSummaryPanel : UserControl
             DaysLeftText.Text = "";
         }
 
-        // Progress
+        // Прогресс
         var pct = Math.Clamp(task.ProgressPercent, 0, 100);
         _currentProgressPercent = pct;
         ProgressText.Text = $"{_currentProgressPercent}%";
@@ -82,7 +82,7 @@ public partial class TaskSummaryPanel : UserControl
         TotalStagesText.Text = task.TotalStages.ToString();
         UpdateProgressWidth(_currentProgressPercent);
 
-        // Progress fill color by percent
+        // Цвет заполнения прогресса по проценту
         ProgressFill.Background = _currentProgressPercent >= 100
             ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
             : _currentProgressPercent >= 60
@@ -91,13 +91,13 @@ public partial class TaskSummaryPanel : UserControl
                     ? new SolidColorBrush(Color.FromRgb(0xF9, 0x73, 0x16))
                     : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
 
-        // For the summary panel, treat 100% stage completion as completed even if the task entity
-        // in the current UI flow has not refreshed its Status field yet.
+        // Для панели сводки считаем 100% завершение этапов как завершённую задачу,
+        // даже если сущность задачи в текущем потоке UI ещё не обновила поле Status.
         var displayStatus = task.TotalStages > 0 && task.CompletedStages >= task.TotalStages
             ? TaskStatus.Completed
             : task.Status;
 
-        // Status
+        // Статус
         var statusBrush = TaskStatusToBrushConverter.Instance.Convert(
             displayStatus, typeof(Brush), null!, CultureInfo.InvariantCulture) as SolidColorBrush;
         StatusBadge.Background = statusBrush ?? Brushes.Gray;
@@ -105,7 +105,7 @@ public partial class TaskSummaryPanel : UserControl
         StatusText.Text = TaskStatusToStringConverter.Instance.Convert(
             displayStatus, typeof(string), null!, CultureInfo.InvariantCulture) as string ?? "—";
 
-        // Header band color based on status
+        // Цвет шапки по статусу
         StatusHeaderBand.Background = displayStatus switch
         {
             TaskStatus.InProgress => new SolidColorBrush(Color.FromRgb(0xEF, 0xF6, 0xFF)),
@@ -114,7 +114,7 @@ public partial class TaskSummaryPanel : UserControl
             _ => new SolidColorBrush(Color.FromRgb(0xF8, 0xF9, 0xFA))
         };
 
-        // Project section (show when project name available)
+        // Секция проекта (показывать когда доступно название проекта)
         if (!string.IsNullOrWhiteSpace(task.ProjectName))
         {
             ProjectSection.Visibility = Visibility.Visible;

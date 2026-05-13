@@ -11,9 +11,7 @@ using MPMS.Views;
 
 namespace MPMS.ViewModels;
 
-// ─────────────────────────────────────────────────────────────────────────
-// Display model for user rows in the admin panel
-// ─────────────────────────────────────────────────────────────────────────
+// Модель отображения для строк пользователей в админ-панели
 public class AdminUserRow : ObservableObject
 {
     public Guid Id { get; set; }
@@ -41,14 +39,8 @@ public class AdminUserRow : ObservableObject
     public string StatusText => IsBlocked ? "Заблокирован" : "Активен";
     public string BlockIcon => IsBlocked ? "🔓" : "🔒";
     public string BlockLabel => IsBlocked ? "Разблокировать" : "Заблокировать";
-
-    /// <summary>Кнопка блокировки: администраторов нельзя блокировать (разблокировать — можно).</summary>
     public bool ShowBlockActionButton => !UserPeekAccess.IsAdministrator(RoleName) || IsBlocked;
-
-    /// <summary>Удаление недоступно для пользователей с ролью администратора.</summary>
     public bool ShowDeleteActionButton => !UserPeekAccess.IsAdministrator(RoleName);
-
-    /// <summary>Редактирование недоступно для пользователей с ролью администратора.</summary>
     public bool ShowEditActionButton => !UserPeekAccess.IsAdministrator(RoleName);
 
     public string RoleColor => RoleName switch
@@ -69,9 +61,7 @@ public class AdminUserRow : ObservableObject
     };
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Display model for archived entity rows
-// ─────────────────────────────────────────────────────────────────────────
+// Модель отображения для строк архивированных сущностей
 public class ArchiveRow
 {
     public Guid Id { get; set; }
@@ -84,9 +74,7 @@ public class ArchiveRow
     public string? Description { get; set; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Role item for the form combo
-// ─────────────────────────────────────────────────────────────────────────
+// Элемент роли для выпадающего списка формы
 public class RoleItem
 {
     public Guid Id { get; set; }
@@ -95,9 +83,7 @@ public class RoleItem
     public override string ToString() => Display;
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Main AdminViewModel
-// ─────────────────────────────────────────────────────────────────────────
+// Основной AdminViewModel
 public partial class AdminViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
@@ -105,17 +91,15 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private readonly IApiService _api;
     private readonly ISyncService _sync;
 
-    // Events to open drawers (handled by AdminPage.xaml.cs)
+    // События для открытия панелей (обрабатываются в AdminPage.xaml.cs)
     public event Action<AdminUserRow>? OpenUserInfoRequested;
     public event Action? OpenCreateFormRequested;
     public event Action<AdminUserRow>? OpenEditFormRequested;
     public event Action<LocalActivityLog>? OpenActivityDetailRequested;
 
-    // Static filter options
     public static readonly IReadOnlyList<string> RoleFilterOptions = ["Все", "Администратор", "Менеджер", "Прораб", "Работник"];
     public static readonly IReadOnlyList<string> StatusFilterOptions = ["Все", "Активные", "Заблокированные"];
 
-    // History action type options (display name → action kind constant)
     public static readonly IReadOnlyList<string> HistoryActionOptions =
         ["Все", "Создано", "Изменено", "Удалено/Архив", "Восстановлено", "Сообщение"];
     private static readonly Dictionary<string, string[]> HistoryActionMap = new()
@@ -127,7 +111,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         ["Сообщение"] = [ActivityActionKind.Message],
     };
 
-    // Activity event type options
+    // Опции типов событий активности
     public static readonly IReadOnlyList<string> ActivityEventOptions =
         ["Все", "Вход", "Выход", "Смена пароля", "Смена аватара", "Изменение профиля", "Заблокирован"];
     private static readonly Dictionary<string, string[]> ActivityEventMap = new()
@@ -142,10 +126,10 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     private const int PageSize = 50;
 
-    // ── Tab navigation ────────────────────────────────────────────────────
+    // ── Навигация по вкладкам
     [ObservableProperty] private string _currentTab = "Users";
 
-    // ── Users tab ─────────────────────────────────────────────────────────
+    // ── Вкладка Пользователи
     [ObservableProperty] private ObservableCollection<AdminUserRow> _users = new();
     [ObservableProperty] private ObservableCollection<AdminUserRow> _filteredUsers = new();
     [ObservableProperty] private string _userSearchText = string.Empty;
@@ -155,7 +139,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _activeUsersCount;
     [ObservableProperty] private int _blockedUsersCount;
 
-    // ── Archive tab ───────────────────────────────────────────────────────
+    // ── Вкладка Архив
     [ObservableProperty] private string _archiveTab = "Projects";
     [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedProjects = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _archivedTasks = new();
@@ -174,7 +158,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedMaterials = new();
     [ObservableProperty] private ObservableCollection<ArchiveRow> _filteredArchivedEquipment = new();
 
-    // ── History tab ───────────────────────────────────────────────────────
+    // ── Вкладка История
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _historyLogs = new();
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _filteredHistoryLogs = new();
     [ObservableProperty] private string _historySearchText = string.Empty;
@@ -186,7 +170,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private int _historyLoadedCount = PageSize;
     private List<LocalActivityLog> _allHistoryLogs = new();
 
-    // ── Activity tab ──────────────────────────────────────────────────────
+    // ── Вкладка Активность
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _activityLogs = new();
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _filteredActivityLogs = new();
     [ObservableProperty] private string _activitySearchText = string.Empty;
@@ -198,7 +182,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private int _activityLoadedCount = PageSize;
     private List<LocalActivityLog> _allActivityLogs = new();
 
-    // ── Block/Unblock helpers ─────────────────────────────────────────────
+    // ── Помощники блокировки/разблокировки
 
     public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, ISyncService sync)
     {
@@ -221,13 +205,9 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         finally { IsBusy = false; }
     }
 
-    /// <summary>Called by overlays after creating/editing a user.</summary>
     public async Task RefreshAfterUserChangeAsync() => await LoadUsersAsync();
 
-    // ══════════════════════════════════════════════════════════════════════
-    // USERS TAB — load + filter + actions
-    // ══════════════════════════════════════════════════════════════════════
-
+    // ВКЛАДКА ПОЛЬЗОВАТЕЛИ — загрузка + фильтр + действия
     public async Task LoadUsersAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -301,7 +281,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         foreach (var u in query) FilteredUsers.Add(u);
     }
 
-    // ── Commands to open drawers ──────────────────────────────────────────
+    // ── Команды для открытия панелей
 
     [RelayCommand]
     private void OpenCreateForm() => OpenCreateFormRequested?.Invoke();
@@ -324,7 +304,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         if (log is not null) OpenActivityDetailRequested?.Invoke(log);
     }
 
-    // ── Block/Unblock ─────────────────────────────────────────────────────
+    // ── Блокировка/Разблокировка
 
     [RelayCommand]
     private async Task ToggleBlockUserAsync(AdminUserRow? row)
@@ -391,7 +371,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         SetStatus(newBlocked ? $"Пользователь {user.Name} заблокирован" : $"Пользователь {user.Name} разблокирован");
     }
 
-    // ── Delete user ───────────────────────────────────────────────────────
+    // ── Удаление пользователя
 
     [RelayCommand]
     private async Task DeleteUserAsync(AdminUserRow? row)
@@ -421,7 +401,6 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             if (!await db.DeletedUserIds.AnyAsync(x => x.Id == userId))
                 db.DeletedUserIds.Add(new DeletedUserId { Id = userId });
 
-            // Обновить имя в связанных записях (оставляем их, вместо имени — «Удалённый пользователь»)
             const string deletedLabel = "Удалённый пользователь";
             foreach (var m in await db.ProjectMembers.Where(x => x.UserId == userId).ToListAsync())
                 m.UserName = deletedLabel;
@@ -448,24 +427,20 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // ARCHIVE TAB
-    // ══════════════════════════════════════════════════════════════════════
-
+    // ВКЛАДКА АРХИВ
     private async Task LoadArchiveAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var projects = await db.Projects.Where(p => p.IsArchived).OrderByDescending(p => p.UpdatedAt).ToListAsync();
 
-        // Only individually archived tasks (skip those cascade-archived with their project)
+        // Только индивидуально архивированные задачи (пропускаем те, что архивированы каскадно вместе с проектом)
         var archivedProjectIds = projects.Select(p => p.Id).ToList();
         var tasks = await db.Tasks
             .Where(t => t.IsArchived && !archivedProjectIds.Contains(t.ProjectId))
             .OrderByDescending(t => t.UpdatedAt)
             .ToListAsync();
 
-        // Only individually archived stages (skip those cascade-archived with their task)
         var archivedTaskIds = await db.Tasks.Where(t => t.IsArchived).Select(t => t.Id).ToListAsync();
         var stages = await db.TaskStages
             .Where(s => s.IsArchived && !archivedTaskIds.Contains(s.TaskId))
@@ -619,7 +594,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил проект «{p.Name}» из архива", "Project", p.Id);
         await db.SaveChangesAsync();
 
-        // Queue updates without await to avoid blocking
+        // Ставим обновления в очередь без await, чтобы избежать блокировки
         _ = _sync.QueueOperationAsync("Project", p.Id, SyncOperation.Update, SyncPayloads.Project(p));
         foreach (var t in tasks)
             _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
@@ -688,7 +663,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         var log = AddAdminLog(db, ActivityActionKind.Restored, $"Восстановил задачу «{t.Name}» из архива", "Task", t.Id);
         await db.SaveChangesAsync();
 
-        // Queue updates without await to avoid blocking
+        // Ставим обновления в очередь без await, чтобы избежать блокировки
         _ = _sync.QueueOperationAsync("Task", t.Id, SyncOperation.Update, SyncPayloads.Task(t));
         foreach (var s in stages)
             _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
@@ -783,7 +758,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             if (eq is null || eq.IsWrittenOff)
                 continue;
 
-            // Не перехватываем оборудование, если оно уже закреплено за другой задачей.
+            // Не перехватываем оборудование, если оно уже закреплено за другой задачей
             if (eq.CheckedOutTaskId.HasValue && eq.CheckedOutTaskId != stage.TaskId)
                 continue;
 
@@ -881,10 +856,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         SetStatus($"Оборудование «{e.Name}» удалено навсегда");
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // HISTORY TAB
-    // ══════════════════════════════════════════════════════════════════════
-
+    // ВКЛАДКА ИСТОРИЯ
     private static readonly HashSet<string> ActivityKinds = new()
     {
         ActivityActionKind.Login, ActivityActionKind.Logout,
@@ -927,7 +899,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             HistoryUserList.Clear();
             HistoryUserList.Add("Все");
             foreach (var n in userNames) HistoryUserList.Add(n);
-            // Restore selections (prevents reset on reload)
+            // Восстанавливаем выборы (предотвращает сброс при перезагрузке)
             HistoryUserFilter = HistoryUserList.Contains(currentUser) ? currentUser : "Все";
             HistoryActionFilter = HistoryActionOptions.Contains(currentAction) ? currentAction : "Все";
             ApplyHistoryFilter();
@@ -988,10 +960,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         SetStatus("История очищена");
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // ACTIVITY TAB
-    // ══════════════════════════════════════════════════════════════════════
-
+    // ВКЛАДКА АКТИВНОСТЬ
     private async Task LoadActivityAsync()
     {
         _activityLoadedCount = PageSize;
@@ -1092,10 +1061,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         SetStatus("Журнал активности очищен");
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // HELPERS
-    // ══════════════════════════════════════════════════════════════════════
-
+    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
     internal LocalActivityLog AddAdminLog(LocalDbContext db, string actionType, string text, string entityType, Guid entityId)
     {
         var log = new LocalActivityLog

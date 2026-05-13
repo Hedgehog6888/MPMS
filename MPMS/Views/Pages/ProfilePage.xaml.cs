@@ -134,7 +134,6 @@ public partial class ProfilePage : UserControl
         CreatedText.Text = _user.CreatedAt.ToString("dd.MM.yyyy");
         LastDeviceText.Text = $"Устройство: {Environment.MachineName}";
 
-        // View mode fields
         ViewFirstName.Text = _user.FirstName;
         ViewLastName.Text = _user.LastName;
         ViewUsername.Text = _user.Username;
@@ -143,26 +142,22 @@ public partial class ProfilePage : UserControl
         ViewAddress.Text = string.IsNullOrWhiteSpace(_user.HomeAddress) ? "Не указан" : _user.HomeAddress;
         ViewCreated.Text = _user.CreatedAt.ToString("dd.MM.yyyy");
 
-        // Edit mode pre-fill
         FirstNameBox.Text = _user.FirstName;
         LastNameBox.Text = _user.LastName;
         EmailBox.Text = _user.Email ?? "";
         BirthDatePicker.SelectedDate = _user.BirthDate?.ToDateTime(TimeOnly.MinValue);
         AddressBox.Text = _user.HomeAddress ?? "";
 
-        // Role info
         var roleName = _user.RoleName;
         ViewRole.Text = roleName;
         PositionText.Text = roleName;
 
-        // Worker specializations
         if (roleName == "Worker")
         {
             WorkerSpecsPanel.Visibility = Visibility.Visible;
             var mainSpec = string.IsNullOrWhiteSpace(_user.SubRole) ? "Не указана" : _user.SubRole.Trim();
             MainSpecialtyText.Text = mainSpec;
 
-            // Apply colored badge style to main specialty
             if (!string.IsNullOrWhiteSpace(_user.SubRole))
             {
                 var bg = WorkerSpecialtiesJson.BadgeBackgroundRgbForSpecName(_user.SubRole);
@@ -206,7 +201,6 @@ public partial class ProfilePage : UserControl
             WorkerSpecsPanel.Visibility = Visibility.Collapsed;
         }
 
-        // Load stats - only for current user
         var userId = _user!.Id;
         var projectCount = await db.Projects.CountAsync(p => p.ManagerId == userId || db.ProjectMembers.Any(m => m.ProjectId == p.Id && m.UserId == userId));
         var taskCount = await db.Tasks.CountAsync(t => t.AssignedUserId == userId || db.TaskAssignees.Any(a => a.TaskId == t.Id && a.UserId == userId));
@@ -215,7 +209,6 @@ public partial class ProfilePage : UserControl
         TaskCountText.Text = taskCount.ToString();
         StageCountText.Text = stageCount.ToString();
 
-        // Activity count
         var activityCount = await ActivityFilterService.GetFilteredActivityCountAsync(db, auth);
         ActivityCountText.Text = activityCount.ToString();
 
@@ -411,7 +404,6 @@ public partial class ProfilePage : UserControl
                 await db.SaveChangesAsync();
             }
 
-            // Обновить данные текущего пользователя в AuthService
             await auth.UpdateCurrentUserAsync(fullName, _user?.Username ?? "");
 
             // Уведомить MainViewModel об изменении текущего пользователя
@@ -444,8 +436,6 @@ public partial class ProfilePage : UserControl
             SaveBtn.IsEnabled = true;
         }
     }
-
-    // ── Avatar helpers ──────────────────────────────────────────────────────
 
     private void ApplyAvatarDisplay(byte[]? avatarData, string? avatarPath)
     {
@@ -565,8 +555,6 @@ public partial class ProfilePage : UserControl
         AvatarHoverOverlay.BeginAnimation(OpacityProperty, anim);
     }
 
-    // ── Error/Success ───────────────────────────────────────────────────────
-
     private void ShowError(string message)
     {
         ErrorText.Text = message;
@@ -642,7 +630,6 @@ public partial class ProfilePage : UserControl
             if (x < pad) x = pad;
             if (layerW > 1 && x + toastW > layerW - pad)
                 x = Math.Max(pad, layerW - toastW - pad);
-            // Всегда над точкой нажатия (не переносим под палец)
             var y = clickInLayer.Y - toastH - 8;
             if (y < pad) y = pad;
             CopyToast.Margin = new Thickness(x, y, 0, 0);
@@ -667,7 +654,6 @@ public partial class ProfilePage : UserControl
         foreach (var log in await db.ActivityLogs.Where(x => x.UserId == userId).ToListAsync())
             log.UserName = newFullName;
 
-        // Обновить RecentAccounts по username (нужно сохранить в переменную для EF)
         var currentUsername = _user?.Username;
         if (!string.IsNullOrEmpty(currentUsername))
         {

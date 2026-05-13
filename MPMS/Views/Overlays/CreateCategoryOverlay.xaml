@@ -10,7 +10,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -51,7 +50,6 @@
             </StackPanel>
         </Border>
 
-        <!-- Form -->
         <StackPanel Grid.Row="2" Margin="24,12,24,8">
             <TextBlock Text="Название *" Style="{StaticResource FormLabel}"/>
             <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
@@ -62,7 +60,6 @@
             </Border>
         </StackPanel>
 
-        <!-- Footer -->
         <Border Grid.Row="3" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

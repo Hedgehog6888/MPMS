@@ -32,7 +32,7 @@ namespace MPMS.Views.Components
                 if (DataContext is MainViewModel vm)
                 {
                     vm.PropertyChanged += OnMainViewModelPropertyChanged;
-                    // Initial avatar apply
+                    // Первоначальное применение аватара
                     ApplyTopBarAvatar(vm.UserAvatarData, vm.UserAvatarPath, vm.UserName);
                 }
             };
@@ -129,7 +129,7 @@ namespace MPMS.Views.Components
 
             try
             {
-                await Task.Delay(200, ct); // debounce
+                await Task.Delay(200, ct); 
 
                 var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
                 await using var db = await dbFactory.CreateDbContextAsync(ct);
@@ -181,14 +181,14 @@ namespace MPMS.Views.Components
                             SearchHelper.ContainsIgnoreCase(f.UploadedByName, searchTerm))
                         .Take(5).ToList();
 
-                // Populate TaskName for stages
+                // Заполнение TaskName для этапов
                 var taskIds = stages.Select(s => s.TaskId).Distinct().ToList();
                 var taskNames = await db.Tasks.Where(t => taskIds.Contains(t.Id))
                     .ToDictionaryAsync(t => t.Id, t => t.Name, ct);
                 foreach (var s in stages)
                     s.TaskName = taskNames.GetValueOrDefault(s.TaskId, "—");
 
-                // Populate ProjectName and StageName for files
+                // Заполнение ProjectName и StageName для файлов
                 var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId.Value).Distinct().ToList();
                 var fileStageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId.Value).Distinct().ToList();
                 var fileProjectNames = await db.Projects.Where(p => fileProjectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);

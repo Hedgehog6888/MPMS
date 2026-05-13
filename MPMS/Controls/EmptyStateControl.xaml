@@ -6,18 +6,7 @@
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d"
              x:Name="Root">
-    <!--
-        Переиспользуемый блок «пустого состояния».
-
-        Использование:
-          <controls:EmptyStateControl
-              Visibility="{Binding Items.Count, Converter={StaticResource IntToVisInv}}"
-              IconPath="/icons/check.svg"
-              Title="Задачи не найдены"
-              Subtitle="Создайте первую задачу или измените фильтры"/>
-    -->
     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
-        <!-- SVG-иконка (если задан IconPath) -->
         <ContentControl HorizontalAlignment="Center"
                         Visibility="{Binding IconPath, ElementName=Root, Converter={StaticResource StringToVis}}">
             <ContentControl.Content>
@@ -27,13 +16,11 @@
             </ContentControl.Content>
         </ContentControl>
 
-        <!-- Заголовок -->
         <TextBlock Text="{Binding Title, ElementName=Root}"
                    FontSize="15" FontWeight="SemiBold"
                    Foreground="#6B778C" HorizontalAlignment="Center"
                    Margin="0,12,0,6"/>
 
-        <!-- Подзаголовок -->
         <TextBlock Text="{Binding Subtitle, ElementName=Root}"
                    FontSize="13" Foreground="#6B778C"
                    HorizontalAlignment="Center"

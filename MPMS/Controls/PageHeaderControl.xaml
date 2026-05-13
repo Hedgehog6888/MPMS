@@ -5,17 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              x:Name="Root">
-    <!--
-        Переиспользуемый заголовок страницы.
-
-        Использование:
-          <controls:PageHeaderControl Title="Задачи"
-                                      Subtitle="Управление всеми задачами">
-              <controls:PageHeaderControl.Actions>
-                  <Button .../>
-              </controls:PageHeaderControl.Actions>
-          </controls:PageHeaderControl>
-    -->
     <Border Background="Transparent" Padding="24,16,24,8">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -23,7 +12,6 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Title + Subtitle -->
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Title, ElementName=Root}"
                            FontSize="24" FontWeight="Bold" Foreground="#000000"/>
@@ -32,7 +20,6 @@
                            Visibility="{Binding Subtitle, ElementName=Root, Converter={StaticResource StringToVis}}"/>
             </StackPanel>
 
-            <!-- Слот для кнопок действий (Добавить, Экспорт и т.д.) -->
             <ContentPresenter Grid.Column="1"
                               Content="{Binding Actions, ElementName=Root}"
                               VerticalAlignment="Center"/>

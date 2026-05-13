@@ -34,8 +34,6 @@ public partial class AdminPage : UserControl
         vm.OpenActivityDetailRequested += OnOpenActivityDetail;
     }
 
-    // ── Drawer openers ────────────────────────────────────────────────────
-
     private void OnOpenCreateForm()
     {
         var overlay = new AdminUserFormOverlay();
@@ -61,8 +59,6 @@ public partial class AdminPage : UserControl
         var overlay = new AdminActivityDetailOverlay(log);
         MainWindow.Instance?.ShowDrawer(overlay);
     }
-
-    // ── Tab switching ─────────────────────────────────────────────────────
 
     private void Tab_Click(object sender, RoutedEventArgs e)
     {

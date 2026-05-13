@@ -136,7 +136,7 @@ public partial class LoginViewModel : ViewModelBase
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
         }
-        catch { /* non-critical */ }
+        catch { /* некритичная ошибка */ }
     }
 
     private async Task LoadRecentAccountsAsync()

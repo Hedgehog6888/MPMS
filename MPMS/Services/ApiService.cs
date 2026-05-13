@@ -14,7 +14,6 @@ public class ApiService : IApiService
     private readonly HttpClient _http;
     private readonly IAuthService _auth;
 
-    /// <summary>Совпадает с AddJsonOptions в MPMS.API (camelCase) — иначе record/DTO могут не собраться из ответа.</summary>
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -55,7 +54,7 @@ public class ApiService : IApiService
         return response?.IsSuccessStatusCode ?? false;
     }
 
-    // ── Auth ──────────────────────────────────────────────────────────────────
+    // ── Авторизация
     public async Task<LoginResult> LoginAsync(string username, string password)
     {
         try
@@ -129,7 +128,7 @@ public class ApiService : IApiService
     public async Task<List<RoleDto>?> GetRolesAsync()
         => await GetAsync<List<RoleDto>>("auth/roles");
 
-    // ── Projects ──────────────────────────────────────────────────────────────
+    // ── Проекты
     public async Task<List<ProjectListResponse>?> GetProjectsAsync(
         string? status = null, string? search = null)
     {
@@ -149,7 +148,7 @@ public class ApiService : IApiService
     public async Task<bool> DeleteProjectAsync(Guid id)
         => await DeleteAsync($"projects/{id}");
 
-    // ── Tasks ─────────────────────────────────────────────────────────────────
+    // ── Задачи
     public async Task<List<TaskListResponse>?> GetTasksAsync(
         Guid? projectId = null, string? status = null, string? priority = null,
         Guid? assignedUserId = null, string? search = null)
@@ -175,7 +174,7 @@ public class ApiService : IApiService
     public async Task<bool> DeleteTaskAsync(Guid id)
         => await DeleteAsync($"tasks/{id}");
 
-    // ── Stages ────────────────────────────────────────────────────────────────
+    // ── Этапы
     public async Task<StageResponse?> GetStageAsync(Guid id)
         => await GetAsync<StageResponse>($"taskstages/{id}");
 
@@ -195,7 +194,7 @@ public class ApiService : IApiService
     public async Task<bool> RemoveStageMaterialAsync(Guid stageId, Guid stageMaterialId)
         => await DeleteAsync($"taskstages/{stageId}/materials/{stageMaterialId}");
 
-    // ── Materials ─────────────────────────────────────────────────────────────
+    // ── Материалы
     public async Task<List<MaterialResponse>?> GetMaterialsAsync(string? search = null)
     {
         var q = BuildQuery(("search", search));
@@ -247,7 +246,7 @@ public class ApiService : IApiService
     public Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync()
         => GetAsync<List<EquipmentHistoryEntryResponse>>("inventory/equipment-history");
 
-    // ── Files ─────────────────────────────────────────────────────────────────
+    // ── Файлы
     public async Task<List<FileDto>?> GetFilesAsync(
         Guid? projectId = null, Guid? taskId = null, Guid? stageId = null)
     {
@@ -280,7 +279,6 @@ public class ApiService : IApiService
             ("originalCreatedAt", originalCreatedAt.HasValue ? FormatUtcInstantForQuery(originalCreatedAt.Value) : null),
             ("id", id?.ToString()));
 
-        // We can't reuse MultipartFormDataContent across retries, so we need a factory or create it inside.
         var response = await SendWithRetryAsync(async () =>
         {
             using var content = new MultipartFormDataContent();
@@ -305,7 +303,7 @@ public class ApiService : IApiService
         _ => "application/octet-stream"
     };
 
-    // ── Users ─────────────────────────────────────────────────────────────────
+    // ── Пользователи
     public async Task<List<UserResponse>?> GetUsersAsync(string? search = null)
     {
         LastUsersPullError = null;
@@ -351,10 +349,6 @@ public class ApiService : IApiService
 
     public async Task<bool> DeleteUserAsync(Guid id) => await DeleteAsync($"users/{id}");
 
-    /// <summary>
-    /// Локальная SQLite/EF часто отдаёт UTC-моменты с Kind=Unspecified.
-    /// <see cref="DateTime.ToUniversalTime"/> для Unspecified трактует их как локальные и сдвигает инкрементальный since.
-    /// </summary>
     private static string FormatUtcInstantForQuery(DateTime dt)
     {
         var utc = dt.Kind switch
@@ -427,7 +421,6 @@ public class ApiService : IApiService
         return response?.IsSuccessStatusCode ?? false;
     }
 
-    /// <summary>Абсолютный URI: база из <see cref="IAuthService.ApiBaseUrl"/>, путь относительно /api/.</summary>
     private Uri Api(string relativePathAndQuery)
     {
         var baseUrl = _auth.ApiBaseUrl;
@@ -438,7 +431,6 @@ public class ApiService : IApiService
         return new Uri($"{baseUrl}{rel}", UriKind.Absolute);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
     private void AttachToken()
     {
         if (!string.IsNullOrWhiteSpace(_auth.Token))
@@ -458,10 +450,8 @@ public class ApiService : IApiService
 
             if (response.StatusCode == HttpStatusCode.Unauthorized && _auth.IsAuthenticated)
             {
-                // Try refresh
                 if (await _auth.TryRefreshJwtIfNeededAsync(this))
                 {
-                    // Retry once
                     AttachToken();
                     response = await requestFunc();
                 }
@@ -498,7 +488,6 @@ public class ApiService : IApiService
     {
         var response = await SendWithRetryAsync(() => _http.DeleteAsync(Api(url)));
         if (response == null) return false;
-        // 404 — уже удалено на сервере; для очереди синхронизации считаем успехом (идемпотентность).
         if (response.StatusCode == HttpStatusCode.NotFound)
             return true;
         return response.IsSuccessStatusCode;

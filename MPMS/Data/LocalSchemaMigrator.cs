@@ -3,8 +3,8 @@ using Microsoft.Data.Sqlite;
 namespace MPMS.Data;
 
 /// <summary>
-/// Applies incremental schema changes to the existing local SQLite database.
-/// Safe to call on every startup — all operations are idempotent.
+/// Применяет инкрементальные изменения схемы к существующей локальной SQLite базе.
+/// Безопасно вызывать при каждом запуске — все операции идемпотентны.
 /// </summary>
 public static class LocalSchemaMigrator
 {
@@ -189,17 +189,14 @@ public static class LocalSchemaMigrator
 
     private static void AddUsernameColumnToAuthSessions(SqliteConnection conn)
     {
-        // Login username (case-sensitive column name to avoid conflict with UserName/UserDisplayName)
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"Username\" TEXT NOT NULL DEFAULT '';");
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"LocalPasswordHash\" TEXT NOT NULL DEFAULT '';");
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"ApiBaseUrl\" TEXT NOT NULL DEFAULT 'http://localhost:5147/';");
-        // EF Core maps AuthSession.UserName → column "UserDisplayName" to avoid SQLite case-insensitive clash
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"UserDisplayName\" TEXT NOT NULL DEFAULT '';");
-        // Kept on logout so the same account can re-login offline (1 = active, 0 = logged out)
         TryAlterTable(conn,
             "ALTER TABLE \"AuthSessions\" ADD COLUMN \"IsActiveSession\" INTEGER NOT NULL DEFAULT 1;");
     }
@@ -465,7 +462,7 @@ public static class LocalSchemaMigrator
     private static void TryAlterTable(SqliteConnection conn, string sql)
     {
         try { Execute(conn, sql); }
-        catch (SqliteException) { /* column already exists */ }
+        catch (SqliteException) { }
     }
 
     /// <summary>Примерные категории для пустой БД (по одному разу на таблицу).</summary>

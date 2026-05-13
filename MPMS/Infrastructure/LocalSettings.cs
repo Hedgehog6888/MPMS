@@ -55,7 +55,6 @@ public static class LocalSettings
         }
         catch
         {
-            // Ignore save errors
         }
     }
 

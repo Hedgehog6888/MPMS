@@ -95,7 +95,6 @@ public partial class ProjectDetailPage : UserControl
                 return;
         }
         await VM.MarkProjectForDeletionCommand.ExecuteAsync(null);
-        // Update button text based on project state
         UpdateMarkProjectButton();
     }
 
@@ -118,11 +117,11 @@ public partial class ProjectDetailPage : UserControl
         if (VM?.Project is null) return;
         bool marked = VM.Project.IsMarkedForDeletion;
         bool closed = VM.Project.IsClosed || VM.Project.Status == ProjectStatus.Closed;
-        // Update mark button text via template
+
         MarkProjectBtn.ApplyTemplate();
         if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
-        // Closed projects are view-only.
+
         EditProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
         EditProjectBtn.IsEnabled = !marked && !closed;
         EditProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
@@ -132,7 +131,6 @@ public partial class ProjectDetailPage : UserControl
         CloseProjectBtn.IsEnabled = !marked && !closed;
         CloseProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
-        // Quick Actions should remain visible but disabled (as per request: ONLY IN QUICK ACTIONS IN THE PROJECT)
         CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
         CreateTaskQuickBtn.IsEnabled = !marked && !closed;
         CreateTaskQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
@@ -144,7 +142,6 @@ public partial class ProjectDetailPage : UserControl
         UploadFileQuickBtn.IsEnabled = !marked && !closed;
         UploadFileQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
 
-        // Other buttons still disappear as per "так и нужно"
         CreateTaskBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         AddFileBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
@@ -649,7 +646,6 @@ public partial class ProjectDetailPage : UserControl
         }
     }
 
-    // ── Local search box focus animations (matches global search style) ─────────
     private static readonly SolidColorBrush SearchFocusBrush = new(Colors.Black);
     private static readonly SolidColorBrush SearchNormalBrush = new(Colors.Transparent);
     private static readonly SolidColorBrush SearchFocusBg = new(Colors.White);

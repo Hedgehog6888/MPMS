@@ -4,7 +4,7 @@ using MPMS.Services;
 
 namespace MPMS.Models;
 
-/// <summary>Base for all local entities — tracks offline sync state</summary>
+/// <summary>Базовый класс для всех локальных сущностей — отслеживает состояние офлайн синхронизации</summary>
 public abstract class LocalEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -21,7 +21,7 @@ public class LocalRole
 
 public class LocalUser : LocalEntity
 {
-    /// <summary>Full name — stored for compatibility. Prefer FirstName+LastName for new data.</summary>
+    /// <summary>Полное имя — хранится для совместимости. Для новых данных предпочтительнее FirstName+LastName.</summary>
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
     [MaxLength(50)] public string FirstName { get; set; } = string.Empty;
     [MaxLength(50)] public string LastName { get; set; } = string.Empty;
@@ -34,19 +34,14 @@ public class LocalUser : LocalEntity
     public DateTime CreatedAt { get; set; }
     [MaxLength(500)] public string? AvatarPath { get; set; }
 
-    /// <summary>Avatar stored as PNG bytes in the database (takes priority over AvatarPath).</summary>
     public byte[]? AvatarData { get; set; }
 
-    /// <summary>BCrypt hash for offline login — set by admin when creating/editing the user locally.</summary>
     public string? PasswordHash { get; set; }
 
-    /// <summary>Primary worker specialty (e.g. "Электромонтажник").</summary>
     [MaxLength(100)] public string? SubRole { get; set; }
 
-    /// <summary>JSON array of additional specialties (see WorkerSpecialtiesJson).</summary>
     public string? AdditionalSubRoles { get; set; }
 
-    /// <summary>Indicates the account is blocked — user cannot log in.</summary>
     public bool IsBlocked { get; set; } = false;
     public DateTime? BlockedAt { get; set; }
     [MaxLength(500)] public string? BlockedReason { get; set; }
@@ -62,7 +57,7 @@ public class LocalUser : LocalEntity
         }
     }
 
-    /// <summary>Base role in Russian (always «Работник» for Worker — for filters and admin list).</summary>
+    /// <summary>Базовая роль на русском (всегда «Работник» для Worker — для фильтров и списка администраторов).</summary>
     [NotMapped]
     public string RoleDisplayName => RoleName switch
     {
@@ -95,7 +90,7 @@ public class LocalProject : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
-    /// <summary>Project has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    /// <summary>Проект был мягко удалён (перемещён в архив). Отдельно от IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;
     public bool IsClosed { get; set; } = false;
 
@@ -118,7 +113,6 @@ public class LocalProject : LocalEntity
         string.Join("", ManagerName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Take(2).Select(w => w[0].ToString().ToUpper()));
 
-    /// <summary>Manager avatar from Users — populated when loading for display.</summary>
     [NotMapped] public byte[]? ManagerAvatarData { get; set; }
     [NotMapped] public string? ManagerAvatarPath { get; set; }
 
@@ -151,10 +145,8 @@ public class LocalTask : LocalEntity
     public DateTime UpdatedAt { get; set; }
     public bool IsMarkedForDeletion { get; set; } = false;
 
-    /// <summary>Флаг проекта при загрузке (не в БД). Нужен для наследования пометки и прогресса.</summary>
     [NotMapped] public bool ProjectIsMarkedForDeletion { get; set; }
 
-    /// <summary>Пометка к удалению с учётом проекта (задача помечена или проект помечен).</summary>
     [NotMapped]
     public bool EffectiveTaskMarkedForDeletion =>
         IsMarkedForDeletion || ProjectIsMarkedForDeletion;
@@ -173,7 +165,7 @@ public class LocalTask : LocalEntity
             ? "Пометка с уровня проекта"
             : "";
 
-    /// <summary>Task has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    /// <summary>Задача была мягко удалена (перемещена в архив). Отдельно от IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;
 
     [NotMapped] public int PlannedStages => Math.Max(0, TotalStages - CompletedStages - InProgressStages);
@@ -234,7 +226,7 @@ public class LocalTaskStage : LocalEntity
         _ => ""
     };
 
-    /// <summary>Stage has been soft-deleted (moved to archive). Separate from IsMarkedForDeletion.</summary>
+    /// <summary>Этап был мягко удалён (перемещён в архив). Отдельно от IsMarkedForDeletion.</summary>
     public bool IsArchived { get; set; } = false;
 
     [NotMapped] public string TaskName { get; set; } = string.Empty;
@@ -448,7 +440,7 @@ public class LocalFile : LocalEntity
     [NotMapped] public string? StageName { get; set; }
 }
 
-/// <summary>Project member — users assigned to a project (executors).</summary>
+/// <summary>Участник проекта — пользователи назначенные на проект (исполнители).</summary>
 public class LocalProjectMember
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -457,19 +449,14 @@ public class LocalProjectMember
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(50)] public string UserRole { get; set; } = string.Empty;
 
-    /// <summary>Avatar path from LocalUser — populated when loading members.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
 
-    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
 
-    /// <summary>Primary specialty — populated from LocalUser when loading.</summary>
     [NotMapped] public string? SubRole { get; set; }
 
-    /// <summary>JSON additional specialties — populated from LocalUser.</summary>
     [NotMapped] public string? AdditionalSubRolesJson { get; set; }
 
-    /// <summary>Подпись под именем только у работников (компактная специализация).</summary>
     [NotMapped]
     public string RoleLabel => UserRole is "Worker" or "Работник"
         ? WorkerSpecialtiesJson.FormatWorkerLineCompact(SubRole, AdditionalSubRolesJson)
@@ -485,11 +472,10 @@ public class LocalProjectMember
     public string Initials => string.IsNullOrWhiteSpace(UserName) ? "?"
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
 
-    /// <summary>Клик по строке открывает карточку участника (задаётся при загрузке состава).</summary>
     [NotMapped] public bool IsUserPeekInteractive { get; set; }
 }
 
-/// <summary>Task assignee — supports multiple assignees per task.</summary>
+/// <summary>Исполнитель задачи — поддерживает несколько исполнителей на задачу.</summary>
 public class LocalTaskAssignee
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -497,19 +483,13 @@ public class LocalTaskAssignee
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
 
-    /// <summary>Avatar path from LocalUser — populated when loading.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
-
-    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
 
-    /// <summary>Primary specialty — populated from LocalUser when loading.</summary>
     [NotMapped] public string? SubRole { get; set; }
 
-    /// <summary>JSON additional specialties — populated from LocalUser.</summary>
     [NotMapped] public string? AdditionalSubRolesJson { get; set; }
 
-    /// <summary>Role name for display — populated from LocalUser when loading.</summary>
     [NotMapped] public string? RoleName { get; set; }
 
     [NotMapped]
@@ -529,7 +509,7 @@ public class LocalTaskAssignee
     [NotMapped] public bool IsUserPeekInteractive { get; set; }
 }
 
-/// <summary>Stage assignee — only users from parent task's assignees.</summary>
+/// <summary>Исполнитель этапа — только пользователи из исполнителей родительской задачи.</summary>
 public class LocalStageAssignee
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -537,10 +517,8 @@ public class LocalStageAssignee
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
 
-    /// <summary>Avatar path from LocalUser — populated when loading.</summary>
     [NotMapped] public string? AvatarPath { get; set; }
 
-    /// <summary>Avatar PNG bytes from LocalUser — takes priority over AvatarPath.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
 
     [NotMapped]
@@ -548,7 +526,7 @@ public class LocalStageAssignee
         : string.Join("", UserName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
 }
 
-/// <summary>Message/comment on a task or project.</summary>
+/// <summary>Сообщение/комментарий к задаче или проекту.</summary>
 public class LocalMessage
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -566,7 +544,7 @@ public class LocalMessage
     [NotMapped] public string? AvatarPath { get; set; }
 }
 
-/// <summary>Action type for activity log — used for styling and filtering.</summary>
+/// <summary>Тип действия для лога активности — используется для стилизации и фильтрации.</summary>
 public static class ActivityActionKind
 {
     public const string Created = "Created";
@@ -576,48 +554,48 @@ public static class ActivityActionKind
     public const string UnmarkedForDeletion = "UnmarkedForDeletion";
     public const string Message = "Message";
 
-    // Auth events
+    // События аутентификации
     public const string Login = "Login";
     public const string Logout = "Logout";
 
-    // Profile events
+    // События профиля
     public const string PasswordChanged = "PasswordChanged";
     public const string AvatarChanged = "AvatarChanged";
 
-    // Admin-only user management events
+    // События управления пользователями (только администратор)
     public const string UserCreated = "UserCreated";
     public const string UserEdited = "UserEdited";
     public const string UserBlocked = "UserBlocked";
     public const string UserUnblocked = "UserUnblocked";
     public const string UserDeleted = "UserDeleted";
 
-    // Archive / restore
+    // Архивация / восстановление
     public const string Restored = "Restored";
     public const string PermanentlyDeleted = "PermanentlyDeleted";
 
-    // Status changes
+    // Изменения статуса
     public const string StatusChanged = "StatusChanged";
     public const string TaskStatusChanged = "TaskStatusChanged";
     public const string StageStatusChanged = "StageStatusChanged";
 
-    // Project member events
+    // События участников проекта
     public const string MemberAdded = "MemberAdded";
     public const string MemberRemoved = "MemberRemoved";
 
-    // Stage material/service events
+    // События материалов/услуг этапа
     public const string MaterialAdded = "MaterialAdded";
     public const string MaterialRemoved = "MaterialRemoved";
     public const string ServiceAdded = "ServiceAdded";
     public const string ServiceRemoved = "ServiceRemoved";
 }
 
-/// <summary>Local activity log entry — tracks user actions for the activity feed.</summary>
+/// <summary>Запись локального лога активности — отслеживает действия пользователей для ленты активности.</summary>
 public class LocalActivityLog
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    /// <summary>User who performed the action — used for role-based filtering.</summary>
+    /// <summary>Пользователь выполнивший действие — используется для фильтрации по ролям.</summary>
     public Guid? UserId { get; set; }
-    /// <summary>Role of the actor at log time — used to hide admin actions from managers.</summary>
+    /// <summary>Роль действующего лица на момент лога — используется для скрытия действий администратора от менеджеров.</summary>
     [MaxLength(50)] public string? ActorRole { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)] public string UserInitials { get; set; } = "?";
@@ -634,21 +612,19 @@ public class LocalActivityLog
     [NotMapped] public string ActivityTooltipEntityLabel => ActivityDetailsService.GetEntityDisplay(EntityType);
     [NotMapped] public IReadOnlyList<string> ActivityTooltipDetailLines => ActivityDetailsService.GetTooltipDetailLines(this);
 
-    /// <summary>Number of items in this group (computed at display time, not stored in DB).</summary>
     [NotMapped] public int GroupCount { get; set; } = 1;
 
-    /// <summary>Avatar from Users — populated when loading for display.</summary>
     [NotMapped] public byte[]? AvatarData { get; set; }
     [NotMapped] public string? AvatarPath { get; set; }
 }
 
-/// <summary>IDs of users deleted locally — prevents sync from re-adding them.</summary>
+/// <summary>ID пользователей удалённых локально — предотвращает повторное добавление при синхронизации.</summary>
 public class DeletedUserId
 {
     public Guid Id { get; set; }
 }
 
-/// <summary>Stores the JWT token and current user info between sessions</summary>
+/// <summary>Хранит JWT токен и информацию о текущем пользователе между сессиями</summary>
 public class AuthSession
 {
     public int Id { get; set; }
@@ -660,22 +636,16 @@ public class AuthSession
     public DateTime ExpiresAt { get; set; }
     public string ApiBaseUrl { get; set; } = "http://localhost:5147/";
 
-    /// <summary>DPAPI (CurrentUser) — для повторного LoginAsync и JWT после перезапуска без ввода пароля.</summary>
     public string? SessionPasswordProtected { get; set; }
 
     public string RefreshToken { get; set; } = string.Empty;
 
-    /// <summary>BCrypt hash of the last entered password — allows offline login.</summary>
     public string LocalPasswordHash { get; set; } = string.Empty;
 
-    /// <summary>
-    /// True while the user is actively logged in.
-    /// Set to false on logout (records are kept so any cached account can re-login offline).
-    /// </summary>
     public bool IsActiveSession { get; set; } = true;
 }
 
-/// <summary>Stores the last N accounts that logged in — shown in the login window</summary>
+/// <summary>Хранит последние N аккаунтов которые вошли — отображается в окне входа</summary>
 public class RecentAccount
 {
     public int Id { get; set; }
@@ -686,7 +656,7 @@ public class RecentAccount
     [MaxLength(5)] public string Initials { get; set; } = "?";
     public DateTime LastLoginAt { get; set; }
 
-    /// <summary>Derive initials and color from name and role</summary>
+    /// <summary>Вычисляет инициалы и цвет из имени и роли</summary>
     public static RecentAccount From(string username, string displayName, string role)
     {
         var parts = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -722,7 +692,7 @@ public class LocalNote : LocalEntity
     [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>Rich text content stored as XAML string.</summary>
+    /// <summary>Содержимое форматированного текста хранится как XAML строка.</summary>
     public string Content { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

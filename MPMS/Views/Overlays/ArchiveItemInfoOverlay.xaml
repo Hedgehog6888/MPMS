@@ -24,7 +24,7 @@
             <Setter Property="FontWeight"   Value="SemiBold"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
-        <!-- Sub-tab button for tasks/stages inside overlay -->
+
         <Style x:Key="SubTab" TargetType="RadioButton">
             <Setter Property="Background"   Value="Transparent"/>
             <Setter Property="Foreground"   Value="#6B778C"/>
@@ -73,7 +73,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══ Header ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -103,11 +102,9 @@
             </Grid>
         </Border>
 
-        <!-- ═══ Body ═════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,16,24,8">
 
-                <!-- Status bar -->
                 <Border Background="#FEF3C7" CornerRadius="8" Padding="14,10" Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="8" Height="8" Fill="#F59E0B" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -116,7 +113,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- MAIN INFO -->
                 <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
                 <Grid>
@@ -160,7 +156,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- DESCRIPTION (only shown when non-empty) -->
                 <StackPanel x:Name="DescriptionPanel" Visibility="Collapsed">
                     <TextBlock Text="ОПИСАНИЕ" Style="{StaticResource SectionHeader}"/>
                     <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12">
@@ -170,19 +165,16 @@
                     </Border>
                 </StackPanel>
 
-                <!-- RESTORE INFO -->
                 <TextBlock Text="ВОССТАНОВЛЕНИЕ" Style="{StaticResource SectionHeader}"/>
                 <Border Background="#F0FDF4" CornerRadius="8" Padding="14,10" Margin="0,0,0,8">
                     <TextBlock x:Name="RestoreInfoText"
                                FontSize="12" Foreground="#166534" TextWrapping="Wrap" LineHeight="18"/>
                 </Border>
 
-                <!-- ═══ СВЯЗАННЫЕ ЭЛЕМЕНТЫ (only for Project / Task) ════ -->
                 <StackPanel x:Name="RelatedPanel" Visibility="Collapsed">
                     <TextBlock x:Name="RelatedSectionTitle" Text="СВЯЗАННЫЕ ЭЛЕМЕНТЫ"
                                Style="{StaticResource SectionHeader}"/>
 
-                    <!-- Sub-tab bar (only shown for Project type) -->
                     <Border x:Name="SubTabBar"
                             Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" Padding="4,3" HorizontalAlignment="Left"
@@ -199,10 +191,8 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Tasks list -->
                     <StackPanel x:Name="RelatedTasksList" Margin="0,0,0,8"/>
 
-                    <!-- Stages list -->
                     <StackPanel x:Name="RelatedStagesList" Visibility="Collapsed" Margin="0,0,0,8"/>
 
                     <TextBlock x:Name="RelatedEmptyText"
@@ -214,7 +204,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

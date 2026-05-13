@@ -132,7 +132,7 @@ public partial class StagesPage : UserControl
     {
         if (sender is not Button btn || btn.DataContext is not ProjectStageGroup group) return;
         group.IsExpanded = !group.IsExpanded;
-        // Разворачиваем/сворачиваем все задачи в проекте
+
         foreach (var taskGroup in group.TaskGroups)
         {
             taskGroup.IsExpanded = group.IsExpanded;

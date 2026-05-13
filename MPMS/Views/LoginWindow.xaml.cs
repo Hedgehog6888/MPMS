@@ -24,7 +24,6 @@ public partial class LoginWindow : Window
             Dispatcher.BeginInvoke(() => PwdBox.Focus());
     }
 
-    // ── Password binding / show-hide toggle ──────────────────────────────────
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         _vm.Password = PwdBox.Password;
@@ -39,7 +38,6 @@ public partial class LoginWindow : Window
 
         if (_pwdVisible)
         {
-            // Sync PasswordBox → TextBox before showing
             PwdVisibleBox.Text = PwdBox.Password;
             PwdBox.Visibility = Visibility.Collapsed;
             PwdVisibleBox.Visibility = Visibility.Visible;
@@ -50,7 +48,6 @@ public partial class LoginWindow : Window
         }
         else
         {
-            // Sync TextBox → PasswordBox before hiding
             var text = PwdVisibleBox.Text;
             PwdBox.Visibility = Visibility.Visible;
             PwdVisibleBox.Visibility = Visibility.Collapsed;
@@ -59,7 +56,7 @@ public partial class LoginWindow : Window
             PwdBox.Password = text;
             _vm.Password = text;
             PwdBox.Focus();
-            // Run before next render so user doesn't see caret jump from start to end.
+
             Dispatcher.Invoke(() => SetPasswordBoxCaretEnd(PwdBox),
                 System.Windows.Threading.DispatcherPriority.Loaded);
         }
@@ -68,7 +65,6 @@ public partial class LoginWindow : Window
     private void PwdVisibleBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         => _vm.Password = PwdVisibleBox.Text;
 
-    // ── Focus effects on input containers ────────────────────────────────────
     private void UsernameBox_GotFocus(object sender, RoutedEventArgs e)
         => UsernameContainer.BorderBrush = FocusBrush;
 
@@ -94,13 +90,11 @@ public partial class LoginWindow : Window
             .Invoke(box, new object[] { box.Password.Length, 0 });
     }
 
-    // ── Window drag ───────────────────────────────────────────────────────────
     private void DragBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 1) DragMove();
     }
 
-    // ── Close ─────────────────────────────────────────────────────────────────
     private void CloseButton_Click(object sender, RoutedEventArgs e)
         => Application.Current.Shutdown();
 }

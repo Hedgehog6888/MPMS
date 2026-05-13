@@ -14,8 +14,8 @@ using TaskStatus = MPMS.Models.TaskStatus;
 namespace MPMS.Infrastructure;
 
 /// <summary>
-/// Visibility converter. Use Instance for bool→Visible/Collapsed.
-/// Use NotEmpty for string→Visible/Collapsed (hidden when empty).
+/// Конвертер видимости. Instance для bool→Visible/Collapsed.
+/// NotEmpty для string→Visible/Collapsed (скрыто когда пусто).
 /// </summary>
 public class BoolToVisibilityConverter : IValueConverter
 {
@@ -43,7 +43,7 @@ public class BoolToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts string to Visibility: Visible when string equals "───" (separator).</summary>
+/// <summary>Конвертирует строку в Visibility: Visible когда строка равна "───" (разделитель).</summary>
 public class SeparatorToVisibilityConverter : IValueConverter
 {
     public static readonly SeparatorToVisibilityConverter Instance = new();
@@ -59,7 +59,7 @@ public class SeparatorToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts string to Visibility: Collapsed when string equals "───" (separator), Visible otherwise.</summary>
+/// <summary>Конвертирует строку в Visibility: Collapsed когда строка равна "───" (разделитель), иначе Visible.</summary>
 public class SeparatorToVisibilityInvertedConverter : IValueConverter
 {
     public static readonly SeparatorToVisibilityInvertedConverter Instance = new();
@@ -75,7 +75,7 @@ public class SeparatorToVisibilityInvertedConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts value to bool: true when value equals parameter (string comparison).</summary>
+/// <summary>Конвертирует значение в bool: true когда значение равно параметру (строковое сравнение).</summary>
 public class EqualityToBoolConverter : IValueConverter
 {
     public static readonly EqualityToBoolConverter Instance = new();
@@ -87,7 +87,7 @@ public class EqualityToBoolConverter : IValueConverter
         => Binding.DoNothing;
 }
 
-/// <summary>Converts to Visibility: Visible when value equals parameter (string comparison).</summary>
+/// <summary>Конвертирует в Visibility: Visible когда значение равно параметру (строковое сравнение).</summary>
 public class EqualityToVisibilityConverter : IValueConverter
 {
     public static readonly EqualityToVisibilityConverter Instance = new();
@@ -100,7 +100,7 @@ public class EqualityToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a hex color string (e.g. "#C0392B") to a SolidColorBrush.</summary>
+/// <summary>Конвертирует hex-строку цвета (например "#C0392B") в SolidColorBrush.</summary>
 public class HexToBrushConverter : IValueConverter
 {
     public static readonly HexToBrushConverter Instance = new();
@@ -121,7 +121,7 @@ public class HexToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts avatar file path to ImageSource for display. Returns null when path is invalid or file missing.</summary>
+/// <summary>Конвертирует путь к аватару в ImageSource для отображения. Возвращает null если путь неверный или файл отсутствует.</summary>
 public class AvatarPathToImageSourceConverter : IValueConverter
 {
     public static readonly AvatarPathToImageSourceConverter Instance = new();
@@ -148,8 +148,8 @@ public class AvatarPathToImageSourceConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts avatar byte array (PNG stored in DB) to ImageSource for display.
-/// Returns null if data is null or empty — caller shows initials circle fallback.
+/// Конвертирует массив байтов аватара (PNG в БД) в ImageSource для отображения.
+/// Возвращает null если данные null или пустые — вызывающий показывает круг с инициалами.
 /// </summary>
 public class AvatarBytesToImageSourceConverter : IValueConverter
 {
@@ -173,7 +173,7 @@ public class AvatarBytesToImageSourceConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts bool IsBlocked to a localized status string: "Активен" / "Заблокирован".
+/// Конвертирует bool IsBlocked в локализованную строку статуса: "Активен" / "Заблокирован".
 /// </summary>
 public class BlockedToStatusStringConverter : IValueConverter
 {
@@ -187,8 +187,8 @@ public class BlockedToStatusStringConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts bool IsBlocked to a SolidColorBrush:
-/// true → red (#EF4444), false → green (#22C55E).
+/// Конвертирует bool IsBlocked в SolidColorBrush:
+/// true → красный (#EF4444), false → зелёный (#22C55E).
 /// </summary>
 public class BlockedToStatusBrushConverter : IValueConverter
 {
@@ -205,7 +205,7 @@ public class BlockedToStatusBrushConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts AdminActionKind string to localized Russian label for history log.
+/// Конвертирует AdminActionKind в локализованную русскую метку для истории.
 /// </summary>
 public class ActionKindToLabelConverter : IValueConverter
 {
@@ -239,7 +239,7 @@ public class ActionKindToLabelConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts AdminActionKind string to a SolidColorBrush for history log badges.
+/// Конвертирует AdminActionKind в SolidColorBrush для бейджей истории.
 /// </summary>
 public class ActionKindToBrushConverter : IValueConverter
 {
@@ -283,7 +283,7 @@ public class ActionKindToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a TaskStatus enum to a SolidColorBrush for UI display.</summary>
+/// <summary>Конвертирует TaskStatus в SolidColorBrush для отображения в UI.</summary>
 public class TaskStatusToBrushConverter : IValueConverter
 {
     public static readonly TaskStatusToBrushConverter Instance = new();
@@ -302,7 +302,7 @@ public class TaskStatusToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a ProjectStatus enum to a SolidColorBrush.</summary>
+/// <summary>Конвертирует ProjectStatus в SolidColorBrush.</summary>
 public class ProjectStatusToBrushConverter : IValueConverter
 {
     public static readonly ProjectStatusToBrushConverter Instance = new();
@@ -322,7 +322,7 @@ public class ProjectStatusToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a TaskPriority enum to a SolidColorBrush.</summary>
+/// <summary>Конвертирует TaskPriority в SolidColorBrush.</summary>
 public class PriorityToBrushConverter : IValueConverter
 {
     public static readonly PriorityToBrushConverter Instance = new();
@@ -341,7 +341,7 @@ public class PriorityToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a StageStatus enum to a SolidColorBrush.</summary>
+/// <summary>Конвертирует StageStatus в SolidColorBrush.</summary>
 public class StageStatusToBrushConverter : IValueConverter
 {
     public static readonly StageStatusToBrushConverter Instance = new();
@@ -359,7 +359,7 @@ public class StageStatusToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts TaskStatus enum to Russian display string.</summary>
+/// <summary>Конвертирует TaskStatus в строку отображения на русском.</summary>
 public class TaskStatusToStringConverter : IValueConverter
 {
     public static readonly TaskStatusToStringConverter Instance = new();
@@ -378,7 +378,7 @@ public class TaskStatusToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts ProjectStatus enum to Russian display string.</summary>
+/// <summary>Конвертирует ProjectStatus в строку отображения на русском.</summary>
 public class ProjectStatusToStringConverter : IValueConverter
 {
     public static readonly ProjectStatusToStringConverter Instance = new();
@@ -398,7 +398,7 @@ public class ProjectStatusToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts TaskPriority enum to Russian display string.</summary>
+/// <summary>Конвертирует TaskPriority в строку отображения на русском.</summary>
 public class PriorityToStringConverter : IValueConverter
 {
     public static readonly PriorityToStringConverter Instance = new();
@@ -417,7 +417,7 @@ public class PriorityToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts StageStatus enum to Russian display string.</summary>
+/// <summary>Конвертирует StageStatus в строку отображения на русском.</summary>
 public class StageStatusToStringConverter : IValueConverter
 {
     public static readonly StageStatusToStringConverter Instance = new();
@@ -435,7 +435,7 @@ public class StageStatusToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts DateOnly? to a display string for WPF binding.</summary>
+/// <summary>Конвертирует DateOnly? в строку отображения для WPF привязки.</summary>
 public class DateOnlyToStringConverter : IValueConverter
 {
     private static readonly System.Globalization.CultureInfo RuCulture =
@@ -469,7 +469,7 @@ public class DateOnlyToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts int to GridLength with Star unit (e.g. 5 -> 5*). Returns 0* if value is 0 or invalid.</summary>
+/// <summary>Конвертирует int в GridLength с единицей Star (например 5 -> 5*). Возвращает 0* если значение 0 или неверно.</summary>
 public class IntToStarGridLengthConverter : IValueConverter
 {
     public static readonly IntToStarGridLengthConverter Instance = new();
@@ -477,7 +477,6 @@ public class IntToStarGridLengthConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is int i && i > 0) return new GridLength(i, GridUnitType.Star);
-        // Small non-zero value to avoid Grid collapse/error if all are zero
         return new GridLength(0.0001, GridUnitType.Star);
     }
 
@@ -485,7 +484,7 @@ public class IntToStarGridLengthConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts bool to GridLength. Parameter: "trueWidth,falseWidth" (e.g., "220,64").</summary>
+/// <summary>Конвертирует bool в GridLength. Параметр: "trueWidth,falseWidth" (например "220,64").</summary>
 public class BoolToGridLengthConverter : IValueConverter
 {
     public static readonly BoolToGridLengthConverter Instance = new();
@@ -508,7 +507,7 @@ public class BoolToGridLengthConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Animates GridLength values for smooth column width transitions.</summary>
+/// <summary>Анимирует значения GridLength для плавных переходов ширины колонок.</summary>
 public class GridLengthAnimation : AnimationTimeline
 {
     public static readonly DependencyProperty FromProperty =
@@ -559,7 +558,7 @@ public class GridLengthAnimation : AnimationTimeline
     }
 }
 
-/// <summary>Converts int to bool: true if value > 0.</summary>
+/// <summary>Конвертирует int в bool: true если значение > 0.</summary>
 public class IntGreaterThanZeroConverter : IValueConverter
 {
     public static readonly IntGreaterThanZeroConverter Instance = new();
@@ -578,7 +577,7 @@ public class IntGreaterThanZeroConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts int (stage count) to localized string like "3 этапа".</summary>
+/// <summary>Конвертирует int (количество этапов) в локализованную строку типа "3 этапа".</summary>
 public class StageCountToStringConverter : IValueConverter
 {
     public static readonly StageCountToStringConverter Instance = new();
@@ -599,7 +598,7 @@ public class StageCountToStringConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a DateTime to a relative or formatted time string.</summary>
+/// <summary>Конвертирует DateTime в относительную или форматированную строку времени.</summary>
 public class DateTimeToRelativeConverter : IValueConverter
 {
     public static readonly DateTimeToRelativeConverter Instance = new();
@@ -653,7 +652,7 @@ public class UtcToLocalDateTimeConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts DateOnly? to DateTime? for WPF DatePicker two-way binding.</summary>
+/// <summary>Конвертирует DateOnly? в DateTime? для двусторонней привязки WPF DatePicker.</summary>
 public class DateOnlyToDateTimeConverter : IValueConverter
 {
     public static readonly DateOnlyToDateTimeConverter Instance = new();
@@ -672,8 +671,8 @@ public class DateOnlyToDateTimeConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts a required role string to Visibility based on current user's role.
-/// Parameter: comma-separated list of roles that should see Visible (e.g., "Admin,Administrator").
+/// Конвертирует строку требуемой роли в Visibility на основе роли текущего пользователя.
+/// Параметр: список ролей через запятую, которые должны видеть Visible (например "Admin,Administrator").
 /// </summary>
 public class RequiredRoleToVisibilityConverter : IValueConverter
 {
@@ -694,7 +693,7 @@ public class RequiredRoleToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts progress percent (int) to Brush: red &lt;30%, orange 30–59%, blue 60–99%, green 100%.</summary>
+/// <summary>Конвертирует прогресс в процентах (int) в Brush: красный &lt;30%, оранжевый 30–59%, синий 60–99%, зелёный 100%.</summary>
 public class ProgressPercentToBrushConverter : IValueConverter
 {
     public static readonly ProgressPercentToBrushConverter Instance = new();
@@ -715,7 +714,7 @@ public class ProgressPercentToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps EntityType string to an accent SolidColorBrush for activity log items.</summary>
+/// <summary>Сопоставляет строку EntityType с акцентным SolidColorBrush для элементов лога активности.</summary>
 public class EntityTypeToAccentBrushConverter : IValueConverter
 {
     public static readonly EntityTypeToAccentBrushConverter Instance = new();
@@ -748,7 +747,7 @@ public class EntityTypeToAccentBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps LocalActivityLog to accent Brush — prefers ActionType (Deleted, MarkedForDeletion, etc.) over EntityType.</summary>
+/// <summary>Сопоставляет LocalActivityLog с акцентным Brush — предпочитает ActionType (Deleted, MarkedForDeletion и т.д.) над EntityType.</summary>
 public class ActivityLogToAccentBrushConverter : IValueConverter
 {
     public static readonly ActivityLogToAccentBrushConverter Instance = new();
@@ -1026,7 +1025,7 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps LocalActivityLog to Brush for Admin Activity panel — simple palette by ActionType (login/logout/password/avatar/user actions).</summary>
+/// <summary>Сопоставляет LocalActivityLog с Brush для панели Admin Activity — простая палитра по ActionType (login/logout/password/avatar/user actions).</summary>
 public class ActivityLogToAdminActivityBrushConverter : IValueConverter
 {
     public static readonly ActivityLogToAdminActivityBrushConverter Instance = new();
@@ -1066,7 +1065,7 @@ public class ActivityLogToAdminActivityBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps EntityType string to a localized Russian label for activity log badges.</summary>
+/// <summary>Сопоставляет строку EntityType с локализованной русской меткой для бейджей лога активности.</summary>
 public class EntityTypeToBadgeLabelConverter : IValueConverter
 {
     public static readonly EntityTypeToBadgeLabelConverter Instance = new();
@@ -1092,7 +1091,7 @@ public class EntityTypeToBadgeLabelConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps ActorRole to localized Russian label for activity log role badge.</summary>
+/// <summary>Сопоставляет ActorRole с локализованной русской меткой для бейджа роли в логе активности.</summary>
 public class ActorRoleToLabelConverter : IValueConverter
 {
     public static readonly ActorRoleToLabelConverter Instance = new();
@@ -1107,7 +1106,7 @@ public class ActorRoleToLabelConverter : IValueConverter
             _ => ""
         };
 
-    /// <summary>English keys, Russian titles from messages (RoleToRussian), short forms.</summary>
+    /// <summary>Английские ключи, русские названия из сообщений (RoleToRussian), короткие формы.</summary>
     internal static string NormalizeRoleKey(string? role)
     {
         if (string.IsNullOrWhiteSpace(role) || role == "—") return "";
@@ -1129,7 +1128,7 @@ public class ActorRoleToLabelConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps ActorRole to light pastel Brush for role badge background (distinct from entity badges).</summary>
+/// <summary>Сопоставляет ActorRole со светлой пастельной Brush для фона бейджа роли (отличается от бейджей сущностей).</summary>
 public class ActorRoleToBrushConverter : IValueConverter
 {
     public static readonly ActorRoleToBrushConverter Instance = new();
@@ -1154,7 +1153,7 @@ public class ActorRoleToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps ActorRole to foreground Brush for role badge text (dark accent).</summary>
+/// <summary>Сопоставляет ActorRole с Brush для текста бейджа роли (тёмный акцент).</summary>
 public class ActorRoleToForegroundBrushConverter : IValueConverter
 {
     public static readonly ActorRoleToForegroundBrushConverter Instance = new();
@@ -1194,7 +1193,7 @@ public class ActorRoleToBadgeVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Null/empty check: Visible when value is NOT null/empty, Collapsed otherwise.</summary>
+/// <summary>Проверка null/empty: Visible когда значение НЕ null/empty, иначе Collapsed.</summary>
 public class NullToVisibilityConverter : IValueConverter
 {
     public bool Invert { get; init; }
@@ -1216,7 +1215,7 @@ public class NullToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps TaskStatus to a pale/tinted background Brush (light version of the status colour).</summary>
+/// <summary>Сопоставляет TaskStatus со светлой/оттенённой фоновой Brush (светлая версия цвета статуса).</summary>
 public class TaskStatusToPaleBrushConverter : IValueConverter
 {
     public static readonly TaskStatusToPaleBrushConverter Instance = new();
@@ -1235,7 +1234,7 @@ public class TaskStatusToPaleBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Maps TaskStatus to the dark foreground colour matching the pale background badge.</summary>
+/// <summary>Сопоставляет TaskStatus с тёмным цветом переднего плана, соответствующим светлому фоновому бейджу.</summary>
 public class TaskStatusToForegroundBrushConverter : IValueConverter
 {
     public static readonly TaskStatusToForegroundBrushConverter Instance = new();
@@ -1254,7 +1253,7 @@ public class TaskStatusToForegroundBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts a 0–1 double fraction to a Star GridLength for proportional Timeline bar columns.</summary>
+/// <summary>Конвертирует дробь 0–1 double в Star GridLength для пропорциональных колонок Timeline.</summary>
 public class FractionToGridLengthConverter : IValueConverter
 {
     public static readonly FractionToGridLengthConverter Instance = new();
@@ -1269,7 +1268,7 @@ public class FractionToGridLengthConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Converts initials string to a deterministic SolidColorBrush accent color.</summary>
+/// <summary>Конвертирует строку инициалов в детерминированный акцентный цвет SolidColorBrush.</summary>
 public class InitialsToBrushConverter : IValueConverter
 {
     private static readonly string[] Palette =
@@ -1401,7 +1400,7 @@ public class StringMatchToBoolConverter : IValueConverter
     }
 }
 
-/// <summary>Maps FileType string to a local SVG icon path.</summary>
+/// <summary>Сопоставляет строку FileType с локальным путём SVG иконки.</summary>
 public class FileTypeToIconConverter : IValueConverter
 {
     public static readonly FileTypeToIconConverter Instance = new();
@@ -1419,7 +1418,7 @@ public class FileTypeToIconConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Returns true if FileType starts with "image/".</summary>
+/// <summary>Возвращает true если FileType начинается с "image/".</summary>
 public class FileTypeToIsImageConverter : IValueConverter
 {
     public static readonly FileTypeToIsImageConverter Instance = new();
@@ -1441,7 +1440,7 @@ public class FileTypeToIsImageConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-/// <summary>Returns Visibility.Visible if file is a supported document type for DocumentViewerOverlay.</summary>
+/// <summary>Возвращает Visibility.Visible если файл поддерживаемый тип документа для DocumentViewerOverlay.</summary>
 public class FileTypeToIsDocumentConverter : IValueConverter
 {
     public static readonly FileTypeToIsDocumentConverter Instance = new();
@@ -1466,7 +1465,7 @@ public class FileTypeToIsDocumentConverter : IValueConverter
 }
 
 /// <summary>
-/// Returns a background SolidColorBrush based on file extension.
+/// Возвращает фоновый SolidColorBrush на основе расширения файла.
 /// </summary>
 public class FileExtensionToBackgroundBrushConverter : IValueConverter
 {
@@ -1477,7 +1476,6 @@ public class FileExtensionToBackgroundBrushConverter : IValueConverter
         var input = (value?.ToString() ?? "").ToLower().Trim();
         if (string.IsNullOrEmpty(input)) return new SolidColorBrush(Color.FromRgb(0xF9, 0xFA, 0xFB));
 
-        // Если это MIME-тип, пытаемся сопоставить его с расширением
         if (input.Contains("/"))
         {
             if (input.Contains("wordprocessingml") || input.Contains("msword")) input = ".docx";
@@ -1507,7 +1505,7 @@ public class FileExtensionToBackgroundBrushConverter : IValueConverter
 }
 
 /// <summary>
-/// Returns a foreground/stroke SolidColorBrush based on file extension.
+/// Возвращает foreground/stroke SolidColorBrush на основе расширения файла.
 /// </summary>
 public class FileExtensionToForegroundBrushConverter : IValueConverter
 {
@@ -1568,7 +1566,7 @@ public class FileSizeConverter : IValueConverter
 }
 
 /// <summary>
-/// Returns a short uppercase label for a file extension (e.g. ".docx" -> "DOCX").
+/// Возвращает короткую метку в верхнем регистре для расширения файла (например ".docx" -> "DOCX").
 /// </summary>
 public class FileExtensionToShortLabelConverter : IValueConverter
 {

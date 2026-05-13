@@ -38,9 +38,6 @@ public class FilesController : ControllerBase
         if (file is null || file.Length == 0)
             return BadRequest(new { message = "Файл не выбран" });
 
-        // if (projectId is null && taskId is null && stageId is null)
-        //     return BadRequest(new { message = "Необходимо указать projectId, taskId или stageId" });
-
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms);
         var fileContent = ms.ToArray();
@@ -51,7 +48,7 @@ public class FilesController : ControllerBase
             {
                 Id = id ?? Guid.NewGuid(),
                 FileName = file.FileName,
-                FilePath = null, // Больше не храним на диске
+                FilePath = null, 
                 Content = fileContent,
                 FileType = file.ContentType,
                 FileSize = file.Length,
@@ -69,7 +66,6 @@ public class FilesController : ControllerBase
             await _db.Entry(attachment).Reference(f => f.UploadedBy).LoadAsync();
             if (attachment.UploadedById != Guid.Empty && attachment.UploadedBy == null)
             {
-                // Should not happen if FK is correct, but let's be safe
                 attachment.UploadedBy = await _db.Users.FindAsync(attachment.UploadedById) ?? new User { FirstName = "System", LastName = "User" };
             }
             

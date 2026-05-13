@@ -20,7 +20,6 @@ namespace MPMS.Controls;
 /// </summary>
 public partial class SearchFilterBarControl : UserControl
 {
-    // ── DependencyProperties ─────────────────────────────────────────
 
     public static readonly DependencyProperty SearchTextProperty =
         DependencyProperty.Register(nameof(SearchText), typeof(string),
@@ -45,7 +44,6 @@ public partial class SearchFilterBarControl : UserControl
         DependencyProperty.Register(nameof(ScrollTarget), typeof(ScrollViewer),
             typeof(SearchFilterBarControl), new PropertyMetadata(null));
 
-    // ── Properties ───────────────────────────────────────────────────
 
     /// <summary>Текст поиска — биндится к VM.SearchText.</summary>
     public string SearchText
@@ -88,7 +86,6 @@ public partial class SearchFilterBarControl : UserControl
         set => SetValue(ScrollTargetProperty, value);
     }
 
-    // ── Static brushes/effects ───────────────────────────────────────
 
     private static readonly SolidColorBrush _focusBorderBrush = new(Colors.Black);
     private static readonly SolidColorBrush _normalBorderBrush = new(Colors.Transparent);
@@ -96,13 +93,11 @@ public partial class SearchFilterBarControl : UserControl
     private static readonly SolidColorBrush _normalBg = new(Color.FromRgb(0xF4, 0xF5, 0xF7));
 
 
-    // ── Ctor ─────────────────────────────────────────────────────────
 
     public SearchFilterBarControl()
     {
         InitializeComponent();
 
-        // Пробрасываем PreviewMouseWheel на ScrollTarget
         PreviewMouseWheel += (_, e) =>
         {
             if (ScrollTarget is { } sv)
@@ -113,7 +108,6 @@ public partial class SearchFilterBarControl : UserControl
         };
     }
 
-    // ── Focus handlers ────────────────────────────────────────────────
 
     private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
@@ -128,7 +122,6 @@ public partial class SearchFilterBarControl : UserControl
         SearchBorder.Effect = null;
     }
 
-    // ── Clear button ─────────────────────────────────────────────────
 
     private void ClearSearch_Click(object sender, RoutedEventArgs e)
     {

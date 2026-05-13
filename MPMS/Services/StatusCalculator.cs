@@ -6,8 +6,6 @@ namespace MPMS.Services;
 /// <summary>Единый расчёт статусов задачи и проекта по этапам/задачам. Синхронизация везде.</summary>
 public static class StatusCalculator
 {
-    /// <summary>Статус задачи по этапам: все завершены → Completed; есть InProgress или Completed → InProgress; иначе Planned.</summary>
-    /// <remarks>Если есть хотя бы один завершённый или в работе — задача "в работе", не "в планировании".</remarks>
     public static TaskStatus GetTaskStatusFromStages(IEnumerable<LocalTaskStage> stages)
     {
         var list = stages.ToList();
@@ -17,8 +15,7 @@ public static class StatusCalculator
             return TaskStatus.InProgress;
         return TaskStatus.Planned;
     }
-
-    /// <summary>Статус проекта по задачам: все Completed → Completed; есть InProgress/Paused/Completed → InProgress; иначе Planning.</summary>
+    
     public static ProjectStatus GetProjectStatusFromTasks(IEnumerable<LocalTask> tasks)
     {
         var list = tasks.Where(t => !t.IsMarkedForDeletion).ToList();

@@ -9,7 +9,6 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <!-- Row hover style -->
         <Style x:Key="ProjectRow" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -20,7 +19,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Slim ProgressBar template -->
         <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="3">
                 <Border x:Name="PART_Track" CornerRadius="3">
@@ -30,7 +28,6 @@
             </Border>
         </ControlTemplate>
 
-        <!-- Column header text style -->
         <Style x:Key="ColHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -38,7 +35,6 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- Cell text style -->
         <Style x:Key="CellText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="#111111"/>
@@ -46,7 +42,6 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
 
-        <!-- Secondary cell text -->
         <Style x:Key="CellTextSec" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="#64748B"/>
@@ -58,11 +53,10 @@
 
     <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Header bar -->
-            <RowDefinition Height="*"/>    <!-- Content -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>  
         </Grid.RowDefinitions>
 
-        <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -76,7 +70,7 @@
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <!-- Closed projects button -->
+
                     <Button x:Name="ClosedProjectsBtn" Click="ClosedProjects_Click"
                             Height="38" Padding="18,0" Margin="0,0,8,0" FontSize="13" FontWeight="SemiBold">
                         <Button.Template>
@@ -96,7 +90,7 @@
                         </Button.Template>
                         <Button.Content>Закрытые проекты</Button.Content>
                     </Button>
-                    <!-- Create project button -->
+
                     <Button x:Name="CreateProjectBtn" Click="CreateProject_Click"
                             Height="38" Padding="18,0" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
                     <Button.Template>
@@ -122,7 +116,6 @@
             </Grid>
         </Border>
 
-        <!-- ── SCROLLABLE BODY ─────────────────────────────────────── -->
         <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
             <ScrollViewer x:Name="MainListScroll" 
                           VerticalScrollBarVisibility="Auto"
@@ -199,7 +192,6 @@
                                                     <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
-                                                <!-- Row 1: Title & Status -->
                                                 <Grid Grid.Row="0" Margin="0,0,0,20">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -260,7 +252,6 @@
                                                     </StackPanel>
                                                 </Grid>
 
-                                                <!-- Row 2: Manager & Dates -->
                                                 <Grid Grid.Row="1" Margin="0,0,0,24">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -300,7 +291,6 @@
                                                     </StackPanel>
                                                 </Grid>
 
-                                                <!-- Row 3: Progress -->
                                                 <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
                                                     <Grid Margin="0,0,0,10">
                                                         <TextBlock Text="Прогресс выполнения" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
@@ -314,7 +304,6 @@
                                                                  Template="{StaticResource SlimPB}"/>
                                                 </StackPanel>
 
-                                                <!-- Actions (role-based) -->
                                                 <Grid Grid.Row="3" Margin="0,20,0,-4">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
@@ -322,7 +311,6 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <!-- Close project (left) -->
                                                     <Button Grid.Column="0" Tag="{Binding}" Click="CloseProject_Click"
                                                             Height="34" Padding="12,0" FontSize="13">
                                                         <Button.Style>
@@ -352,9 +340,8 @@
                                                         <Button.Content>Закрыть проект</Button.Content>
                                                     </Button>
 
-                                                    <!-- Other actions (right) -->
                                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                        <!-- Edit (Manager+, hidden when marked) -->
+
                                                         <Button Tag="{Binding}" Click="EditProject_Click" Margin="0,0,8,0" ToolTip="Редактировать">
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
@@ -369,7 +356,6 @@
                                                             <Image Width="16" Height="16" Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"/>
                                                         </Button>
 
-                                                        <!-- Mark for deletion / Unmark (Manager role) -->
                                                         <Button Tag="{Binding}" Click="MarkProjectForDeletion_Click" Style="{StaticResource IconButton}" Margin="0,0,8,0"
                                                                 Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}">
                                                             <Button.ToolTip>
@@ -423,7 +409,6 @@
                                                             </Grid>
                                                         </Button>
 
-                                                        <!-- Delete (Admin only) -->
                                                         <Button Tag="{Binding}" Click="DeleteProject_Click" Style="{StaticResource IconButton}" ToolTip="Удалить проект"
                                                                 Visibility="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Administrator'}">
                                                             <Image Width="16" Height="16">
@@ -450,7 +435,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                    <!-- Empty state -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                 Visibility="{Binding Projects.Count, Converter={StaticResource IntToVisInv}}">
                         <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}" 
@@ -465,7 +449,6 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- ── Плавающая панель поиска ── -->
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
                 HorizontalAlignment="Stretch" Margin="0,0,24,0"

@@ -25,7 +25,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Без своего белого фона — иначе прямоугольник ломает скругление внешней модалки -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1"
                 Background="Transparent">

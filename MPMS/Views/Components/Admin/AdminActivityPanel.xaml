@@ -27,7 +27,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Activity toolbar -->
+        <!-- Панель инструментов активности -->
         <Border Grid.Row="0" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
             <Grid>
@@ -82,12 +82,12 @@
                         </Button>
                     </Grid>
                 </Border>
-                <!-- Event type filter -->
+                <!-- Фильтр типа события -->
                 <ComboBox Grid.Column="2"
                           ItemsSource="{x:Static vm:AdminViewModel.ActivityEventOptions}"
                           SelectedItem="{Binding ActivityEventFilter}"
                           Style="{StaticResource FormCombo}"/>
-                <!-- User filter -->
+                <!-- Фильтр пользователя -->
                 <ComboBox Grid.Column="4"
                           ItemsSource="{Binding ActivityUserList}"
                           SelectedItem="{Binding ActivityUserFilter}"
@@ -99,7 +99,7 @@
             </Grid>
         </Border>
 
-        <!-- Activity table + load more -->
+        <!-- Таблица активности + загрузить ещё -->
         <Border Grid.Row="2" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1">
             <Grid>
@@ -175,7 +175,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <!-- Load more -->
+                <!-- Загрузить ещё -->
                 <Border Grid.Row="2" Padding="16,8"
                         BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
                         Visibility="{Binding HasMoreActivity, Converter={StaticResource BoolToVis}}">

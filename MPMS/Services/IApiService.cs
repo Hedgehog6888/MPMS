@@ -6,32 +6,28 @@ public interface IApiService
 {
     bool IsOnline { get; }
 
-    /// <summary>Последняя ошибка GET users (HTTP/JSON/сеть).</summary>
     string? LastUsersPullError { get; }
 
     void ClearLastUsersPullError();
 
-    /// <summary>Fast connectivity probe — updates IsOnline with a short timeout.</summary>
     Task ProbeAsync();
 
-    /// <summary>Проверяет, что текущий JWT принимается сервером (GET api/auth/me).</summary>
     Task<bool> VerifyAuthAsync();
 
-    // Auth
+    // Аутентификация
     Task<LoginResult> LoginAsync(string username, string password);
     Task<AuthResponse?> RefreshAsync(string token, string refreshToken);
-    /// <summary>Текущий пользователь по JWT (GET api/auth/me).</summary>
     Task<UserResponse?> GetCurrentUserAsync();
     Task<List<RoleDto>?> GetRolesAsync();
 
-    // Projects
+    // Проекты
     Task<List<ProjectListResponse>?> GetProjectsAsync(string? status = null, string? search = null);
     Task<ProjectResponse?> GetProjectAsync(Guid id);
     Task<ProjectResponse?> CreateProjectAsync(CreateProjectRequest request);
     Task<ProjectResponse?> UpdateProjectAsync(Guid id, UpdateProjectRequest request);
     Task<bool> DeleteProjectAsync(Guid id);
 
-    // Tasks
+    // Задачи
     Task<List<TaskListResponse>?> GetTasksAsync(Guid? projectId = null, string? status = null,
         string? priority = null, Guid? assignedUserId = null, string? search = null);
     Task<TaskResponse?> GetTaskAsync(Guid id);
@@ -39,7 +35,7 @@ public interface IApiService
     Task<TaskResponse?> UpdateTaskAsync(Guid id, UpdateTaskRequest request);
     Task<bool> DeleteTaskAsync(Guid id);
 
-    // Stages
+    // Этапы
     Task<StageResponse?> GetStageAsync(Guid id);
     Task<StageResponse?> CreateStageAsync(CreateStageRequest request);
     Task<StageResponse?> UpdateStageAsync(Guid id, UpdateStageRequest request);
@@ -47,7 +43,7 @@ public interface IApiService
     Task<StageMaterialResponse?> AddStageMaterialAsync(Guid stageId, AddStageMaterialRequest request);
     Task<bool> RemoveStageMaterialAsync(Guid stageId, Guid stageMaterialId);
 
-    // Materials & inventory
+    // Материалы и инвентарь
     Task<List<MaterialResponse>?> GetMaterialsAsync(string? search = null);
     Task<MaterialResponse?> CreateMaterialAsync(CreateMaterialRequest request);
     Task<MaterialResponse?> UpdateMaterialAsync(Guid id, UpdateMaterialRequest request);
@@ -66,20 +62,20 @@ public interface IApiService
     Task<EquipmentHistoryEntryResponse?> RecordEquipmentEventAsync(Guid equipmentId, RecordEquipmentEventRequest request);
     Task<List<EquipmentHistoryEntryResponse>?> GetAllEquipmentHistoryAsync();
 
-    // Files
+    // Файлы
     Task<List<FileDto>?> GetFilesAsync(Guid? projectId = null, Guid? taskId = null, Guid? stageId = null);
     Task<bool> DeleteFileAsync(Guid id);
     Task<FileDto?> UploadFileAsync(string filePath, Guid? projectId = null, Guid? taskId = null, Guid? stageId = null, DateTime? originalCreatedAt = null, Guid? id = null);
     Task<byte[]?> DownloadFileAsync(Guid id);
 
-    // Users
+    // Пользователи
     Task<List<UserResponse>?> GetUsersAsync(string? search = null);
     Task<UserResponse?> CreateUserAsync(CreateUserRequest request);
     Task<UserResponse?> UpdateUserAsync(Guid id, UpdateUserRequest request);
     Task<bool> DeleteUserAsync(Guid id);
     Task<bool> UploadUserAvatarAsync(Guid userId, byte[] avatarData);
 
-    // Sync: обсуждения, активность, соисполнители
+    // Синхронизация: обсуждения, активность, соисполнители
     Task<List<DiscussionMessageResponse>?> GetDiscussionMessagesAsync(DateTime? since = null);
     Task<DiscussionMessageResponse?> PostDiscussionMessageAsync(CreateDiscussionMessageRequest request);
     Task<List<SyncedActivityLogResponse>?> GetSyncedActivityLogsAsync(DateTime? since = null);

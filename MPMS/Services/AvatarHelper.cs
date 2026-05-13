@@ -8,10 +8,6 @@ using MPMS.Models;
 
 namespace MPMS.Services;
 
-/// <summary>
-/// Utility class for generating and managing user avatars.
-/// Avatars are stored as PNG byte arrays in the database.
-/// </summary>
 public static class AvatarHelper
 {
     private static readonly string[] PaletteColors =
@@ -20,7 +16,6 @@ public static class AvatarHelper
         "#F1C40F", "#E67E22", "#E74C3C", "#95A5A6", "#D35400"
     };
 
-    /// <summary>Returns a deterministic accent color for a given display name.</summary>
     public static string GetColorForName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "#34495E";
@@ -29,7 +24,6 @@ public static class AvatarHelper
         return PaletteColors[Math.Abs(hash) % PaletteColors.Length];
     }
 
-    /// <summary>Extracts up to 2 initials from a full name (e.g. "Иван Петров" → "ИП").</summary>
     public static string GetInitials(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return "?";
@@ -39,10 +33,6 @@ public static class AvatarHelper
             : char.ToUpper(name[0]).ToString();
     }
 
-    /// <summary>
-    /// Generates an initials-based avatar as a PNG byte array.
-    /// Must be called on the UI thread (uses WPF DrawingVisual).
-    /// </summary>
     public static byte[] GenerateInitialsAvatar(string name, string? hexColor = null, int size = 256)
     {
         hexColor ??= GetColorForName(name);
@@ -90,10 +80,6 @@ public static class AvatarHelper
         return ms.ToArray();
     }
 
-    /// <summary>
-    /// Converts raw byte array to a WPF BitmapImage.
-    /// Supports decodeWidth for high-quality downsampling during decoding.
-    /// </summary>
     public static BitmapImage? BytesToBitmapImage(byte[]? data, int decodeWidth = 0)
     {
         if (data is null || data.Length == 0) return null;
@@ -116,7 +102,6 @@ public static class AvatarHelper
         catch { return null; }
     }
 
-    /// <summary>Reads an image file and returns its bytes. Returns null if file is missing or unreadable.</summary>
     public static byte[]? FileToBytes(string? path)
     {
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return null;
@@ -124,13 +109,6 @@ public static class AvatarHelper
         catch { return null; }
     }
 
-    /// <summary>
-    /// Returns the best available ImageSource for a user:
-    /// 1. AvatarData (bytes from DB) if present
-    /// 2. AvatarPath (file path) if file exists
-    /// 3. Generated initials avatar if fallbackDisplayName is provided (must be on UI thread)
-    /// 4. null (caller should render initials circle)
-    /// </summary>
     public static BitmapImage? GetImageSource(byte[]? avatarData, string? avatarPath, string? fallbackDisplayName = null, int decodeWidth = 0)
     {
         if (avatarData is { Length: > 0 })

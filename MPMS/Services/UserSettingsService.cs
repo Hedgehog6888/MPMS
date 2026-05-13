@@ -66,7 +66,6 @@ public class UserSettingsService : IUserSettingsService
         }
         catch
         {
-            // Ignore errors in settings saving
         }
     }
 }

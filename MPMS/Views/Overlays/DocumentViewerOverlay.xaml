@@ -6,7 +6,6 @@
 
     <UserControl.Resources>
 
-        <!-- Light icon button style matching app design -->
         <Style x:Key="ViewerIconBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -37,7 +36,6 @@
             </Setter>
         </Style>
 
-        <!-- Save button (black style) -->
         <Style x:Key="SaveInfoBtn" TargetType="Button">
             <Setter Property="Background" Value="#111111"/>
             <Setter Property="Foreground" Value="White"/>
@@ -66,7 +64,6 @@
             </Setter>
         </Style>
 
-        <!-- Close circle button (light style) -->
         <Style x:Key="CloseCircleBtn" TargetType="Button">
             <Setter Property="Width" Value="32"/>
             <Setter Property="Height" Value="32"/>
@@ -89,7 +86,6 @@
             </Setter>
         </Style>
 
-        <!-- Light zoom slider -->
         <Style x:Key="ZoomSliderStyle" TargetType="Slider">
             <Setter Property="Template">
                 <Setter.Value>
@@ -132,7 +128,6 @@
             </Setter>
         </Style>
 
-        <!-- Info row label (light theme) -->
         <Style x:Key="InfoLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Foreground" Value="#6B778C"/>
@@ -144,7 +139,6 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
-        <!-- Thumbnail item style -->
         <Style x:Key="ThumbnailItem" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E8E9EC"/>
@@ -199,7 +193,6 @@
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
         </Style>
 
-        <!-- Excel sheet tab style (no hover effect, rounded corners) -->
         <Style x:Key="ExcelSheetTabStyle" TargetType="Button">
             <Setter Property="Padding" Value="12,3,12,3"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
@@ -227,31 +220,23 @@
 
     </UserControl.Resources>
 
-    <!-- Root: full overlay light background -->
     <Grid Background="#FFFFFF">
         <Grid.ColumnDefinitions>
-            <!-- Main document area -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!-- Bottom toolbar -->
             <RowDefinition Height="48"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- Document viewport                                              -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <Grid Grid.Column="0" Grid.Row="0" Background="#F4F5F7">
             <ScrollViewer x:Name="DocumentScrollViewer"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Auto"
                           Focusable="False">
                 <StackPanel x:Name="DocumentContainer" Margin="16" HorizontalAlignment="Center">
-                    <!-- Pages container for text and Word documents -->
                     <ItemsControl x:Name="PagesContainer" Visibility="Collapsed"/>
 
-                    <!-- Fallback for unsupported formats -->
                     <Border x:Name="FallbackCard"
                             Background="White"
                             BorderBrush="#E8E9EC"
@@ -354,21 +339,16 @@
             </Grid>
         </Grid>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- BOTTOM: Toolbar                                                -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <Border Grid.Column="0" Grid.Row="1"
                 Background="White"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0">
             <Grid Margin="16,0">
-                <!-- Document name -->
                 <TextBlock x:Name="DocumentNameText"
                            VerticalAlignment="Center"
                            FontSize="12"
                            Foreground="#111111"
                            TextTrimming="CharacterEllipsis"/>
 
-                <!-- Right side: open in app/download/close -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Button x:Name="OpenInAppBtn" Style="{StaticResource ViewerIconBtn}" Margin="0,0,8,0" Padding="12,6" Click="OpenInApp_Click">
                         <TextBlock x:Name="OpenInAppBtnText" Text="Открыть" FontSize="12" FontWeight="SemiBold"/>

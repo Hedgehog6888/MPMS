@@ -132,7 +132,6 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
     {
         var filtered = _allProjects.AsEnumerable();
 
-        // Search by name or client
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             var searchTerm = SearchText.ToLower();
@@ -140,13 +139,11 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
                                          (p.Client != null && p.Client.ToLower().Contains(searchTerm)));
         }
 
-        // Filter by start date
         if (StartDateFilter.HasValue)
         {
             filtered = filtered.Where(p => p.StartDate.HasValue && p.StartDate.Value >= StartDateFilter.Value);
         }
 
-        // Filter by end date
         if (EndDateFilter.HasValue)
         {
             filtered = filtered.Where(p => p.EndDate.HasValue && p.EndDate.Value <= EndDateFilter.Value);

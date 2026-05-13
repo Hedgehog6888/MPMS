@@ -27,7 +27,6 @@ public partial class AdminUserFormOverlay : UserControl
     private static bool IsDbWorkerRole(string? roleName) =>
         roleName is "Worker" or "Работник";
 
-    /// <summary>Совпадает с <see cref="WorkerSpecialtiesJson.CanonicalWorkerSpecialties"/> (цвета привязаны к порядку).</summary>
     public static readonly IReadOnlyList<string> WorkerSubRoles = WorkerSpecialtiesJson.CanonicalWorkerSpecialties;
 
     public AdminUserFormOverlay()
@@ -160,8 +159,6 @@ public partial class AdminUserFormOverlay : UserControl
         return WorkerSpecialtiesJson.Serialize(list);
     }
 
-    // ── Setup ─────────────────────────────────────────────────────────────
-
     public void SetCreateMode(AdminViewModel vm)
     {
         _adminVm = vm;
@@ -204,7 +201,6 @@ public partial class AdminUserFormOverlay : UserControl
         }
     }
 
-    // Fallback roles — IDs must match API (ApplicationDbContext seed)
     private static readonly List<RoleItem> _defaultRoles =
     [
         new() { Id = new Guid("10000000-0000-0000-0000-000000000001"), Name = "Administrator",   Display = "Администратор" },
@@ -302,8 +298,6 @@ public partial class AdminUserFormOverlay : UserControl
         _loadingRoles = false;
     }
 
-    // ── Actions ───────────────────────────────────────────────────────────
-
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         MainWindow.Instance?.HideDrawer();
@@ -326,7 +320,6 @@ public partial class AdminUserFormOverlay : UserControl
             DateOnly? birthDate = BirthDatePicker.SelectedDate is { } bd ? DateOnly.FromDateTime(bd) : null;
             var homeAddress = string.IsNullOrWhiteSpace(HomeAddressBox.Text) ? null : HomeAddressBox.Text.Trim();
 
-            // Validation
             if (string.IsNullOrWhiteSpace(firstName)) { ShowError("Введите имя"); return; }
             if (string.IsNullOrWhiteSpace(lastName)) { ShowError("Введите фамилию"); return; }
             if (string.IsNullOrWhiteSpace(username)) { ShowError("Введите логин"); return; }
@@ -489,8 +482,6 @@ public partial class AdminUserFormOverlay : UserControl
             SaveButton.IsEnabled = true;
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────
 
     private void ShowError(string message)
     {

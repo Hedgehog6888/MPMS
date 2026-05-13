@@ -21,7 +21,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -71,13 +70,11 @@
             </StackPanel>
         </Border>
 
-        <!-- Form -->
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,8,24,8">
 
                 <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Name -->
                 <TextBlock Text="Название *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
@@ -86,7 +83,6 @@
                              Padding="0"/>
                 </Border>
 
-                <!-- Category (with add button) -->
                 <TextBlock x:Name="CategoryLabel" Text="Категория" Style="{StaticResource FormLabel}"/>
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
@@ -107,7 +103,6 @@
                     </Button>
                 </Grid>
 
-                <!-- Unit (materials only — ComboBox with predefined list) -->
                 <StackPanel x:Name="UnitPanel">
                     <TextBlock Text="Единица измерения *" Style="{StaticResource FormLabel}"/>
                     <ComboBox x:Name="UnitCombo" Style="{StaticResource FormCombo}"
@@ -123,7 +118,6 @@
                               DisplayMemberPath="Display"/>
                 </StackPanel>
 
-                <!-- Initial quantity + cost (materials create mode only) -->
                 <StackPanel x:Name="QuantityCostPanel">
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
@@ -153,7 +147,6 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- Cost only (edit mode) -->
                 <StackPanel x:Name="CostOnlyPanel" Visibility="Collapsed" Margin="0,0,0,12">
                     <TextBlock Text="Стоимость за ед., ₽ *" Style="{StaticResource FormLabel}"/>
                     <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
@@ -164,7 +157,6 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
@@ -175,10 +167,8 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
-                <!-- Photo -->
                 <TextBlock Text="ФОТО" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Preview -->
                 <Border x:Name="PhotoPreviewBorder" Height="160" Background="#F4F5F7"
                         CornerRadius="8" Margin="0,0,0,10" Visibility="Collapsed"
                         BorderBrush="#DFE1E6" BorderThickness="1" ClipToBounds="True">
@@ -226,7 +216,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Footer -->
         <Border Grid.Row="3" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

@@ -66,15 +66,15 @@ public partial class MainViewModel : ViewModelBase
         _sync = sync;
         _sp = sp;
 
-        // Load saved sidebar state
+        // Загружаем сохранённое состояние боковой панели
         _isSidebarExpanded = LocalSettings.GetBool("SidebarExpanded", true);
 
-        // Read the real connectivity state immediately so the badge is correct
-        // on the very first frame, before the timer fires for the first time.
+        // Считываем реальное состояние подключения немедленно, чтобы значок был правильным
+        // на самом первом кадре, прежде чем таймер сработает в первый раз.
         _isOnline = _sync.IsOnline;
 
-        // DispatcherTimer runs on the UI thread — no threading issues.
-        // Polls SyncService.IsOnline (which reads IApiService.IsOnline updated after every HTTP call).
+        // DispatcherTimer работает в потоке UI — нет проблем с потоками.
+        // Опрашивает SyncService.IsOnline (который читает IApiService.IsOnline, обновляемый после каждого HTTP-вызова).
         _onlineTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _onlineTimer.Tick += OnOnlineTimerTick;
         _onlineTimer.Start();
@@ -145,7 +145,7 @@ public partial class MainViewModel : ViewModelBase
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null, // handled via overlay
+            "Settings" => null, 
             _ => null
         };
 
@@ -153,11 +153,8 @@ public partial class MainViewModel : ViewModelBase
             _ = loadable.LoadAsync();
 
         CurrentPageViewModel = vm;
-
-        // Refresh sync counts when navigating
         _ = RefreshSyncCountsAsync();
 
-        // Show/hide PhotoViewerLayer and DocumentViewerLayer based on current page
         if (page == "Files")
         {
             MainWindow.Instance?.RestorePhotoViewerVisibility();
@@ -209,7 +206,7 @@ public partial class MainViewModel : ViewModelBase
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null, // handled via overlay
+            "Settings" => null, 
             _ => null
         };
 
@@ -218,10 +215,10 @@ public partial class MainViewModel : ViewModelBase
 
         CurrentPageViewModel = vm;
 
-        // Refresh sync counts when navigating
+        // Обновляем счётчики синхронизации при навигации
         _ = RefreshSyncCountsAsync();
 
-        // Show/hide PhotoViewerLayer and DocumentViewerLayer based on current page
+        // Показываем/скрываем PhotoViewerLayer и DocumentViewerLayer в зависимости от текущей страницы
         if (page == "Files")
         {
             MainWindow.Instance?.RestorePhotoViewerVisibility();
@@ -279,7 +276,6 @@ public partial class MainViewModel : ViewModelBase
         else
         {
             SetStatus("Нет соединения с сервером");
-            // LastSyncText не меняем — в офлайне показывается «Изменения сохраняются локально»
         }
         IsBusy = false;
         IsSyncing = false;
@@ -299,7 +295,6 @@ public partial class MainViewModel : ViewModelBase
             await _sync.SyncAsync();
     }
 
-    /// <summary>Вызывается из <see cref="App.OpenMainWindowAsync"/> после синхронизации.</summary>
     public void RefreshUserInfo()
     {
         OnPropertyChanged(nameof(UserName));
@@ -318,7 +313,6 @@ public partial class MainViewModel : ViewModelBase
         Navigate("Home");
     }
 
-    /// <summary>Reloads the avatar from the local DB and notifies the UI (supports AvatarData bytes and legacy AvatarPath).</summary>
     public async Task RefreshAvatarAsync()
     {
         if (_auth.UserId is not { } uid) { UserAvatarPath = null; UserAvatarData = null; return; }
@@ -366,7 +360,7 @@ public partial class MainViewModel : ViewModelBase
             await db.SaveChangesAsync();
             await _sync.QueueLocalActivityLogAsync(log);
         }
-        catch { /* non-critical */ }
+        catch { /* некритичная ошибка */ }
     }
 }
 

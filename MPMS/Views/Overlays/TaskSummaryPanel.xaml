@@ -30,7 +30,6 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,0,16">
 
-                <!-- Task header band -->
                 <Border x:Name="StatusHeaderBand" Padding="16,14,16,14">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -38,18 +37,15 @@
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <!-- Label -->
                         <TextBlock Text="ЗАДАЧА" FontSize="10" FontWeight="Bold"
                                    Foreground="#64748B" Margin="0,0,0,6"/>
 
-                        <!-- Task name -->
                         <TextBlock x:Name="TaskNameText"
                                    FontSize="16" FontWeight="Bold"
                                    Foreground="#000000"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"/>
 
-                        <!-- Status badge -->
                         <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5"
                                 HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
@@ -63,7 +59,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Progress section -->
                 <Border Padding="16,14,16,14" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
                     <StackPanel>
                         <Grid Margin="0,0,0,8">
@@ -78,7 +73,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Progress bar -->
                         <Border x:Name="ProgressTrack" Background="#EEF0F3" CornerRadius="4" Height="8" Margin="0,0,0,6">
                             <Border x:Name="ProgressFill" CornerRadius="4" HorizontalAlignment="Left"
                                     Background="#0082FF" Width="0">
@@ -101,10 +95,8 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Details section -->
                 <StackPanel Margin="16,14,16,0">
 
-                    <!-- Due date -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
                             <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
@@ -120,7 +112,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Project (if available) -->
                     <StackPanel x:Name="ProjectSection" Style="{StaticResource InfoRow}" Visibility="Collapsed">
                         <Border Style="{StaticResource IconBox}">
                             <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
@@ -136,7 +127,6 @@
 
                     <Border Background="#F0F0F0" Height="1" Margin="0,4,0,16"/>
 
-                    <!-- Прораб (как в сводке проекта) -->
                     <StackPanel x:Name="ForemanSection" Margin="0,0,0,12" Visibility="Collapsed">
                         <TextBlock Text="ПРОРАБ" Style="{StaticResource SectionLabel}"/>
                         <ItemsControl x:Name="ForemanList">
@@ -194,7 +184,6 @@
                         </ItemsControl>
                     </StackPanel>
 
-                    <!-- Работники (как в сводке проекта) -->
                     <StackPanel x:Name="WorkersSection" Margin="0,0,0,0" Visibility="Collapsed">
                         <TextBlock Text="РАБОТНИКИ" Style="{StaticResource SectionLabel}"/>
                         <ItemsControl x:Name="WorkersList">

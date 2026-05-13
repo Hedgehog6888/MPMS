@@ -58,7 +58,6 @@
         </Border.Effect>
 
         <StackPanel>
-            <!-- Header -->
             <Border Background="White" CornerRadius="12,12,0,0" Padding="20,18,20,14"
                     BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                 <Grid>
@@ -84,14 +83,11 @@
                 </Grid>
             </Border>
 
-            <!-- Content -->
             <StackPanel Margin="20,14,20,0">
-                <!-- Stage name -->
                 <TextBlock x:Name="StageNameText" Text=""
                            FontSize="13" FontWeight="SemiBold" Foreground="#000000"
                            TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                <!-- Status change display -->
                 <Grid Margin="0,0,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -103,32 +99,27 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Current status -->
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Текущий статус" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
                     <Border Grid.Row="1" Grid.Column="0" x:Name="CurrentStatusBadge" Style="{StaticResource StatusBadge}">
                         <TextBlock x:Name="CurrentStatusText" Text="" FontSize="12" FontWeight="SemiBold" Foreground="#42526E"/>
                     </Border>
 
-                    <!-- Arrow icon -->
                     <Grid Grid.Row="1" Grid.Column="1" Width="20" Height="20" Margin="8,0" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <Path Data="M 6 4 L 10 8 L 6 12" Stroke="#6B778C" StrokeThickness="2" 
                               Fill="{x:Null}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
 
-                    <!-- New status -->
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="Новый статус" FontSize="11" Foreground="#6B778C" Margin="0,0,0,4"/>
                     <Border Grid.Row="1" Grid.Column="2" x:Name="NewStatusBadge" Style="{StaticResource StatusBadge}">
                         <TextBlock x:Name="NewStatusText" Text="" FontSize="12" FontWeight="SemiBold" Foreground="#42526E"/>
                     </Border>
                 </Grid>
 
-                <!-- Optional message -->
                 <TextBlock x:Name="MessageText" Text=""
                            FontSize="12" Foreground="#6B778C" TextWrapping="Wrap"
                            Margin="0,12,0,0" Visibility="Collapsed"/>
             </StackPanel>
 
-            <!-- Footer -->
             <Border Padding="20,14,20,18">
                 <Grid>
                     <Button Content="Отмена" HorizontalAlignment="Left"

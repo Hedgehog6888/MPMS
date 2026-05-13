@@ -157,20 +157,15 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT COLUMN -->
             <StackPanel Grid.Column="0" VerticalAlignment="Top">
 
-                <!-- Avatar Card -->
                 <Border Style="{StaticResource ProfileCard}" Padding="24" Margin="0,0,0,16">
                     <StackPanel>
-                        <!-- Avatar area -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,16">
-                            <!-- Outer ring -->
                             <Border Width="96" Height="96" CornerRadius="48"
                                     HorizontalAlignment="Center"
                                     BorderBrush="#000000" BorderThickness="2"/>
 
-                            <!-- Avatar circle -->
                             <Border x:Name="AvatarBorder" Style="{StaticResource AvatarCircle90}"
                                     HorizontalAlignment="Center"
                                     Background="{StaticResource AvatarPlaceholderBrush}">
@@ -181,7 +176,6 @@
                                            VerticalAlignment="Center"/>
                             </Border>
 
-                            <!-- Photo image -->
                             <Border Style="{StaticResource AvatarCircle90}"
                                     HorizontalAlignment="Center">
                                 <Image x:Name="AvatarImage"
@@ -190,7 +184,6 @@
                                        Visibility="Collapsed"/>
                             </Border>
 
-                            <!-- Upload button overlay -->
                             <Border Width="90" Height="90" CornerRadius="45"
                                     HorizontalAlignment="Center"
                                     ClipToBounds="True"
@@ -223,7 +216,6 @@
 
                         </Grid>
 
-                        <!-- Name and role -->
                         <TextBlock x:Name="NameText"
                                    Text=""
                                    FontSize="18" FontWeight="Bold"
@@ -240,7 +232,6 @@
 
                         <Border Height="1" Background="#F0F0F0" Margin="0,0,0,12"/>
 
-                        <!-- Contact info -->
                         <StackPanel Margin="0,0,0,4">
                             <StackPanel x:Name="EmailRow" Orientation="Horizontal" Margin="0,0,0,10"
                                         Background="Transparent">
@@ -293,7 +284,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Stats card -->
                 <Border Style="{StaticResource ProfileCard}" Padding="16" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Последний вход" Style="{StaticResource ProfileSectionTitle}"/>
@@ -364,10 +354,8 @@
 
             </StackPanel>
 
-            <!-- RIGHT COLUMN -->
             <Grid Grid.Column="2">
                 <StackPanel>
-                <!-- Page header -->
                 <Grid Margin="0,0,0,20">
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Мой профиль" FontSize="22" FontWeight="Bold"
@@ -400,7 +388,6 @@
                     </WrapPanel>
                 </Grid>
 
-                <!-- View mode: Personal info -->
                 <Border x:Name="ViewPanel" Style="{StaticResource ProfileCard}"
                         Padding="24" Margin="0,0,0,16">
                     <StackPanel>
@@ -454,13 +441,11 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Worker specializations (only for Worker role) -->
                 <Border x:Name="WorkerSpecsPanel" Style="{StaticResource ProfileCard}"
                         Padding="24" Margin="0,0,0,16" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="Специализации" Style="{StaticResource ProfileSectionTitle}"/>
-                        
-                        <!-- Main specialty -->
+
                         <StackPanel Margin="0,0,0,12">
                             <TextBlock Text="Основная специализация" Style="{StaticResource ProfileLabel}"/>
                             <Border x:Name="MainSpecialtyBadge" CornerRadius="4" Padding="8,3" Margin="0,0,6,4">
@@ -468,7 +453,6 @@
                             </Border>
                         </StackPanel>
 
-                        <!-- Additional specialties in horizontal wrap -->
                         <StackPanel>
                             <TextBlock Text="Дополнительные специализации" Style="{StaticResource ProfileLabel}"/>
                             <WrapPanel x:Name="AdditionalSpecsWrap" Orientation="Horizontal" Margin="0,0,0,0"/>
@@ -476,13 +460,11 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Edit mode: Form -->
                 <Border x:Name="EditPanel" Style="{StaticResource ProfileCard}"
                         Padding="24" Margin="0,0,0,16" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="Редактирование профиля" Style="{StaticResource ProfileSectionTitle}"/>
 
-                        <!-- First name + Last name row -->
                         <Grid Margin="0,0,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -504,7 +486,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Email -->
                         <TextBlock Text="Email" Style="{StaticResource ProfileLabel}"/>
                         <Border Style="{StaticResource ProfileInput}">
                             <TextBox x:Name="EmailBox" Style="{StaticResource EditInputBox}"/>
@@ -522,7 +503,7 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="Дата рождения" Style="{StaticResource ProfileLabel}"/>
-                                <!-- Та же высота/стиль, что у адреса (ProfileInputPair); ширина только под дату -->
+
                                 <Border Grid.Row="1" Style="{StaticResource ProfileInputPair}"
                                         HorizontalAlignment="Left" Width="168">
                                     <DatePicker x:Name="BirthDatePicker" Style="{StaticResource EditDatePicker}"/>
@@ -542,14 +523,12 @@
                             </Grid>
                         </Grid>
 
-                        <!-- Current password (required to save changes) -->
                         <TextBlock Text="Текущий пароль (для подтверждения) *"
                                    Style="{StaticResource ProfileLabel}"/>
                         <Border Style="{StaticResource ProfileInput}">
                             <PasswordBox x:Name="CurrentPasswordBox" Style="{StaticResource EditPasswordBox}"/>
                         </Border>
 
-                        <!-- Error message -->
                         <Border x:Name="ErrorPanel" Background="#FFF0F0"
                                 CornerRadius="8" Padding="14,10"
                                 Margin="0,0,0,12" Visibility="Collapsed"
@@ -562,7 +541,6 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Success message -->
                         <Border x:Name="SuccessPanel" Background="#F0FDF4"
                                 CornerRadius="8" Padding="14,10"
                                 Margin="0,0,0,12" Visibility="Collapsed"

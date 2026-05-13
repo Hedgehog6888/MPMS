@@ -25,7 +25,6 @@ public class UserSyncer : IEntitySyncer
 
     public async Task PullAsync(LocalDbContext db)
     {
-        // Roles
         var apiRoles = await _api.GetRolesAsync();
         if (apiRoles is not null)
         {
@@ -42,7 +41,6 @@ public class UserSyncer : IEntitySyncer
             }
         }
 
-        // Users
         var users = await _api.GetUsersAsync();
         if (users is not null)
             await UserListMergeHelper.ApplyPulledUsersAsync(db, users, _auth);

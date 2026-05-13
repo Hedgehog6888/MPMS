@@ -49,7 +49,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header (like ConfirmDeleteDialog) -->
         <Border Grid.Row="0" Background="#FEF2F2" Padding="24,20,24,16">
             <Grid>
                 <StackPanel Orientation="Horizontal">
@@ -78,11 +77,9 @@
             </Grid>
         </Border>
 
-        <!-- Body -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,16,24,8">
 
-                <!-- Item info card -->
                 <Border Background="#F4F5F7" CornerRadius="8" Padding="14,12" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock x:Name="EntityTypeLabel" Text="Элемент"
@@ -94,7 +91,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Write-off mode selector (shown only for materials) -->
                 <StackPanel x:Name="ModePanel" Visibility="Collapsed" Margin="0,0,0,16">
                     <TextBlock Text="Что списать?" Style="{StaticResource FormLabel}"/>
                     <Grid Margin="0,6,0,0">
@@ -103,7 +99,7 @@
                             <ColumnDefinition Width="8"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Full -->
+
                         <Border x:Name="ModeFull" Grid.Column="0"
                                 MouseLeftButtonDown="ModeFull_Click"
                                 Background="White" BorderBrush="#DFE1E6"
@@ -115,7 +111,7 @@
                                            Margin="0,3,0,0"/>
                             </StackPanel>
                         </Border>
-                        <!-- Partial -->
+
                         <Border x:Name="ModePartial" Grid.Column="2"
                                 MouseLeftButtonDown="ModePartial_Click"
                                 Background="White" BorderBrush="#DFE1E6"
@@ -130,7 +126,6 @@
                     </Grid>
                 </StackPanel>
 
-                <!-- Quantity input (partial mode only) -->
                 <StackPanel x:Name="QuantityPanel" Visibility="Collapsed" Margin="0,0,0,16">
                     <TextBlock x:Name="QuantityLabel" Text="Количество *" Style="{StaticResource FormLabel}"/>
                     <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
@@ -141,7 +136,6 @@
                     </Border>
                 </StackPanel>
 
-                <!-- Comment -->
                 <TextBlock Text="Причина списания" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
@@ -152,7 +146,6 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
-                <!-- Error -->
                 <Border x:Name="ErrorPanel" Background="#FFF0F0"
                         CornerRadius="8" Padding="14,10"
                         Margin="0,0,0,8" Visibility="Collapsed"
@@ -168,7 +161,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Footer -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

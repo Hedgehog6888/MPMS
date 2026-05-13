@@ -18,14 +18,14 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Toolbar -->
+            <RowDefinition Height="Auto"/> 
             <RowDefinition Height="8"/>
-            <RowDefinition Height="Auto"/>  <!-- Sub-tabs -->
+            <RowDefinition Height="Auto"/> 
             <RowDefinition Height="8"/>
-            <RowDefinition Height="*"/>     <!-- Tables -->
+            <RowDefinition Height="*"/> 
         </Grid.RowDefinitions>
 
-        <!-- Archive toolbar -->
+        <!-- Панель инструментов архива -->
         <Border Grid.Row="0" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
             <Border x:Name="ArchiveSearchBorder"
@@ -74,7 +74,7 @@
             </Border>
         </Border>
 
-        <!-- Archive sub-tabs -->
+        <!-- Подвкладки архива -->
         <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                 CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal">
@@ -131,9 +131,8 @@
             </StackPanel>
         </Border>
 
-        <!-- Archive tables -->
         <Grid Grid.Row="4">
-            <!-- Projects -->
+            <!-- Проекты -->
             <Border x:Name="ArchProjPanel" Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1">
                 <Grid>
@@ -207,7 +206,7 @@
                 </Grid>
             </Border>
 
-            <!-- Tasks -->
+            <!-- Задачи -->
             <Border x:Name="ArchTaskPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1">
                 <Grid>
@@ -281,7 +280,7 @@
                 </Grid>
             </Border>
 
-            <!-- Stages -->
+            <!-- Этапы -->
             <Border x:Name="ArchStagePanel" Visibility="Collapsed" Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1">
                 <Grid>
@@ -355,7 +354,7 @@
                 </Grid>
             </Border>
 
-            <!-- Materials -->
+            <!-- Материалы -->
             <Border x:Name="ArchMaterialPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1">
                 <Grid>
@@ -424,7 +423,7 @@
                 </Grid>
             </Border>
 
-            <!-- Equipment -->
+            <!-- Оборудование -->
             <Border x:Name="ArchEquipmentPanel" Visibility="Collapsed" Background="White" CornerRadius="8"
                     BorderBrush="#DFE1E6" BorderThickness="1">
                 <Grid>

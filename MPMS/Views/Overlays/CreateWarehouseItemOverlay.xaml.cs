@@ -17,11 +17,10 @@ public partial class CreateWarehouseItemOverlay : UserControl
     private readonly WarehouseViewModel _vm;
     private readonly LocalMaterial? _editMaterial;
     private readonly LocalEquipment? _editEquipment;
-    /// <summary>Предпросмотр номера при создании; при сохранении передаётся в VM как предпочтительный.</summary>
     private string? _preferredInventoryForSave;
     private readonly Func<Task>? _afterStackedCloseSuccess;
 
-    // Display items for unit combo
+    // Элементы отображения для комбобокса единиц измерения
     private record UnitDisplayItem(string Display, string Short, bool IsInteger);
     private record EquipmentConditionItem(string Display, EquipmentCondition Value);
 
@@ -90,7 +89,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
             SaveButton.Content = _isEdit ? "Сохранить" : "Добавить";
             CategoryCombo.ItemsSource = materialCategories;
 
-            // Populate unit combo
+            // Заполнить комбобокс единиц измерения
             var units = MaterialUnits.All
                 .Select(u => new UnitDisplayItem($"{u.Display}  ({u.Short})", u.Short, u.IsInteger))
                 .ToList();
@@ -112,7 +111,7 @@ public partial class CreateWarehouseItemOverlay : UserControl
                 HeaderInventoryLine.Visibility = Visibility.Visible;
                 HeaderInventoryLine.Text = $"Инв. № {editMaterial.InventoryNumber ?? "—"}";
 
-                // Select matching unit
+                // Выбрать соответствующую единицу
                 if (!string.IsNullOrWhiteSpace(editMaterial.Unit))
                 {
                     var match = units.FirstOrDefault(u => u.Short == editMaterial.Unit);

@@ -16,12 +16,10 @@ public class AuthService : IAuthService
     private const string DefaultApiBase = "http://localhost:5147/api/";
 
     private readonly string _defaultApiBaseUrl;
-    /// <summary>Из %LocalAppData%\MPMS\client_settings.json — предпочтение пользователя на экране входа.</summary>
     private string? _persistedApiBaseUrl;
     private string? _activeApiBaseUrl;
 
     private AuthResponse? _current;
-    /// <summary>Пароль текущей сессии (только в памяти) — нужен для получения JWT после офлайн-входа при появлении сети.</summary>
     private string? _sessionPlainPassword;
 
     public AuthService(IDbContextFactory<LocalDbContext> dbFactory)
@@ -39,11 +37,9 @@ public class AuthService : IAuthService
     public string? Username => _current?.Username;
     public string? UserRole => _current?.Role;
 
-    /// <inheritdoc />
     public string ApiBaseUrl =>
         NormalizeApiBaseUrl(_activeApiBaseUrl ?? _persistedApiBaseUrl ?? _defaultApiBaseUrl);
 
-    /// <inheritdoc />
     public async Task PersistApiBaseUrlForNextLoginAsync(string urlInput)
     {
         var n = NormalizeApiBaseUrl(string.IsNullOrWhiteSpace(urlInput) ? DefaultApiBase : urlInput);
@@ -58,7 +54,7 @@ public class AuthService : IAuthService
                 new Dictionary<string, string> { ["apiBaseUrl"] = n });
             await File.WriteAllTextAsync(path, json);
         }
-        catch { /* не блокируем вход */ }
+        catch { }
     }
 
     public async Task SetSessionAsync(AuthResponse response, string plainPassword)
@@ -84,7 +80,6 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(Token) || string.IsNullOrWhiteSpace(RefreshToken))
             return false;
 
-        // Try using Refresh Token first
         var refreshResult = await api.RefreshAsync(Token, RefreshToken);
         if (refreshResult != null)
         {
@@ -97,7 +92,6 @@ public class AuthService : IAuthService
             }
         }
 
-        // Fallback to password if we have it
         var hasPassword = !string.IsNullOrEmpty(_sessionPlainPassword) && !string.IsNullOrWhiteSpace(Username);
         if (!hasPassword)
             return false;
@@ -122,7 +116,6 @@ public class AuthService : IAuthService
         _ = ClearSessionAsync(currentUserId);
     }
 
-    /// <summary>Обновляет данные текущего пользователя в памяти после изменений в профиле.</summary>
     public async Task UpdateCurrentUserAsync(string newName, string newUsername)
     {
         if (_current is null) return;
@@ -186,11 +179,6 @@ public class AuthService : IAuthService
         return (true, null);
     }
 
-    /// <summary>
-    /// Attempts to authenticate using the locally cached password hash.
-    /// First checks the active AuthSession (previously logged-in users),
-    /// then falls back to LocalUser.PasswordHash (admin-created users).
-    /// </summary>
     public async Task<(AuthResponse? Response, string? BlockMessage)> TryOfflineLoginAsync(string username, string plainPassword)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -281,7 +269,7 @@ public class AuthService : IAuthService
                     return NormalizeApiBaseUrl(s);
             }
         }
-        catch { /* ignore */ }
+        catch { }
         return null;
     }
 
@@ -299,7 +287,7 @@ public class AuthService : IAuthService
                     return NormalizeApiBaseUrl(s);
             }
         }
-        catch { /* ignore */ }
+        catch { }
         return DefaultApiBase;
     }
 
@@ -318,7 +306,7 @@ public class AuthService : IAuthService
         try
         {
             var bytes = Encoding.UTF8.GetBytes(plainPassword);
-#pragma warning disable CA1416 // WPF: DPAPI только Windows
+#pragma warning disable CA1416
             return Convert.ToBase64String(
                 ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser));
 #pragma warning restore CA1416

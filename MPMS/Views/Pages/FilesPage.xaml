@@ -12,7 +12,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -60,12 +59,10 @@
             </Grid>
         </Border>
 
-        <!-- Content -->
         <Border Grid.Row="1" Background="Transparent" Padding="24,8,24,24">
             <components:FilesControl DataContext="{Binding FilesControlVM}"/>
         </Border>
 
-        <!-- Global Drag & Drop Overlay -->
         <controls:DragDropOverlay Grid.RowSpan="2" 
                                   UploadCommand="{Binding FilesControlVM.ProcessFilesCommand}"
                                   Panel.ZIndex="100"/>

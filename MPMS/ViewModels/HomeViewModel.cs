@@ -31,7 +31,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _overdueTasksCount;
     [ObservableProperty] private int _totalFilesCount;
 
-    // Role-specific card properties
+    // Свойства карточек для конкретных ролей
     [ObservableProperty] private string _card2Title = "Ближайшее";
     [ObservableProperty] private string _card2Value = "—";
     [ObservableProperty] private string _card2SubValue = "Нет активных задач";
@@ -48,23 +48,23 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _card4Value = "Загрузка...";
     [ObservableProperty] private string _card4SubValue = "синхронизация данных";
 
-    // Card 1 segments
+    // Сегменты карточки 1
     [ObservableProperty] private int _card1Completed;
     [ObservableProperty] private int _card1InProgress;
     [ObservableProperty] private int _card1Planned;
     [ObservableProperty] private int _card1Total;
 
-    // For gradient stops
+    // Для градиентных остановок
     [ObservableProperty] private double _card1DoneOffset;
     [ObservableProperty] private double _card1InProgressOffset;
 
-    // Card 3 segments (for visual breakdown)
+    // Сегменты карточки 3 (для визуального разбиения)
     [ObservableProperty] private int _card3Segment1;
     [ObservableProperty] private int _card3Segment2;
     [ObservableProperty] private int _card3Segment3;
     [ObservableProperty] private int _card3Total;
 
-    // For gradient stops
+    // Для градиентных остановок
     [ObservableProperty] private double _card3Offset1;
     [ObservableProperty] private double _card3Offset2;
 
@@ -72,7 +72,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private bool _isOnline = true;
     [ObservableProperty] private bool _isAdmin;
 
-    // Detailed Tooltip Properties
+    // Свойства детальных всплывающих подсказок
     [ObservableProperty] private string _card1TooltipHeader = "Обзор нагрузки";
     [ObservableProperty] private string _card1TooltipDesc = "Текущее распределение объектов по статусам";
     [ObservableProperty] private string _card2TooltipHeader = "Ближайшее";
@@ -113,7 +113,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
     private void OnOnlineStatusChanged(object? sender, bool isOnline)
     {
-        // Update UI properties when sync status changes
+        // Обновляем свойства UI при изменении статуса синхронизации
         App.Current.Dispatcher.Invoke(() => UpdateSystemStatus());
     }
 
@@ -121,7 +121,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     {
         IsOnline = _sync.IsOnline;
         var syncTime = _sync.LastSyncTime?.ToString("HH:mm:ss") ?? "—";
-        LastSyncTime = syncTime; // Update the tooltip property too
+        LastSyncTime = syncTime;
         Card4Value = IsOnline ? "В сети" : "Офлайн";
         Card4SubValue = $"Синхронизация: {syncTime}";
 
@@ -194,7 +194,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
             await db.SaveChangesAsync();
 
-            // Update original values to reflect the saved state
+            // Обновляем исходные значения для отражения сохранённого состояния
             _originalTitle = SelectedNote.Title ?? "";
             _originalXaml = SelectedNote.Content ?? "";
 
@@ -260,7 +260,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     private bool HasChanges()
     {
         if (SelectedNote == null) return false;
-        // Compare with original values
+        // Сравниваем с исходными значениями
         return (SelectedNote.Title ?? "") != _originalTitle || (CurrentNoteXaml ?? "") != _originalXaml;
     }
 
@@ -292,35 +292,29 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
         try
         {
-            // Update technical status immediately before heavy DB queries
+            // Обновляем технический статус немедленно перед тяжёлыми запросами к БД
             Card4Title = "Статус системы";
             UpdateSystemStatus();
 
             await using var db = await _dbFactory.CreateDbContextAsync();
             var userId = _auth.UserId ?? Guid.Empty;
 
-
-
-            // 4. Recent Activities
             var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 100, excludeAuthEvents: true);
             RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
 
-            // 5. Notes
             await LoadNotesAsync();
 
-            // 6. Statistics (General)
             TotalFilesCount = await db.Files.CountAsync();
 
             var today = DateOnly.FromDateTime(DateTime.Today);
             var role = _auth.UserRole;
 
-            // Normalize role for comparison
             IsAdmin = role is "Admin" or "Administrator" or "Админ";
             bool isManager = role is "Project Manager" or "ProjectManager" or "Менеджер" or "Менеджер проектов";
             bool isForeman = role is "Foreman" or "Прораб";
             bool isWorker = role is "Worker" or "Работник";
 
-            // Helper for Russian pluralization
+            // Вспомогательная функция для русского множественного числа
             string GetPlural(int n, string one, string two, string five)
             {
                 int n1 = Math.Abs(n) % 100;
@@ -331,7 +325,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 return $"{n} {five}";
             }
 
-            // ── CARD 1: STATUS LINE (Load Overview) ──
+            // КАРТОЧКА 1: СТРОКА СТАТУСА (Обзор нагрузки) ──
             if (isWorker || isForeman)
             {
                 Card1Title = "Обзор нагрузки";
@@ -341,7 +335,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
                 if (isWorker)
                 {
-                    // Workers: count only stages assigned to them
+                    // Работники: считаем только этапы, назначенные им
                     var stagesQuery = from s in db.TaskStages
                                       join t in db.Tasks on s.TaskId equals t.Id
                                       join p in db.Projects on t.ProjectId equals p.Id
@@ -360,7 +354,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card1SubValue = "ваша нагрузка";
                     Card1TooltipDesc = "Ваши этапы по статусам:";
 
-                    // Card 2: Next Action for worker (stages only)
+                    // Карточка 2: Следующее действие для работника (только этапы)
                     var nextStage = await stagesQuery.Where(s => s.Status != StageStatus.Completed)
                         .OrderBy(s => s.DueDate == null).ThenBy(s => s.DueDate).FirstOrDefaultAsync();
 
@@ -395,7 +389,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 }
                 else // Foreman
                 {
-                    // Foremen: count only tasks assigned to them
+                    // Прорабы: считаем только задачи, назначенные им
                     var tasksQuery = from t in db.Tasks
                                      join p in db.Projects on t.ProjectId equals p.Id
                                      where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id))
@@ -412,7 +406,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card1SubValue = "задачи проектов";
                     Card1TooltipDesc = "Задачи в ваших проектах по статусам:";
 
-                    // Card 2: Next Action for foreman (tasks only)
+                    // Карточка 2: Следующее действие для прораба (только задачи)
                     var nextTask = await tasksQuery.Where(t => t.Status != Models.TaskStatus.Completed)
                         .OrderBy(t => t.DueDate == null).ThenBy(t => t.DueDate).FirstOrDefaultAsync();
 
@@ -446,7 +440,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     }
                 }
 
-                // Calculate offsets for gradient (0.0 to 1.0)
+                // Вычисляем смещения для градиента (от 0.0 до 1.0)
                 if (Card1Total > 0)
                 {
                     Card1DoneOffset = (double)Card1Completed / Card1Total;
@@ -458,7 +452,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card1InProgressOffset = 0;
                 }
 
-                // For Attention, we count ALL overdue tasks assigned to user
+                // Для внимания считаем ВСЕ просроченные задачи, назначенные пользователю
                 var overdueTasksCount = await (from t in db.Tasks
                                                join p in db.Projects on t.ProjectId equals p.Id
                                                where (t.AssignedUserId == userId || workerTaskIds.Contains(t.Id))
@@ -468,7 +462,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                                                   && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
                                                select t.Id).CountAsync();
 
-                // For Attention, we count ALL overdue stages assigned to user
+                // Для внимания считаем ВСЕ просроченные этапы, назначенные пользователю
                 var overdueStagesCount = await (from s in db.TaskStages
                                                 join t in db.Tasks on s.TaskId equals t.Id
                                                 join p in db.Projects on t.ProjectId equals p.Id
@@ -514,9 +508,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3TooltipDesc = "Внимание! Обнаружены объекты с истекшим сроком выполнения:";
                     }
                 }
-                else // Foreman
+                else 
                 {
-                    // For foreman, also count unassigned tasks in their projects (management concern)
                     int unassigned = await (from t in db.Tasks
                                              join p in db.Projects on t.ProjectId equals p.Id
                                              where foremanProjectIds.Contains(p.Id)
@@ -609,7 +602,6 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     ? "Статистика по курируемым вами проектам:"
                     : "Общий обзор всех проектов в организации:";
 
-                // Card 2: Next Action or Users
                 if (isManager)
                 {
                     var nextProject = await query.Where(p => p.Status != ProjectStatus.Completed)
@@ -641,7 +633,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card2TooltipDesc = "У ваших текущих проектов не установлены крайние сроки.";
                     }
                 }
-                else // Admin
+                else
                 {
                     Card2Title = "На удаление";
                     var projectsMarked = await db.Projects.CountAsync(p => p.IsMarkedForDeletion);
@@ -661,7 +653,6 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                     Card2TooltipDesc = "Список объектов, ожидающих подтверждения администратора для окончательного удаления.";
                 }
 
-                // Card 3: Attention (Risk Zone)
                 Card3Title = "Внимание";
                 if (isManager)
                 {
@@ -713,9 +704,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3TooltipDesc = "Обнаружены критические задержки в курируемых проектах:";
                     }
                 }
-                else // Admin
+                else 
                 {
-                    // Global overdue counts for admin (only in active projects/tasks)
                     int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed && p.Status != ProjectStatus.Completed && p.EndDate < today);
 
                     int globalOverdueTasks = await (from t in db.Tasks
@@ -770,7 +760,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 }
             }
 
-            // Technical status is now updated at the beginning of LoadAsync
+            // Технический статус теперь обновляется в начале LoadAsync
 
         }
         catch (Exception ex)

@@ -2,10 +2,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MPMS.API.Data;
 
-/// <summary>
-/// Полное удаление задачи и зависимостей. Простой <see cref="DbSet{TEntity}.Remove"/> не проходит из‑за FK с NoAction
-/// (обсуждения, файлы задачи, зависимости «другие задачи → эта», движения склада, история оборудования).
-/// </summary>
 public static class TaskCascadeDelete
 {
     public static async Task<bool> TryDeleteTaskGraphAsync(ApplicationDbContext db, Guid taskId,

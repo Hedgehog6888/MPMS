@@ -67,13 +67,13 @@ public partial class TaskDetailViewModel : ViewModelBase
         HasNoStages = stages.Count == 0;
         StagesTabLabel = stages.Count > 0 ? $"Этапы ({stages.Count})" : "Этапы";
 
-        // Load all materials for all stages of this task
+        // Загружаем все материалы для всех этапов этой задачи
         var stageIds = stages.Select(s => s.Id).ToList();
         var mats = await db.StageMaterials
             .Where(sm => stageIds.Contains(sm.StageId))
             .ToListAsync();
 
-        // Populate StageName for display
+        // Заполняем StageName для отображения
         foreach (var mat in mats)
         {
             var stage = stages.FirstOrDefault(s => s.Id == mat.StageId);
@@ -86,7 +86,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         if (SelectedStage is not null)
             await LoadStageMaterialsAsync(SelectedStage.Id);
 
-        // Load files for this task
+        // Загружаем файлы для этой задачи
         var files = await db.Files
             .Where(f => f.TaskId == Task.Id)
             .OrderByDescending(f => f.CreatedAt)
@@ -100,11 +100,11 @@ public partial class TaskDetailViewModel : ViewModelBase
             s.ProjectIsMarkedForDeletion = Task.ProjectIsMarkedForDeletion;
         }
 
-        // Refresh task progress from active stages
+        // Обновляем прогресс задачи из активных этапов
         ProgressCalculator.ApplyTaskMetrics(Task, stages);
         OnPropertyChanged(nameof(Task));
 
-        // Load messages for this task with AvatarData from Users
+        // Загружаем сообщения для этой задачи с AvatarData из Users
         var messages = await db.Messages
             .Where(m => m.TaskId == Task.Id)
             .OrderBy(m => m.CreatedAt)
@@ -611,7 +611,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         var task = await db.Tasks.FindAsync(taskId);
         if (task is null) return;
 
-        // Validate due date only if it was actually changed
+        // Проверяем срок выполнения только если он был изменён
         if (req.DueDate != task.DueDate)
         {
             if (!DueDatePolicy.IsAllowed(req.DueDate))
@@ -629,7 +629,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         task.AssignedUserName = assignedName;
         task.Priority = req.Priority;
         task.DueDate = req.DueDate;
-        // Status is auto-calculated from stages (StatusCalculator)
+        // Статус вычисляется автоматически из этапов (StatusCalculator)
         var stages = await db.TaskStages.Where(s => s.TaskId == taskId).ToListAsync();
         task.TotalStages = stages.Count;
         task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
@@ -649,7 +649,6 @@ public partial class TaskDetailViewModel : ViewModelBase
         await _sync.QueueOperationAsync("Task", taskId, SyncOperation.Update, syncTaskReq);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", taskId, ActivityActionKind.Updated, details);
 
-        // Логируем изменение статуса задачи отдельно
         if (oldStatus != task.Status)
         {
             var statusText = task.Status switch
@@ -801,10 +800,10 @@ public partial class TaskDetailViewModel : ViewModelBase
         taskEntity.UpdatedAt = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
 
-        // Auto-update project status based on task completion
+        // Автоматически обновляем статус проекта на основе завершения задачи
         await RecalcProjectStatusAsync(ctx, taskEntity.ProjectId);
 
-        // Update the in-memory Task so the UI reflects the new progress immediately
+        // Обновляем задачу в памяти, чтобы UI немедленно отразил новый прогресс
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
             if (Task is not null)
@@ -848,7 +847,6 @@ public partial class TaskDetailViewModel : ViewModelBase
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        // Логируем изменение статуса проекта (без аватарки - системное действие)
         if (oldStatus != project.Status)
         {
             var statusText = project.Status switch
@@ -863,7 +861,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             db.ActivityLogs.Add(new LocalActivityLog
             {
                 Id = Guid.NewGuid(),
-                UserId = null, // Системное действие - без аватарки
+                UserId = null,
                 ActorRole = "System",
                 ActionType = ActivityActionKind.StatusChanged,
                 ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",

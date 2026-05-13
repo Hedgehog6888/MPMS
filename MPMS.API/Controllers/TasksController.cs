@@ -165,8 +165,6 @@ public class TasksController : ControllerBase
         var task = await _db.Tasks.FindAsync(id);
         if (task is null) return NotFound();
 
-        // Снятие архива: не блокировать по просроченному сроку — иначе IsArchived не сбрасывается на сервере.
-        // Для обычного редактирования активной задачи срок по-прежнему не раньше «сегодня».
         var restoringFromArchive = task.IsArchived && !request.IsArchived;
         if (!request.IsArchived && !DueDatePolicy.IsAllowed(request.DueDate) && !restoringFromArchive)
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });

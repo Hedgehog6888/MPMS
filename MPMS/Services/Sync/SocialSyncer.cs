@@ -23,7 +23,6 @@ public class SocialSyncer : IEntitySyncer
 
     public async Task PullAsync(LocalDbContext db)
     {
-        // 1. Discussion messages
         DateTime? msgSince = null;
         if (await db.Messages.AnyAsync())
             msgSince = await db.Messages.MaxAsync(m => m.CreatedAt);
@@ -49,7 +48,6 @@ public class SocialSyncer : IEntitySyncer
             }
         }
 
-        // 2. Activity logs
         DateTime? actSince = null;
         if (await db.ActivityLogs.AnyAsync())
             actSince = await db.ActivityLogs.MaxAsync(a => a.CreatedAt);
@@ -61,7 +59,6 @@ public class SocialSyncer : IEntitySyncer
                 var existing = await db.ActivityLogs.FindAsync(a.Id);
                 if (existing is not null)
                 {
-                    // Update existing log with correct data from server
                     existing.UserId = a.UserId;
                     existing.ActorRole = a.ActorRole;
                     existing.UserName = a.UserName;

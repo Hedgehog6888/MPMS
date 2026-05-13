@@ -30,7 +30,6 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,0,16">
 
-                <!-- Project header band -->
                 <Border x:Name="StatusHeaderBand" Padding="16,14,16,14">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -38,18 +37,15 @@
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <!-- Label -->
                         <TextBlock Text="ПРОЕКТ" FontSize="10" FontWeight="Bold"
                                    Foreground="#64748B" Margin="0,0,0,6"/>
 
-                        <!-- Project name -->
                         <TextBlock x:Name="ProjectNameText"
                                    FontSize="16" FontWeight="Bold"
                                    Foreground="#000000"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,10"/>
 
-                        <!-- Status badge -->
                         <Border x:Name="StatusBadge" CornerRadius="6" Padding="10,5"
                                 HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
@@ -63,7 +59,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Progress section -->
                 <Border Padding="16,14,16,14" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
                     <StackPanel>
                         <Grid Margin="0,0,0,8">
@@ -78,7 +73,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Progress bar -->
                         <Border Background="#E9ECEF" CornerRadius="3" Height="10" Margin="0,0,0,6">
                             <Border x:Name="ProgressFill" CornerRadius="3" HorizontalAlignment="Left"
                                     Background="#0082FF" Width="0">
@@ -101,10 +95,8 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Details section -->
                 <StackPanel Margin="16,14,16,0">
 
-                    <!-- Client -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
                             <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}"
@@ -118,7 +110,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Address -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
                             <Image Source="{svgc:SvgImage Source=/icons/location.svg, AppName=MPMS}"
@@ -132,7 +123,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Dates -->
                     <StackPanel Style="{StaticResource InfoRow}">
                         <Border Style="{StaticResource IconBox}">
                             <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
@@ -148,10 +138,8 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Separator -->
                     <Border Background="#F0F0F0" Height="1" Margin="0,4,0,16"/>
 
-                    <!-- Manager -->
                     <StackPanel Margin="0,0,0,12">
                         <TextBlock Text="МЕНЕДЖЕР" Style="{StaticResource SectionLabel}"/>
                         <StackPanel Orientation="Horizontal">
@@ -172,7 +160,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Foreman -->
                     <StackPanel x:Name="ForemanSection" Margin="0,0,0,12" Visibility="Collapsed">
                         <TextBlock Text="ПРОРАБ" Style="{StaticResource SectionLabel}"/>
                         <ItemsControl x:Name="ForemanList">
@@ -203,13 +190,10 @@
                         </ItemsControl>
                     </StackPanel>
 
-                    <!-- Workers -->
                     <StackPanel x:Name="WorkersSection" Margin="0,0,0,0" Visibility="Collapsed">
                         <TextBlock Text="РАБОТНИКИ" Style="{StaticResource SectionLabel}"/>
 
-                        <!-- Avatar strip for workers -->
                         <StackPanel x:Name="WorkersAvatarStrip" Orientation="Horizontal" Margin="0,0,0,8">
-                            <!-- Avatars added in code-behind -->
                         </StackPanel>
 
                         <ItemsControl x:Name="WorkersList">

@@ -1,9 +1,8 @@
 namespace MPMS.Models;
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
 public record LoginRequest(string Username, string Password);
 
-/// <summary>Result of a login attempt — distinguishes network errors from wrong credentials.</summary>
+/// <summary>Результат попытки входа — различает сетевые ошибки от неверных учётных данных.</summary>
 public record LoginResult(AuthResponse? Response, string? Error)
 {
     public bool Success => Response is not null;
@@ -20,7 +19,7 @@ public record AuthResponse(Guid UserId, string Name, string Username, string Rol
 public record RefreshRequest(string AccessToken, string RefreshToken);
 public record RoleDto(Guid Id, string Name, string? Description);
 
-// ── Projects ──────────────────────────────────────────────────────────────────
+// ── Проекты
 public record CreateProjectRequest(string Name, string? Description, string? Client,
     string? Address, DateOnly? StartDate, DateOnly? EndDate, Guid ManagerId, Guid? Id = null);
 
@@ -45,7 +44,7 @@ public record ProjectListResponse(Guid Id, string Name, string? Client,
     bool IsMarkedForDeletion, bool IsArchived, bool IsClosed = false,
     DateTime? ClosedAt = null, string? ClosureReason = null);
 
-// ── Tasks ─────────────────────────────────────────────────────────────────────
+// ── Задачи
 public record CreateTaskRequest(Guid ProjectId, string Name, string? Description,
     Guid? AssignedUserId, TaskPriority Priority, DateOnly? DueDate, Guid? Id = null);
 
@@ -66,7 +65,7 @@ public record TaskResponse(Guid Id, Guid ProjectId, string ProjectName,
     bool IsMarkedForDeletion = false, bool IsArchived = false,
     List<Guid>? AssigneeUserIds = null);
 
-// ── Stages ────────────────────────────────────────────────────────────────────
+// ── Этапы
 public record CreateStageRequest(Guid TaskId, string Name, string? Description,
     Guid? AssignedUserId, DateOnly? DueDate = null, Guid? Id = null,
     Guid? ServiceTemplateId = null, decimal WorkQuantity = 0, decimal? WorkPricePerUnit = null,
@@ -90,7 +89,7 @@ public record StageResponse(Guid Id, Guid TaskId, string Name, string? Descripti
     bool IsMarkedForDeletion = false, bool IsArchived = false,
     List<Guid>? AssigneeUserIds = null);
 
-// ── Materials & inventory ────────────────────────────────────────────────────
+// ── Материалы и инвентарь
 public record MaterialCategoryResponse(Guid Id, string Name);
 public record EquipmentCategoryResponse(Guid Id, string Name);
 public record CreateMaterialCategoryRequest(string Name, Guid? Id = null);
@@ -256,13 +255,13 @@ public record StageServiceResponse(Guid Id, Guid ServiceTemplateId, string Servi
     string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
 public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity, decimal? PricePerUnit = null);
 
-// ── Files ─────────────────────────────────────────────────────────────────────
+// ── Файлы
 public record FileDto(Guid Id, string FileName, string FileType, long FileSize,
     Guid UploadedById, string UploadedByName,
     Guid? ProjectId, Guid? TaskId, Guid? StageId, DateTime CreatedAt,
     DateTime? OriginalCreatedAt = null, string? ProjectName = null, string? StageName = null);
 
-// ── Users ─────────────────────────────────────────────────────────────────────
+// ── Пользователи
 public record UserResponse(Guid Id, string FirstName, string LastName, string Username, string? Email, string Role, Guid RoleId, DateTime CreatedAt, byte[]? AvatarData = null, string? SubRole = null, string? AdditionalSubRoles = null, DateOnly? BirthDate = null, string? HomeAddress = null, bool IsBlocked = false, DateTime? BlockedAt = null, string? BlockedReason = null);
 
 public record UploadAvatarRequest(byte[] AvatarData);
@@ -283,7 +282,7 @@ public record CreateUserRequest(
 
 public record UpdateUserRequest(string FirstName, string LastName, string Username, string? Email, Guid RoleId, string? NewPassword = null, string? SubRole = null, string? AdditionalSubRoles = null, DateOnly? BirthDate = null, string? HomeAddress = null, bool? IsBlocked = null, string? BlockedReason = null);
 
-// ── Sync: сообщения, активность, соисполнители ─────────────────────────────
+// ── Синхронизация: сообщения, активность, соисполнители
 public record AssigneeSyncItemDto(Guid Id, Guid UserId);
 
 public record ReplaceTaskAssigneesRequest(List<AssigneeSyncItemDto> Assignees);

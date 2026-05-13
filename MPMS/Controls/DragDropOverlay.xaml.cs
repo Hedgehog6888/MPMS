@@ -40,10 +40,8 @@ public partial class DragDropOverlay : UserControl
         var parent = this.Parent as UIElement;
         if (parent != null)
         {
-            // Убеждаемся, что родитель принимает Drop, иначе события не будут возникать
             parent.AllowDrop = true;
 
-            // Подписываемся на туннельные события родителя
             parent.PreviewDragEnter += Parent_PreviewDragEnter;
             parent.PreviewDragOver += Parent_PreviewDragEnter;
         }
@@ -54,9 +52,6 @@ public partial class DragDropOverlay : UserControl
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             ShowOverlay();
-            // Важно: если оверлей только что стал видимым, система Drag&Drop может 
-            // не сразу понять, что теперь он - главный таргет. 
-            // Устанавливаем эффекты сразу здесь для родителя.
             e.Effects = DragDropEffects.Copy;
         }
     }

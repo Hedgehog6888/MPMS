@@ -27,7 +27,6 @@ public partial class AdminUserInfoOverlay : UserControl
 
     private async Task LoadAsync()
     {
-        // Avatar
         AvatarBorder.Background = new InitialsToBrushConverter().Convert(_row.Initials, typeof(Brush), parameter: null!, System.Globalization.CultureInfo.CurrentCulture) as Brush
                                    ?? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2));
         if (_row.AvatarData is { Length: > 0 })
@@ -43,7 +42,6 @@ public partial class AdminUserInfoOverlay : UserControl
             AvatarInitials.Visibility = Visibility.Visible;
         }
 
-        // Name / username / role
         FullNameText.Text = _row.Name;
         UsernameText.Text = $"@{_row.Username}";
         RoleBadgeText.Text = _row.RoleDisplay;
@@ -80,7 +78,6 @@ public partial class AdminUserInfoOverlay : UserControl
                 AddNamedBadge(ex);
         }
 
-        // Status
         if (_row.IsBlocked)
         {
             StatusBar.Background = new SolidColorBrush(Color.FromRgb(0xFE, 0xE2, 0xE2));
@@ -112,7 +109,6 @@ public partial class AdminUserInfoOverlay : UserControl
             ? Visibility.Collapsed
             : Visibility.Visible;
 
-        // Contact info
         EmailText.Text = string.IsNullOrWhiteSpace(_row.Email) ? "—" : _row.Email;
         CreatedAtText.Text = _row.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy");
         BirthDateText.Text = _row.BirthDate.HasValue
@@ -122,7 +118,6 @@ public partial class AdminUserInfoOverlay : UserControl
 
         HeaderSubtitle.Text = $"ID: {_row.Id.ToString()[..8]}…";
 
-        // Load last login + recent activity
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -148,7 +143,6 @@ public partial class AdminUserInfoOverlay : UserControl
 
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
-        // Replace drawer content directly without HideDrawer (avoids animation conflict)
         var overlay = new AdminUserFormOverlay();
         overlay.SetEditMode(_adminVm, _row);
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);

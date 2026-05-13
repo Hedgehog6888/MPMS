@@ -1,6 +1,6 @@
 namespace MPMS.ViewModels;
 
-/// <summary>Marker ViewModel for the Profile page — actual logic lives in ProfilePage.xaml.cs.</summary>
+/// <summary>ViewModel-маркер для страницы профиля — фактическая логика находится в ProfilePage.xaml.cs.</summary>
 public class ProfileViewModel : ViewModelBase
 {
 }

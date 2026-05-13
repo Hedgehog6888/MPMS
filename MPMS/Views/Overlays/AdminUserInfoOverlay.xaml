@@ -34,7 +34,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══ Header ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -65,7 +64,6 @@
             </Grid>
         </Border>
 
-        <!-- ═══ Body ═════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,20,24,8">
 
@@ -97,7 +95,6 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Status badge -->
                 <Border x:Name="StatusBar" CornerRadius="6" Padding="12,8" Margin="0,0,0,4">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="StatusDot" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -108,7 +105,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- CONTACT INFO -->
                 <TextBlock Text="КОНТАКТНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
                 <Grid Margin="0,0,0,0">
@@ -150,7 +146,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- RECENT ACTIVITY -->
                 <TextBlock Text="ПОСЛЕДНЯЯ АКТИВНОСТЬ" Style="{StaticResource SectionHeader}"/>
                 <ItemsControl x:Name="ActivityList">
                     <ItemsControl.ItemTemplate>
@@ -180,7 +175,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ═══ Footer ═══════════════════════════════════════════════════ -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0" Background="White">
             <Grid>

@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace MPMS.Models;
 
-/// <summary>Serializes additional worker specialties as JSON array in DB.</summary>
+/// <summary>Сериализует дополнительные специальности работника как JSON массив в БД.</summary>
 public static class WorkerSpecialtiesJson
 {
     private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -37,7 +37,7 @@ public static class WorkerSpecialtiesJson
         }
     }
 
-    /// <summary>One line under name for workers: main + optional "также: …".</summary>
+    /// <summary>Одна строка под именем для работников: основная + опционально "также: …".</summary>
     public static string FormatWorkerLine(string? mainSubRole, string? additionalJson)
     {
         var extras = Deserialize(additionalJson);
@@ -205,15 +205,12 @@ public static class WorkerSpecialtiesJson
         return reserved + (Math.Abs(h) % (PaletteSize - reserved));
     }
 
-    /// <summary>RGB фона плашки по названию специальности (то же имя — тот же цвет).</summary>
     public static (byte R, byte G, byte B) BadgeBackgroundRgbForSpecName(string? spec) =>
         SpecBgPalette[PaletteIndexForSpec(spec)];
-
-    /// <summary>RGB текста плашки по названию специальности.</summary>
+    
     public static (byte R, byte G, byte B) BadgeForegroundRgbForSpecName(string? spec) =>
         SpecFgPalette[PaletteIndexForSpec(spec)];
 
-    /// <summary>RGB для круга-аватара в списке (насыщенный акцент).</summary>
     public static (byte R, byte G, byte B) PickerAvatarRgbForSpecName(string? spec) =>
         BadgeForegroundRgbForSpecName(spec);
 }

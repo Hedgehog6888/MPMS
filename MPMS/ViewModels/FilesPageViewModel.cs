@@ -21,7 +21,7 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
     {
         if (!_isLoaded)
         {
-            FilesControlVM.Initialize(null); // Глобальный режим
+            FilesControlVM.Initialize(null); 
             _isLoaded = true;
         }
         await Task.CompletedTask;

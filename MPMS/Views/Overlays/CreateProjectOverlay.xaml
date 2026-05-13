@@ -34,7 +34,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Padding="24,18"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
             <Grid>
@@ -63,14 +62,11 @@
             </Grid>
         </Border>
 
-        <!-- Form -->
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,8,24,8">
 
-                <!-- Section: Основная информация -->
                 <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Name -->
                 <TextBlock Text="Название проекта *" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12" Height="42">
@@ -79,7 +75,6 @@
                              Padding="0"/>
                 </Border>
 
-                <!-- Description -->
                 <TextBlock Text="Описание" Style="{StaticResource FormLabel}"/>
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="12,10" Margin="0,0,0,12">
@@ -90,7 +85,6 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
-                <!-- Client + Address -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -117,7 +111,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Dates -->
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -136,10 +129,8 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Section: Команда -->
                 <TextBlock Text="КОМАНДА ПРОЕКТА" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Manager (один выбор, тот же вид списка, что у прорабов/работников) -->
                 <TextBlock Text="Менеджер проекта *" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
                 <Border x:Name="ManagerPickerHost" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" MaxHeight="200" Margin="0,0,0,16">
@@ -207,7 +198,6 @@
                     </ScrollViewer>
                 </Border>
 
-                <!-- Foreman picker -->
                 <Grid Margin="0,0,0,12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -217,12 +207,10 @@
 
                     <TextBlock Grid.Row="0" Text="Прораб" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <!-- Selected foremen chips -->
                     <WrapPanel x:Name="SelectedForemenPanel" Grid.Row="1"
                                Margin="0,0,0,8"
                                Visibility="Collapsed"/>
 
-                    <!-- Foreman list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -290,7 +278,6 @@
                     </Border>
                 </Grid>
 
-                <!-- Workers multi-picker -->
                 <Grid Margin="0,0,0,12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -300,11 +287,9 @@
 
                     <TextBlock Grid.Row="0" Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
-                    <!-- Selected workers chips -->
                     <WrapPanel x:Name="SelectedWorkersPanel" Grid.Row="1"
                                Margin="0,0,0,8" Visibility="Collapsed"/>
 
-                    <!-- Workers list (как в CreateTaskOverlay/CreateStageOverlay) -->
                     <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                             CornerRadius="8" MaxHeight="200">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -376,7 +361,6 @@
                     </Border>
                 </Grid>
 
-                <!-- Status row (edit mode only) -->
                 <StackPanel x:Name="StatusRow" Margin="0,0,0,12" Visibility="Collapsed">
                     <TextBlock Text="СТАТУС" Style="{StaticResource SectionHeader}"/>
                     <ComboBox x:Name="StatusCombo" Style="{StaticResource FormCombo}"
@@ -386,7 +370,6 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Footer -->
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Background="White">

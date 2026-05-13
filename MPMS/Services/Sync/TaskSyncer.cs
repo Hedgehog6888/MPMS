@@ -23,7 +23,6 @@ public class TaskSyncer : IEntitySyncer
 
     public async Task PullAsync(LocalDbContext db)
     {
-        // 1. Pull basic task info
         var tasks = await _api.GetTasksAsync();
         if (tasks is not null)
         {
@@ -47,7 +46,6 @@ public class TaskSyncer : IEntitySyncer
                         local.ProjectName = t.ProjectName;
                         local.IsSynced = true;
                     }
-                    // If not synced, don't overwrite local changes - protect them from server data
                 }
                 else
                 {
@@ -80,7 +78,6 @@ public class TaskSyncer : IEntitySyncer
                 await LocalDbGraphDeletion.PermanentlyDeleteTaskGraphAsync(db, tid);
         }
 
-        // 2. Pull detailed stage info and assignees
         var taskIds = await db.Tasks.Select(t => t.Id).ToListAsync();
         var existingStages = await db.TaskStages.ToDictionaryAsync(s => s.Id);
         foreach (var taskId in taskIds)
@@ -139,7 +136,6 @@ public class TaskSyncer : IEntitySyncer
                         localStage.IsMarkedForDeletion = s.IsMarkedForDeletion;
                         localStage.IsArchived = s.IsArchived;
                     }
-                    // If not synced, don't overwrite local changes
                 }
                 else
                 {

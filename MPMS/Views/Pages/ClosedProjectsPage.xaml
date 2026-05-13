@@ -12,7 +12,6 @@
         <infra:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True"/>
         <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
 
-        <!-- Slim progress bar template -->
         <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="2">
                 <Border x:Name="PART_Track" CornerRadius="2">
@@ -22,7 +21,6 @@
             </Border>
         </ControlTemplate>
 
-        <!-- Column header style -->
         <Style x:Key="ColHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -37,7 +35,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- PAGE HEADER -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <StackPanel>
                 <TextBlock Text="Закрытые проекты" FontSize="24" FontWeight="Bold" Foreground="#111111"/>
@@ -48,7 +45,6 @@
             </StackPanel>
         </Border>
 
-        <!-- BODY: скролл справа у края, но контент/плашка с отступом справа -->
         <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
             <ScrollViewer x:Name="MainListScroll"
                           VerticalScrollBarVisibility="Visible"
@@ -56,7 +52,6 @@
                           Background="Transparent"
                           Panel.ZIndex="0">
                 <StackPanel>
-                    <!-- Заголовки колонок -->
                     <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
                             BorderThickness="1.5" BorderBrush="Transparent">
                         <Grid>
@@ -75,7 +70,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Projects list -->
                     <ItemsControl ItemsSource="{Binding Projects}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -110,7 +104,6 @@
                                             <ColumnDefinition Width="*" MinWidth="115"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Name -->
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}"
                                                        FontSize="13" FontWeight="SemiBold"
@@ -118,14 +111,12 @@
                                                        TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
 
-                                        <!-- Client -->
                                         <TextBlock Grid.Column="1"
                                                    Text="{Binding Client, TargetNullValue='Без заказчика'}"
                                                    FontSize="12" Foreground="#111111"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"/>
 
-                                        <!-- Status badge -->
                                         <Border Grid.Column="2"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
@@ -141,7 +132,6 @@
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
 
-                                        <!-- Due date -->
                                         <StackPanel Grid.Column="3" Orientation="Horizontal"
                                                     VerticalAlignment="Center">
                                             <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
@@ -153,7 +143,6 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
 
-                                        <!-- Progress -->
                                         <StackPanel Grid.Column="4" VerticalAlignment="Center">
                                             <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
                                                          Maximum="100" Height="6"
@@ -170,7 +159,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Empty state -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                 Visibility="{Binding Projects.Count, Converter={StaticResource BoolToVisInv}}">
                         <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
@@ -185,7 +173,6 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Плавающая панель поиска -->
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
                 HorizontalAlignment="Stretch" Margin="0,0,24,0"

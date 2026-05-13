@@ -82,7 +82,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ── PAGE HEADER (title left, nav+today right — same pattern as Calendar) ── -->
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -96,7 +95,6 @@
                                FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                 </StackPanel>
 
-                <!-- "Сегодня" + month nav + help — same layout as Calendar header -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Height="30" Padding="14,0" Margin="0,0,10,0"
                             Command="{Binding GoToTodayCommand}" Cursor="Hand">
@@ -165,7 +163,6 @@
             </Grid>
         </Border>
 
-        <!-- ── TABS ROW ─────────────────────────────────────────────── -->
         <Border Grid.Row="1" Background="Transparent" Padding="16,0">
             <controls:TabBarControl x:Name="TimelineTabBar"
                                     GroupName="TimelineTabs"
@@ -175,20 +172,17 @@
             </controls:TabBarControl>
         </Border>
 
-        <!-- ── TIMELINE BODY ────────────────────────────────────────────── -->
         <Border Grid.Row="2" Background="White" Margin="16,8,16,16"
                 CornerRadius="12" BorderBrush="#E2E8F0" BorderThickness="1"
                 ClipToBounds="True">
             <Grid>
 
-                <!-- ── TASKS SECTION ──────────────────────────────── -->
                 <Grid x:Name="TasksSection">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Modern header with subtle background -->
                     <Border Grid.Row="0" Background="#F8FAFC"
                             Padding="20,16,20,12"
                             CornerRadius="12,12,0,0">
@@ -241,7 +235,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Task rows with modern card design -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
                                   ScrollChanged="TimelineScrollViewer_ScrollChanged">
@@ -271,7 +264,6 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Task info (left) -->
                                             <Border Grid.Column="0" Padding="0,0,20,0"
                                                     ToolTip="{Binding Task.Name}">
                                                 <StackPanel>
@@ -296,9 +288,7 @@
                                                 </StackPanel>
                                             </Border>
 
-                                            <!-- Timeline area (right) -->
                                             <Grid Grid.Column="1">
-                                                <!-- Subtle day separators -->
                                                 <ItemsControl ItemsSource="{Binding DataContext.DayHeaders,
                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               IsHitTestVisible="False">
@@ -314,7 +304,6 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
 
-                                                <!-- Modern proportional bar -->
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="{Binding BarLeft,     Converter={StaticResource FracToGL}}"/>
@@ -368,7 +357,6 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- Empty state -->
                     <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
                                 Visibility="{Binding TaskRows.Count, Converter={StaticResource NullToVisInv}}">
                         <TextBlock Text="Нет задач для отображения"
@@ -377,14 +365,12 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- ── STAGES SECTION ─────────────────────────────── -->
                 <Grid x:Name="StagesSection" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Modern header with subtle background -->
                     <Border Grid.Row="0" Background="#F8FAFC"
                             Padding="20,16,20,12"
                             CornerRadius="12,12,0,0">
@@ -437,7 +423,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Stage rows with modern card design -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
                                   ScrollChanged="TimelineScrollViewer_ScrollChanged">
@@ -467,7 +452,6 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Stage info (left) -->
                                             <Border Grid.Column="0" Padding="0,0,20,0"
                                                     ToolTip="{Binding Stage.Stage.Name}">
                                                 <StackPanel>
@@ -492,9 +476,8 @@
                                                 </StackPanel>
                                             </Border>
 
-                                            <!-- Timeline area (right) -->
                                             <Grid Grid.Column="1">
-                                                <!-- Subtle day separators -->
+
                                                 <ItemsControl ItemsSource="{Binding DataContext.DayHeaders,
                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               IsHitTestVisible="False">
@@ -510,7 +493,6 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
 
-                                                <!-- Modern proportional bar -->
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="{Binding BarLeft,     Converter={StaticResource FracToGL}}"/>
@@ -565,7 +547,6 @@
                     </ScrollViewer>
                 </Grid>
 
-                <!-- Today line overlay – drawn in code-behind -->
                 <Canvas x:Name="TodayLineCanvas"
                         IsHitTestVisible="False"
                         VerticalAlignment="Top"

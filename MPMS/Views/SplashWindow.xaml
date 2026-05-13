@@ -23,10 +23,9 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left branding panel -->
             <Grid Grid.Column="0" Background="#111111">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24,0,24,0">
-                    <!-- Logo -->
+
                     <Border Width="80" Height="36"
                             Background="White"
                             CornerRadius="8"
@@ -40,7 +39,6 @@
                                    VerticalAlignment="Center"/>
                     </Border>
 
-                    <!-- Tagline -->
                     <TextBlock Text="Montage Project"
                                Foreground="#C1C7D0"
                                FontSize="11"
@@ -56,7 +54,6 @@
                                TextAlignment="Center"
                                Margin="0,0,0,24"/>
 
-                    <!-- Version -->
                     <Border Background="#1A1A1A"
                             CornerRadius="4"
                             Padding="8,4"
@@ -69,7 +66,6 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Right loading panel -->
             <Grid Grid.Column="1" Background="{StaticResource BackgroundBrush}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="48,0,48,0">
                     <TextBlock Text="Загрузка"
@@ -79,7 +75,6 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,28"/>
 
-                    <!-- Progress bar container -->
                     <Border Width="220" Height="4"
                             Background="#E2E8F0"
                             CornerRadius="2">
@@ -95,7 +90,6 @@
                         </Border>
                     </Border>
 
-                    <!-- Loading text -->
                     <TextBlock x:Name="LoadingText"
                                Text="Инициализация..."
                                FontSize="13"

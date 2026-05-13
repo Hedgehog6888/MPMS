@@ -27,7 +27,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- History toolbar -->
         <Border Grid.Row="0" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1" Padding="16,10">
             <Grid>
@@ -40,7 +39,7 @@
                     <ColumnDefinition Width="12"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <!-- Search -->
+                <!-- Поиск -->
                 <Border Grid.Column="0" x:Name="HistorySearchBorder"
                         Background="#F4F5F7" CornerRadius="6"
                         Padding="10,0" Height="36" BorderThickness="1.5" BorderBrush="Transparent">
@@ -83,12 +82,12 @@
                         </Button>
                     </Grid>
                 </Border>
-                <!-- Action type filter -->
+                <!-- Фильтр типа действия -->
                 <ComboBox Grid.Column="2"
                           ItemsSource="{x:Static vm:AdminViewModel.HistoryActionOptions}"
                           SelectedItem="{Binding HistoryActionFilter}"
                           Style="{StaticResource FormCombo}"/>
-                <!-- User filter -->
+                <!-- Фильтр пользователя -->
                 <ComboBox Grid.Column="4"
                           ItemsSource="{Binding HistoryUserList}"
                           SelectedItem="{Binding HistoryUserFilter}"
@@ -100,7 +99,7 @@
             </Grid>
         </Border>
 
-        <!-- History table + load more -->
+        <!-- Таблица истории + загрузить ещё -->
         <Border Grid.Row="2" Background="White" CornerRadius="8"
                 BorderBrush="#DFE1E6" BorderThickness="1">
             <Grid>
@@ -175,7 +174,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <!-- Load more -->
+                <!-- Загрузить ещё -->
                 <Border Grid.Row="2" Padding="16,8"
                         BorderBrush="#DFE1E6" BorderThickness="0,1,0,0"
                         Visibility="{Binding HasMoreHistory, Converter={StaticResource BoolToVis}}">

@@ -19,9 +19,7 @@ public partial class TaskDetailOverlay : UserControl
     /// <summary>Как показывать drawer при открытии и после вложенных форм (этап, редактирование задачи).</summary>
     public enum TaskDetailDrawerMode
     {
-        /// <summary>Только карточка задачи — пользователь уже на странице проекта.</summary>
         TaskOnly,
-        /// <summary>Сводка проекта слева (глобальный поиск, страница «Задачи»).</summary>
         WithProjectSummary,
     }
 
@@ -90,7 +88,7 @@ public partial class TaskDetailOverlay : UserControl
 
         if (isWorker || isProjectClosed)
         {
-            /* Edit already collapsed */
+
         }
         else if (_vm?.Task?.EffectiveTaskMarkedForDeletion == true)
         {
@@ -143,7 +141,7 @@ public partial class TaskDetailOverlay : UserControl
             .OrderBy(a => a.UserName)
             .ToListAsync();
 
-        // If no multi-assignees, fall back to legacy single assignee
+        // Если нет нескольких исполнителей, откат к устаревшему одиночному исполнителю
         if (assignees.Count == 0 && _vm.Task.AssignedUserId.HasValue)
         {
             assignees.Add(new LocalTaskAssignee
@@ -269,8 +267,6 @@ public partial class TaskDetailOverlay : UserControl
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
 
-        // При редактировании скрываем текущую пару оверлеев
-        // и показываем только окно редактирования.
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 
@@ -327,7 +323,7 @@ public partial class TaskDetailOverlay : UserControl
             item.Click += async (s, _) =>
             {
                 await _vm.ChangeTaskStatusAsync(status);
-                // Notify project page to refresh and close drawer
+                // Уведомить страницу проекта о необходимости обновления и закрыть drawer
                 _onClosed?.Invoke();
                 MainWindow.Instance?.HideDrawer();
             };
@@ -374,14 +370,14 @@ public partial class TaskDetailOverlay : UserControl
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         if (stage.Status == Models.StageStatus.Completed) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
-        _onClosed?.Invoke(); // Sync project page
+        _onClosed?.Invoke();
     }
 
     private async void CompleteStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
-        _onClosed?.Invoke(); // Sync project page
+        _onClosed?.Invoke(); 
     }
 
     private async void SendMessage_Click(object sender, RoutedEventArgs e)
@@ -411,7 +407,7 @@ public partial class TaskDetailOverlay : UserControl
                 return;
         }
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
-        _onClosed?.Invoke(); // Синхронизация страницы проекта
+        _onClosed?.Invoke(); 
     }
 
     private async void DeleteStage_Click(object sender, RoutedEventArgs e)
@@ -421,7 +417,7 @@ public partial class TaskDetailOverlay : UserControl
         if (MPMS.Views.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
         {
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
-            _onClosed?.Invoke(); // Синхронизация страницы проекта
+            _onClosed?.Invoke(); 
         }
     }
 
@@ -448,7 +444,7 @@ public partial class TaskDetailOverlay : UserControl
     }
 }
 
-/// <summary>Display model for a task assignee in the detail overlay.</summary>
+/// <summary>Модель отображения для исполнителя задачи в детальном оверлее.</summary>
 public sealed class AssigneeDisplayItem
 {
     public Guid UserId { get; }

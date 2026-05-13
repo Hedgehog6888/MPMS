@@ -38,7 +38,6 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ── Role ──────────────────────────────────────────────────────────
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -46,7 +45,6 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
-        // ── User ──────────────────────────────────────────────────────────
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -62,7 +60,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── Project ───────────────────────────────────────────────────────
         modelBuilder.Entity<Project>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -81,7 +78,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── ProjectMember ─────────────────────────────────────────────────
         modelBuilder.Entity<ProjectMember>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -102,7 +98,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── ProjectTask ───────────────────────────────────────────────────
         modelBuilder.Entity<ProjectTask>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -132,7 +127,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // ── TaskStage ─────────────────────────────────────────────────────
         modelBuilder.Entity<TaskStage>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -163,7 +157,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // ── ServiceCategory ───────────────────────────────────────────────
         modelBuilder.Entity<ServiceCategory>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -171,7 +164,6 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
-        // ── ServiceTemplate ───────────────────────────────────────────────
         modelBuilder.Entity<ServiceTemplate>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -188,7 +180,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── MaterialCategory ──────────────────────────────────────────────
         modelBuilder.Entity<MaterialCategory>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -196,7 +187,6 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
-        // ── EquipmentCategory ─────────────────────────────────────────────
         modelBuilder.Entity<EquipmentCategory>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -204,7 +194,6 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
-        // ── Material ──────────────────────────────────────────────────────
         modelBuilder.Entity<Material>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -221,7 +210,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // ── MaterialStockMovement ─────────────────────────────────────────
         modelBuilder.Entity<MaterialStockMovement>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -254,7 +242,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // ── Equipment ─────────────────────────────────────────────────────
         modelBuilder.Entity<Equipment>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -284,7 +271,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // ── EquipmentHistoryEntry ─────────────────────────────────────────
         modelBuilder.Entity<EquipmentHistoryEntry>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -321,7 +307,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // ── StageMaterial ─────────────────────────────────────────────────
         modelBuilder.Entity<StageMaterial>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -341,7 +326,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── StageService ──────────────────────────────────────────────────
         modelBuilder.Entity<StageService>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -360,7 +344,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── FileAttachment ────────────────────────────────────────────────
         modelBuilder.Entity<FileAttachment>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -389,7 +372,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // ── TaskDependency ────────────────────────────────────────────────
         modelBuilder.Entity<TaskDependency>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -412,7 +394,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // ── ActivityLog ───────────────────────────────────────────────────
         modelBuilder.Entity<ActivityLog>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -434,7 +415,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── TaskAssignee ──────────────────────────────────────────────────
         modelBuilder.Entity<TaskAssignee>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -452,7 +432,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── StageAssignee ─────────────────────────────────────────────────
         modelBuilder.Entity<StageAssignee>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -470,7 +449,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── DiscussionMessage ─────────────────────────────────────────────
         modelBuilder.Entity<DiscussionMessage>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -493,7 +471,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── SyncedActivityLog ─────────────────────────────────────────────
         modelBuilder.Entity<SyncedActivityLog>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -506,7 +483,6 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // ── Seed: Roles ───────────────────────────────────────────────────
         modelBuilder.Entity<Role>().HasData(
             new Role { Id = new Guid("10000000-0000-0000-0000-000000000001"), Name = "Administrator",   Description = "Полный доступ к системе" },
             new Role { Id = new Guid("10000000-0000-0000-0000-000000000002"), Name = "Project Manager", Description = "Управление проектами и задачами" },

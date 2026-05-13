@@ -15,12 +15,6 @@ public partial class ConfirmDeleteDialog : Window
         InitializeComponent();
     }
 
-    /// <summary>
-    /// Configures the dialog for a specific deletion scenario.
-    /// </summary>
-    /// <param name="entityType">Human-readable entity type in Russian (e.g., "Задача", "Этап", "Проект")</param>
-    /// <param name="itemName">Name of the item being deleted</param>
-    /// <param name="cascadeMessage">Optional cascade warning message</param>
     public void Configure(string entityType, string itemName, string? cascadeMessage = null)
     {
         TitleText.Text = $"Удалить {entityType.ToLower()}?";
@@ -41,9 +35,6 @@ public partial class ConfirmDeleteDialog : Window
         }
     }
 
-    /// <summary>
-    /// Shows the dialog centered over the owner window and returns true if confirmed.
-    /// </summary>
     public static bool Show(Window owner, string entityType, string itemName, string? cascadeMessage = null)
     {
         var dialog = new ConfirmDeleteDialog();
@@ -53,9 +44,6 @@ public partial class ConfirmDeleteDialog : Window
         return dialog.Confirmed;
     }
 
-    /// <summary>
-    /// Configures the dialog for mark-for-deletion action.
-    /// </summary>
     public void ConfigureMarkForDeletion(string entityType, string itemName)
     {
         TitleText.Text = $"Пометить {entityType.ToLower()} к удалению?";
@@ -67,9 +55,6 @@ public partial class ConfirmDeleteDialog : Window
         CascadeWarning.Visibility = Visibility.Collapsed;
     }
 
-    /// <summary>
-    /// Shows mark-for-deletion confirmation and returns true if confirmed.
-    /// </summary>
     public static bool ShowMarkForDeletion(Window owner, string entityType, string itemName)
     {
         var dialog = new ConfirmDeleteDialog
@@ -81,17 +66,12 @@ public partial class ConfirmDeleteDialog : Window
         return dialog.Confirmed;
     }
 
-    /// <summary>Sets a custom message for the admin panel operations.</summary>
     public void SetMessage(string message)
     {
         if (TitleText is not null) TitleText.Text = "Подтверждение";
         if (ItemNameText is not null) ItemNameText.Text = message;
         if (EntityTypeText is not null) EntityTypeText.Text = "Действие";
     }
-
-    /// <summary>
-    /// Configures the dialog for close project action.
-    /// </summary>
     public void ConfigureCloseProject(string projectName)
     {
         TitleText.Text = "Закрыть проект?";
@@ -104,10 +84,6 @@ public partial class ConfirmDeleteDialog : Window
         ClosureReasonPanel.Visibility = Visibility.Visible;
         ClosureReasonTextBox.Text = string.Empty;
     }
-
-    /// <summary>
-    /// Shows close project confirmation and returns the closure reason if confirmed.
-    /// </summary>
     public static (bool confirmed, string? reason) ShowCloseProjectConfirmation(Window owner, string projectName)
     {
         var dialog = new ConfirmDeleteDialog
@@ -119,9 +95,6 @@ public partial class ConfirmDeleteDialog : Window
         return (dialog.Confirmed, dialog.ClosureReason);
     }
 
-    /// <summary>
-    /// Configures the dialog for block user action (amber).
-    /// </summary>
     public void ConfigureBlockUser(string userName)
     {
         TitleText.Text = "Заблокировать пользователя?";
@@ -139,9 +112,6 @@ public partial class ConfirmDeleteDialog : Window
         BlockReasonTextBox.Text = string.Empty;
     }
 
-    /// <summary>
-    /// Shows block user confirmation and returns the block reason if confirmed.
-    /// </summary>
     public static (bool confirmed, string? reason) ShowBlockUserConfirmation(Window owner, string userName)
     {
         var dialog = new ConfirmDeleteDialog
@@ -153,9 +123,6 @@ public partial class ConfirmDeleteDialog : Window
         return (dialog.Confirmed, dialog.BlockReason);
     }
 
-    /// <summary>
-    /// Configures the dialog for unblock user action (green).
-    /// </summary>
     public void ConfigureUnblockUser(string userName, string? blockReason)
     {
         TitleText.Text = "Разблокировать пользователя?";
@@ -173,9 +140,6 @@ public partial class ConfirmDeleteDialog : Window
         BlockReasonDisplayText.Text = blockReason ?? string.Empty;
     }
 
-    /// <summary>
-    /// Shows unblock user confirmation.
-    /// </summary>
     public static bool ShowUnblockUserConfirmation(Window owner, string userName, string? blockReason)
     {
         var dialog = new ConfirmDeleteDialog
@@ -187,9 +151,6 @@ public partial class ConfirmDeleteDialog : Window
         return dialog.Confirmed;
     }
 
-    /// <summary>
-    /// Configures the dialog for a generic non-destructive confirmation (blue).
-    /// </summary>
     public void ConfigureNonDestructive(string title, string entityName, string buttonText)
     {
         TitleText.Text = title;
@@ -206,9 +167,6 @@ public partial class ConfirmDeleteDialog : Window
         BlockReasonDisplayPanel.Visibility = Visibility.Collapsed;
     }
 
-    /// <summary>
-    /// Shows non-destructive confirmation.
-    /// </summary>
     public static bool ShowNonDestructiveConfirmation(Window owner, string title, string entityName, string buttonText)
     {
         var dialog = new ConfirmDeleteDialog

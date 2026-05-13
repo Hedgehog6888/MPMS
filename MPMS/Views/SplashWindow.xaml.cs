@@ -11,7 +11,6 @@ public partial class SplashWindow : Window
     {
         InitializeComponent();
 
-        // Animate progress bar
         _progressAnimation = new DoubleAnimation
         {
             From = 0,

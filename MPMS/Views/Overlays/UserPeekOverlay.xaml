@@ -90,17 +90,16 @@
     </UserControl.Resources>
     <Grid Background="White">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Шапка с бейджами -->
-            <RowDefinition Height="Auto"/>  <!-- Профиль + вкладки (только хаб) -->
-            <RowDefinition Height="*"/>     <!-- Скролл-контент -->
-            <RowDefinition Height="Auto"/>  <!-- Футер -->
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="Auto"/>  
+            <RowDefinition Height="*"/>    
+            <RowDefinition Height="Auto"/>  
         </Grid.RowDefinitions>
-        <!-- ── ШАПКА ──────────────────────────────────────────────── -->
+
         <Border Grid.Row="0" Background="White" Padding="20,16"
                 BorderBrush="#E8E9EC" BorderThickness="0,0,0,1">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Кнопка "Назад" (детали задачи/этапа) -->
                     <Button x:Name="BackButton" Click="Back_Click"
                             Width="32" Height="32" Margin="0,0,10,0"
                             Visibility="Collapsed" ToolTip="Назад">
@@ -119,7 +118,7 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-                    <!-- Хаб: бейдж роли -->
+
                     <Border x:Name="HubRoleBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
                             <Border Width="6" Height="6" CornerRadius="3" Background="White"
@@ -127,13 +126,13 @@
                             <TextBlock x:Name="HubRoleBadgeText" FontSize="11" FontWeight="Bold" Foreground="White"/>
                         </StackPanel>
                     </Border>
-                    <!-- Хаб: контекстный чип -->
+
                     <Border x:Name="HubContextChip" CornerRadius="6" Padding="8,4" Background="#F4F5F7">
                         <TextBlock Text="Карточка участника" FontSize="11"
                                    FontWeight="SemiBold" Foreground="#8993A4"/>
                     </Border>
                 </StackPanel>
-                <!-- Кнопка закрыть -->
+
                 <Button HorizontalAlignment="Right" Click="Close_Click"
                         Width="32" Height="32" ToolTip="Закрыть">
                     <Button.Template>
@@ -152,9 +151,9 @@
                 </Button>
             </Grid>
         </Border>
-        <!-- ── ПРОФИЛЬ + ВКЛАДКИ (только в режиме хаба) ─────────── -->
+
         <StackPanel x:Name="HubFixedSection" Grid.Row="1">
-            <!-- Блок профиля -->
+
             <Border Background="White" Padding="20,14,20,14"
                     BorderBrush="#E8E9EC" BorderThickness="0,0,0,1">
                 <Grid>
@@ -162,7 +161,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <!-- Аватар -->
+
                     <Border x:Name="AvatarBorder" Width="80" Height="80" CornerRadius="40"
                             Background="#111111" Margin="0,0,16,0" VerticalAlignment="Top">
                         <Grid>
@@ -173,7 +172,7 @@
                                        Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Grid>
                     </Border>
-                    <!-- Имя + инфо -->
+
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock x:Name="UserNameText" FontSize="17" FontWeight="Bold"
                                    Foreground="#000000" TextWrapping="Wrap"/>
@@ -189,7 +188,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
-            <!-- Вкладки (как на странице проекта: белая «пилюля», без линии снизу) -->
+
             <Border Background="#F4F5F7" Padding="20,4,20,6">
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
@@ -214,14 +213,14 @@
                 </Border>
             </Border>
         </StackPanel>
-        <!-- ── СКРОЛЛ-КОНТЕНТ ─────────────────────────────────────── -->
+
         <ScrollViewer x:Name="BodyScroll" Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       Background="#F4F5F7">
             <Grid>
-                <!-- ── ХАБ: списки ── -->
+
                 <StackPanel x:Name="HubPanel" Margin="16,12,16,12">
-                    <!-- Ошибка -->
+
                     <Border x:Name="ErrorPanel" CornerRadius="8" Padding="14,10"
                             Background="#FFEBE6" BorderBrush="#FFBDAD" BorderThickness="1"
                             Margin="0,0,0,10" Visibility="Collapsed">
@@ -232,7 +231,7 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
-                    <!-- Список проектов -->
+
                     <Grid x:Name="ProjectsTabPanel" Visibility="Visible">
                         <StackPanel>
                             <ItemsControl x:Name="ProjectsList">
@@ -293,7 +292,7 @@
                                        Margin="4,6,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>
-                    <!-- Список задач -->
+
                     <Grid x:Name="TasksTabPanel" Visibility="Collapsed">
                         <StackPanel>
                             <ItemsControl x:Name="TasksList">
@@ -384,7 +383,7 @@
                                        Margin="4,6,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                     </Grid>
-                    <!-- Список этапов -->
+
                     <Grid x:Name="StagesTabPanel" Visibility="Collapsed">
                         <StackPanel>
                             <ItemsControl x:Name="StagesList">
@@ -479,7 +478,7 @@
                                        Margin="4,6,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                     </Grid>
-                    <!-- Список изображений -->
+
                     <Grid x:Name="ImagesTabPanel" Visibility="Collapsed">
                         <StackPanel>
                             <ItemsControl x:Name="ImagesList">
@@ -570,9 +569,8 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
-                <!-- ── ДЕТАЛИ ЗАДАЧИ ── -->
+
                 <StackPanel x:Name="TaskDetailPanel" Visibility="Collapsed">
-                    <!-- Заголовок задачи (фон по статусу — как в TaskSummaryPanel) -->
                     <Border x:Name="TaskDetailTitleBand" Padding="20,18,20,18" MinHeight="76"
                             Background="#F8F9FA"
                             BorderBrush="#E8E9EC" BorderThickness="0,0,0,1">
@@ -580,9 +578,8 @@
                                    Foreground="#000000" TextWrapping="Wrap" LineHeight="28"
                                    VerticalAlignment="Center"/>
                     </Border>
-                    <!-- Карточки -->
+
                     <StackPanel Margin="16,12,16,16">
-                        <!-- Прогресс -->
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,10">
                             <StackPanel>
@@ -604,7 +601,6 @@
                                              Template="{StaticResource SlimProgressBar}"/>
                             </StackPanel>
                         </Border>
-                        <!-- Срок + приоритет -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -640,7 +636,7 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
-                        <!-- Описание -->
+
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,10">
                             <StackPanel>
@@ -650,7 +646,7 @@
                                            Foreground="#6B778C" TextWrapping="Wrap" LineHeight="22"/>
                             </StackPanel>
                         </Border>
-                        <!-- Быстрые действия -->
+
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1">
                             <StackPanel>
@@ -678,9 +674,8 @@
                         </Border>
                     </StackPanel>
                 </StackPanel>
-                <!-- ── ДЕТАЛИ ЭТАПА ── -->
+
                 <StackPanel x:Name="StageDetailPanel" Visibility="Collapsed">
-                    <!-- Заголовок этапа (фон по статусу этапа — как палитра сводки задачи) -->
                     <Border x:Name="StageDetailTitleBand" Padding="20,18,20,18" MinHeight="76"
                             Background="#F8F9FA"
                             BorderBrush="#E8E9EC" BorderThickness="0,0,0,1">
@@ -691,9 +686,8 @@
                                        Foreground="#000000" TextWrapping="Wrap" LineHeight="28"/>
                         </StackPanel>
                     </Border>
-                    <!-- Карточки -->
+
                     <StackPanel Margin="16,12,16,16">
-                        <!-- Срок -->
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,10">
                             <StackPanel>
@@ -711,7 +705,7 @@
                                 </Border>
                             </StackPanel>
                         </Border>
-                        <!-- Описание -->
+
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,10">
                             <StackPanel>
@@ -721,7 +715,7 @@
                                            Foreground="#6B778C" TextWrapping="Wrap" LineHeight="22"/>
                             </StackPanel>
                         </Border>
-                        <!-- Связь: задача + проект -->
+
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1" Margin="0,0,0,10">
                             <StackPanel>
@@ -752,7 +746,7 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
-                        <!-- Быстрые действия -->
+
                         <Border Background="White" CornerRadius="10" Padding="16"
                                 BorderBrush="#E8E9EC" BorderThickness="1">
                             <StackPanel>
@@ -790,7 +784,7 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
-        <!-- ── ФУТЕР ──────────────────────────────────────────────── -->
+
         <Border Grid.Row="3" Background="White" Padding="20,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0">
             <Button Content="Закрыть" Click="Close_Click"

@@ -21,7 +21,6 @@ public partial class AdminActivityDetailOverlay : UserControl
 
     private void LoadData()
     {
-        // Avatar
         if (_log.AvatarData is { Length: > 0 })
         {
             var src = AvatarHelper.GetImageSource(_log.AvatarData, _log.AvatarPath, _log.UserName ?? "User");
@@ -37,11 +36,9 @@ public partial class AdminActivityDetailOverlay : UserControl
                 (Color)ColorConverter.ConvertFromString(_log.UserColor ?? "#1B6EC2"));
         }
 
-        // User info
         UserNameText.Text = _log.UserName ?? "Неизвестный пользователь";
         UserRoleText.Text = _log.ActorRole ?? "—";
 
-        // Action type badge - use ActivityLogToAdminActivityBrushConverter for admin activity colors
         var brush = ActivityLogToAdminActivityBrushConverter.Instance.Convert(_log, typeof(SolidColorBrush), string.Empty, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
         ActionBadge.Background = brush ?? new SolidColorBrush(Colors.Gray);
         
@@ -50,7 +47,6 @@ public partial class AdminActivityDetailOverlay : UserControl
         ActionTypeText.Text = actionLabel;
         ActionTypeText.Foreground = Brushes.White;
 
-        // Operation info
         ActionKindText.Text = actionKind;
         CreatedAtText.Text = _log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss");
         EntityTypeText.Text = _log.EntityType ?? "—";
@@ -58,10 +54,8 @@ public partial class AdminActivityDetailOverlay : UserControl
             ? _log.EntityId.ToString()[..8] + "…" 
             : "—";
 
-        // Description
         ActionDescriptionText.Text = _log.ActionText ?? "Нет описания";
 
-        // Details
         if (!string.IsNullOrWhiteSpace(_log.DetailsText))
         {
             DetailsHeader.Visibility = Visibility.Visible;
@@ -74,7 +68,6 @@ public partial class AdminActivityDetailOverlay : UserControl
             DetailsBorder.Visibility = Visibility.Collapsed;
         }
 
-        // Tooltip details
         var tooltipLines = ActivityDetailsService.GetTooltipDetailLines(_log);
         if (tooltipLines.Count > 0)
         {
@@ -88,7 +81,6 @@ public partial class AdminActivityDetailOverlay : UserControl
             TooltipDetailLinesList.Visibility = Visibility.Collapsed;
         }
 
-        // Header subtitle
         HeaderSubtitle.Text = $"ID: {_log.Id.ToString()[..8]}…";
     }
 

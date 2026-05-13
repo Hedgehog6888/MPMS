@@ -7,7 +7,7 @@
              SnapsToDevicePixels="True">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <!-- Row hover style -->
+
         <Style x:Key="TaskRow" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -17,7 +17,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-        <!-- Slim progress bar template -->
+
         <ControlTemplate x:Key="SlimPB" TargetType="ProgressBar">
             <Border Background="{TemplateBinding Background}" CornerRadius="2">
                 <Border x:Name="PART_Track" CornerRadius="2">
@@ -26,7 +26,7 @@
                 </Border>
             </Border>
         </ControlTemplate>
-        <!-- Column header style -->
+
         <Style x:Key="ColHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -37,11 +37,9 @@
 
     <Grid Background="#F8FAFC">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Header bar -->
-            <RowDefinition Height="*"/>    <!-- Content -->
+            <RowDefinition Height="Auto"/> 
+            <RowDefinition Height="*"/>   
         </Grid.RowDefinitions>
-
-        <!-- ── PAGE HEADER ─────────────────────────────────────────── -->
 
         <Border Grid.Row="0" Background="Transparent" Padding="24,16,24,8">
             <Grid>
@@ -55,7 +53,7 @@
                                FontSize="13" Foreground="#64748B" Margin="0,3,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <!-- Create task button -->
+
                     <Button x:Name="CreateTaskBtn" Click="CreateTask_Click" Height="38" Padding="18,0"
                             FontSize="13" FontWeight="SemiBold" Cursor="Hand">
                         <Button.Template>
@@ -81,7 +79,6 @@
             </Grid>
         </Border>
 
-        <!-- BODY: скролл справа у края, но контент/плашка с отступом справа -->
         <Grid Grid.Row="1" Margin="24,12,0,24" ClipToBounds="True">
             <ScrollViewer x:Name="MainListScroll"
                           VerticalScrollBarVisibility="Visible"
@@ -89,12 +86,12 @@
                           Background="Transparent"
                           Panel.ZIndex="0">
                 <StackPanel>
-                    <!-- Task rows (grouped by project) -->
+
                     <ItemsControl ItemsSource="{Binding TaskGroups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel ClipToBounds="False">
-                                    <!-- Подпись проекта -->
+
                                     <Button Margin="0,10,0,6" VerticalAlignment="Center"
                                             Click="ProjectHeader_Click"
                                             Cursor="Hand"
@@ -165,13 +162,13 @@
                                                        FontWeight="SemiBold" Foreground="#111111"
                                                        TextTrimming="CharacterEllipsis"
                                                        Text="{Binding ProjectName, Mode=OneWay}"/>
-                                            <!-- Task count -->
+
                                             <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="11"
                                                        Foreground="#64748B" Margin="8,0,8,0">
                                                 <Run Text="{Binding TaskCount, Mode=OneWay}"/>
                                                 <Run Text="{Binding TaskCount, Converter={StaticResource PluralTaskConverter}, Mode=OneWay}"/>
                                             </TextBlock>
-                                            <!-- Chevron icon -->
+
                                             <Grid Grid.Column="4" Width="10" Height="10" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="4,0,8,0">
                                                 <Path Data="M 0 0 L 4 4 L 0 8" Stroke="#64748B" StrokeThickness="1.5" StrokeLineJoin="Round"
                                                       Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}"/>
@@ -180,9 +177,8 @@
                                             </Grid>
                                         </Grid>
                                     </Button>
-                                    <!-- Заголовки колонок и задачи под этим проектом -->
+
                                     <StackPanel Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
-                                        <!-- Заголовки колонок под этим проектом -->
                                         <Border Background="Transparent" Padding="15,8,15,8" Margin="0,0,0,4" Opacity="0.7"
                                                 BorderThickness="1.5" BorderBrush="Transparent">
                                             <Grid>
@@ -207,7 +203,7 @@
                                                            HorizontalAlignment="Right"/>
                                             </Grid>
                                         </Border>
-                                        <!-- Tasks in project -->
+
                                         <ItemsControl ItemsSource="{Binding Tasks}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -247,7 +243,7 @@
                                                     <ColumnDefinition Width="*" MinWidth="67"/>
                                                     <ColumnDefinition Width="*" MinWidth="87"/>
                                                 </Grid.ColumnDefinitions>
-                                                <!-- Name + description -->
+
                                                 <StackPanel Grid.Column="0" VerticalAlignment="Center"
                                                             Margin="0,0,12,0">
                                                     <StackPanel Orientation="Horizontal">
@@ -256,7 +252,7 @@
                                                                    Foreground="#111111"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
-                                                        <!-- Overdue indicator -->
+
                                                         <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
                                                                 Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
                                                                 Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
@@ -269,7 +265,7 @@
                                                                TextWrapping="Wrap"
                                                                Visibility="{Binding TaskInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                 </StackPanel>
-                                                <!-- Assignee -->
+
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                             VerticalAlignment="Center" Margin="0,0,8,0"
                                                             ToolTip="{Binding AssignedUserName}">
@@ -290,7 +286,7 @@
                                                                VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
-                                                <!-- Status badge -->
+
                                                 <Border Grid.Column="2"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"
@@ -320,7 +316,7 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
                                                 </Border>
-                                                <!-- Priority badge -->
+
                                                 <Border Grid.Column="3"
                                                         HorizontalAlignment="Left"
                                                         VerticalAlignment="Center"
@@ -331,7 +327,7 @@
                                                                FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{Binding Priority, Converter={StaticResource PriorityToBrush}}"/>
                                                 </Border>
-                                                <!-- Due date -->
+
                                                 <StackPanel Grid.Column="4" Orientation="Horizontal"
                                                             VerticalAlignment="Center">
                                                     <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
@@ -342,7 +338,7 @@
                                                                FontSize="12" Foreground="#111111"
                                                                VerticalAlignment="Center"/>
                                                 </StackPanel>
-                                                <!-- Progress -->
+
                                                 <StackPanel Grid.Column="5" VerticalAlignment="Center">
                                                     <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
                                                                  Maximum="100" Height="6"
@@ -353,16 +349,16 @@
                                                     <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0}%'}"
                                                                FontSize="11" Foreground="#64748B"/>
                                                 </StackPanel>
-                                                <!-- Stage count -->
+
                                                 <TextBlock Grid.Column="6"
                                                            Text="{Binding TotalStages, Converter={StaticResource StageCountToString}}"
                                                            FontSize="12" Foreground="#64748B"
                                                            VerticalAlignment="Center"
                                                            Margin="12,0,0,0"/>
-                                                <!-- Action buttons -->
+
                                                 <StackPanel Grid.Column="7" Orientation="Horizontal"
                                                             VerticalAlignment="Center" HorizontalAlignment="Right">
-                                                    <!-- Edit (Foreman+, hidden when marked) -->
+
                                                     <Button ToolTip="Редактировать"
                                                             Tag="{Binding}" Click="EditTask_Click"
                                                             Margin="0,0,4,0">
@@ -379,7 +375,7 @@
                                                         <Image Source="{svgc:SvgImage Source=/icons/editing.svg, AppName=MPMS}"
                                                                Width="14" Height="14" VerticalAlignment="Center"/>
                                                     </Button>
-                                                    <!-- Mark for deletion (Manager+) -->
+
                                                     <Button Tag="{Binding}" Click="MarkTask_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
@@ -436,7 +432,7 @@
                                                             </Image>
                                                         </Grid>
                                                     </Button>
-                                                    <!-- Delete (Manager+, hidden when marked) -->
+
                                                     <Button Tag="{Binding}" Click="DeleteTask_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
@@ -464,7 +460,6 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Empty state (shown when no tasks at all) -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40"
                                 Visibility="{Binding Tasks.Count, Converter={StaticResource IntToVisInv}}">
                         <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
@@ -478,7 +473,7 @@
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
-            <!-- ── Плавающая панель поиска ── -->
+
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
                 HorizontalAlignment="Left"

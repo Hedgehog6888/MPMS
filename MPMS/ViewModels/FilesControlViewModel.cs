@@ -121,7 +121,7 @@ public partial class FilesControlViewModel : ViewModelBase
             await using var db = await _dbFactory.CreateDbContextAsync();
             IQueryable<LocalFile> query = db.Files;
 
-            // Load project if projectId is set
+            // Загружаем проект, если указан projectId
             if (_projectId.HasValue)
             {
                 Project = await db.Projects.FindAsync(_projectId.Value);
@@ -140,7 +140,6 @@ public partial class FilesControlViewModel : ViewModelBase
                 }
                 else if (userRole == "Worker" || userRole == "Работник")
                 {
-                    // Работник видит только изображения с этапов на которых он стоит
                     var userStageIds = db.StageAssignees
                         .Where(sa => sa.UserId == userId)
                         .Select(sa => sa.StageId)
@@ -153,14 +152,13 @@ public partial class FilesControlViewModel : ViewModelBase
                 }
                 else
                 {
-                    // Менеджер и прораб видят файлы своих проектов + глобальные файлы
                     var userProjectIds = db.ProjectMembers
                         .Where(pm => pm.UserId == userId)
                         .Select(pm => pm.ProjectId)
                         .ToList();
 
                     query = query.Where(f =>
-                        !f.ProjectId.HasValue || // Глобальные файлы
+                        !f.ProjectId.HasValue || 
                         userProjectIds.Contains(f.ProjectId.Value));
                 }
             }
@@ -189,12 +187,11 @@ public partial class FilesControlViewModel : ViewModelBase
                     f.StageName = sname;
             }
 
-            // Оптимизация:批量 добавление вместо по одному
+            // Оптимизация: добавляем все сразу вместо по одному
             AllFiles.Clear();
             foreach (var f in files)
                 AllFiles.Add(f);
 
-            // Кэшируем результаты фильтрации для быстрого переключения
             _cachedImagesFiles = files.Where(f => IsImage(f.FileName)).ToList();
             _cachedDocumentsFiles = files.Where(f => !IsImage(f.FileName)).ToList();
 
@@ -514,7 +511,7 @@ public partial class FilesControlViewModel : ViewModelBase
     {
         if (file == null) return;
 
-        // Check if it's actually an image - if not, open in system app instead
+        // Проверяем, что это изображение - если нет, открываем в системном приложении
         if (!IsImage(file.FileName))
         {
             await OpenFile(file);
@@ -523,12 +520,11 @@ public partial class FilesControlViewModel : ViewModelBase
 
         string filePath = string.Empty;
 
-        // If file exists on disk, use it
         if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
         {
             filePath = file.FilePath;
         }
-        // Otherwise extract from FileData to temp
+
         else if (file.FileData != null && file.FileData.Length > 0)
         {
             var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
@@ -536,7 +532,7 @@ public partial class FilesControlViewModel : ViewModelBase
             filePath = Path.Combine(tempDir, file.FileName);
             await File.WriteAllBytesAsync(filePath, file.FileData);
         }
-        // Fetch from server if online
+
         else if (_api.IsOnline)
         {
             IsLoading = true;
@@ -561,7 +557,7 @@ public partial class FilesControlViewModel : ViewModelBase
             finally { IsLoading = false; }
         }
 
-        // Load uploader avatar data
+        // Загружаем данные аватара загрузчика
         byte[]? uploaderAvatarData = null;
         string? uploaderAvatarPath = null;
         if (file.UploadedById != Guid.Empty)
@@ -600,12 +596,11 @@ public partial class FilesControlViewModel : ViewModelBase
 
         string filePath = string.Empty;
 
-        // If file exists on disk, use it
         if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
         {
             filePath = file.FilePath;
         }
-        // Otherwise extract from FileData to temp
+
         else if (file.FileData != null && file.FileData.Length > 0)
         {
             var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_open_{file.Id}");
@@ -613,7 +608,7 @@ public partial class FilesControlViewModel : ViewModelBase
             filePath = Path.Combine(tempDir, file.FileName);
             await File.WriteAllBytesAsync(filePath, file.FileData);
         }
-        // Fetch from server if online
+
         else if (_api.IsOnline)
         {
             IsLoading = true;
@@ -666,7 +661,7 @@ public partial class FilesControlViewModel : ViewModelBase
     {
         if (file == null) return;
 
-        // Check if it's a supported document type
+        // Проверяем, поддерживается ли тип документа
         var ext = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
         bool isDocument = ext == ".txt" || ext == ".csv" || ext == ".log" || ext == ".json" || ext == ".xml" ||
                         ext == ".md" || ext == ".html" || ext == ".htm" ||
@@ -682,18 +677,18 @@ public partial class FilesControlViewModel : ViewModelBase
 
         string docPath = string.Empty;
 
-        // If file exists on disk, copy to MPMS/documents and open copy
+        // Если файл существует на диске, копируем в MPMS/documents и открываем копию
         if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
         {
             var mpmsPath = MpmsDocumentPaths.EnsureDocumentCopy(file.Id, file.FilePath, file.FileName);
             docPath = mpmsPath;
         }
-        // Otherwise extract from FileData to MPMS/documents
+        // Иначе извлекаем из FileData в MPMS/documents
         else if (file.FileData != null && file.FileData.Length > 0)
         {
             docPath = await EnsureDocumentFileAsync(file);
         }
-        // Fetch from server if online
+
         else if (_api.IsOnline)
         {
             IsLoading = true;
@@ -758,7 +753,6 @@ public partial class FilesControlViewModel : ViewModelBase
         dbFile.FileSize = fileInfo.Length;
         dbFile.FileData = fileData;
         dbFile.Description = savedDescription;
-        // Always update FilePath to point to MPMS/documents copy, never to original path
         dbFile.FilePath = mpmsPath;
         dbFile.IsSynced = false;
         dbFile.LastModifiedLocally = DateTime.UtcNow;
@@ -784,7 +778,6 @@ public partial class FilesControlViewModel : ViewModelBase
         dbFile.FileSize = fileInfo.Length;
         dbFile.FileData = fileData;
         dbFile.Description = savedDescription;
-        // Always update FilePath to point to MPMS/images copy, never to original path
         dbFile.FilePath = mpmsPath;
         dbFile.IsSynced = false;
         dbFile.LastModifiedLocally = DateTime.UtcNow;

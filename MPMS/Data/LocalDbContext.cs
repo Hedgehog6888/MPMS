@@ -54,7 +54,6 @@ public class LocalDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Enum → string conversions (SQLite stores as text)
         modelBuilder.Entity<LocalProject>()
             .Property(e => e.Status).HasConversion<string>();
 
@@ -73,8 +72,6 @@ public class LocalDbContext : DbContext
         modelBuilder.Entity<PendingOperation>()
             .Property(e => e.OperationType).HasConversion<string>();
 
-        // UserName (display) and Username (login) differ only by case → SQLite sees duplicates.
-        // Map UserName to a distinct column name "UserDisplayName".
         modelBuilder.Entity<AuthSession>()
             .HasKey(e => e.Id);
         modelBuilder.Entity<AuthSession>()

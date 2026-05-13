@@ -25,11 +25,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private LocalProject? _project;
     public ICommand? BackCommand { get; private set; }
 
-    // ─── Tasks collections ──────────────────────────────────────────────────────
+    // ─── Коллекции задач
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<LocalTask> _filteredTasks = [];
 
-    // ─── Task filters ──────────────────────────────────────────────────────────
+    // ─── Фильтры задач
     [ObservableProperty] private string _taskSearchText = string.Empty;
     [ObservableProperty] private string _taskStatusFilter = "Все";
     [ObservableProperty] private string _taskPriorityFilter = "Все";
@@ -40,7 +40,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     public IReadOnlyList<string> TaskPriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
 
-    // ─── Stages collections & filters ─────────────────────────────────────────
+    // ─── Коллекции этапов и фильтры
     [ObservableProperty] private ObservableCollection<LocalTaskStage> _allStages = [];
     [ObservableProperty] private ObservableCollection<LocalTaskStage> _filteredStages = [];
     [ObservableProperty] private ObservableCollection<ProjectStageGroup> _projectStageGroups = [];
@@ -54,7 +54,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     public List<string> StageStatusOptions { get; } =
         ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удаления"];
 
-    // ─── UI state and other entities ──────────────────────────────────────────
+    // ─── Состояние UI и другие сущности
     [ObservableProperty] private string _activeTab = "Tasks";
     [ObservableProperty] private string _stageViewMode = "List";
     public FilesControlViewModel FilesControlVM { get; }
@@ -98,7 +98,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private bool CanMarkTaskDeletion() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
-    // ─── Filter change handlers ────────────────────────────────────────────────
+    // ─── Обработчики изменения фильтров
     partial void OnTaskSearchTextChanged(string value) => ApplyTaskFilter();
     partial void OnTaskStatusFilterChanged(string value) => ApplyTaskFilter();
     partial void OnTaskPriorityFilterChanged(string value) => ApplyTaskFilter();
@@ -150,7 +150,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Reload project from DB to get latest IsMarkedForDeletion and Status.
+        // Перезагружаем проект из БД для получения актуальных IsMarkedForDeletion и Status.
         // Важно: не присваивать Project до заполнения ManagerAvatar* — иначе UI успевает отрисовать
         // пустой аватар, а без INPC на NotMapped-свойствах Image не обновится (как у участников:
         // у них AvatarData выставляется до попадания в коллекцию).
@@ -177,7 +177,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 }
             }
 
-            // Update existing Project object in-place to preserve UI bindings
+            // Обновляем существующий объект Project на месте для сохранения привязок UI
             Project.Name = projectEntity.Name;
             Project.Description = projectEntity.Description;
             Project.Client = projectEntity.Client;
@@ -194,7 +194,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Project.ManagerAvatarData = mgrAvatarData;
             Project.ManagerAvatarPath = mgrAvatarPath;
 
-            // Force UI refresh for all project properties
+            // Принудительно обновляем UI для всех свойств проекта
             OnPropertyChanged(nameof(Project));
         }
 
@@ -262,7 +262,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
 
-        // Load stages and compute TotalStages/CompletedStages + auto task status for each task
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stagesQuery = db.TaskStages.Where(s => taskIds.Contains(s.TaskId));
         if (!isClosedProject)
@@ -295,14 +294,13 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         }
 
-        // Closed projects are read-only snapshots; keep their stored task/stage/project statuses intact.
         if (!isClosedProject)
         {
             await RecalcAndSaveTaskStatusesAsync(db, tasks);
             await RecalcProjectStatusAsync(db);
         }
 
-        // Populate AssignedUserAvatarData for tasks from Users
+        // Заполняем AssignedUserAvatarData для задач из Users
         var taskAssigneeIds = tasks.Where(t => t.AssignedUserId.HasValue).Select(t => t.AssignedUserId!.Value).Distinct().ToList();
         if (taskAssigneeIds.Count > 0)
         {
@@ -356,7 +354,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             new() { Label = "Запланировано",Value = plannedStagesCount,     Color = Color.FromRgb(0x64, 0x74, 0x8B) },
         };
 
-        // Populate TaskName and AssignedUserAvatarData for each stage
+        // Заполняем TaskName и AssignedUserAvatarData для каждого этапа
         var taskNameDict = tasks.ToDictionary(t => t.Id, t => t.Name);
         var stageAssigneeIds = stages.Where(s => s.AssignedUserId.HasValue).Select(s => s.AssignedUserId!.Value).Distinct().ToList();
         if (stageAssigneeIds.Count > 0)
@@ -388,14 +386,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .Select(g => new TaskFilterOption(g.Key.TaskId, g.Key.TaskName ?? "—")));
         StageTaskFilterOptions = new ObservableCollection<TaskFilterOption>(taskOpts);
 
-        // Initialize filtered stages based on current filters
+        // Инициализируем отфильтрованные этапы на основе текущих фильтров
         ApplyStageFilter();
 
-        // Load files
+        // Загружаем файлы
         var projectId = Project!.Id;
         FilesControlVM.Initialize(projectId);
 
-        // Load project members (executors) with AvatarData/AvatarPath from Users
+        // Загружаем участников проекта (исполнителей) с AvatarData/AvatarPath из Users
         var members = await db.ProjectMembers
             .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.UserName)
@@ -430,7 +428,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
 
-        // Load project messages (discussion) with AvatarData from Users
+        // Загружаем сообщения проекта (обсуждение) с AvatarData из Users
         var messages = await db.Messages
             .Where(m => m.ProjectId == projectId)
             .OrderBy(m => m.CreatedAt)
@@ -494,7 +492,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
                 query = query.Where(t => t.Priority == priority.Value);
         }
 
-        // Статус (план → в работе → пауза → завершена), пометка удаления в конце; затем дата срока и обновление
         var list = query
             .OrderBy(t => t.EffectiveTaskMarkedForDeletion)
             .ThenBy(t => t.Status switch
@@ -578,7 +575,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         FilteredInProgressStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.InProgress));
         FilteredCompletedStages = new ObservableCollection<StageItem>(stageItems.Where(s => s.Stage.Status == StageStatus.Completed));
 
-        // Построение группировки по задачам для отображения во вкладке "Этапы"
         var taskGroups = ordered
             .GroupBy(s => new { s.TaskId, s.TaskName })
             .OrderBy(g => g.Key.TaskName)
@@ -615,7 +611,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.Address = req.Address;
         project.StartDate = req.StartDate;
         project.EndDate = req.EndDate;
-        // Status is auto-calculated, do not override from request
+        // Статус вычисляется автоматически, не переопределять из запроса
         project.ManagerId = req.ManagerId;
         project.ManagerName = managerName;
         project.IsMarkedForDeletion = req.IsMarkedForDeletion;
@@ -761,7 +757,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         task.AssignedUserName = assignedName;
         task.Priority = req.Priority;
         task.DueDate = req.DueDate;
-        // Status is auto-calculated from stages, do not set from request
+        // Статус вычисляется автоматически из этапов, не устанавливать из запроса
         var stages = await db.TaskStages.Where(s => s.TaskId == id).ToListAsync();
         task.TotalStages = stages.Count;
         task.CompletedStages = stages.Count(s => s.Status == StageStatus.Completed);
@@ -806,7 +802,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         entity.IsSynced = false;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        // Cascade archive to all stages of this task
+        // Каскадный архив для всех этапов этой задачи
         var stages = await db.TaskStages.Where(s => s.TaskId == task.Id).ToListAsync();
         foreach (var s in stages)
         {
@@ -819,7 +815,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
         await RecalcProjectStatusAsync(db);
 
-        // Queue updates without await to avoid blocking
+        // Ставим обновления в очередь без await, чтобы избежать блокировки
         _ = _sync.QueueOperationAsync("Task", entity.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         foreach (var s in stages)
             _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
@@ -1011,7 +1007,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await _sync.QueueLocalActivityLogAsync(log);
     }
 
-    /// <summary>Persists task status/stages and recalculates project status.</summary>
+    /// <summary>Сохраняет статус задач/этапов и пересчитывает статус проекта.</summary>
     private async Task RecalcAndSaveTaskStatusesAsync(LocalDbContext db, List<LocalTask> tasks)
     {
         foreach (var t in tasks)
@@ -1028,7 +1024,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
     }
 
-    /// <summary>Recalculates and saves the project's status based on its tasks. Excludes tasks marked for deletion. StatusCalculator.</summary>
     private async Task RecalcProjectStatusAsync(LocalDbContext db)
     {
         if (Project is null) return;
@@ -1061,7 +1056,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         project.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
 
-        // Логируем изменение статуса проекта (без аватарки - системное действие)
+        // Логируем изменение статуса проекта
         if (oldStatus != project.Status)
         {
             var statusText = project.Status switch

@@ -48,7 +48,6 @@ public class ProjectSyncer : IEntitySyncer
                     local.IsClosed = p.IsClosed;
                     local.IsSynced = true;
                 }
-                // If not synced, don't overwrite local changes - protect them from server data
             }
             else
             {
@@ -107,9 +106,6 @@ public class ProjectSyncer : IEntitySyncer
         if (updateReq is null) return false;
         var updated = await _api.UpdateProjectAsync(op.EntityId, updateReq);
         if (updated is null) return false;
-
-        // Don't set IsSynced = true for updates - wait for all related entities to sync
-        // This prevents PullAsync from overwriting local changes with server data
 
         return true;
     }

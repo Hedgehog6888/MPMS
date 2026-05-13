@@ -163,7 +163,7 @@ public partial class StageDetailOverlay : UserControl
             .OrderBy(a => a.UserName)
             .ToListAsync();
 
-        // Fallback to legacy single assignee
+        // Откат к устаревшему одиночному исполнителю
         if (assignees.Count == 0 && _stage.AssignedUserId.HasValue)
         {
             assignees.Add(new LocalStageAssignee
@@ -310,7 +310,7 @@ public partial class StageDetailOverlay : UserControl
 
         _stage.Status = newStatus;
         ApplyStatus(newStatus);
-        _onClosed?.Invoke(); // Refresh parent list
+        _onClosed?.Invoke(); 
     }
 
     private static async System.Threading.Tasks.Task RecalcTaskProgressAsync(LocalDbContext db, Guid taskId)

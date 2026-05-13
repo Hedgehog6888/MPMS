@@ -3,7 +3,6 @@ using MPMS.API.Models;
 
 namespace MPMS.API.DTOs;
 
-// ── Categories ───────────────────────────────────────────────────────────────
 public record MaterialCategoryResponse(Guid Id, string Name);
 
 public record CreateMaterialCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
@@ -12,7 +11,6 @@ public record EquipmentCategoryResponse(Guid Id, string Name);
 
 public record CreateEquipmentCategoryRequest([Required, MaxLength(100)] string Name, Guid? Id = null);
 
-// ── Material stock ───────────────────────────────────────────────────────────
 public record MaterialStockMovementResponse(
     Guid Id,
     Guid MaterialId,
@@ -32,7 +30,6 @@ public record RecordMaterialStockRequest(
     Guid? ProjectId,
     Guid? TaskId);
 
-// ── Equipment ────────────────────────────────────────────────────────────────
 public record EquipmentResponse(
     Guid Id,
     string Name,

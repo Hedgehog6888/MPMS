@@ -6,7 +6,6 @@
 
     <UserControl.Resources>
 
-        <!-- Light icon button style matching app design -->
         <Style x:Key="ViewerIconBtn" TargetType="Button">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -37,7 +36,6 @@
             </Setter>
         </Style>
 
-        <!-- View Toggle RadioButton with borders for inactive state -->
         <Style x:Key="DrawToolToggleButton" TargetType="RadioButton">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -81,7 +79,6 @@
             </Setter>
         </Style>
 
-        <!-- Aspect ratio button style (square like undo/redo buttons) -->
         <Style x:Key="AspectRatioButton" TargetType="RadioButton">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DFE1E6"/>
@@ -125,8 +122,6 @@
             </Setter>
         </Style>
 
-
-        <!-- Save button (black style) -->
         <Style x:Key="SaveInfoBtn" TargetType="Button">
             <Setter Property="Background" Value="#111111"/>
             <Setter Property="Foreground" Value="White"/>
@@ -155,7 +150,6 @@
             </Setter>
         </Style>
 
-        <!-- Close circle button (light style) -->
         <Style x:Key="CloseCircleBtn" TargetType="Button">
             <Setter Property="Width" Value="32"/>
             <Setter Property="Height" Value="32"/>
@@ -178,7 +172,6 @@
             </Setter>
         </Style>
 
-        <!-- Light zoom slider -->
         <Style x:Key="ZoomSliderStyle" TargetType="Slider">
             <Setter Property="Template">
                 <Setter.Value>
@@ -221,7 +214,6 @@
             </Setter>
         </Style>
 
-        <!-- Info row label (light theme) -->
         <Style x:Key="InfoLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Foreground" Value="#6B778C"/>
@@ -249,7 +241,6 @@
             </Setter>
         </Style>
 
-        <!-- Note button styles (same as in HomePage) -->
         <Style x:Key="NoteActionButton" TargetType="Button">
             <Setter Property="Width" Value="32"/>
             <Setter Property="Height" Value="32"/>
@@ -292,35 +283,23 @@
 
     </UserControl.Resources>
 
-    <!-- Root: full overlay light background -->
     <Grid Background="#FFFFFF">
         <Grid.ColumnDefinitions>
-            <!-- Main image area -->
             <ColumnDefinition Width="*"/>
-            <!-- Info panel -->
             <ColumnDefinition Width="290"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!-- Bottom bar -->
             <RowDefinition Height="48"/>
         </Grid.RowDefinitions>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- LEFT: Image viewport                                        -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <Grid Grid.Column="0" Grid.Row="0">
 
-            <!-- Viewport -->
             <Grid x:Name="ViewportGrid"
                   Background="#F4F5F7"
                   ClipToBounds="True"
                   SizeChanged="ViewportGrid_SizeChanged">
-
-                <!-- Canvas provides infinite layout space to prevent WPF clipping -->
                 <Canvas x:Name="InfiniteCanvas">
-
-                    <!-- Scale + Rotate + Pan applied here -->
                     <Grid x:Name="ImageContainer"
                           RenderTransformOrigin="0.5,0.5"
                           ClipToBounds="True">
@@ -332,12 +311,10 @@
                             </TransformGroup>
                         </Grid.RenderTransform>
 
-                        <!-- Image — explicit W/H set from code after load -->
                         <Image x:Name="MainImage"
                                Stretch="Fill"
                                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-                        <!-- Draw canvas — same size as image (set from code) -->
                         <Canvas x:Name="DrawCanvas"
                                 Background="Transparent"
                                 Cursor="Hand"
@@ -349,7 +326,6 @@
                                 MouseEnter="DrawCanvas_MouseEnter"
                                 MouseLeave="DrawCanvas_MouseLeave">
 
-                            <!-- Custom cursor circle for drawing tools -->
                             <Ellipse x:Name="CursorCircle"
                                      Stroke="White"
                                      StrokeThickness="3"
@@ -362,7 +338,6 @@
                                 </Ellipse.Effect>
                             </Ellipse>
 
-                            <!-- Crop overlay -->
                             <Canvas x:Name="CropOverlayGrid" Visibility="Collapsed"
                                     Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Canvas}}"
                                     Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Canvas}}"
@@ -434,16 +409,12 @@
 
         </Grid>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- RIGHT: Info panel                                           -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <Border Grid.Column="1" Grid.Row="0"
                 Background="White"
                 BorderBrush="#E8E9EC" BorderThickness="1,0,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
-                    <!-- Drawing tools below info -->
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -452,7 +423,6 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="16,14,16,12">
 
-                        <!-- Header: title + close + save -->
                         <Grid Margin="0,0,0,16">
                             <TextBlock Text="Сведения" FontSize="15" FontWeight="SemiBold"
                                        Foreground="#111111" VerticalAlignment="Center"/>
@@ -466,7 +436,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- File name editable -->
                         <Border Background="#F4F5F7" BorderBrush="#E8E9EC" BorderThickness="1"
                                 CornerRadius="6" Margin="0,0,0,12">
                             <Grid Margin="10,8">
@@ -485,7 +454,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Created date -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
@@ -498,7 +466,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Modified time -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
@@ -511,10 +478,8 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Divider -->
                         <Border Height="1" Background="#E8E9EC" Margin="0,4,0,12"/>
 
-                        <!-- Description editable -->
                         <Border Background="#F4F5F7" BorderBrush="#E8E9EC" BorderThickness="1"
                                 CornerRadius="6" Margin="0,0,0,12">
                             <Grid Margin="10,8">
@@ -537,7 +502,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Camera/Device info -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
@@ -550,7 +514,6 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Uploaded by info -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="28"/>
@@ -569,13 +532,11 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ─── Drawing tools panel ──────────────────────────────── -->
                 <Border Grid.Row="1" x:Name="DrawingToolsPanel"
                         Background="#F8F9FA"
                         BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                         Padding="12,10">
                     <StackPanel>
-                        <!-- Row 1: Drawing tools (left) + Undo/Redo (right) -->
                         <Grid Margin="0,0,0,10">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                 <RadioButton x:Name="PencilBtn" Tag="Pencil" GroupName="DrawTools"
@@ -629,7 +590,6 @@
                                 </Button>
                             </StackPanel>
                         </Grid>
-                        <!-- Row 2: Brush size slider -->
                         <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -648,20 +608,17 @@
                                        Foreground="#111111" FontSize="11"
                                        VerticalAlignment="Center" Margin="8,0,0,0" Width="16"/>
                         </Grid>
-                        <!-- Row 3: Color palette -->
                         <UniformGrid x:Name="ColorPalettePanel"
                                    Rows="2" Columns="8"/>
                     </StackPanel>
                 </Border>
 
-                <!-- ─── Crop tools panel ─────────────────────────────────── -->
                 <Border Grid.Row="2" x:Name="CropToolsPanel"
                         Background="#F8F9FA"
                         BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                         Padding="12,10"
                         Visibility="Collapsed">
                     <StackPanel>
-                        <!-- Header: Size + Reset -->
                         <Grid Margin="0,0,0,12">
                             <TextBlock x:Name="CropPanelSizeText" Text="— × —" Foreground="#111111" FontSize="14" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
@@ -671,7 +628,6 @@
                             </Button>
                         </Grid>
 
-                        <!-- Aspect ratio buttons - better organized -->
                         <TextBlock Text="Соотношение сторон" Foreground="#6B778C" FontSize="11" Margin="0,0,0,8"/>
                         <UniformGrid Rows="2" Columns="6" Margin="0,0,0,12">
                             <RadioButton Content="1:1" GroupName="AspectRatio"
@@ -712,7 +668,6 @@
                                          Click="AspectRatioButton_Click" Tag="16:10"/>
                         </UniformGrid>
 
-                        <!-- Cancel + Apply buttons - full width -->
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -746,24 +701,17 @@
             </Grid>
         </Border>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- BOTTOM BAR                                                  -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <Border Grid.Row="1" Grid.ColumnSpan="2"
                 Background="White"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
                 Padding="16,0">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <!-- Left: resolution + size -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Center: zoom controls -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Right: action buttons (print, crop, rotate) -->
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left info -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Image Source="{svgc:SvgImage Source=/icons/dimensions.svg, AppName=MPMS}" 
                            Width="16" Height="16" Opacity="0.6"
@@ -779,54 +727,43 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Center: zoom controls only -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <!-- Zoom out -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomOut_Click" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/zoom_out.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
-                    <!-- Zoom slider -->
                     <Slider x:Name="ZoomSlider"
                             Minimum="10" Maximum="500" Value="100"
                             Width="140" VerticalAlignment="Center" Margin="6,0"
                             Style="{StaticResource ZoomSliderStyle}"
                             ValueChanged="ZoomSlider_ValueChanged"/>
-                    <!-- Zoom in -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="ZoomIn_Click" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/zoom_in.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
-                    <!-- Zoom text -->
                     <TextBlock x:Name="ZoomText" Text="100 %" Foreground="#6B778C"
                                FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" Width="46"/>
                 </StackPanel>
 
-                <!-- Right: action buttons with separator -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Separator -->
                     <Border Width="1" Background="#E8E9EC" Margin="0,10" Height="20"/>
-                    
-                    <!-- Print -->
+
                     <Button Style="{StaticResource ViewerIconBtn}" Click="Print_Click"
                             ToolTip="Печать" Margin="12,0,4,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/print.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
 
-                    <!-- Crop/Markup toggle -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="ToggleCrop_Click"
                             ToolTip="Разметка / Обрезка" Margin="0,0,4,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/crop.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
 
-                    <!-- Rotate separator -->
                     <Border Width="1" Background="#E8E9EC" Margin="0,10" Height="20"/>
 
-                    <!-- Rotate CCW -->
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCCW_Click"
                             ToolTip="Повернуть влево" Margin="8,0,2,0" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/rotate_left.svg, AppName=MPMS}" Width="16" Height="16"/>
                     </Button>
-                    <!-- Rotate CW -->
+
                     <Button Style="{StaticResource ViewerIconBtn}" Click="RotateCW_Click"
                             ToolTip="Повернуть вправо" Width="32" Height="32" Padding="0">
                         <Image Source="{svgc:SvgImage Source=/icons/rotate_right.svg, AppName=MPMS}" Width="16" Height="16"/>
@@ -835,7 +772,6 @@
             </Grid>
         </Border>
 
-        <!-- Confirmation Overlay -->
         <Border x:Name="ConfirmPopupBorder" Background="Transparent" CornerRadius="8" Margin="0"
                 Visibility="Collapsed"
                 UseLayoutRounding="True" SnapsToDevicePixels="True"

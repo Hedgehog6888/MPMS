@@ -44,7 +44,7 @@ public static class UserPeekAccess
 
     public static bool IsTargetWorkerRole(string? roleName) => IsWorker(roleName);
 
-    /// <summary>Кликабельная строка исполнителя (курсор-рука): работнику никогда; прорабу — только если назначенный работник.</summary>
+    /// <summary>Кликабельная строка исполнителя: работнику никогда; прорабу — только если назначенный работник.</summary>
     public static bool CanInteractPeekRow(IAuthService auth, LocalDbContext db, string? assigneeRoleName)
     {
         var vr = ResolveViewerRole(auth, db);

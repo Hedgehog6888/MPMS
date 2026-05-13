@@ -23,8 +23,6 @@ public partial class CreateProjectOverlay : UserControl
     private LocalProject? _editProject;
     private Func<System.Threading.Tasks.Task>? _onSaved;
     private Action? _onAfterSave;
-
-    // User data
     private List<ManagerPickerItem> _managerItems = [];
     private List<LocalUser> _managerUsers = [];
     private Guid? _selectedManagerId;
@@ -154,7 +152,6 @@ public partial class CreateProjectOverlay : UserControl
         NoManagerHint.Visibility = _managerItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         RefreshManagerItems();
 
-        // Load foremans and workers (only active, not blocked)
         _foremanUsers = await db.Users
             .Where(u => !u.IsBlocked && (u.RoleName == "Foreman" || u.RoleName == "Прораб"))
             .OrderBy(u => u.Name)
@@ -164,7 +161,6 @@ public partial class CreateProjectOverlay : UserControl
             .OrderBy(u => u.Name)
             .ToListAsync();
 
-        // If editing, load existing project members first (до создания items)
         if (projectId.HasValue)
         {
             var members = await db.ProjectMembers
@@ -532,7 +528,6 @@ public partial class CreateProjectOverlay : UserControl
             });
         }
 
-        // Add workers
         foreach (var workerId in _selectedWorkerIds)
         {
             var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
