@@ -154,7 +154,7 @@ public partial class CreateTaskOverlay : UserControl
             await LoadAssigneesForProjectAsync(preselectedProjectId.Value);
         }
         if (editTaskId.HasValue)
-            ProjectCombo.IsEnabled = false; 
+            ProjectCombo.IsEnabled = false;
 
         if (editTaskId.HasValue && _editTask is not null)
         {

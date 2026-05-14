@@ -158,11 +158,11 @@ public partial class HomePage : UserControl
         {
             if (BlockquoteBtn.IsChecked == true)
             {
-                p.BorderBrush = new SolidColorBrush(Color.FromRgb(17, 17, 17)); 
+                p.BorderBrush = new SolidColorBrush(Color.FromRgb(17, 17, 17));
                 p.BorderThickness = new Thickness(4, 0, 0, 0);
-                p.Background = new SolidColorBrush(Color.FromRgb(249, 250, 251)); 
+                p.Background = new SolidColorBrush(Color.FromRgb(249, 250, 251));
                 p.FontStyle = FontStyles.Italic;
-                p.Foreground = new SolidColorBrush(Color.FromRgb(74, 85, 104)); 
+                p.Foreground = new SolidColorBrush(Color.FromRgb(74, 85, 104));
                 p.Tag = blockId;
             }
             else
@@ -236,7 +236,7 @@ public partial class HomePage : UserControl
                         };
 
                         var container = new BlockUIContainer(quoteIcon);
-                        container.IsEnabled = false; 
+                        container.IsEnabled = false;
                         floater.Blocks.Add(container);
 
                         if (p.Inlines.FirstInline != null)
@@ -349,7 +349,7 @@ public partial class HomePage : UserControl
                 else
                 {
                     NumberingBtn.IsChecked = true;
-                    BulletsBtn.IsChecked = false; 
+                    BulletsBtn.IsChecked = false;
                 }
                 return;
             }

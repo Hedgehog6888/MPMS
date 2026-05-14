@@ -46,7 +46,7 @@ public partial class PhotoViewerOverlay : UserControl
     private Color _currentColor = Color.FromRgb(0x1E, 0x90, 0xFF);
     private double _brushSize = 3;
     private bool _isDrawing = false;
-    private bool _drawingActive = false; 
+    private bool _drawingActive = false;
     private Polyline? _currentStroke;
     private readonly Stack<UIElement> _undoStack = new();
     private readonly Stack<UIElement> _redoStack = new();
@@ -709,7 +709,7 @@ public partial class PhotoViewerOverlay : UserControl
     }
 
     // ── Логика ластика
-    private const double FixedEraserSize = 50; 
+    private const double FixedEraserSize = 50;
 
     private void EraseAtPoint(Point point)
     {
@@ -745,7 +745,7 @@ public partial class PhotoViewerOverlay : UserControl
         var distance = Math.Sqrt(Math.Pow(end.X - start.X, 2) + Math.Pow(end.Y - start.Y, 2));
         if (distance < 1) return;
 
-        int steps = Math.Min((int)Math.Ceiling(distance / (eraserRadius * 0.3)), 15); 
+        int steps = Math.Min((int)Math.Ceiling(distance / (eraserRadius * 0.3)), 15);
         for (int i = 0; i <= steps; i++)
         {
             double t = i / (double)steps;
@@ -1287,7 +1287,7 @@ public partial class PhotoViewerOverlay : UserControl
 
         return _currentAspectRatio switch
         {
-            AspectRatio.Free => 0, 
+            AspectRatio.Free => 0,
             AspectRatio.Original => (double)_source.PixelWidth / _source.PixelHeight,
             AspectRatio.Square => 1.0,
             AspectRatio.Ratio_9_16 => 9.0 / 16.0,

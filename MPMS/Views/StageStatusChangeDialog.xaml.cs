@@ -20,7 +20,7 @@ public partial class StageStatusChangeDialog : Window
         StageNameText.Text = stageName;
         CurrentStatusText.Text = currentStatus;
         NewStatusText.Text = newStatus;
-        
+
         CurrentStatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(currentStatusColor));
         NewStatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(newStatusColor));
         CurrentStatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(currentStatusTextColor));

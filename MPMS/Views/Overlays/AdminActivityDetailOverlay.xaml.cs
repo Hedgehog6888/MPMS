@@ -41,7 +41,7 @@ public partial class AdminActivityDetailOverlay : UserControl
 
         var brush = ActivityLogToAdminActivityBrushConverter.Instance.Convert(_log, typeof(SolidColorBrush), string.Empty, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
         ActionBadge.Background = brush ?? new SolidColorBrush(Colors.Gray);
-        
+
         var actionKind = _log.ActionType ?? "Unknown";
         var actionLabel = ActivityDetailsService.GetActionDisplay(actionKind);
         ActionTypeText.Text = actionLabel;
@@ -50,8 +50,8 @@ public partial class AdminActivityDetailOverlay : UserControl
         ActionKindText.Text = actionKind;
         CreatedAtText.Text = _log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss");
         EntityTypeText.Text = _log.EntityType ?? "—";
-        EntityIdText.Text = _log.EntityId != Guid.Empty 
-            ? _log.EntityId.ToString()[..8] + "…" 
+        EntityIdText.Text = _log.EntityId != Guid.Empty
+            ? _log.EntityId.ToString()[..8] + "…"
             : "—";
 
         ActionDescriptionText.Text = _log.ActionText ?? "Нет описания";

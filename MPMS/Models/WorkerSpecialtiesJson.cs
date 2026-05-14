@@ -207,7 +207,7 @@ public static class WorkerSpecialtiesJson
 
     public static (byte R, byte G, byte B) BadgeBackgroundRgbForSpecName(string? spec) =>
         SpecBgPalette[PaletteIndexForSpec(spec)];
-    
+
     public static (byte R, byte G, byte B) BadgeForegroundRgbForSpecName(string? spec) =>
         SpecFgPalette[PaletteIndexForSpec(spec)];
 

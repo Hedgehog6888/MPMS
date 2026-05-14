@@ -436,7 +436,8 @@
                                     <DataTemplate>
                                         <Border CornerRadius="6" Margin="0,0,0,4"
                                                 Padding="10,6" BorderThickness="1.5"
-                                                Cursor="Hand" HorizontalAlignment="Stretch">
+                                                Cursor="Hand" HorizontalAlignment="Stretch"
+                                                MouseLeftButtonDown="StageCard_Click">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="White"/>

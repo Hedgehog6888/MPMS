@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using MPMS.Models;
 using MPMS.ViewModels;
@@ -15,21 +15,21 @@ public partial class StageServicesControl : UserControl
     private void AddServiceTemplate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: LocalServiceTemplate tpl }) return;
-        if (DataContext is StageEditViewModel vm)
+        if (DataContext is StageDetailViewModel vm)
             vm.AddServiceTemplateCommand.Execute(tpl);
     }
 
     private void DecServiceQty_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: StageServiceLineVm line }) return;
-        if (DataContext is StageEditViewModel vm)
+        if (DataContext is StageDetailViewModel vm)
             vm.AdjustServiceQuantity(line, -1);
     }
 
     private void IncServiceQty_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: StageServiceLineVm line }) return;
-        if (DataContext is StageEditViewModel vm)
+        if (DataContext is StageDetailViewModel vm)
             vm.AdjustServiceQuantity(line, 1);
     }
 }

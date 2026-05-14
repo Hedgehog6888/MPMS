@@ -426,7 +426,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             db.ActivityLogs.Add(new LocalActivityLog
             {
                 Id = Guid.NewGuid(),
-                UserId = null, 
+                UserId = null,
                 ActorRole = "System",
                 ActionType = ActivityActionKind.StatusChanged,
                 ActionText = $"Статус проекта «{project.Name}» изменён на {statusText}",

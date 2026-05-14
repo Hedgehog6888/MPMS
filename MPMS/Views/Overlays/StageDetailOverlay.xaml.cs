@@ -268,18 +268,17 @@ public partial class StageDetailOverlay : UserControl
         if (_stage is null || _task is null) return;
         if (_stage.Status == StageStatus.Completed) return;
         MainWindow.Instance?.HideDrawer();
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
-        stageEditor.SetEditMode(
+        var overlay = new CreateStageOverlay();
+        overlay.SetEditMode(
             _stage,
             _task,
-            goBack: () => main.Navigate("Stages"),
-            onSavedAsync: async () =>
+            onSaved: async () =>
             {
                 _onClosed?.Invoke();
                 await System.Threading.Tasks.Task.CompletedTask;
-            });
-        main.NavigateToStageEditor(stageEditor);
+            },
+            onAfterSave: () => MainWindow.Instance?.HideDrawer());
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async void SetStatusPlanned_Click(object sender, RoutedEventArgs e)
@@ -310,7 +309,7 @@ public partial class StageDetailOverlay : UserControl
 
         _stage.Status = newStatus;
         ApplyStatus(newStatus);
-        _onClosed?.Invoke(); 
+        _onClosed?.Invoke();
     }
 
     private static async System.Threading.Tasks.Task RecalcTaskProgressAsync(LocalDbContext db, Guid taskId)

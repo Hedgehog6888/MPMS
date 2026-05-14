@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -359,32 +359,21 @@ public partial class ProjectDetailPage : UserControl
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
 
-        var taskPanel = new TaskSummaryPanel();
-        taskPanel.SetTask(task);
-
-        var overlay = new StageDetailOverlay();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        var taskId = task.Id;
-        overlay.SetStage(stageItem, task, () =>
-        {
-            _ = Dispatcher.InvokeAsync(async () =>
+        var project = VM.Project!;
+        stageEditor.SetEditMode(stage, task,
+            goBack: () => main.NavigateToProject(project),
+            onSavedAsync: async () =>
             {
                 if (vm != null)
                 {
                     await vm.LoadAsync();
                     UpdateMarkProjectButton();
                 }
-                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-                await using var db = await dbFactory.CreateDbContextAsync();
-                var updatedTask = await db.Tasks.FindAsync(taskId);
-                if (updatedTask != null)
-                {
-                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
-                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
-                }
             });
-        });
-        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private void OpenStageKanbanDetail(StageItem item)
@@ -393,32 +382,21 @@ public partial class ProjectDetailPage : UserControl
         var task = VM.Tasks.FirstOrDefault(t => t.Id == item.TaskId);
         if (task is null) return;
 
-        var taskPanel = new TaskSummaryPanel();
-        taskPanel.SetTask(task);
-
-        var overlay = new StageDetailOverlay();
-        var taskId = task.Id;
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        overlay.SetStage(item, task, () =>
-        {
-            _ = Dispatcher.InvokeAsync(async () =>
+        var project = VM.Project!;
+        stageEditor.SetEditMode(item.Stage, task,
+            goBack: () => main.NavigateToProject(project),
+            onSavedAsync: async () =>
             {
                 if (vm is not null)
                 {
                     await vm.LoadAsync();
                     UpdateMarkProjectButton();
                 }
-                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-                await using var db = await dbFactory.CreateDbContextAsync();
-                var updatedTask = await db.Tasks.FindAsync(taskId);
-                if (updatedTask != null)
-                {
-                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
-                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
-                }
             });
-        });
-        MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+        main.NavigateToStageEditor(stageEditor);
     }
 
     private void StageKanbanCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -554,7 +532,7 @@ public partial class ProjectDetailPage : UserControl
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
         var project = VM.Project!;
         stageEditor.SetEditMode(stage, task,
@@ -619,7 +597,7 @@ public partial class ProjectDetailPage : UserControl
     {
         if (VM?.Project is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
         var project = VM.Project;
         stageEditor.SetCreateForProject(project.Id,

@@ -104,7 +104,20 @@ public class FilesController : ControllerBase
             .Include(f => f.Stage)
             .AsQueryable();
 
-        if (projectId.HasValue) query = query.Where(f => f.ProjectId == projectId);
+        if (projectId.HasValue)
+        {
+            // Получаем все этапы проекта через задачи
+            var projectTaskIds = await _db.Tasks
+                .Where(t => t.ProjectId == projectId)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var projectStageIds = await _db.TaskStages
+                .Where(s => projectTaskIds.Contains(s.TaskId))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            query = query.Where(f => f.ProjectId == projectId || (f.StageId.HasValue && projectStageIds.Contains(f.StageId.Value)));
+        }
         if (taskId.HasValue) query = query.Where(f => f.TaskId == taskId);
         if (stageId.HasValue) query = query.Where(f => f.StageId == stageId);
 

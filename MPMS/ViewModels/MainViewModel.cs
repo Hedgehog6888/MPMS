@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -145,7 +145,7 @@ public partial class MainViewModel : ViewModelBase
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null, 
+            "Settings" => null,
             _ => null
         };
 
@@ -206,7 +206,7 @@ public partial class MainViewModel : ViewModelBase
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null, 
+            "Settings" => null,
             _ => null
         };
 
@@ -245,10 +245,10 @@ public partial class MainViewModel : ViewModelBase
     }
 
     /// <summary>Встроенный редактор этапа (полноэкранная страница, как карточка проекта).</summary>
-    public void NavigateToStageEditor(StageEditViewModel vm)
+    public void NavigateToStageEditor(StageDetailViewModel vm)
     {
-        PushNavigationHistory("StageEdit");
-        CurrentPage = "StageEdit";
+        PushNavigationHistory("StageDetail");
+        CurrentPage = "StageDetail";
         CurrentPageViewModel = vm;
         _ = vm.LoadAsync();
 

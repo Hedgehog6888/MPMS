@@ -26,12 +26,10 @@ public static class LocalDbGraphDeletion
         {
             await db.TaskAssignees.Where(x => taskIds.Contains(x.TaskId)).ExecuteDeleteAsync();
             await db.Messages.Where(x => x.TaskId.HasValue && taskIds.Contains(x.TaskId.Value)).ExecuteDeleteAsync();
-            await db.Files.Where(x => x.TaskId.HasValue && taskIds.Contains(x.TaskId.Value)).ExecuteDeleteAsync();
             await db.Tasks.Where(x => taskIds.Contains(x.Id)).ExecuteDeleteAsync();
         }
 
         await db.Messages.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
-        await db.Files.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
         await db.ProjectMembers.Where(x => x.ProjectId == projectId).ExecuteDeleteAsync();
         await db.Projects.Where(x => x.Id == projectId).ExecuteDeleteAsync();
     }
@@ -50,7 +48,6 @@ public static class LocalDbGraphDeletion
 
         await db.TaskAssignees.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
         await db.Messages.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
-        await db.Files.Where(x => x.TaskId == taskId).ExecuteDeleteAsync();
         await db.Tasks.Where(x => x.Id == taskId).ExecuteDeleteAsync();
     }
 

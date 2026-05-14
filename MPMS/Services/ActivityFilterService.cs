@@ -517,7 +517,7 @@ public static class ActivityFilterService
         if (entityType == "Stage" && workerData.StageIds.Contains(entityId))
             return true;
 
-        if ((entityType == "File" || entityType == "Image" || entityType == "Document") 
+        if ((entityType == "File" || entityType == "Image" || entityType == "Document")
             && workerData.RelatedFileIds.Contains(entityId))
             return true;
 

@@ -1,7 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -344,7 +345,7 @@ public partial class TaskDetailOverlay : UserControl
         if (_vm?.Task is null) return;
         MainWindow.Instance?.HideDrawer();
         var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var task = _vm.Task;
         stageEditor.SetCreateForTask(
             task,
@@ -377,7 +378,7 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
-        _onClosed?.Invoke(); 
+        _onClosed?.Invoke();
     }
 
     private async void SendMessage_Click(object sender, RoutedEventArgs e)
@@ -407,7 +408,7 @@ public partial class TaskDetailOverlay : UserControl
                 return;
         }
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
-        _onClosed?.Invoke(); 
+        _onClosed?.Invoke();
     }
 
     private async void DeleteStage_Click(object sender, RoutedEventArgs e)
@@ -417,7 +418,7 @@ public partial class TaskDetailOverlay : UserControl
         if (MPMS.Views.ConfirmDeleteDialog.Show(owner, "Этап", stage.Name))
         {
             await _vm.DeleteStageCommand.ExecuteAsync(stage);
-            _onClosed?.Invoke(); 
+            _onClosed?.Invoke();
         }
     }
 
@@ -428,7 +429,30 @@ public partial class TaskDetailOverlay : UserControl
 
         MainWindow.Instance?.HideDrawer();
         var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
+        stageEditor.SetEditMode(
+            stage,
+            _vm.Task,
+            goBack: () => main.Navigate("Tasks"),
+            onSavedAsync: async () =>
+            {
+                await _vm.LoadAsync();
+                UpdateStagesTabLabel();
+                UpdateEmptyStates();
+                _onClosed?.Invoke();
+            });
+        main.NavigateToStageEditor(stageEditor);
+    }
+
+    private void StageCard_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskStage stage || _vm?.Task is null) return;
+        if (stage.Status == Models.StageStatus.Completed) return;
+        e.Handled = true;
+
+        MainWindow.Instance?.HideDrawer();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         stageEditor.SetEditMode(
             stage,
             _vm.Task,

@@ -129,7 +129,7 @@ namespace MPMS.Views.Components
 
             try
             {
-                await Task.Delay(200, ct); 
+                await Task.Delay(200, ct);
 
                 var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
                 await using var db = await dbFactory.CreateDbContextAsync(ct);
@@ -344,20 +344,12 @@ namespace MPMS.Views.Components
             stageEntity.TaskIsMarkedForDeletion = task.IsMarkedForDeletion;
             stageEntity.ProjectIsMarkedForDeletion = task.ProjectIsMarkedForDeletion;
 
-            var taskPanel = new TaskSummaryPanel();
-            taskPanel.SetTask(task);
-
-            var overlay = new StageDetailOverlay();
-            overlay.SetStage(new StageItem
-            {
-                Stage = stageEntity,
-                TaskId = task.Id,
-                TaskName = task.Name,
-                ProjectId = task.ProjectId,
-                ProjectName = task.ProjectName ?? "—"
-            }, task);
-
-            MainWindow.Instance?.ShowDrawer(taskPanel, overlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+            var main = App.Services.GetRequiredService<MainViewModel>();
+            var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
+            stageEditor.SetEditMode(stageEntity, task,
+                goBack: () => main.GoBackCommand.Execute(null),
+                onSavedAsync: null);
+            main.NavigateToStageEditor(stageEditor);
         }
 
         private async Task OpenMaterialFromSearchAsync(LocalMaterial material)

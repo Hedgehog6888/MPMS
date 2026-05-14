@@ -202,9 +202,9 @@ public partial class TimelinePage : UserControl
         };
         label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         double lblW = label.DesiredSize.Width;
-        
+
         Canvas.SetLeft(label, dayColumnCenter - lblW / 2);
-        Canvas.SetTop(label, 2); 
+        Canvas.SetTop(label, 2);
         TodayLineCanvas.Children.Add(label);
     }
 

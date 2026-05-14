@@ -15,7 +15,7 @@ public static class StatusCalculator
             return TaskStatus.InProgress;
         return TaskStatus.Planned;
     }
-    
+
     public static ProjectStatus GetProjectStatusFromTasks(IEnumerable<LocalTask> tasks)
     {
         var list = tasks.Where(t => !t.IsMarkedForDeletion).ToList();

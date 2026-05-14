@@ -1,4 +1,4 @@
-<Application x:Class="MPMS.App"
+﻿<Application x:Class="MPMS.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
@@ -1123,8 +1123,8 @@
             <DataTemplate DataType="{x:Type vm:ProjectDetailViewModel}">
                 <pages:ProjectDetailPage/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vm:StageEditViewModel}">
-                <pages:StageEditPage/>
+            <DataTemplate DataType="{x:Type vm:StageDetailViewModel}">
+                <pages:StageDetailPage/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vm:TasksViewModel}">
                 <pages:TasksPage/>

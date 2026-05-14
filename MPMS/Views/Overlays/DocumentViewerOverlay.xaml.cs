@@ -275,16 +275,16 @@ public partial class DocumentViewerOverlay : UserControl
     {
         if (hasImage)
         {
-            return 300; 
+            return 300;
         }
         else if (textLength > 0)
         {
             int lineCount = (textLength / 90) + 1;
-            return lineCount * 28; 
+            return lineCount * 28;
         }
         else
         {
-            return 20; 
+            return 20;
         }
     }
 

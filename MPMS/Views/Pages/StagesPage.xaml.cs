@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -45,13 +45,12 @@ public partial class StagesPage : UserControl
             return;
         }
 
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
         var vm = VM;
-        stageEditor.SetCreateFromStagesPage(
-            goBack: () => main.Navigate("Stages"),
-            onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
-        main.NavigateToStageEditor(stageEditor);
+        var overlay = new CreateStageOverlay();
+        overlay.SetCreateMode(
+            onSaved: async () => { if (vm is not null) await vm.LoadAsync(); },
+            onAfterSave: () => MainWindow.Instance?.HideDrawer());
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
@@ -114,7 +113,7 @@ public partial class StagesPage : UserControl
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageEditViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
         stageEditor.SetEditMode(item.Stage, task,
             goBack: () => main.Navigate("Stages"),
@@ -199,29 +198,12 @@ public partial class StagesPage : UserControl
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
 
-        var taskPanel = new TaskSummaryPanel();
-        taskPanel.SetTask(task);
-
-        var stageOverlay = new StageDetailOverlay();
-        var taskId = item.TaskId;
-        stageOverlay.SetStage(item, task, () =>
-        {
-            _ = Dispatcher.InvokeAsync(async () =>
-            {
-                if (vm is null) return;
-                await vm.LoadAsync();
-                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-                await using var db = await dbFactory.CreateDbContextAsync();
-                var updatedTask = await db.Tasks.FindAsync(taskId);
-                if (updatedTask != null)
-                {
-                    await ProgressCalculator.ApplyTaskMetricsForTaskAsync(db, updatedTask);
-                    await Dispatcher.InvokeAsync(() => taskPanel.SetTask(updatedTask));
-                }
-            });
-        });
-
-        MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
+        stageEditor.SetEditMode(item.Stage, task,
+            goBack: () => main.Navigate("Stages"),
+            onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
+        main.NavigateToStageEditor(stageEditor);
     }
 }
 

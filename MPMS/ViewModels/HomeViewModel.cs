@@ -508,15 +508,15 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3TooltipDesc = "Внимание! Обнаружены объекты с истекшим сроком выполнения:";
                     }
                 }
-                else 
+                else
                 {
                     int unassigned = await (from t in db.Tasks
-                                             join p in db.Projects on t.ProjectId equals p.Id
-                                             where foremanProjectIds.Contains(p.Id)
-                                                && t.AssignedUserId == null
-                                                && !t.IsMarkedForDeletion && !t.IsArchived
-                                                && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
-                                             select t.Id).CountAsync();
+                                            join p in db.Projects on t.ProjectId equals p.Id
+                                            where foremanProjectIds.Contains(p.Id)
+                                               && t.AssignedUserId == null
+                                               && !t.IsMarkedForDeletion && !t.IsArchived
+                                               && !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed
+                                            select t.Id).CountAsync();
                     Card3Value = overdueStagesCount + overdueTasksCount + unassigned;
                     Card3Segment1 = overdueTasksCount;
                     Card3Segment2 = overdueStagesCount;
@@ -704,7 +704,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                         Card3TooltipDesc = "Обнаружены критические задержки в курируемых проектах:";
                     }
                 }
-                else 
+                else
                 {
                     int globalOverdueProjects = await db.Projects.CountAsync(p => !p.IsMarkedForDeletion && !p.IsArchived && !p.IsClosed && p.Status != ProjectStatus.Completed && p.EndDate < today);
 

@@ -16,12 +16,19 @@ public partial class LoginWindow : Window
 
     public LoginWindow(LoginViewModel vm)
     {
+        System.Diagnostics.Debug.WriteLine("[LoginWindow] Конструктор начался");
         InitializeComponent();
+        System.Diagnostics.Debug.WriteLine("[LoginWindow] InitializeComponent завершён");
         _vm = vm;
         DataContext = vm;
+        System.Diagnostics.Debug.WriteLine("[LoginWindow] DataContext установлен");
 
         vm.PasswordFocusRequested += (_, _) =>
             Dispatcher.BeginInvoke(() => PwdBox.Focus());
+        System.Diagnostics.Debug.WriteLine("[LoginWindow] Конструктор завершён");
+
+        System.Diagnostics.Debug.WriteLine($"[LoginWindow] ShutdownMode: {Application.Current.ShutdownMode}");
+        Closed += (s, e) => System.Diagnostics.Debug.WriteLine("[LoginWindow] ОКНО ЗАКРЫТО!");
     }
 
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)

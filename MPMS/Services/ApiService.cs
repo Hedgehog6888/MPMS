@@ -102,6 +102,11 @@ public class ApiService : IApiService
             IsOnline = false;
             return LoginResult.Offline();
         }
+        catch (Exception ex)
+        {
+            IsOnline = false;
+            return LoginResult.Fail($"Ошибка: {ex.Message}");
+        }
     }
 
     public async Task<AuthResponse?> RefreshAsync(string token, string refreshToken)
