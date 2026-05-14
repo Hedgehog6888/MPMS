@@ -16,12 +16,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
     private bool _suppressProjectFilterReload;
-    private bool _isLoaded;
-
-    // Кэш для фильтрации в памяти без перезагрузки из БД
-    private List<LocalProject> _allLoadedProjects = [];
-    private List<LocalTask> _allLoadedTasks = [];
-    private List<LocalTaskStage> _allLoadedStages = [];
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<ProjectTaskGroup> _taskGroups = [];
@@ -47,17 +41,16 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     }
     private bool CanMarkTaskDeletion() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
-    partial void OnSearchTextChanged(string value) => ApplyFilter();
-    partial void OnStatusFilterChanged(string value) => ApplyFilter();
-    partial void OnPriorityFilterChanged(string value) => ApplyFilter();
+    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
+    partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
+    partial void OnPriorityFilterChanged(string value) => _ = LoadAsync();
     partial void OnProjectFilterChanged(Guid? value)
     {
         if (_suppressProjectFilterReload) return;
-        ApplyFilter();
+        _ = LoadAsync();
     }
     public async Task LoadAsync()
     {
-        if (_isLoaded) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var projectQuery = db.Projects.Where(p => !p.IsArchived && !p.IsClosed);
@@ -102,7 +95,6 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             .ThenByDescending(p => p.UpdatedAt)
             .ThenBy(p => p.Name)
             .ToList();
-        _allLoadedProjects = projectList;
         Projects = new ObservableCollection<LocalProject>(projectList);
 
         var query = db.Tasks.Where(t => !t.IsArchived && db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
@@ -132,6 +124,22 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 var allWorkerTaskIds = workerTaskIds.Concat(workerTaskIdsFromAssignees).Distinct().ToList();
                 query = query.Where(t => allWorkerTaskIds.Contains(t.Id));
             }
+        }
+
+        if (ProjectFilter.HasValue)
+            query = query.Where(t => t.ProjectId == ProjectFilter.Value);
+
+        if (PriorityFilter != "Все")
+        {
+            var priority = PriorityFilter switch
+            {
+                "Низкий" => TaskPriority.Low,
+                "Средний" => TaskPriority.Medium,
+                "Высокий" => TaskPriority.High,
+                "Критический" => TaskPriority.Critical,
+                _ => (TaskPriority?)null
+            };
+            if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
         }
 
         var list = await query.ToListAsync();
@@ -170,7 +178,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             _suppressProjectFilterReload = false;
         }
 
-        // Загружаем этапы и пересчитываем статус/прогресс
+        // Загружаем этапы и пересчитываем статус/прогресс задачи из активных этапов
         var taskIds = list.Select(t => t.Id).ToList();
         var stages = await db.TaskStages
             .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived)
@@ -181,6 +189,23 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         {
             var taskStages = stages.Where(s => s.TaskId == t.Id).ToList();
             ProgressCalculator.ApplyTaskMetrics(t, taskStages);
+        }
+
+        if (StatusFilter == "Пометка удаления")
+        {
+            list = list.Where(t => t.EffectiveTaskMarkedForDeletion).ToList();
+        }
+        else if (StatusFilter != "Все")
+        {
+            var status = StatusFilter switch
+            {
+                "Запланирована" => TaskStatus.Planned,
+                "Выполняется" => TaskStatus.InProgress,
+                "Завершена" => TaskStatus.Completed,
+                _ => (TaskStatus?)null
+            };
+            if (status.HasValue)
+                list = list.Where(t => t.Status == status.Value && !t.EffectiveTaskMarkedForDeletion).ToList();
         }
 
         // Заполняем AssignedUserAvatarData для задач из Users
@@ -201,55 +226,10 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
             }
         }
 
-        _allLoadedTasks = list;
-        _allLoadedStages = stages;
-        _isLoaded = true;
-        ApplyFilter();
-    }
-
-    public void Invalidate() => _isLoaded = false;
-
-    private void ApplyFilter()
-    {
-        var list = _allLoadedTasks.AsEnumerable();
-
-        if (ProjectFilter.HasValue)
-            list = list.Where(t => t.ProjectId == ProjectFilter.Value);
-
-        if (PriorityFilter != "Все")
-        {
-            var priority = PriorityFilter switch
-            {
-                "Низкий" => TaskPriority.Low,
-                "Средний" => TaskPriority.Medium,
-                "Высокий" => TaskPriority.High,
-                "Критический" => TaskPriority.Critical,
-                _ => (TaskPriority?)null
-            };
-            if (priority.HasValue) list = list.Where(t => t.Priority == priority.Value);
-        }
-
-        if (StatusFilter == "Пометка удаления")
-        {
-            list = list.Where(t => t.EffectiveTaskMarkedForDeletion);
-        }
-        else if (StatusFilter != "Все")
-        {
-            var status = StatusFilter switch
-            {
-                "Запланирована" => TaskStatus.Planned,
-                "Выполняется" => TaskStatus.InProgress,
-                "Завершена" => TaskStatus.Completed,
-                _ => (TaskStatus?)null
-            };
-            if (status.HasValue)
-                list = list.Where(t => t.Status == status.Value && !t.EffectiveTaskMarkedForDeletion);
-        }
-
         var searchTerm = SearchHelper.Normalize(SearchText);
         if (searchTerm is not null)
             list = list.Where(t => SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
-                SearchHelper.ContainsIgnoreCase(t.Description, searchTerm));
+                SearchHelper.ContainsIgnoreCase(t.Description, searchTerm)).ToList();
 
         list = list
             .OrderBy(t => t.EffectiveTaskMarkedForDeletion)
@@ -399,7 +379,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         await RecalcProjectStatusAsync(db, req.ProjectId);
         await LogActivityAsync(db, $"Создана задача «{req.Name}»", "Task", localId, ActivityActionKind.Created);
-        Invalidate(); await LoadAsync();
+        await LoadAsync();
     }
 
     private static async Task RecalcProjectStatusAsync(LocalDbContext db, Guid projectId)
@@ -496,7 +476,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         };
         await _sync.QueueOperationAsync("Task", id, SyncOperation.Update, syncReq);
         await LogActivityAsync(db, $"Обновлена задача «{req.Name}»", "Task", id, ActivityActionKind.Updated, details);
-        Invalidate(); await LoadAsync();
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -527,7 +507,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         foreach (var s in stages)
             _ = _sync.QueueOperationAsync("Stage", s.Id, SyncOperation.Update, SyncPayloads.Stage(s));
         await LogActivityAsync(db, $"Удалена задача «{task.Name}»", "Task", task.Id, ActivityActionKind.Deleted);
-        Invalidate(); await LoadAsync();
+        await LoadAsync();
     }
 
     [RelayCommand]
@@ -564,7 +544,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id, actionType);
-        Invalidate(); await LoadAsync();
+        await LoadAsync();
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null, string? detailsText = null)

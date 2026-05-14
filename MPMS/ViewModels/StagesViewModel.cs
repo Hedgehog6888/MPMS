@@ -26,7 +26,6 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
-    private bool _isLoaded;
 
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
@@ -70,7 +69,6 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        if (_isLoaded) return;
         IsBusy = true;
         ClearMessages();
         try
@@ -233,10 +231,7 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
         {
             IsBusy = false;
         }
-        _isLoaded = true;
     }
-
-    public void Invalidate() => _isLoaded = false;
 
     private void ApplyFilter()
     {

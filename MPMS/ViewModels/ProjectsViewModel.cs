@@ -17,7 +17,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
     private CancellationTokenSource _loadCts = new();
     private bool _isDeleting = false;
-    private bool _isLoaded;
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
     [ObservableProperty] private string _searchText = string.Empty;
@@ -43,7 +42,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     public async Task LoadAsync()
     {
         // Предотвращаем перезагрузку во время операций удаления
-        if (_isDeleting || _isLoaded) return;
+        if (_isDeleting) return;
 
         _loadCts.Cancel();
         _loadCts = new CancellationTokenSource();
@@ -107,10 +106,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             await LoadInternalAsync(db, query, ct);
         }
         catch (OperationCanceledException) { /* новый вызов заменил этот */ }
-        _isLoaded = true;
     }
-
-    public void Invalidate() => _isLoaded = false;
 
     private async Task LoadInternalAsync(LocalDbContext db, IQueryable<LocalProject> query, CancellationToken ct)
     {

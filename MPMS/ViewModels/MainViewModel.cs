@@ -280,12 +280,6 @@ public partial class MainViewModel : ViewModelBase
         IsBusy = false;
         IsSyncing = false;
         await RefreshSyncCountsAsync();
-
-        if (CurrentPageViewModel is ILoadable loadableVm)
-        {
-            loadableVm.Invalidate();
-            _ = loadableVm.LoadAsync();
-        }
     }
 
     [RelayCommand]

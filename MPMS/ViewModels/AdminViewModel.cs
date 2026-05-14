@@ -90,7 +90,6 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
     private readonly IApiService _api;
     private readonly ISyncService _sync;
-    private bool _isLoaded;
 
     // События для открытия панелей (обрабатываются в AdminPage.xaml.cs)
     public event Action<AdminUserRow>? OpenUserInfoRequested;
@@ -195,7 +194,6 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        if (_isLoaded) return;
         IsBusy = true;
         try
         {
@@ -205,10 +203,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
             await LoadActivityAsync();
         }
         finally { IsBusy = false; }
-        _isLoaded = true;
     }
-
-    public void Invalidate() => _isLoaded = false;
 
     public async Task RefreshAfterUserChangeAsync() => await LoadUsersAsync();
 

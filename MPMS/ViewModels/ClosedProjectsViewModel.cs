@@ -14,7 +14,6 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
     private CancellationTokenSource _loadCts = new();
-    private bool _isLoaded;
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
     [ObservableProperty] private string _searchText = "";
@@ -33,7 +32,6 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
 
     public async Task LoadAsync()
     {
-        if (_isLoaded) return;
         _loadCts.Cancel();
         _loadCts = new CancellationTokenSource();
         var ct = _loadCts.Token;
@@ -112,11 +110,8 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
             _allProjects = list;
             ApplySearch();
         }
-        catch (OperationCanceledException) { /* новый вызов заменил этот */ }
-        _isLoaded = true;
+        catch (OperationCanceledException) { }
     }
-
-    public void Invalidate() => _isLoaded = false;
 
     partial void OnSearchTextChanged(string value)
     {

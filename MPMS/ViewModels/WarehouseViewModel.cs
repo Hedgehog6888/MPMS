@@ -30,9 +30,6 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _equipmentStatusFilter = "Все";
 
     private bool _suppressWarehouseFilterReload;
-    private bool _isLoaded;
-    private List<LocalMaterial> _allMaterials = [];
-    private List<LocalEquipment> _allEquipments = [];
 
     public IReadOnlyList<string> LifecycleFilterOptions { get; } = ["Все", "Активные", "Списанные"];
 
@@ -84,44 +81,47 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     private static bool IsLockedByStage(LocalEquipment equipment) =>
         equipment.CheckedOutTaskId.HasValue && !equipment.IsWrittenOff;
 
-    partial void OnSearchTextChanged(string value) => ApplyFilter();
+    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
 
     partial void OnSelectedMaterialCategoryIdChanged(Guid? value)
     {
         if (_suppressWarehouseFilterReload) return;
-        ApplyFilter();
+        _ = LoadAsync();
     }
 
     partial void OnSelectedEquipmentCategoryIdChanged(Guid? value)
     {
         if (_suppressWarehouseFilterReload) return;
-        ApplyFilter();
+        _ = LoadAsync();
     }
 
-    partial void OnLifecycleFilterChanged(string value) => ApplyFilter();
+    partial void OnLifecycleFilterChanged(string value) => _ = LoadAsync();
 
     partial void OnMaterialStockFilterChanged(string value)
     {
         if (_suppressWarehouseFilterReload) return;
-        ApplyFilter();
+        _ = LoadAsync();
     }
 
     partial void OnEquipmentStatusFilterChanged(string value)
     {
         if (_suppressWarehouseFilterReload) return;
-        ApplyFilter();
+        _ = LoadAsync();
     }
 
     partial void OnActiveTabChanged(string value)
     {
-        ApplyFilter();
+        // Мы НЕ сбрасываем SelectedMaterialCategoryId / SelectedEquipmentCategoryId,
+        // чтобы при возвращении на вкладку фильтр сохранялся.
+        _ = LoadAsync();
     }
 
     public async Task LoadAsync()
     {
-        if (_isLoaded) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
 
+        // Загружаем категории только если они еще не загружены или нужно обновить.
+        // Для простоты оставим обновление здесь, но добавим проверку, чтобы не перезаписывать зря
         var cats = (await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync())
             .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(g => g.OrderBy(x => x.Name).First())
@@ -138,46 +138,52 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
 
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         matFilterOpts.AddRange(cats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
+
+        if (MaterialCategoryFilterOptions.Count != matFilterOpts.Count)
+            MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
 
         var eqFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         eqFilterOpts.AddRange(eqCats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
-        EquipmentCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(eqFilterOpts);
 
-        _allMaterials = await db.Materials.Where(m => !m.IsArchived).ToListAsync();
-        _allEquipments = await db.Equipments.Where(e => !e.IsArchived).ToListAsync();
+        if (EquipmentCategoryFilterOptions.Count != eqFilterOpts.Count)
+            EquipmentCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(eqFilterOpts);
 
-        _isLoaded = true;
-        ApplyFilter();
-    }
+        // Проверка валидности выбранных категорий
+        if (SelectedMaterialCategoryId is { } mid && cats.All(c => c.Id != mid))
+        {
+            _suppressWarehouseFilterReload = true;
+            try { SelectedMaterialCategoryId = null; } finally { _suppressWarehouseFilterReload = false; }
+        }
+        if (SelectedEquipmentCategoryId is { } eid && eqCats.All(c => c.Id != eid))
+        {
+            _suppressWarehouseFilterReload = true;
+            try { SelectedEquipmentCategoryId = null; } finally { _suppressWarehouseFilterReload = false; }
+        }
 
-    public void Invalidate() => _isLoaded = false;
-
-    private void ApplyFilter()
-    {
         var search = SearchHelper.Normalize(SearchText);
 
-        var matList = _allMaterials.AsEnumerable();
+        var matQuery = db.Materials.Where(m => !m.IsArchived).AsQueryable();
         if (SelectedMaterialCategoryId.HasValue)
-            matList = matList.Where(m => m.CategoryId == SelectedMaterialCategoryId);
+            matQuery = matQuery.Where(m => m.CategoryId == SelectedMaterialCategoryId);
+        var matList = await matQuery.ToListAsync();
         if (search is not null)
             matList = matList.Where(m =>
                 SearchHelper.ContainsIgnoreCase(m.Name, search) ||
                 SearchHelper.ContainsIgnoreCase(m.Description, search) ||
                 SearchHelper.ContainsIgnoreCase(m.CategoryName, search) ||
-                SearchHelper.ContainsIgnoreCase(m.InventoryNumber, search));
+                SearchHelper.ContainsIgnoreCase(m.InventoryNumber, search)).ToList();
 
         matList = LifecycleFilter switch
         {
-            "Активные" => matList.Where(m => !m.IsWrittenOff),
-            "Списанные" => matList.Where(m => m.IsWrittenOff),
+            "Активные" => matList.Where(m => !m.IsWrittenOff).ToList(),
+            "Списанные" => matList.Where(m => m.IsWrittenOff).ToList(),
             _ => matList
         };
 
         matList = MaterialStockFilter switch
         {
-            "Есть остаток" => matList.Where(m => m.Quantity > 0 && !m.IsWrittenOff),
-            "Нет в наличии" => matList.Where(m => m.Quantity <= 0 && !m.IsWrittenOff),
+            "Есть остаток" => matList.Where(m => m.Quantity > 0 && !m.IsWrittenOff).ToList(),
+            "Нет в наличии" => matList.Where(m => m.Quantity <= 0 && !m.IsWrittenOff).ToList(),
             _ => matList
         };
 
@@ -187,29 +193,30 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             .ToList();
         Materials = new ObservableCollection<LocalMaterial>(matList);
 
-        var eqList = _allEquipments.AsEnumerable();
+        var eqQuery = db.Equipments.Where(e => !e.IsArchived).AsQueryable();
         if (SelectedEquipmentCategoryId.HasValue)
-            eqList = eqList.Where(e => e.CategoryId == SelectedEquipmentCategoryId);
+            eqQuery = eqQuery.Where(e => e.CategoryId == SelectedEquipmentCategoryId);
+        var eqList = await eqQuery.ToListAsync();
         if (search is not null)
             eqList = eqList.Where(e =>
                 SearchHelper.ContainsIgnoreCase(e.Name, search) ||
                 SearchHelper.ContainsIgnoreCase(e.Description, search) ||
                 SearchHelper.ContainsIgnoreCase(e.CategoryName, search) ||
-                SearchHelper.ContainsIgnoreCase(e.InventoryNumber, search));
+                SearchHelper.ContainsIgnoreCase(e.InventoryNumber, search)).ToList();
 
         eqList = LifecycleFilter switch
         {
-            "Активные" => eqList.Where(e => !e.IsWrittenOff),
-            "Списанные" => eqList.Where(e => e.IsWrittenOff),
+            "Активные" => eqList.Where(e => !e.IsWrittenOff).ToList(),
+            "Списанные" => eqList.Where(e => e.IsWrittenOff).ToList(),
             _ => eqList
         };
 
         eqList = EquipmentStatusFilter switch
         {
-            "Доступно" => eqList.Where(e => e.Status == "Available"),
-            "Недоступно" => eqList.Where(e => e.Status is "Unavailable" or "3"),
-            "Используется" => eqList.Where(e => e.Status is "InUse" or "CheckedOut"),
-            "Списано" => eqList.Where(e => e.Status == "Retired" || e.IsWrittenOff),
+            "Доступно" => eqList.Where(e => e.Status == "Available").ToList(),
+            "Недоступно" => eqList.Where(e => e.Status is "Unavailable" or "3").ToList(),
+            "Используется" => eqList.Where(e => e.Status is "InUse" or "CheckedOut").ToList(),
+            "Списано" => eqList.Where(e => e.Status == "Retired" || e.IsWrittenOff).ToList(),
             _ => eqList
         };
 
