@@ -11,6 +11,7 @@ using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
+using MPMS.Views.Components;
 using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
@@ -59,13 +60,14 @@ public partial class ProjectDetailPage : UserControl
         bool isManagerOrAbove = _userRole is "Administrator" or "Project Manager";
         bool canMarkProject = _userRole is "Administrator" or "Project Manager";
 
-        EditProjectBtn.Visibility = isManagerOrAbove ? Visibility.Visible : Visibility.Collapsed;
-        MarkProjectBtn.Visibility = canMarkProject ? Visibility.Visible : Visibility.Collapsed;
         CreateTaskBtn.Visibility = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility = Visibility.Collapsed; // shown only on Stages tab for editors
         AddFileBtn.Visibility = (FilesPanel.Visibility == Visibility.Visible && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
-        QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
+        
+        // Set DataContext for the new panels
+        ProjectManagementPanel.DataContext = DataContext;
+        QuickActionsPanel.DataContext = DataContext;
+        
         _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
         _ = Dispatcher.InvokeAsync(SyncStageViewToggleIcons, System.Windows.Threading.DispatcherPriority.Loaded);
     }
@@ -85,32 +87,6 @@ public partial class ProjectDetailPage : UserControl
         StageViewKanbanIconLight.Visibility = kanbanOn ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async void MarkProject_Click(object sender, RoutedEventArgs e)
-    {
-        if (VM is null) return;
-        if (VM.Project is { IsMarkedForDeletion: false } projectToMark)
-        {
-            var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-            if (owner is null || !ConfirmDeleteDialog.ShowMarkForDeletion(owner, "проект", projectToMark.Name))
-                return;
-        }
-        await VM.MarkProjectForDeletionCommand.ExecuteAsync(null);
-        UpdateMarkProjectButton();
-    }
-
-    private async void CloseProject_Click(object sender, RoutedEventArgs e)
-    {
-        if (VM?.Project is null) return;
-        var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
-        if (owner is null) return;
-
-        var (confirmed, reason) = ConfirmDeleteDialog.ShowCloseProjectConfirmation(owner, VM.Project.Name);
-        if (confirmed)
-        {
-            await VM.CloseProjectAsync(reason);
-            UpdateMarkProjectButton();
-        }
-    }
 
     private void UpdateMarkProjectButton()
     {
@@ -118,29 +94,9 @@ public partial class ProjectDetailPage : UserControl
         bool marked = VM.Project.IsMarkedForDeletion;
         bool closed = VM.Project.IsClosed || VM.Project.Status == ProjectStatus.Closed;
 
-        MarkProjectBtn.ApplyTemplate();
-        if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
-            tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
-
-        EditProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
-        EditProjectBtn.IsEnabled = !marked && !closed;
-        EditProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
-        MarkProjectBtn.Visibility = closed ? Visibility.Collapsed : (_userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed);
-
-        CloseProjectBtn.Visibility = _userRole is "Administrator" or "Project Manager" ? Visibility.Visible : Visibility.Collapsed;
-        CloseProjectBtn.IsEnabled = !marked && !closed;
-        CloseProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
-
-        CreateTaskQuickBtn.Visibility = _canEdit ? Visibility.Visible : Visibility.Collapsed;
-        CreateTaskQuickBtn.IsEnabled = !marked && !closed;
-        CreateTaskQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
-
-        QuickTeamBtn.Visibility = _canManageTeam ? Visibility.Visible : Visibility.Collapsed;
-        QuickTeamBtn.IsEnabled = !marked && !closed;
-        QuickTeamBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
-
-        UploadFileQuickBtn.IsEnabled = !marked && !closed;
-        UploadFileQuickBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
+        // Update the new panels
+        ProjectManagementPanel.UpdateButtons();
+        QuickActionsPanel.UpdateButtons();
 
         CreateTaskBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
@@ -215,45 +171,11 @@ public partial class ProjectDetailPage : UserControl
             {
                 if (vm != null)
                 {
-                    vm.Invalidate();
-                    await vm.LoadAsync();
+                                        await vm.LoadAsync();
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
-    }
-
-    private void EditProject_Click(object sender, RoutedEventArgs e)
-    {
-        if (VM?.Project is null) return;
-        var projVm = App.Services.GetRequiredService<ProjectsViewModel>();
-        var overlay = new CreateProjectOverlay();
-        var vm = VM;
-        overlay.SetEditMode(projVm, vm.Project,
-            onSaved: async () =>
-            {
-                if (vm != null)
-                {
-                    vm.Invalidate();
-                    await vm.LoadAsync();
-                    _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
-                }
-            });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
-    }
-
-    private void OpenQuickTeamOverlay_Click(object sender, RoutedEventArgs e)
-    {
-        if (VM?.Project is null) return;
-        var vm = VM;
-        var overlay = new QuickTeamMembersOverlay();
-        overlay.SetProject(vm.Project.Id, onSaved: async () =>
-        {
-            vm.Invalidate();
-            await vm.LoadAsync();
-            _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
-        });
-        MainWindow.Instance?.ShowCenteredOverlay(overlay, 532);
     }
 
     private void EditTask_Click(object sender, RoutedEventArgs e)
@@ -265,8 +187,7 @@ public partial class ProjectDetailPage : UserControl
             currentTask,
             onSaved: async () =>
             {
-                VM!.Invalidate();
-                await VM.LoadAsync();
+                await VM!.LoadAsync();
                 _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
             },
             onAfterSave: () => OpenTaskDetail(currentTask));
@@ -570,23 +491,6 @@ public partial class ProjectDetailPage : UserControl
         MainWindow.Instance?.ShowDrawer(overlay, MainWindow.TaskOrStageDetailDrawerWidth);
     }
 
-
-
-    private void UploadFile_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Title = "Выберите файлы для загрузки",
-            Multiselect = true,
-            Filter = "Все файлы (*.*)|*.*|Изображения|*.png;*.jpg;*.jpeg|Документы|*.pdf;*.docx;*.xlsx"
-        };
-        if (dialog.ShowDialog() == true)
-        {
-            MessageBox.Show(
-                $"Выбрано файлов: {dialog.FileNames.Length}\nЗагрузка будет реализована при подключении к серверу.",
-                "Загрузка файлов", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-    }
 
     private void AddFile_Click(object sender, RoutedEventArgs e)
     {

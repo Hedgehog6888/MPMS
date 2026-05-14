@@ -13,7 +13,7 @@ public static class DatabaseSeeder
 
         await db.Database.MigrateAsync();
 
-        await SeedServicesAsync(db);
+        await SeedWorkTypesAsync(db);
 
         if (!await db.Users.AnyAsync())
         {
@@ -32,13 +32,13 @@ public static class DatabaseSeeder
 
     }
 
-    private static async Task SeedServicesAsync(ApplicationDbContext db)
+    private static async Task SeedWorkTypesAsync(ApplicationDbContext db)
     {
-        var categoryNames = DefaultServiceCategories;
-        var categories = await db.ServiceCategories.ToListAsync();
+        var categoryNames = DefaultWorkTypeCategories;
+        var categories = await db.WorkTypeCategories.ToListAsync();
         if (categories.Count == 0)
         {
-            db.ServiceCategories.AddRange(categoryNames.Select((x, idx) => new ServiceCategory
+            db.WorkTypeCategories.AddRange(categoryNames.Select((x, idx) => new WorkTypeCategory
             {
                 Id = Guid.NewGuid(),
                 Name = x,
@@ -47,7 +47,7 @@ public static class DatabaseSeeder
                 IsActive = true
             }));
             await db.SaveChangesAsync();
-            categories = await db.ServiceCategories.ToListAsync();
+            categories = await db.WorkTypeCategories.ToListAsync();
         }
         else
         {
@@ -55,7 +55,7 @@ public static class DatabaseSeeder
             {
                 if (categories.All(c => !string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    db.ServiceCategories.Add(new ServiceCategory
+                    db.WorkTypeCategories.Add(new WorkTypeCategory
                     {
                         Id = Guid.NewGuid(),
                         Name = name,
@@ -66,12 +66,12 @@ public static class DatabaseSeeder
                 }
             }
             await db.SaveChangesAsync();
-            categories = await db.ServiceCategories.ToListAsync();
+            categories = await db.WorkTypeCategories.ToListAsync();
         }
 
         var catMap = categories.ToDictionary(c => c.Name, c => c.Id, StringComparer.OrdinalIgnoreCase);
-        var seedItems = BuildServiceItems(catMap);
-        var existing = await db.ServiceTemplates.ToDictionaryAsync(x => x.Article ?? string.Empty);
+        var seedItems = BuildWorkTypeItems(catMap);
+        var existing = await db.WorkTypeTemplates.ToDictionaryAsync(x => x.Article ?? string.Empty);
         var now = DateTime.UtcNow;
 
         foreach (var item in seedItems)
@@ -88,7 +88,7 @@ public static class DatabaseSeeder
             }
             else
             {
-                db.ServiceTemplates.Add(new ServiceTemplate
+                db.WorkTypeTemplates.Add(new WorkTypeTemplate
                 {
                     Id = Guid.NewGuid(),
                     Name = item.Name,
@@ -107,7 +107,7 @@ public static class DatabaseSeeder
         await db.SaveChangesAsync();
     }
 
-    private static readonly string[] DefaultServiceCategories =
+    private static readonly string[] DefaultWorkTypeCategories =
     [
         "Электромонтаж",
         "Слаботочные системы",
@@ -144,12 +144,12 @@ public static class DatabaseSeeder
         "Щитовое оборудование"
     ];
 
-    private static List<SeedServiceItem> BuildServiceItems(Dictionary<string, Guid> catMap)
+    private static List<SeedWorkTypeItem> BuildWorkTypeItems(Dictionary<string, Guid> catMap)
     {
-        var data = new List<SeedServiceItem>();
+        var data = new List<SeedWorkTypeItem>();
         var i = 1;
         void Add(string category, string name, string description, decimal price, string? unit = null)
-            => data.Add(new SeedServiceItem($"SRV-{i++:0000}", name, description, price, unit, catMap[category]));
+            => data.Add(new SeedWorkTypeItem($"WRK-{i++:0000}", name, description, price, unit, catMap[category]));
 
         Add("Электромонтаж", "Прокладка кабеля ВВГнг-LS 3x1.5", "Скрытая или открытая прокладка кабеля, без штробления.", 220m, "м");
         Add("Электромонтаж", "Прокладка кабеля ВВГнг-LS 3x2.5", "Прокладка силовой линии с креплением и маркировкой.", 260m, "м");
@@ -299,8 +299,8 @@ public static class DatabaseSeeder
             foreach (var s in originals)
             {
                 if (data.Count >= 320) break;
-                data.Add(new SeedServiceItem(
-                    $"SRV-{data.Count + 1:0000}",
+                data.Add(new SeedWorkTypeItem(
+                    $"WRK-{data.Count + 1:0000}",
                     $"{s.Name} (доп.)",
                     s.Description,
                     s.BasePrice,
@@ -312,7 +312,7 @@ public static class DatabaseSeeder
         return data;
     }
 
-    private sealed record SeedServiceItem(
+    private sealed record SeedWorkTypeItem(
         string Article,
         string Name,
         string Description,

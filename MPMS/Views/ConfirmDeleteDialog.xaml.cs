@@ -79,6 +79,7 @@ public partial class ConfirmDeleteDialog : Window
         ItemNameText.Text = projectName;
         ConfirmBtn.Content = "Закрыть";
         HeaderBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E5E7EB"));
+        SubtitleText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#6B778C"));
         ConfirmBtn.Style = (Style)FindResource("GrayDialogBtn");
         CascadeWarning.Visibility = Visibility.Collapsed;
         ClosureReasonPanel.Visibility = Visibility.Visible;

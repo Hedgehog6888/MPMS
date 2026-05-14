@@ -241,7 +241,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             AssignedUserName = assignedName,
             DueDate = req.DueDate,
             Status = StageStatus.Planned,
-            ServiceTemplateId = req.ServiceTemplateId,
+            WorkTypeTemplateId = req.WorkTypeTemplateId,
             WorkQuantity = req.WorkQuantity,
             WorkPricePerUnit = req.WorkPricePerUnit ?? 0m,
             IsSynced = false,
@@ -251,7 +251,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         };
 
         db.TaskStages.Add(stage);
-        await ReplaceLocalStageServicesAsync(db, localId, req.ServiceItems);
+        await ReplaceLocalStageWorkTypesAsync(db, localId, req.WorkTypeItems);
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Stage", localId, SyncOperation.Create,
@@ -276,7 +276,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
-        var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.ServiceItems is not null);
+        var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.WorkTypeItems is not null);
 
         stage.Name = req.Name;
         stage.Description = req.Description;
@@ -284,15 +284,15 @@ public partial class TaskDetailViewModel : ViewModelBase
         stage.AssignedUserName = assignedName;
         stage.Status = req.Status;
         stage.DueDate = req.DueDate;
-        stage.ServiceTemplateId = req.ServiceTemplateId;
+        stage.WorkTypeTemplateId = req.WorkTypeTemplateId;
         stage.WorkQuantity = req.WorkQuantity;
         stage.WorkPricePerUnit = req.WorkPricePerUnit;
         stage.IsSynced = false;
         stage.UpdatedAt = DateTime.UtcNow;
         stage.LastModifiedLocally = DateTime.UtcNow;
 
-        if (req.ServiceItems is not null)
-            await ReplaceLocalStageServicesAsync(db, id, req.ServiceItems);
+        if (req.WorkTypeItems is not null)
+            await ReplaceLocalStageWorkTypesAsync(db, id, req.WorkTypeItems);
 
         var isReservedByStage = ShouldReserveStageEquipment(stage);
         if (wasReservedByStage != isReservedByStage)
@@ -319,41 +319,40 @@ public partial class TaskDetailViewModel : ViewModelBase
         await UpdateTaskProgressAsync();
     }
 
-    private async System.Threading.Tasks.Task ReplaceLocalStageServicesAsync(
-        LocalDbContext db, Guid stageId, IReadOnlyList<StageServiceItemRequest>? items)
+    private async System.Threading.Tasks.Task ReplaceLocalStageWorkTypesAsync(
+        LocalDbContext db, Guid stageId, IReadOnlyList<StageWorkTypeItemRequest>? items)
     {
-        var existing = await db.StageServices.Where(x => x.StageId == stageId).ToListAsync();
-        db.StageServices.RemoveRange(existing);
-        if (items is null || items.Count == 0) return;
+        var stage = await db.TaskStages.FindAsync(stageId);
+        var existing = await db.StageWorkTypes.Where(x => x.StageId == stageId).ToListAsync();
+        db.StageWorkTypes.RemoveRange(existing);
 
-        var addedServices = new List<string>();
-        foreach (var item in items)
+        var addedWorkTypes = new List<string>();
+        if (items is not null)
         {
-            var tpl = await db.ServiceTemplates.FindAsync(item.ServiceTemplateId);
-            var price = item.PricePerUnit ?? tpl?.BasePrice ?? 0m;
-            var serviceName = tpl?.Name ?? "—";
-            db.StageServices.Add(new LocalStageService
+            foreach (var item in items)
             {
-                Id = Guid.NewGuid(),
-                StageId = stageId,
-                ServiceTemplateId = item.ServiceTemplateId,
-                ServiceName = serviceName,
-                ServiceDescription = tpl?.Description,
-                Unit = tpl?.Unit,
-                Quantity = item.Quantity,
-                PricePerUnit = price,
-                IsSynced = false,
-                LastModifiedLocally = DateTime.UtcNow
-            });
-            addedServices.Add(serviceName);
+                var tpl = await db.WorkTypeTemplates.FindAsync(item.WorkTypeTemplateId);
+                var workTypeName = tpl?.Name ?? "—";
+                db.StageWorkTypes.Add(new LocalStageWorkType
+                {
+                    Id = Guid.NewGuid(),
+                    StageId = stageId,
+                    WorkTypeTemplateId = item.WorkTypeTemplateId,
+                    WorkTypeName = workTypeName,
+                    WorkTypeDescription = tpl?.Description,
+                    Unit = tpl?.Unit,
+                    Quantity = item.Quantity,
+                    PricePerUnit = item.PricePerUnit ?? tpl?.BasePrice ?? 0m,
+                    IsSynced = false,
+                    LastModifiedLocally = DateTime.UtcNow
+                });
+                addedWorkTypes.Add(workTypeName);
+            }
         }
-
-        // Логируем добавление услуг
-        if (addedServices.Count > 0)
+        if (addedWorkTypes.Count > 0)
         {
-            var stage = await db.TaskStages.FindAsync(stageId);
-            var serviceNames = string.Join(", ", addedServices);
-            await LogActivityAsync(db, $"В этап «{stage?.Name}» добавлены услуги: {serviceNames}", "Stage", stageId, ActivityActionKind.ServiceAdded);
+            var workTypeNames = string.Join(", ", addedWorkTypes);
+            await LogActivityAsync(db, $"В этап «{stage?.Name}» добавлены виды работ: {workTypeNames}", "Stage", stageId, ActivityActionKind.WorkTypeAdded);
         }
     }
 

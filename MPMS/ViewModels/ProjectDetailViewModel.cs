@@ -142,7 +142,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         Project = project;
         _goBackAction = goBackAction;
         BackCommand = goBackAction is null ? null : new RelayCommand(() => goBackAction());
-        Invalidate();
     }
 
     public async Task LoadAsync()
@@ -151,10 +150,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         await using var db = await _dbFactory.CreateDbContextAsync();
 
-        // Перезагружаем проект из БД для получения актуальных IsMarkedForDeletion и Status.
-        // Важно: не присваивать Project до заполнения ManagerAvatar* — иначе UI успевает отрисовать
-        // пустой аватар, а без INPC на NotMapped-свойствах Image не обновится (как у участников:
-        // у них AvatarData выставляется до попадания в коллекцию).
         var projectEntity = await db.Projects.FindAsync(Project.Id);
         if (projectEntity is not null)
         {
@@ -195,7 +190,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Project.ManagerAvatarData = mgrAvatarData;
             Project.ManagerAvatarPath = mgrAvatarPath;
 
-            // Принудительно обновляем UI для всех свойств проекта
             OnPropertyChanged(nameof(Project));
         }
 
@@ -930,14 +924,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         await _sync.QueueOperationAsync("Project", project.Id, SyncOperation.Update, SyncPayloads.Project(project));
 
         await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
-
-        // Инвалидируем связанные ViewModels для обновления UI
-        var projectsVm = App.Services.GetService(typeof(ProjectsViewModel)) as ProjectsViewModel;
-        var closedProjectsVm = App.Services.GetService(typeof(ClosedProjectsViewModel)) as ClosedProjectsViewModel;
-        var filesPageVm = App.Services.GetService(typeof(FilesPageViewModel)) as FilesPageViewModel;
-        projectsVm?.Invalidate();
-        closedProjectsVm?.Invalidate();
-        filesPageVm?.Invalidate();
 
         // Навигация назад
         _goBackAction?.Invoke();

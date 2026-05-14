@@ -3,8 +3,8 @@ using MPMS.Models;
 
 namespace MPMS.ViewModels;
 
-/// <summary>Выбранная услуга в этапе: количество и цена за единицу (наценка/скидка).</summary>
-public sealed partial class StageServiceLineVm : ObservableObject
+/// <summary>Выбранный вид работ в этапе: количество и цена за единицу (наценка/скидка).</summary>
+public sealed partial class StageWorkTypeLineVm : ObservableObject
 {
     public Guid TemplateId { get; }
     public string Name { get; }
@@ -15,7 +15,7 @@ public sealed partial class StageServiceLineVm : ObservableObject
 
     public decimal LineTotal => Quantity * PricePerUnit;
 
-    public StageServiceLineVm(Guid templateId, string name, string? unit, decimal basePrice)
+    public StageWorkTypeLineVm(Guid templateId, string name, string? unit, decimal basePrice)
     {
         TemplateId = templateId;
         Name = name;

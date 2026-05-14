@@ -14,7 +14,8 @@ namespace MPMS.Views.Overlays;
 
 public partial class QuickTeamMembersOverlay : UserControl
 {
-    private Guid _projectId;
+    private Guid? _projectId;
+    private Guid? _stageId;
     private Func<System.Threading.Tasks.Task>? _onSaved;
 
     private List<AssigneePickerItem> _foremanItems = [];
@@ -42,7 +43,20 @@ public partial class QuickTeamMembersOverlay : UserControl
     public void SetProject(Guid projectId, Func<System.Threading.Tasks.Task>? onSaved = null)
     {
         _projectId = projectId;
+        _stageId = null;
         _onSaved = onSaved;
+        TitleText.Text = "Состав проекта";
+        SubtitleText.Text = "Быстрое добавление/удаление прорабов и работников";
+        _ = LoadDataAsync();
+    }
+
+    public void SetStage(Guid stageId, Func<System.Threading.Tasks.Task>? onSaved = null)
+    {
+        _stageId = stageId;
+        _projectId = null;
+        _onSaved = onSaved;
+        TitleText.Text = "Состав этапа";
+        SubtitleText.Text = "Быстрое добавление/удаление прорабов и работников";
         _ = LoadDataAsync();
     }
 
@@ -61,23 +75,40 @@ public partial class QuickTeamMembersOverlay : UserControl
             .OrderBy(u => u.Name)
             .ToListAsync();
 
-        var members = await db.ProjectMembers
-            .Where(m => m.ProjectId == _projectId)
-            .ToListAsync();
-
         _selectedForemanIds.Clear();
         _selectedWorkerIds.Clear();
 
-        foreach (var fm in members.Where(m => m.UserRole is "Foreman" or "Прораб"))
+        if (_projectId.HasValue)
         {
-            if (_foremanUsers.Any(u => u.Id == fm.UserId))
-                _selectedForemanIds.Add(fm.UserId);
-        }
+            var members = await db.ProjectMembers
+                .Where(m => m.ProjectId == _projectId.Value)
+                .ToListAsync();
 
-        foreach (var wm in members.Where(m => m.UserRole is "Worker" or "Работник"))
+            foreach (var fm in members.Where(m => m.UserRole is "Foreman" or "Прораб"))
+            {
+                if (_foremanUsers.Any(u => u.Id == fm.UserId))
+                    _selectedForemanIds.Add(fm.UserId);
+            }
+
+            foreach (var wm in members.Where(m => m.UserRole is "Worker" or "Работник"))
+            {
+                if (_workerUsers.Any(u => u.Id == wm.UserId))
+                    _selectedWorkerIds.Add(wm.UserId);
+            }
+        }
+        else if (_stageId.HasValue)
         {
-            if (_workerUsers.Any(u => u.Id == wm.UserId))
-                _selectedWorkerIds.Add(wm.UserId);
+            var assignees = await db.StageAssignees
+                .Where(a => a.StageId == _stageId.Value)
+                .ToListAsync();
+
+            foreach (var fa in assignees)
+            {
+                if (_foremanUsers.Any(u => u.Id == fa.UserId))
+                    _selectedForemanIds.Add(fa.UserId);
+                else if (_workerUsers.Any(u => u.Id == fa.UserId))
+                    _selectedWorkerIds.Add(fa.UserId);
+            }
         }
 
         _foremanItems = _foremanUsers
@@ -104,7 +135,7 @@ public partial class QuickTeamMembersOverlay : UserControl
 
         if (_selectedForemanIds.Contains(item.UserId))
         {
-            if (_selectedForemanIds.Count <= 1)
+            if (_projectId.HasValue && _selectedForemanIds.Count <= 1)
             {
                 ShowError("В проекте должен остаться хотя бы один прораб.");
                 return;
@@ -127,7 +158,7 @@ public partial class QuickTeamMembersOverlay : UserControl
 
         if (_selectedWorkerIds.Contains(item.UserId))
         {
-            if (_selectedWorkerIds.Count <= 1)
+            if (_projectId.HasValue && _selectedWorkerIds.Count <= 1)
             {
                 ShowError("В проекте должен остаться хотя бы один работник.");
                 return;
@@ -165,21 +196,28 @@ public partial class QuickTeamMembersOverlay : UserControl
         _errorHideTimer.Stop();
         ErrorPanel.Visibility = Visibility.Collapsed;
 
-        if (_selectedForemanIds.Count == 0)
+        if (_projectId.HasValue)
         {
-            ShowError("Добавьте хотя бы одного прораба.");
-            return;
-        }
-        if (_selectedWorkerIds.Count == 0)
-        {
-            ShowError("Добавьте хотя бы одного работника.");
-            return;
+            if (_selectedForemanIds.Count == 0)
+            {
+                ShowError("Добавьте хотя бы одного прораба.");
+                return;
+            }
+            if (_selectedWorkerIds.Count == 0)
+            {
+                ShowError("Добавьте хотя бы одного работника.");
+                return;
+            }
         }
 
         SaveButton.IsEnabled = false;
         try
         {
-            await SaveProjectMembersAsync();
+            if (_projectId.HasValue)
+                await SaveProjectMembersAsync();
+            else if (_stageId.HasValue)
+                await SaveStageAssigneesAsync();
+
             if (_onSaved is not null)
                 await _onSaved();
             MainWindow.Instance?.HideDrawer();
@@ -204,7 +242,7 @@ public partial class QuickTeamMembersOverlay : UserControl
         foreach (var workerId in _selectedWorkerIds) newMemberIds.Add(workerId);
 
         var existing = await db.ProjectMembers
-            .Where(m => m.ProjectId == _projectId)
+            .Where(m => m.ProjectId == _projectId.Value)
             .ToListAsync();
         var removedIds = existing
             .Where(m => !newMemberIds.Contains(m.UserId))
@@ -221,7 +259,7 @@ public partial class QuickTeamMembersOverlay : UserControl
             db.ProjectMembers.Add(new LocalProjectMember
             {
                 Id = Guid.NewGuid(),
-                ProjectId = _projectId,
+                ProjectId = _projectId.Value,
                 UserId = foremanId,
                 UserName = foreman.Name,
                 UserRole = "Foreman"
@@ -235,15 +273,14 @@ public partial class QuickTeamMembersOverlay : UserControl
             db.ProjectMembers.Add(new LocalProjectMember
             {
                 Id = Guid.NewGuid(),
-                ProjectId = _projectId,
+                ProjectId = _projectId.Value,
                 UserId = workerId,
                 UserName = worker.Name,
                 UserRole = "Worker"
             });
         }
 
-        // Логируем добавление участников проекта
-        var project = await db.Projects.FindAsync(_projectId);
+        var project = await db.Projects.FindAsync(_projectId.Value);
         var totalMembers = _selectedForemanIds.Count + _selectedWorkerIds.Count;
         if (totalMembers > 0 && project != null)
         {
@@ -259,12 +296,12 @@ public partial class QuickTeamMembersOverlay : UserControl
                 if (worker != null) memberNames.Add(worker.Name);
             }
             var namesText = string.Join(", ", memberNames);
-            await LogActivityAsync(db, $"В проект «{project.Name}» добавлены участники: {namesText}", "Project", _projectId, ActivityActionKind.MemberAdded);
+            await LogActivityAsync(db, $"В проект «{project.Name}» добавлены участники: {namesText}", "Project", _projectId.Value, ActivityActionKind.MemberAdded);
         }
 
         if (removedIds.Count > 0)
         {
-            var taskIds = await db.Tasks.Where(t => t.ProjectId == _projectId).Select(t => t.Id).ToListAsync();
+            var taskIds = await db.Tasks.Where(t => t.ProjectId == _projectId.Value).Select(t => t.Id).ToListAsync();
             var toRemoveTaskAssignees = await db.TaskAssignees
                 .Where(ta => taskIds.Contains(ta.TaskId) && removedIds.Contains(ta.UserId))
                 .ToListAsync();
@@ -275,6 +312,69 @@ public partial class QuickTeamMembersOverlay : UserControl
                 .Where(sa => stageIds.Contains(sa.StageId) && removedIds.Contains(sa.UserId))
                 .ToListAsync();
             db.StageAssignees.RemoveRange(toRemoveStageAssignees);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private async System.Threading.Tasks.Task SaveStageAssigneesAsync()
+    {
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+
+        var newAssigneeIds = new HashSet<Guid>();
+        foreach (var foremanId in _selectedForemanIds) newAssigneeIds.Add(foremanId);
+        foreach (var workerId in _selectedWorkerIds) newAssigneeIds.Add(workerId);
+
+        var existing = await db.StageAssignees
+            .Where(a => a.StageId == _stageId.Value)
+            .ToListAsync();
+
+        db.StageAssignees.RemoveRange(existing);
+
+        foreach (var foremanId in _selectedForemanIds)
+        {
+            var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
+            if (foreman is null) continue;
+            db.StageAssignees.Add(new LocalStageAssignee
+            {
+                Id = Guid.NewGuid(),
+                StageId = _stageId.Value,
+                UserId = foremanId,
+                UserName = foreman.Name
+            });
+        }
+
+        foreach (var workerId in _selectedWorkerIds)
+        {
+            var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
+            if (worker is null) continue;
+            db.StageAssignees.Add(new LocalStageAssignee
+            {
+                Id = Guid.NewGuid(),
+                StageId = _stageId.Value,
+                UserId = workerId,
+                UserName = worker.Name
+            });
+        }
+
+        var stage = await db.TaskStages.FindAsync(_stageId.Value);
+        var totalAssignees = _selectedForemanIds.Count + _selectedWorkerIds.Count;
+        if (totalAssignees > 0 && stage != null)
+        {
+            var assigneeNames = new List<string>();
+            foreach (var foremanId in _selectedForemanIds)
+            {
+                var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
+                if (foreman != null) assigneeNames.Add(foreman.Name);
+            }
+            foreach (var workerId in _selectedWorkerIds)
+            {
+                var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
+                if (worker != null) assigneeNames.Add(worker.Name);
+            }
+            var namesText = string.Join(", ", assigneeNames);
+            await LogActivityAsync(db, $"В этап «{stage.Name}» добавлены участники: {namesText}", "Stage", _stageId.Value, ActivityActionKind.MemberAdded);
         }
 
         await db.SaveChangesAsync();

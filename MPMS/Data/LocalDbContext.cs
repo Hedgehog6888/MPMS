@@ -29,8 +29,8 @@ public class LocalDbContext : DbContext
     public DbSet<LocalProject> Projects => Set<LocalProject>();
     public DbSet<LocalTask> Tasks => Set<LocalTask>();
     public DbSet<LocalTaskStage> TaskStages => Set<LocalTaskStage>();
-    public DbSet<LocalServiceCategory> ServiceCategories => Set<LocalServiceCategory>();
-    public DbSet<LocalServiceTemplate> ServiceTemplates => Set<LocalServiceTemplate>();
+    public DbSet<LocalWorkTypeCategory> WorkTypeCategories => Set<LocalWorkTypeCategory>();
+    public DbSet<LocalWorkTypeTemplate> WorkTypeTemplates => Set<LocalWorkTypeTemplate>();
     public DbSet<LocalMaterialCategory> MaterialCategories => Set<LocalMaterialCategory>();
     public DbSet<LocalEquipmentCategory> EquipmentCategories => Set<LocalEquipmentCategory>();
     public DbSet<LocalMaterial> Materials => Set<LocalMaterial>();
@@ -38,7 +38,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalEquipment> Equipments => Set<LocalEquipment>();
     public DbSet<LocalEquipmentHistoryEntry> EquipmentHistoryEntries => Set<LocalEquipmentHistoryEntry>();
     public DbSet<LocalStageMaterial> StageMaterials => Set<LocalStageMaterial>();
-    public DbSet<LocalStageService> StageServices => Set<LocalStageService>();
+    public DbSet<LocalStageWorkType> StageWorkTypes => Set<LocalStageWorkType>();
     public DbSet<LocalStageEquipment> StageEquipments => Set<LocalStageEquipment>();
     public DbSet<LocalFile> Files => Set<LocalFile>();
     public DbSet<LocalActivityLog> ActivityLogs => Set<LocalActivityLog>();
@@ -88,11 +88,11 @@ public class LocalDbContext : DbContext
             .Property(e => e.QuantityAfter).HasPrecision(18, 3);
         modelBuilder.Entity<LocalStageMaterial>()
             .Property(e => e.PricePerUnit).HasPrecision(18, 2);
-        modelBuilder.Entity<LocalStageService>()
+        modelBuilder.Entity<LocalStageWorkType>()
             .Property(e => e.Quantity).HasPrecision(18, 3);
-        modelBuilder.Entity<LocalStageService>()
+        modelBuilder.Entity<LocalStageWorkType>()
             .Property(e => e.PricePerUnit).HasPrecision(18, 2);
-        modelBuilder.Entity<LocalServiceTemplate>()
+        modelBuilder.Entity<LocalWorkTypeTemplate>()
             .Property(e => e.BasePrice).HasPrecision(18, 2);
     }
 }

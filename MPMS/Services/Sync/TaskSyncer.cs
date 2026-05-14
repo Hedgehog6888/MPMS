@@ -122,9 +122,9 @@ public class TaskSyncer : IEntitySyncer
                     {
                         localStage.Name = s.Name;
                         localStage.Description = s.Description;
-                        localStage.ServiceTemplateId = s.ServiceTemplateId;
-                        localStage.ServiceNameSnapshot = s.ServiceName;
-                        localStage.ServiceDescriptionSnapshot = s.ServiceDescription;
+                        localStage.WorkTypeTemplateId = s.WorkTypeTemplateId;
+                        localStage.WorkTypeNameSnapshot = s.WorkTypeName;
+                        localStage.WorkTypeDescriptionSnapshot = s.WorkTypeDescription;
                         localStage.WorkUnitSnapshot = s.WorkUnit;
                         localStage.WorkQuantity = s.WorkQuantity;
                         localStage.WorkPricePerUnit = s.WorkPricePerUnit;
@@ -146,9 +146,9 @@ public class TaskSyncer : IEntitySyncer
                         Name = s.Name,
                         Description = s.Description,
                         AssignedUserName = s.AssignedUserName,
-                        ServiceTemplateId = s.ServiceTemplateId,
-                        ServiceNameSnapshot = s.ServiceName,
-                        ServiceDescriptionSnapshot = s.ServiceDescription,
+                        WorkTypeTemplateId = s.WorkTypeTemplateId,
+                        WorkTypeNameSnapshot = s.WorkTypeName,
+                        WorkTypeDescriptionSnapshot = s.WorkTypeDescription,
                         WorkUnitSnapshot = s.WorkUnit,
                         WorkQuantity = s.WorkQuantity,
                         WorkPricePerUnit = s.WorkPricePerUnit,
@@ -164,7 +164,7 @@ public class TaskSyncer : IEntitySyncer
                 }
 
                 await db.StageAssignees.Where(a => a.StageId == s.Id).ExecuteDeleteAsync();
-                await db.StageServices.Where(x => x.StageId == s.Id).ExecuteDeleteAsync();
+                await db.StageWorkTypes.Where(x => x.StageId == s.Id).ExecuteDeleteAsync();
 
                 if (s.AssigneeUserIds is { Count: > 0 })
                 {
@@ -182,17 +182,17 @@ public class TaskSyncer : IEntitySyncer
                     }
                 }
 
-                if (s.Services is { Count: > 0 })
+                if (s.WorkTypes is { Count: > 0 })
                 {
-                    foreach (var ss in s.Services)
+                    foreach (var ss in s.WorkTypes)
                     {
-                        db.StageServices.Add(new LocalStageService
+                        db.StageWorkTypes.Add(new LocalStageWorkType
                         {
                             Id = ss.Id,
                             StageId = s.Id,
-                            ServiceTemplateId = ss.ServiceTemplateId,
-                            ServiceName = ss.ServiceName,
-                            ServiceDescription = ss.ServiceDescription,
+                            WorkTypeTemplateId = ss.WorkTypeTemplateId,
+                            WorkTypeName = ss.WorkTypeName,
+                            WorkTypeDescription = ss.WorkTypeDescription,
                             Unit = ss.Unit,
                             Quantity = ss.Quantity,
                             PricePerUnit = ss.PricePerUnit,

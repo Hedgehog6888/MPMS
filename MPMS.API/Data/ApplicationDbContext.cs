@@ -16,8 +16,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<ProjectTask> Tasks => Set<ProjectTask>();
     public DbSet<TaskStage> TaskStages => Set<TaskStage>();
-    public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
-    public DbSet<ServiceTemplate> ServiceTemplates => Set<ServiceTemplate>();
+    public DbSet<WorkTypeCategory> WorkTypeCategories => Set<WorkTypeCategory>();
+    public DbSet<WorkTypeTemplate> WorkTypeTemplates => Set<WorkTypeTemplate>();
     public DbSet<MaterialCategory> MaterialCategories => Set<MaterialCategory>();
     public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
     public DbSet<Material> Materials => Set<Material>();
@@ -25,7 +25,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Equipment> Equipments => Set<Equipment>();
     public DbSet<EquipmentHistoryEntry> EquipmentHistoryEntries => Set<EquipmentHistoryEntry>();
     public DbSet<StageMaterial> StageMaterials => Set<StageMaterial>();
-    public DbSet<StageService> StageServices => Set<StageService>();
+    public DbSet<StageWorkType> StageWorkTypes => Set<StageWorkType>();
     public DbSet<FileAttachment> Files => Set<FileAttachment>();
     public DbSet<TaskDependency> TaskDependencies => Set<TaskDependency>();
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
@@ -151,20 +151,20 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(e => e.AssignedUserId)
                   .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasOne(e => e.ServiceTemplate)
+            entity.HasOne(e => e.WorkTypeTemplate)
                   .WithMany(st => st.TaskStages)
-                  .HasForeignKey(e => e.ServiceTemplateId)
+                  .HasForeignKey(e => e.WorkTypeTemplateId)
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<ServiceCategory>(entity =>
+        modelBuilder.Entity<WorkTypeCategory>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             entity.HasIndex(e => e.Name).IsUnique();
         });
 
-        modelBuilder.Entity<ServiceTemplate>(entity =>
+        modelBuilder.Entity<WorkTypeTemplate>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
@@ -175,7 +175,7 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Article).IsUnique().HasFilter("[Article] IS NOT NULL");
 
             entity.HasOne(e => e.Category)
-                  .WithMany(c => c.Services)
+                  .WithMany(c => c.WorkTypes)
                   .HasForeignKey(e => e.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
@@ -326,7 +326,7 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<StageService>(entity =>
+        modelBuilder.Entity<StageWorkType>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
@@ -334,13 +334,13 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PricePerUnit).HasPrecision(18, 2);
 
             entity.HasOne(e => e.Stage)
-                  .WithMany(s => s.StageServices)
+                  .WithMany(s => s.StageWorkTypes)
                   .HasForeignKey(e => e.StageId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(e => e.ServiceTemplate)
+            entity.HasOne(e => e.WorkTypeTemplate)
                   .WithMany()
-                  .HasForeignKey(e => e.ServiceTemplateId)
+                  .HasForeignKey(e => e.WorkTypeTemplateId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

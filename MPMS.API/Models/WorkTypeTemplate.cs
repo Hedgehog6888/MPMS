@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MPMS.API.Models;
 
-public class ServiceTemplate
+public class WorkTypeTemplate
 {
     public Guid Id { get; set; }
 
@@ -20,7 +20,7 @@ public class ServiceTemplate
     public decimal BasePrice { get; set; }
 
     public Guid CategoryId { get; set; }
-    public ServiceCategory Category { get; set; } = null!;
+    public WorkTypeCategory Category { get; set; } = null!;
 
     public bool IsActive { get; set; } = true;
 

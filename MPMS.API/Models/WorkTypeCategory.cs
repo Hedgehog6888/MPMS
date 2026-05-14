@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MPMS.API.Models;
 
-public class ServiceCategory
+public class WorkTypeCategory
 {
     public Guid Id { get; set; }
 
@@ -16,5 +16,5 @@ public class ServiceCategory
 
     public bool IsActive { get; set; } = true;
 
-    public ICollection<ServiceTemplate> Services { get; set; } = new List<ServiceTemplate>();
+    public ICollection<WorkTypeTemplate> WorkTypes { get; set; } = new List<WorkTypeTemplate>();
 }

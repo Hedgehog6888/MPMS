@@ -253,7 +253,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             req with { Id = localId });
 
         await LogActivityAsync(db, $"Создан проект «{req.Name}»", "Project", localId, ActivityActionKind.Created);
-        Invalidate();
         await LoadAsync();
     }
 
@@ -287,7 +286,6 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await db.SaveChangesAsync();
 
         await _sync.QueueOperationAsync("Project", id, SyncOperation.Update, req);
-        Invalidate();
         await LogActivityAsync(db, $"Обновлён проект «{req.Name}»", "Project", id, ActivityActionKind.Updated, details);
         await LoadAsync();
     }
@@ -364,12 +362,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
 
         // Инвалидируем ClosedProjectsViewModel и FilesPageViewModel для обновления UI
-        var closedProjectsVm = App.Services.GetService(typeof(ClosedProjectsViewModel)) as ClosedProjectsViewModel;
-        var filesPageVm = App.Services.GetService(typeof(FilesPageViewModel)) as FilesPageViewModel;
-        closedProjectsVm?.Invalidate();
-        Invalidate();
-        filesPageVm?.Invalidate();
-
+        
         await LoadAsync();
     }
 

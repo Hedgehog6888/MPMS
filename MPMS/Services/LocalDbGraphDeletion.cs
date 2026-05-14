@@ -16,7 +16,7 @@ public static class LocalDbGraphDeletion
         if (stageIds.Count > 0)
         {
             await db.StageMaterials.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageServices.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
+            await db.StageWorkTypes.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.StageEquipments.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.StageAssignees.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.TaskStages.Where(x => stageIds.Contains(x.Id)).ExecuteDeleteAsync();
@@ -40,7 +40,7 @@ public static class LocalDbGraphDeletion
         if (stageIds.Count > 0)
         {
             await db.StageMaterials.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
-            await db.StageServices.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
+            await db.StageWorkTypes.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.StageEquipments.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.StageAssignees.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync();
             await db.TaskStages.Where(x => stageIds.Contains(x.Id)).ExecuteDeleteAsync();
@@ -54,7 +54,7 @@ public static class LocalDbGraphDeletion
     public static async Task PermanentlyDeleteStageGraphAsync(LocalDbContext db, Guid stageId)
     {
         await db.StageMaterials.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
-        await db.StageServices.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
+        await db.StageWorkTypes.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
         await db.StageEquipments.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
         await db.StageAssignees.Where(x => x.StageId == stageId).ExecuteDeleteAsync();
         await db.TaskStages.Where(x => x.Id == stageId).ExecuteDeleteAsync();

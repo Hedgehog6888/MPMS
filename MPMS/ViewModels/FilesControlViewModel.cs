@@ -52,6 +52,7 @@ public partial class FilesControlViewModel : ViewModelBase
 
     public int ImagesCount => AllFiles.Count(f => IsImage(f.FileName));
     public int DocumentsCount => AllFiles.Count(f => !IsImage(f.FileName));
+    public int FilesCount => AllFiles.Count;
 
     private Guid? _projectId;
     private Guid? _taskId;
@@ -125,7 +126,24 @@ public partial class FilesControlViewModel : ViewModelBase
             if (_projectId.HasValue)
             {
                 Project = await db.Projects.FindAsync(_projectId.Value);
-                query = query.Where(f => f.ProjectId == _projectId.Value);
+                
+                // Получаем все этапы проекта через задачи (как в API)
+                var projectTaskIds = await db.Tasks
+                    .Where(t => t.ProjectId == _projectId.Value)
+                    .Select(t => t.Id)
+                    .ToListAsync();
+                var projectStageIds = await db.TaskStages
+                    .Where(s => projectTaskIds.Contains(s.TaskId))
+                    .Select(s => s.Id)
+                    .ToListAsync();
+
+                // Фильтруем файлы проекта и файлы этапов проекта
+                query = query.Where(f => f.ProjectId == _projectId.Value || 
+                    (f.StageId.HasValue && projectStageIds.Contains(f.StageId.Value)));
+            }
+            else if (_stageId.HasValue)
+            {
+                query = query.Where(f => f.StageId == _stageId.Value);
             }
             else
             {
@@ -136,19 +154,20 @@ public partial class FilesControlViewModel : ViewModelBase
 
                 if (userRole == "Administrator" || userRole == "Admin")
                 {
-                    // Админ видит все файлы
+                    // Админ видит файлы проектов, кроме закрытых проектов (файлы этапов не показываются)
+                    var closedProjectIds = db.Projects
+                        .Where(p => p.IsClosed)
+                        .Select(p => p.Id)
+                        .ToList();
+                    
+                    query = query.Where(f => 
+                        !f.StageId.HasValue &&
+                        (!f.ProjectId.HasValue || !closedProjectIds.Contains(f.ProjectId.Value)));
                 }
                 else if (userRole == "Worker" || userRole == "Работник")
                 {
-                    var userStageIds = db.StageAssignees
-                        .Where(sa => sa.UserId == userId)
-                        .Select(sa => sa.StageId)
-                        .ToList();
-
-                    query = query.Where(f =>
-                        IsImage(f.FileName) &&
-                        f.StageId.HasValue &&
-                        userStageIds.Contains(f.StageId.Value));
+                    // Работники не видят файлы в общем списке - только на своих этапах
+                    query = query.Where(f => false);
                 }
                 else
                 {
@@ -157,9 +176,15 @@ public partial class FilesControlViewModel : ViewModelBase
                         .Select(pm => pm.ProjectId)
                         .ToList();
 
+                    var closedProjectIds = db.Projects
+                        .Where(p => p.IsClosed)
+                        .Select(p => p.Id)
+                        .ToList();
+
                     query = query.Where(f =>
-                        !f.ProjectId.HasValue || 
-                        userProjectIds.Contains(f.ProjectId.Value));
+                        !f.StageId.HasValue &&
+                        (!f.ProjectId.HasValue || 
+                        (userProjectIds.Contains(f.ProjectId.Value) && !closedProjectIds.Contains(f.ProjectId.Value))));
                 }
             }
 

@@ -182,9 +182,9 @@ public class LocalTaskStage : LocalEntity
     public Guid TaskId { get; set; }
     [MaxLength(200)] public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public Guid? ServiceTemplateId { get; set; }
-    [MaxLength(200)] public string? ServiceNameSnapshot { get; set; }
-    public string? ServiceDescriptionSnapshot { get; set; }
+    public Guid? WorkTypeTemplateId { get; set; }
+    [MaxLength(200)] public string? WorkTypeNameSnapshot { get; set; }
+    public string? WorkTypeDescriptionSnapshot { get; set; }
     [MaxLength(50)] public string? WorkUnitSnapshot { get; set; }
     public decimal WorkQuantity { get; set; }
     public decimal WorkPricePerUnit { get; set; }
@@ -243,7 +243,7 @@ public class LocalMaterialCategory
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
 }
 
-public class LocalServiceCategory
+public class LocalWorkTypeCategory
 {
     public Guid Id { get; set; }
     [MaxLength(120)] public string Name { get; set; } = string.Empty;
@@ -252,7 +252,7 @@ public class LocalServiceCategory
     public bool IsActive { get; set; } = true;
 }
 
-public class LocalServiceTemplate : LocalEntity
+public class LocalWorkTypeTemplate : LocalEntity
 {
     [MaxLength(200)] public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -401,12 +401,12 @@ public class LocalStageMaterial : LocalEntity
     [NotMapped] public string StageName { get; set; } = string.Empty;
 }
 
-public class LocalStageService : LocalEntity
+public class LocalStageWorkType : LocalEntity
 {
     public Guid StageId { get; set; }
-    public Guid ServiceTemplateId { get; set; }
-    [MaxLength(200)] public string ServiceName { get; set; } = string.Empty;
-    public string? ServiceDescription { get; set; }
+    public Guid WorkTypeTemplateId { get; set; }
+    [MaxLength(200)] public string WorkTypeName { get; set; } = string.Empty;
+    public string? WorkTypeDescription { get; set; }
     [MaxLength(50)] public string? Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
@@ -582,11 +582,11 @@ public static class ActivityActionKind
     public const string MemberAdded = "MemberAdded";
     public const string MemberRemoved = "MemberRemoved";
 
-    // События материалов/услуг этапа
+    // События материалов/видов работ этапа
     public const string MaterialAdded = "MaterialAdded";
     public const string MaterialRemoved = "MaterialRemoved";
-    public const string ServiceAdded = "ServiceAdded";
-    public const string ServiceRemoved = "ServiceRemoved";
+    public const string WorkTypeAdded = "WorkTypeAdded";
+    public const string WorkTypeRemoved = "WorkTypeRemoved";
 }
 
 /// <summary>Запись локального лога активности — отслеживает действия пользователей для ленты активности.</summary>

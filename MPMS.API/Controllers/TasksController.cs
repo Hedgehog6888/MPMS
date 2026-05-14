@@ -98,8 +98,8 @@ public class TasksController : ControllerBase
             .Include(t => t.Stages)
                 .ThenInclude(s => s.StageAssignees)
             .Include(t => t.Stages)
-                .ThenInclude(s => s.StageServices)
-                .ThenInclude(ss => ss.ServiceTemplate)
+                .ThenInclude(s => s.StageWorkTypes)
+                .ThenInclude(ss => ss.WorkTypeTemplate)
             .Include(t => t.Stages)
                 .ThenInclude(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
@@ -291,27 +291,27 @@ public class TasksController : ControllerBase
 
         var stages = t.Stages.OrderBy(s => s.CreatedAt).Select(s => new TaskStageResponse(
             s.Id, s.TaskId, s.Name, s.Description,
-            s.ServiceTemplateId,
-            s.ServiceNameSnapshot,
-            s.ServiceDescriptionSnapshot,
+            s.WorkTypeTemplateId,
+            s.WorkTypeNameSnapshot,
+            s.WorkTypeDescriptionSnapshot,
             s.WorkUnitSnapshot,
             s.WorkQuantity,
             s.WorkPricePerUnit,
-            (s.StageServices.Count > 0
-                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+            (s.StageWorkTypes.Count > 0
+                ? s.StageWorkTypes.Sum(ss => ss.Quantity * ss.PricePerUnit)
                 : s.WorkQuantity * s.WorkPricePerUnit),
-            s.StageServices.Select(ss => new StageServiceResponse(
+            s.StageWorkTypes.Select(ss => new StageWorkTypeResponse(
                 ss.Id,
-                ss.ServiceTemplateId,
-                ss.ServiceNameSnapshot,
-                ss.ServiceDescriptionSnapshot,
+                ss.WorkTypeTemplateId,
+                ss.WorkTypeNameSnapshot,
+                ss.WorkTypeDescriptionSnapshot,
                 ss.UnitSnapshot,
                 ss.Quantity,
                 ss.PricePerUnit,
                 ss.Quantity * ss.PricePerUnit)).ToList(),
             s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
-            (s.StageServices.Count > 0
-                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+            (s.StageWorkTypes.Count > 0
+                ? s.StageWorkTypes.Sum(ss => ss.Quantity * ss.PricePerUnit)
                 : s.WorkQuantity * s.WorkPricePerUnit) + s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
             s.AssignedUserId,
             s.AssignedUser?.Name,

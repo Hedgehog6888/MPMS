@@ -68,20 +68,20 @@ public record TaskResponse(Guid Id, Guid ProjectId, string ProjectName,
 // ── Этапы
 public record CreateStageRequest(Guid TaskId, string Name, string? Description,
     Guid? AssignedUserId, DateOnly? DueDate = null, Guid? Id = null,
-    Guid? ServiceTemplateId = null, decimal WorkQuantity = 0, decimal? WorkPricePerUnit = null,
-    List<StageServiceItemRequest>? ServiceItems = null);
+    Guid? WorkTypeTemplateId = null, decimal WorkQuantity = 0, decimal? WorkPricePerUnit = null,
+    List<StageWorkTypeItemRequest>? WorkTypeItems = null);
 
 public record UpdateStageRequest(string Name, string? Description,
     Guid? AssignedUserId, StageStatus Status, DateOnly? DueDate = null,
     bool IsMarkedForDeletion = false, bool IsArchived = false,
-    Guid? ServiceTemplateId = null, decimal WorkQuantity = 0, decimal WorkPricePerUnit = 0,
-    List<StageServiceItemRequest>? ServiceItems = null);
+    Guid? WorkTypeTemplateId = null, decimal WorkQuantity = 0, decimal WorkPricePerUnit = 0,
+    List<StageWorkTypeItemRequest>? WorkTypeItems = null);
 
-public record StageServiceItemRequest(Guid ServiceTemplateId, decimal Quantity, decimal? PricePerUnit = null);
+public record StageWorkTypeItemRequest(Guid WorkTypeTemplateId, decimal Quantity, decimal? PricePerUnit = null);
 
 public record StageResponse(Guid Id, Guid TaskId, string Name, string? Description,
-    Guid? ServiceTemplateId, string? ServiceName, string? ServiceDescription, string? WorkUnit,
-    decimal WorkQuantity, decimal WorkPricePerUnit, decimal WorkTotal, List<StageServiceResponse> Services, decimal MaterialTotal, decimal StageTotal,
+    Guid? WorkTypeTemplateId, string? WorkTypeName, string? WorkTypeDescription, string? WorkUnit,
+    decimal WorkQuantity, decimal WorkPricePerUnit, decimal WorkTotal, List<StageWorkTypeResponse> WorkTypes, decimal MaterialTotal, decimal StageTotal,
     Guid? AssignedUserId, string? AssignedUserName, string Status,
     DateOnly? DueDate,
     List<StageMaterialResponse> Materials, List<FileDto> Files,
@@ -251,7 +251,7 @@ public record RecordEquipmentEventRequest(
 
 public record StageMaterialResponse(Guid Id, Guid MaterialId, string MaterialName,
     string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
-public record StageServiceResponse(Guid Id, Guid ServiceTemplateId, string ServiceName, string? ServiceDescription,
+public record StageWorkTypeResponse(Guid Id, Guid WorkTypeTemplateId, string WorkTypeName, string? WorkTypeDescription,
     string? Unit, decimal Quantity, decimal PricePerUnit, decimal Total);
 public record AddStageMaterialRequest(Guid MaterialId, decimal Quantity, decimal? PricePerUnit = null);
 

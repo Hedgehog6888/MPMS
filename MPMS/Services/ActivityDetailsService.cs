@@ -38,8 +38,8 @@ public static class ActivityDetailsService
         ActivityActionKind.MemberRemoved => "удаление участника",
         ActivityActionKind.MaterialAdded => "добавление материала",
         ActivityActionKind.MaterialRemoved => "удаление материала",
-        ActivityActionKind.ServiceAdded => "добавление услуги",
-        ActivityActionKind.ServiceRemoved => "удаление услуги",
+        ActivityActionKind.WorkTypeAdded => "добавление вида работ",
+        ActivityActionKind.WorkTypeRemoved => "удаление вида работ",
         _ => "действие"
     };
 

@@ -41,7 +41,7 @@ public static class LocalSchemaMigrator
         AddSessionPasswordProtectedColumn(conn);
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
-        ApplyServicesSchema(conn);
+        ApplyWorkTypesSchema(conn);
 
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"FileData\" BLOB NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"OriginalCreatedAt\" TEXT NULL;");
@@ -403,11 +403,11 @@ public static class LocalSchemaMigrator
         catch (SqliteException) { /* ignore */ }
     }
 
-    private static void ApplyServicesSchema(SqliteConnection conn)
+    private static void ApplyWorkTypesSchema(SqliteConnection conn)
     {
         Execute(conn, """
-            CREATE TABLE IF NOT EXISTS "ServiceCategories" (
-                "Id"          TEXT NOT NULL CONSTRAINT "PK_ServiceCategories" PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS "WorkTypeCategories" (
+                "Id"          TEXT NOT NULL CONSTRAINT "PK_WorkTypeCategories" PRIMARY KEY,
                 "Name"        TEXT NOT NULL DEFAULT '',
                 "Description" TEXT NULL,
                 "SortOrder"   INTEGER NOT NULL DEFAULT 0,
@@ -416,8 +416,8 @@ public static class LocalSchemaMigrator
             """);
 
         Execute(conn, """
-            CREATE TABLE IF NOT EXISTS "ServiceTemplates" (
-                "Id"                 TEXT NOT NULL CONSTRAINT "PK_ServiceTemplates" PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS "WorkTypeTemplates" (
+                "Id"                 TEXT NOT NULL CONSTRAINT "PK_WorkTypeTemplates" PRIMARY KEY,
                 "Name"               TEXT NOT NULL DEFAULT '',
                 "Description"        TEXT NULL,
                 "Unit"               TEXT NULL,
@@ -433,20 +433,20 @@ public static class LocalSchemaMigrator
             );
             """);
 
-        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceTemplateId\" TEXT NULL;");
-        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceNameSnapshot\" TEXT NULL;");
-        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServiceDescriptionSnapshot\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkTypeTemplateId\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkTypeNameSnapshot\" TEXT NULL;");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkTypeDescriptionSnapshot\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkUnitSnapshot\" TEXT NULL;");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkQuantity\" TEXT NOT NULL DEFAULT '0';");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkPricePerUnit\" TEXT NOT NULL DEFAULT '0';");
         TryAlterTable(conn, "ALTER TABLE \"StageMaterials\" ADD COLUMN \"PricePerUnit\" TEXT NOT NULL DEFAULT '0';");
         Execute(conn, """
-            CREATE TABLE IF NOT EXISTS "StageServices" (
-                "Id"                TEXT NOT NULL CONSTRAINT "PK_StageServices" PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS "StageWorkTypes" (
+                "Id"                TEXT NOT NULL CONSTRAINT "PK_StageWorkTypes" PRIMARY KEY,
                 "StageId"           TEXT NOT NULL,
-                "ServiceTemplateId" TEXT NOT NULL,
-                "ServiceName"       TEXT NOT NULL DEFAULT '',
-                "ServiceDescription" TEXT NULL,
+                "WorkTypeTemplateId" TEXT NOT NULL,
+                "WorkTypeName"       TEXT NOT NULL DEFAULT '',
+                "WorkTypeDescription" TEXT NULL,
                 "Unit"              TEXT NULL,
                 "Quantity"          TEXT NOT NULL DEFAULT '0',
                 "PricePerUnit"      TEXT NOT NULL DEFAULT '0',
@@ -455,8 +455,8 @@ public static class LocalSchemaMigrator
             );
             """);
 
-        SeedDefaultServiceCategories(conn);
-        SeedDefaultServiceTemplates(conn);
+        SeedDefaultWorkTypeCategories(conn);
+        SeedDefaultWorkTypeTemplates(conn);
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)
@@ -528,36 +528,36 @@ public static class LocalSchemaMigrator
         cmd.ExecuteNonQuery();
     }
 
-    private static void SeedDefaultServiceCategories(SqliteConnection conn)
+    private static void SeedDefaultWorkTypeCategories(SqliteConnection conn)
     {
-        if (!IsCategoryTableEmpty(conn, "ServiceCategories"))
+        if (!IsCategoryTableEmpty(conn, "WorkTypeCategories"))
             return;
 
-        for (var i = 0; i < DefaultServiceCategoryNames.Length; i++)
+        for (var i = 0; i < DefaultWorkTypeCategoryNames.Length; i++)
         {
             using var cmd = conn.CreateCommand();
             cmd.CommandText = """
-                INSERT INTO "ServiceCategories" ("Id", "Name", "SortOrder", "IsActive")
+                INSERT INTO "WorkTypeCategories" ("Id", "Name", "SortOrder", "IsActive")
                 VALUES (@id, @name, @sort, 1)
                 """;
             cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
-            cmd.Parameters.AddWithValue("@name", DefaultServiceCategoryNames[i]);
+            cmd.Parameters.AddWithValue("@name", DefaultWorkTypeCategoryNames[i]);
             cmd.Parameters.AddWithValue("@sort", i + 1);
             cmd.ExecuteNonQuery();
         }
     }
 
-    private static void SeedDefaultServiceTemplates(SqliteConnection conn)
+    private static void SeedDefaultWorkTypeTemplates(SqliteConnection conn)
     {
         using var countCmd = conn.CreateCommand();
-        countCmd.CommandText = "SELECT COUNT(*) FROM \"ServiceTemplates\"";
+        countCmd.CommandText = "SELECT COUNT(*) FROM \"WorkTypeTemplates\"";
         var count = Convert.ToInt32(countCmd.ExecuteScalar());
         if (count > 0) return;
 
         var categories = new List<(string Id, string Name)>();
         using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = "SELECT \"Id\", \"Name\" FROM \"ServiceCategories\" ORDER BY \"SortOrder\", \"Name\"";
+            cmd.CommandText = "SELECT \"Id\", \"Name\" FROM \"WorkTypeCategories\" ORDER BY \"SortOrder\", \"Name\"";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
                 categories.Add((reader.GetString(0), reader.GetString(1)));
@@ -570,13 +570,13 @@ public static class LocalSchemaMigrator
             var category = categories[i % categories.Count];
             using var insert = conn.CreateCommand();
             insert.CommandText = """
-                INSERT INTO "ServiceTemplates"
+                INSERT INTO "WorkTypeTemplates"
                 ("Id","Name","Description","Unit","Article","BasePrice","CategoryId","CategoryName","IsActive","CreatedAt","UpdatedAt","IsSynced","LastModifiedLocally")
                 VALUES
                 (@id,@name,@description,@unit,@article,@price,@categoryId,@categoryName,1,@createdAt,@updatedAt,1,@lastModified)
                 """;
             insert.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
-            insert.Parameters.AddWithValue("@name", $"{DefaultServiceTemplateNames[i % DefaultServiceTemplateNames.Length]} #{i + 1:000}");
+            insert.Parameters.AddWithValue("@name", $"{DefaultWorkTypeTemplateNames[i % DefaultWorkTypeTemplateNames.Length]} #{i + 1:000}");
             insert.Parameters.AddWithValue("@description", "Шаблонная услуга для формирования этапов и расчета сметы.");
             insert.Parameters.AddWithValue("@unit", i % 3 == 0 ? "м" : i % 3 == 1 ? "м2" : "шт");
             insert.Parameters.AddWithValue("@article", $"SRV-{i + 1:0000}");
@@ -590,7 +590,7 @@ public static class LocalSchemaMigrator
         }
     }
 
-    private static readonly string[] DefaultServiceCategoryNames =
+    private static readonly string[] DefaultWorkTypeCategoryNames =
     [
         "Электромонтаж",
         "Слаботочные системы",
@@ -614,7 +614,7 @@ public static class LocalSchemaMigrator
         "Пуско-наладка"
     ];
 
-    private static readonly string[] DefaultServiceTemplateNames =
+    private static readonly string[] DefaultWorkTypeTemplateNames =
     [
         "Прокладка кабеля ВВГ-Пнг(А)-LS 3х1.5",
         "Прокладка кабеля ВВГ-Пнг(А)-LS 3х2.5",

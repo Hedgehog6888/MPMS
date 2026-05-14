@@ -112,13 +112,12 @@ public partial class StagesPage : UserControl
             return;
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        stageEditor.SetEditMode(item.Stage, task,
-            goBack: () => main.Navigate("Stages"),
-            onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
-        main.NavigateToStageEditor(stageEditor);
+        var overlay = new CreateStageOverlay();
+        overlay.SetEditMode(item.Stage, task,
+            onSaved: async () => { if (vm is not null) await vm.LoadAsync(); },
+            onAfterSave: () => MainWindow.Instance?.HideDrawer());
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void TaskHeader_Click(object sender, RoutedEventArgs e)

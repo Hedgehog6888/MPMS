@@ -55,16 +55,16 @@ public class TaskStagesController : ControllerBase
         if (!DueDatePolicy.IsAllowed(request.DueDate))
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
-        ServiceTemplate? serviceTemplate = null;
-        if (request.ServiceTemplateId.HasValue)
+        WorkTypeTemplate? workTypeTemplate = null;
+        if (request.WorkTypeTemplateId.HasValue)
         {
-            serviceTemplate = await _db.ServiceTemplates
-                .FirstOrDefaultAsync(s => s.Id == request.ServiceTemplateId.Value && s.IsActive);
-            if (serviceTemplate is null)
-                return BadRequest(new { message = "Услуга не найдена" });
+            workTypeTemplate = await _db.WorkTypeTemplates
+                .FirstOrDefaultAsync(s => s.Id == request.WorkTypeTemplateId.Value && s.IsActive);
+            if (workTypeTemplate is null)
+                return BadRequest(new { message = "Вид работ не найден" });
         }
 
-        var workPricePerUnit = request.WorkPricePerUnit ?? serviceTemplate?.BasePrice ?? 0m;
+        var workPricePerUnit = request.WorkPricePerUnit ?? workTypeTemplate?.BasePrice ?? 0m;
         var workQuantity = request.WorkQuantity;
 
         var stage = new TaskStage
@@ -73,10 +73,10 @@ public class TaskStagesController : ControllerBase
             TaskId = request.TaskId,
             Name = request.Name,
             Description = request.Description,
-            ServiceTemplateId = request.ServiceTemplateId,
-            ServiceNameSnapshot = serviceTemplate?.Name,
-            ServiceDescriptionSnapshot = serviceTemplate?.Description,
-            WorkUnitSnapshot = serviceTemplate?.Unit,
+            WorkTypeTemplateId = request.WorkTypeTemplateId,
+            WorkTypeNameSnapshot = workTypeTemplate?.Name,
+            WorkTypeDescriptionSnapshot = workTypeTemplate?.Description,
+            WorkUnitSnapshot = workTypeTemplate?.Unit,
             WorkQuantity = workQuantity,
             WorkPricePerUnit = workPricePerUnit,
             AssignedUserId = request.AssignedUserId,
@@ -88,25 +88,25 @@ public class TaskStagesController : ControllerBase
 
         _db.TaskStages.Add(stage);
 
-        var serviceItems = request.ServiceItems ?? [];
-        if (serviceItems.Count > 0)
+        var workTypeItems = request.WorkTypeItems ?? [];
+        if (workTypeItems.Count > 0)
         {
-            var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
-            var templates = await _db.ServiceTemplates
+            var ids = workTypeItems.Select(x => x.WorkTypeTemplateId).Distinct().ToList();
+            var templates = await _db.WorkTypeTemplates
                 .Where(s => ids.Contains(s.Id) && s.IsActive)
                 .ToDictionaryAsync(s => s.Id);
             if (templates.Count != ids.Count)
-                return BadRequest(new { message = "Одна или несколько услуг не найдены" });
+                return BadRequest(new { message = "Один или несколько видов работ не найдены" });
 
-            foreach (var item in serviceItems)
+            foreach (var item in workTypeItems)
             {
-                var tpl = templates[item.ServiceTemplateId];
-                _db.StageServices.Add(new StageService
+                var tpl = templates[item.WorkTypeTemplateId];
+                _db.StageWorkTypes.Add(new StageWorkType
                 {
                     StageId = stage.Id,
-                    ServiceTemplateId = tpl.Id,
-                    ServiceNameSnapshot = tpl.Name,
-                    ServiceDescriptionSnapshot = tpl.Description,
+                    WorkTypeTemplateId = tpl.Id,
+                    WorkTypeNameSnapshot = tpl.Name,
+                    WorkTypeDescriptionSnapshot = tpl.Description,
                     UnitSnapshot = tpl.Unit,
                     Quantity = item.Quantity,
                     PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
@@ -138,58 +138,58 @@ public class TaskStagesController : ControllerBase
 
         stage.Name = request.Name;
         stage.Description = request.Description;
-        stage.ServiceTemplateId = request.ServiceTemplateId;
-        if (request.ServiceTemplateId.HasValue)
+        stage.WorkTypeTemplateId = request.WorkTypeTemplateId;
+        if (request.WorkTypeTemplateId.HasValue)
         {
-            var serviceTemplate = await _db.ServiceTemplates.FirstOrDefaultAsync(s => s.Id == request.ServiceTemplateId.Value);
-            if (serviceTemplate is null)
-                return BadRequest(new { message = "Услуга не найдена" });
+            var workTypeTemplate = await _db.WorkTypeTemplates.FirstOrDefaultAsync(s => s.Id == request.WorkTypeTemplateId.Value);
+            if (workTypeTemplate is null)
+                return BadRequest(new { message = "Вид работ не найден" });
 
-            stage.ServiceNameSnapshot = serviceTemplate.Name;
-            stage.ServiceDescriptionSnapshot = serviceTemplate.Description;
-            stage.WorkUnitSnapshot = serviceTemplate.Unit;
+            stage.WorkTypeNameSnapshot = workTypeTemplate.Name;
+            stage.WorkTypeDescriptionSnapshot = workTypeTemplate.Description;
+            stage.WorkUnitSnapshot = workTypeTemplate.Unit;
         }
         else
         {
-            stage.ServiceNameSnapshot = null;
-            stage.ServiceDescriptionSnapshot = null;
+            stage.WorkTypeNameSnapshot = null;
+            stage.WorkTypeDescriptionSnapshot = null;
             stage.WorkUnitSnapshot = null;
         }
         stage.WorkQuantity = request.WorkQuantity;
         stage.WorkPricePerUnit = request.WorkPricePerUnit;
-        if (request.ServiceItems is { } serviceItems)
+        if (request.WorkTypeItems is { } workTypeItems)
         {
-            if (serviceItems.Count > 0)
+            if (workTypeItems.Count > 0)
             {
-                var ids = serviceItems.Select(x => x.ServiceTemplateId).Distinct().ToList();
-                var templates = await _db.ServiceTemplates
+                var ids = workTypeItems.Select(x => x.WorkTypeTemplateId).Distinct().ToList();
+                var templates = await _db.WorkTypeTemplates
                     .Where(s => ids.Contains(s.Id) && s.IsActive)
                     .ToDictionaryAsync(s => s.Id);
                 if (templates.Count != ids.Count)
-                    return BadRequest(new { message = "Одна или несколько услуг не найдены" });
+                    return BadRequest(new { message = "Один или несколько видов работ не найдены" });
 
-                var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
-                _db.StageServices.RemoveRange(existingServices);
-                foreach (var item in serviceItems)
+                var existingWorkTypes = await _db.StageWorkTypes.Where(x => x.StageId == id).ToListAsync();
+                _db.StageWorkTypes.RemoveRange(existingWorkTypes);
+                foreach (var item in workTypeItems)
                 {
-                    var tpl = templates[item.ServiceTemplateId];
-                    _db.StageServices.Add(new StageService
+                    var tpl = templates[item.WorkTypeTemplateId];
+                    _db.StageWorkTypes.Add(new StageWorkType
                     {
                         Id = Guid.NewGuid(),
                         StageId = id,
-                        ServiceTemplateId = tpl.Id,
-                        ServiceNameSnapshot = tpl.Name,
-                        ServiceDescriptionSnapshot = tpl.Description,
+                        WorkTypeTemplateId = tpl.Id,
+                        WorkTypeNameSnapshot = tpl.Name,
+                        WorkTypeDescriptionSnapshot = tpl.Description,
                         UnitSnapshot = tpl.Unit,
                         Quantity = item.Quantity,
                         PricePerUnit = item.PricePerUnit ?? tpl.BasePrice
                     });
                 }
             }
-            else if (!request.ServiceTemplateId.HasValue)
+            else if (!request.WorkTypeTemplateId.HasValue)
             {
-                var existingServices = await _db.StageServices.Where(x => x.StageId == id).ToListAsync();
-                _db.StageServices.RemoveRange(existingServices);
+                var existingWorkTypes = await _db.StageWorkTypes.Where(x => x.StageId == id).ToListAsync();
+                _db.StageWorkTypes.RemoveRange(existingWorkTypes);
             }
         }
         stage.AssignedUserId = request.AssignedUserId;
@@ -344,7 +344,7 @@ public class TaskStagesController : ControllerBase
         await _db.TaskStages
             .Include(s => s.AssignedUser)
             .Include(s => s.StageAssignees)
-            .Include(s => s.StageServices)
+            .Include(s => s.StageWorkTypes)
             .Include(s => s.StageMaterials)
                 .ThenInclude(sm => sm.Material)
             .Include(s => s.Files)
@@ -354,27 +354,27 @@ public class TaskStagesController : ControllerBase
     private static TaskStageResponse MapToResponse(TaskStage s) =>
         new(
             s.Id, s.TaskId, s.Name, s.Description,
-            s.ServiceTemplateId,
-            s.ServiceNameSnapshot,
-            s.ServiceDescriptionSnapshot,
+            s.WorkTypeTemplateId,
+            s.WorkTypeNameSnapshot,
+            s.WorkTypeDescriptionSnapshot,
             s.WorkUnitSnapshot,
             s.WorkQuantity,
             s.WorkPricePerUnit,
-            (s.StageServices.Count > 0
-                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+            (s.StageWorkTypes.Count > 0
+                ? s.StageWorkTypes.Sum(ss => ss.Quantity * ss.PricePerUnit)
                 : s.WorkQuantity * s.WorkPricePerUnit),
-            s.StageServices.Select(ss => new StageServiceResponse(
+            s.StageWorkTypes.Select(ss => new StageWorkTypeResponse(
                 ss.Id,
-                ss.ServiceTemplateId,
-                ss.ServiceNameSnapshot,
-                ss.ServiceDescriptionSnapshot,
+                ss.WorkTypeTemplateId,
+                ss.WorkTypeNameSnapshot,
+                ss.WorkTypeDescriptionSnapshot,
                 ss.UnitSnapshot,
                 ss.Quantity,
                 ss.PricePerUnit,
                 ss.Quantity * ss.PricePerUnit)).ToList(),
             s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
-            (s.StageServices.Count > 0
-                ? s.StageServices.Sum(ss => ss.Quantity * ss.PricePerUnit)
+            (s.StageWorkTypes.Count > 0
+                ? s.StageWorkTypes.Sum(ss => ss.Quantity * ss.PricePerUnit)
                 : s.WorkQuantity * s.WorkPricePerUnit) + s.StageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit),
             s.AssignedUserId, s.AssignedUser?.Name,
             s.Status.ToString(),

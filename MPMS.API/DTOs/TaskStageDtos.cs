@@ -10,10 +10,10 @@ public record CreateStageRequest(
     Guid? AssignedUserId,
     DateOnly? DueDate = null,
     Guid? Id = null,
-    Guid? ServiceTemplateId = null,
+    Guid? WorkTypeTemplateId = null,
     decimal WorkQuantity = 0,
     decimal? WorkPricePerUnit = null,
-    List<StageServiceItemRequest>? ServiceItems = null
+    List<StageWorkTypeItemRequest>? WorkTypeItems = null
 );
 
 public record UpdateStageRequest(
@@ -24,14 +24,14 @@ public record UpdateStageRequest(
     DateOnly? DueDate = null,
     bool IsMarkedForDeletion = false,
     bool IsArchived = false,
-    Guid? ServiceTemplateId = null,
+    Guid? WorkTypeTemplateId = null,
     decimal WorkQuantity = 0,
     decimal WorkPricePerUnit = 0,
-    List<StageServiceItemRequest>? ServiceItems = null
+    List<StageWorkTypeItemRequest>? WorkTypeItems = null
 );
 
-public record StageServiceItemRequest(
-    Guid ServiceTemplateId,
+public record StageWorkTypeItemRequest(
+    Guid WorkTypeTemplateId,
     decimal Quantity,
     decimal? PricePerUnit = null
 );
@@ -41,14 +41,14 @@ public record TaskStageResponse(
     Guid TaskId,
     string Name,
     string? Description,
-    Guid? ServiceTemplateId,
-    string? ServiceName,
-    string? ServiceDescription,
+    Guid? WorkTypeTemplateId,
+    string? WorkTypeName,
+    string? WorkTypeDescription,
     string? WorkUnit,
     decimal WorkQuantity,
     decimal WorkPricePerUnit,
     decimal WorkTotal,
-    List<StageServiceResponse> Services,
+    List<StageWorkTypeResponse> WorkTypes,
     decimal MaterialTotal,
     decimal StageTotal,
     Guid? AssignedUserId,
@@ -80,11 +80,11 @@ public record StageMaterialResponse(
     decimal Total
 );
 
-public record StageServiceResponse(
+public record StageWorkTypeResponse(
     Guid Id,
-    Guid ServiceTemplateId,
-    string ServiceName,
-    string? ServiceDescription,
+    Guid WorkTypeTemplateId,
+    string WorkTypeName,
+    string? WorkTypeDescription,
     string? Unit,
     decimal Quantity,
     decimal PricePerUnit,
