@@ -237,6 +237,8 @@ public partial class QuickTeamMembersOverlay : UserControl
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
 
+        if (_projectId is null) return;
+
         var newMemberIds = new HashSet<Guid>();
         foreach (var foremanId in _selectedForemanIds) newMemberIds.Add(foremanId);
         foreach (var workerId in _selectedWorkerIds) newMemberIds.Add(workerId);
@@ -321,6 +323,8 @@ public partial class QuickTeamMembersOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
+
+        if (_stageId is null) return;
 
         var newAssigneeIds = new HashSet<Guid>();
         foreach (var foremanId in _selectedForemanIds) newAssigneeIds.Add(foremanId);

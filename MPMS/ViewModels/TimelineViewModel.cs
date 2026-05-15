@@ -100,20 +100,22 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
             bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
-            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion);
+            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion)
+                .Where(t => !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
 
             if (userId.HasValue && !isAdmin)
             {
                 if (isManager)
                 {
                     taskQuery = taskQuery.Where(t =>
-                        db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
+                        db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value && !p.IsClosed));
                 }
                 else if (isForeman)
                 {
                     var pids = await db.ProjectMembers
                         .Where(m => m.UserId == userId.Value).Select(m => m.ProjectId).ToListAsync();
-                    taskQuery = taskQuery.Where(t => pids.Contains(t.ProjectId));
+                    taskQuery = taskQuery.Where(t => pids.Contains(t.ProjectId)
+                        && !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
                 }
                 else if (isWorker)
                 {
@@ -122,7 +124,8 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                     var via = await db.TaskAssignees.Where(a => a.UserId == userId.Value)
                         .Select(a => a.TaskId).ToListAsync();
                     var ids = direct.Concat(via).Distinct().ToList();
-                    taskQuery = taskQuery.Where(t => ids.Contains(t.Id));
+                    taskQuery = taskQuery.Where(t => ids.Contains(t.Id)
+                        && !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
                 }
             }
 

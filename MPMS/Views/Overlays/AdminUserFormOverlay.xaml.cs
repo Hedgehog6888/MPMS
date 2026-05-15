@@ -353,8 +353,8 @@ public partial class AdminUserFormOverlay : UserControl
                 user.Email = string.IsNullOrWhiteSpace(email) ? null : email;
                 user.BirthDate = birthDate;
                 user.HomeAddress = homeAddress;
-                user.RoleId = _editingRow.RoleId;
-                user.RoleName = _editingRow.RoleName;
+                user.RoleId = role.Id;
+                user.RoleName = role.Name;
                 user.SubRole = subRole;
                 user.AdditionalSubRoles = additionalJson;
                 user.LastModifiedLocally = DateTime.UtcNow;
@@ -397,7 +397,7 @@ public partial class AdminUserFormOverlay : UserControl
                         lastName,
                         username,
                         string.IsNullOrWhiteSpace(email) ? null : email,
-                        _editingRow.RoleId,
+                        role.Id,
                         string.IsNullOrEmpty(password) ? null : password,
                         subRole,
                         additionalJson,

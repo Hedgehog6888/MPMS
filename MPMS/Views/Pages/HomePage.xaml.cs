@@ -335,7 +335,7 @@ public partial class HomePage : UserControl
         Paragraph p = selection.Start.Paragraph;
         if (p == null) return;
 
-        DependencyObject parent = p.Parent;
+        DependencyObject? parent = p.Parent;
         while (parent != null)
         {
             if (parent is List list)

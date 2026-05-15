@@ -371,6 +371,14 @@ public partial class TaskDetailViewModel : ViewModelBase
                 UserName = a.UserName
             });
         }
+
+        var stage = await db.TaskStages.FindAsync(stageId);
+        if (stage is not null)
+        {
+            stage.AssignedUserId = assignees.Count > 0 ? assignees[0].UserId : null;
+            stage.AssignedUserName = assignees.Count > 0 ? assignees[0].UserName : null;
+        }
+
         await db.SaveChangesAsync();
 
         var rows = await db.StageAssignees.Where(x => x.StageId == stageId).ToListAsync();

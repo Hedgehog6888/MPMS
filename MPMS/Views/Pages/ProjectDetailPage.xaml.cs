@@ -122,7 +122,6 @@ public partial class ProjectDetailPage : UserControl
         StagesPanel.Visibility = tab == "Stages" ? Visibility.Visible : Visibility.Collapsed;
         DiscussionPanel.Visibility = tab == "Discussion" ? Visibility.Visible : Visibility.Collapsed;
         FilesPanel.Visibility = tab == "Files" ? Visibility.Visible : Visibility.Collapsed;
-        MaterialsPanel.Visibility = tab == "Materials" ? Visibility.Visible : Visibility.Collapsed;
 
         StageViewModeSwitcher.Visibility = tab == "Stages" ? Visibility.Visible : Visibility.Collapsed;
 

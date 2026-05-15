@@ -141,7 +141,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private async Task CreateNoteAsync()
+    private void CreateNoteAsync()
     {
         var note = new LocalNote
         {

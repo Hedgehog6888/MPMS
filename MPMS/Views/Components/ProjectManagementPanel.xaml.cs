@@ -15,7 +15,7 @@ public partial class ProjectManagementPanel : UserControl
         InitializeComponent();
     }
 
-    private async void EditProject_Click(object sender, RoutedEventArgs e)
+    private void EditProject_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not ProjectDetailViewModel vm || vm.Project is null) return;
         var projVm = App.Services.GetRequiredService<ProjectsViewModel>();

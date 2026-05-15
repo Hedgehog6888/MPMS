@@ -228,34 +228,33 @@ public partial class CreateStageOverlay : UserControl
                 .ToListAsync();
             foreach (var sa in stageAssignees)
                 _selectedAssigneeIds.Add(sa.UserId);
-
-            var stageEntity = await db.TaskStages.FindAsync(stageId.Value);
-            if (stageEntity?.AssignedUserId is { } aid && !blockedUserIds.Contains(aid)
-                                                        && !_selectedAssigneeIds.Contains(aid))
-                _selectedAssigneeIds.Add(aid);
         }
 
-        var allItems = taskAssignees.Select(ta =>
-        {
-            userRows.TryGetValue(ta.UserId, out var ur);
-            var role = string.IsNullOrWhiteSpace(ur?.RoleName) ? "Worker" : ur.RoleName;
-            return new AssigneePickerItem(
-                ta.UserId,
-                ta.UserName,
-                role,
-                _selectedAssigneeIds,
-                ta.AvatarPath,
-                ta.AvatarData,
-                ur?.SubRole,
-                ur?.AdditionalSubRoles);
-        }).ToList();
+        var allItems = taskAssignees
+            .Where(ta =>
+            {
+                userRows.TryGetValue(ta.UserId, out var ur);
+                var role = string.IsNullOrWhiteSpace(ur?.RoleName) ? "Worker" : ur.RoleName;
+                return role is "Worker" or "Работник";
+            })
+            .Select(ta =>
+            {
+                userRows.TryGetValue(ta.UserId, out var ur);
+                var role = string.IsNullOrWhiteSpace(ur?.RoleName) ? "Worker" : ur.RoleName;
+                return new AssigneePickerItem(
+                    ta.UserId,
+                    ta.UserName,
+                    role,
+                    _selectedAssigneeIds,
+                    ta.AvatarPath,
+                    ta.AvatarData,
+                    ur?.SubRole,
+                    ur?.AdditionalSubRoles);
+            })
+            .ToList();
 
-        _foremanItems = allItems
-            .Where(i => i.RoleDisplay is "Foreman" or "Прораб")
-            .ToList();
-        _workerItems = allItems
-            .Where(i => i.RoleDisplay is "Worker" or "Работник")
-            .ToList();
+        _foremanItems = [];
+        _workerItems = allItems;
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
@@ -387,15 +386,17 @@ public partial class CreateStageOverlay : UserControl
 
         Guid taskId;
         LocalTask? task = _task;
-        if (_fixedTaskId.HasValue)
+        
+        if (task is not null)
+        {
+            taskId = task.Id;
+        }
+        else if (_fixedTaskId.HasValue)
         {
             taskId = _fixedTaskId.Value;
-            if (task is null)
-            {
-                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-                await using var db = await dbFactory.CreateDbContextAsync();
-                task = await db.Tasks.FindAsync(taskId);
-            }
+            var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            task = await db.Tasks.FindAsync(taskId);
         }
         else if (TaskCombo.SelectedValue is Guid tid)
         {
@@ -430,11 +431,7 @@ public partial class CreateStageOverlay : UserControl
         if (!DueDatePolicy.IsAllowed(dueDate))
         { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
 
-        Guid? primaryAssigneeId = _workerItems
-            .Select(i => i.UserId)
-            .FirstOrDefault(id => _selectedAssigneeIds.Contains(id));
-        if (primaryAssigneeId == Guid.Empty)
-            primaryAssigneeId = null;
+        Guid? primaryAssigneeId = _selectedAssigneeIds.Count > 0 ? _selectedAssigneeIds.FirstOrDefault() : null;
 
         var taskVm = App.Services.GetRequiredService<TaskDetailViewModel>();
         taskVm.SetTask(task);
@@ -482,6 +479,7 @@ public partial class CreateStageOverlay : UserControl
                     return (uid, item?.Name ?? "—");
                 })
                 .ToList();
+
             await taskVm.ReplaceStageAssigneesAsync(stageId, assigneeRows);
 
             if (_onSaved is not null)

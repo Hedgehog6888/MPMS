@@ -202,55 +202,15 @@
                                 <StackPanel Margin="0,0,0,16">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                         <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="ПРОРАБ" FontSize="11" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding ForemanMembers}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="0,0,0,6">
-                                                    <Button Style="{StaticResource PeekRowButton}" Margin="0"
-                                                            Click="WorkerPeek_Click">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Border Style="{StaticResource AvatarCircle32}"
-                                                                    Background="{Binding AvatarBrush}"
-                                                                    Margin="0,0,10,0">
-                                                                <Grid>
-                                                                    <Image Style="{StaticResource AvatarImage}"
-                                                                           Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                           Width="32" Height="32"
-                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                                    <TextBlock Text="{Binding Initials}"
-                                                                               FontSize="10" FontWeight="Bold"
-                                                                               Foreground="White"
-                                                                               HorizontalAlignment="Center"
-                                                                               VerticalAlignment="Center"
-                                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                                </Grid>
-                                                            </Border>
-                                                            <StackPanel VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Name}"
-                                                                           FontSize="13" FontWeight="SemiBold"
-                                                                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                            </StackPanel>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <TextBlock Text="Прораб не назначен" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic"
-                                               Visibility="{Binding ForemanMembers.Count, Converter={StaticResource IntToVisInv}}"/>
-                                </StackPanel>
-
-                                <StackPanel Margin="0,0,0,16">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                        <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                         <TextBlock Text="РАБОТНИКИ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <ItemsControl ItemsSource="{Binding WorkerMembers}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="0,0,0,6">
@@ -319,7 +279,7 @@
                                         <TextBlock Text="Виды работ" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="#64748B" Margin="0,0,0,6"/>
                                         <Grid Margin="0,0,0,8">
-                                            <ProgressBar Value="{Binding SummaryWorkTypesTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
+                                            <ProgressBar Value="{Binding SummaryServicesTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
                                                          Background="#E9ECEF" Foreground="#3B82F6">
                                                 <ProgressBar.Template>
                                                     <ControlTemplate TargetType="ProgressBar">
@@ -339,12 +299,12 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding SummaryWorkTypesTotal, StringFormat='{}{0:N0} ₽'}"
+                                            <TextBlock Grid.Column="0" Text="{Binding SummaryServicesTotal, StringFormat='{}{0:N0} ₽'}"
                                                        FontSize="13" FontWeight="SemiBold" Foreground="#111111"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding WorkTypesCount, StringFormat='{}{0} поз.'}"
+                                            <TextBlock Grid.Column="1" Text="{Binding ServicesCount, StringFormat='{}{0} поз.'}"
                                                        FontSize="11" Foreground="#64748B" Margin="8,0,0,0" VerticalAlignment="Center"/>
                                         </Grid>
-                                        <TextBlock Text="{Binding AverageWorkTypePrice, StringFormat='Средняя цена: {0:N2} ₽/ед.'}"
+                                        <TextBlock Text="{Binding AverageServicePrice, StringFormat='Средняя цена: {0:N2} ₽/ед.'}"
                                                    FontSize="10" Foreground="#94A3B8"/>
                                     </StackPanel>
 
@@ -385,7 +345,6 @@
                             </Border>
 
                             <panels:StageManagementPanel x:Name="StageManagementPanel" Margin="0,0,0,8"/>
-                            <panels:StageQuickActionsPanel x:Name="StageQuickActionsPanel"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>

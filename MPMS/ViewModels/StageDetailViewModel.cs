@@ -25,9 +25,12 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     private LocalTask? _task;
     private LocalTaskStage? _editStage;
     private Action? _goBack;
+    public LocalTaskStage? EditStage => _editStage;
+    public LocalTask? EditTask => _task;
     private Func<Task>? _onSavedAsync;
     private readonly HashSet<Guid> _selectedAssigneeIds = [];
     private List<AssigneePickerItem> _workerAssigneeItems = [];
+    private List<AssigneePickerItem> _allAssigneeItems = [];
     private CancellationTokenSource? _errorMessageCts;
     private Guid? _peekProjectId;
     private bool _isLoaded;
@@ -51,25 +54,20 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private bool _isStageMarkedForDeletion;
     [ObservableProperty] private string _activeTab = "Main";
 
-    public LocalTaskStage? EditStage => _editStage;
-    public LocalTask? EditTask => _task;
-
     [ObservableProperty] private bool _showProjectTaskPickers;
     [ObservableProperty] private bool _showProjectNameRow;
     [ObservableProperty] private bool _showProjectPickerList = true;
-    [ObservableProperty] private bool _showAssigneesSection = true;
-    [ObservableProperty] private bool _showWorkerAutoHint;
 
     [ObservableProperty] private ObservableCollection<PickerRowVm> _projectRows = [];
     [ObservableProperty] private ObservableCollection<PickerRowVm> _taskRows = [];
     [ObservableProperty] private Guid? _selectedProjectId;
     [ObservableProperty] private Guid? _selectedTaskId;
 
-    [ObservableProperty] private string _workTypeSearchText = "";
-    [ObservableProperty] private string _workTypeCategoryFilter = "Все категории";
-    [ObservableProperty] private ObservableCollection<string> _workTypeCategoryOptions = [];
-    [ObservableProperty] private ObservableCollection<LocalWorkTypeTemplate> _workTypeCatalogFiltered = [];
-    private List<LocalWorkTypeTemplate> _allWorkTypeTemplates = [];
+    [ObservableProperty] private string _serviceSearchText = "";
+    [ObservableProperty] private string _serviceCategoryFilter = "Все категории";
+    [ObservableProperty] private ObservableCollection<string> _serviceCategoryOptions = [];
+    [ObservableProperty] private ObservableCollection<LocalWorkTypeTemplate> _serviceCatalogFiltered = [];
+    private List<LocalWorkTypeTemplate> _allServiceTemplates = [];
 
     [ObservableProperty] private string _materialSearchText = "";
     [ObservableProperty] private string _materialCategoryFilter = "Все категории";
@@ -77,7 +75,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _equipmentSearchText = "";
     [ObservableProperty] private string _equipmentCategoryFilter = "Все категории";
     [ObservableProperty] private ObservableCollection<string> _equipmentCategoryOptions = [];
-    [ObservableProperty] private ObservableCollection<StageWorkTypeLineVm> _selectedWorkTypes = [];
+    [ObservableProperty] private ObservableCollection<StageWorkTypeLineVm> _selectedServices = [];
     [ObservableProperty] private ObservableCollection<StageMaterialLineVm> _materialLines = [];
     [ObservableProperty] private ObservableCollection<StageEquipmentLineVm> _equipmentLines = [];
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materialCatalog = [];
@@ -86,36 +84,30 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<LocalEquipment> _equipmentCatalogFiltered = [];
     private List<LocalEquipment> _allEquipmentTemplates = [];
 
-    [ObservableProperty] private ObservableCollection<AssigneePickerItem> _workerPickerItems = [];
-    [ObservableProperty] private string _workerSearchText = "";
-    [ObservableProperty] private string _workerSpecialtyFilter = "Все специальности";
-    [ObservableProperty] private ObservableCollection<string> _workerSpecialtyOptions = [];
 
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private List<AssigneePickerItem> _foremanMembers = [];
+    [ObservableProperty] private List<AssigneePickerItem> _workerMembers = [];
 
-    [ObservableProperty] private decimal _summaryWorkTypesTotal;
+    [ObservableProperty] private decimal _summaryServicesTotal;
     [ObservableProperty] private decimal _summaryMaterialsTotal;
     [ObservableProperty] private decimal _summaryGrandTotal;
-    [ObservableProperty] private decimal _workTypeAdjustmentPercent;
+    [ObservableProperty] private decimal _serviceAdjustmentPercent;
     [ObservableProperty] private decimal _materialAdjustmentPercent;
-    [ObservableProperty] private ObservableCollection<ReceiptRowVm> _workTypeReceiptRows = [];
+    [ObservableProperty] private ObservableCollection<ReceiptRowVm> _serviceReceiptRows = [];
     [ObservableProperty] private ObservableCollection<ReceiptRowVm> _materialReceiptRows = [];
-    public decimal AdjustedWorkTypesTotal => SummaryWorkTypesTotal * (1m + WorkTypeAdjustmentPercent / 100m);
+    public decimal AdjustedServicesTotal => SummaryServicesTotal * (1m + ServiceAdjustmentPercent / 100m);
     public decimal AdjustedMaterialsTotal => SummaryMaterialsTotal * (1m + MaterialAdjustmentPercent / 100m);
-    public decimal AdjustedGrandTotal => AdjustedWorkTypesTotal + AdjustedMaterialsTotal;
-    public int WorkTypesCount => SelectedWorkTypes.Count;
+    public decimal AdjustedGrandTotal => AdjustedServicesTotal + AdjustedMaterialsTotal;
+    public int ServicesCount => SelectedServices.Count;
     public int MaterialsCount => MaterialLines.Count;
-    public decimal WorkTypesQuantityTotal => SelectedWorkTypes.Sum(s => s.Quantity);
+    public decimal ServicesQuantityTotal => SelectedServices.Sum(s => s.Quantity);
     public decimal MaterialsQuantityTotal => MaterialLines.Sum(m => m.Quantity);
-    public decimal AverageWorkTypePrice => WorkTypesQuantityTotal > 0 ? SummaryWorkTypesTotal / WorkTypesQuantityTotal : 0;
+    public decimal AverageServicePrice => ServicesQuantityTotal > 0 ? SummaryServicesTotal / ServicesQuantityTotal : 0;
     public decimal AverageMaterialPrice => MaterialsQuantityTotal > 0 ? SummaryMaterialsTotal / MaterialsQuantityTotal : 0;
-    public decimal ProgressMaximum => SummaryGrandTotal > 0 ? SummaryGrandTotal : 1;
-    public int SelectedWorkersCount => _selectedAssigneeIds.Count;
-    public int AvailableWorkersCount => WorkerPickerItems.Count;
+    public decimal ProgressMaximum => Math.Max(1m, SummaryServicesTotal + SummaryMaterialsTotal);
     public Guid? PeekProjectId => _peekProjectId;
-    public List<AssigneePickerItem> ForemanMembers => WorkerPickerItems.Where(w => w.IsForemanPicker).ToList();
-    public List<AssigneePickerItem> WorkerMembers => WorkerPickerItems.Where(w => !w.IsForemanPicker).ToList();
 
     public StageDetailViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
@@ -127,12 +119,10 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         _sp = sp;
         FilesControlVM = sp.GetRequiredService<FilesControlViewModel>();
 
-        SelectedWorkTypes.CollectionChanged += OnTotalsCollectionChanged;
+        SelectedServices.CollectionChanged += OnTotalsCollectionChanged;
         MaterialLines.CollectionChanged += OnTotalsCollectionChanged;
         EquipmentLines.CollectionChanged += (_, _) => ApplyEquipmentFilters();
     }
-
-    public event Action<LocalTaskStage, LocalTask>? OpenEditorRequested;
 
     private void OnTotalsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
@@ -153,8 +143,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             }
         }
         RecalculateTotals();
-        if (ReferenceEquals(sender, SelectedWorkTypes))
-            ApplyWorkTypeFilters();
+        if (ReferenceEquals(sender, SelectedServices))
+            ApplyServiceFilters();
         else if (ReferenceEquals(sender, MaterialLines))
             ApplyMaterialFilters();
     }
@@ -167,32 +157,33 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
     private void RecalculateTotals()
     {
-        SummaryWorkTypesTotal = SelectedWorkTypes.Sum(s => s.LineTotal);
+        SummaryServicesTotal = SelectedServices.Sum(s => s.LineTotal);
         SummaryMaterialsTotal = MaterialLines.Sum(m => m.LineTotal);
-        SummaryGrandTotal = SummaryWorkTypesTotal + SummaryMaterialsTotal;
+        SummaryGrandTotal = SummaryServicesTotal + SummaryMaterialsTotal;
         BuildReceiptRows();
-        OnPropertyChanged(nameof(WorkTypesCount));
+        OnPropertyChanged(nameof(ServicesCount));
         OnPropertyChanged(nameof(MaterialsCount));
-        OnPropertyChanged(nameof(WorkTypesQuantityTotal));
+        OnPropertyChanged(nameof(ServicesQuantityTotal));
         OnPropertyChanged(nameof(MaterialsQuantityTotal));
-        OnPropertyChanged(nameof(AverageWorkTypePrice));
+        OnPropertyChanged(nameof(AverageServicePrice));
         OnPropertyChanged(nameof(AverageMaterialPrice));
-        OnPropertyChanged(nameof(AdjustedWorkTypesTotal));
+        OnPropertyChanged(nameof(AdjustedServicesTotal));
         OnPropertyChanged(nameof(AdjustedMaterialsTotal));
         OnPropertyChanged(nameof(AdjustedGrandTotal));
+        OnPropertyChanged(nameof(ProgressMaximum));
     }
 
     private void BuildReceiptRows()
     {
-        var workTypeK = 1m + WorkTypeAdjustmentPercent / 100m;
-        WorkTypeReceiptRows = new ObservableCollection<ReceiptRowVm>(
-            SelectedWorkTypes.Select(s => new ReceiptRowVm(
+        var serviceK = 1m + ServiceAdjustmentPercent / 100m;
+        ServiceReceiptRows = new ObservableCollection<ReceiptRowVm>(
+            SelectedServices.Select(s => new ReceiptRowVm(
                 s.Name,
                 s.Quantity,
                 s.PricePerUnit,
                 s.LineTotal,
-                s.LineTotal * workTypeK,
-                WorkTypeAdjustmentPercent)));
+                s.LineTotal * serviceK,
+                ServiceAdjustmentPercent)));
 
         var materialK = 1m + MaterialAdjustmentPercent / 100m;
         MaterialReceiptRows = new ObservableCollection<ReceiptRowVm>(
@@ -220,10 +211,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ShowProjectTaskPickers = false;
         ShowProjectNameRow = true;
         ShowProjectPickerList = true;
-        ShowWorkerAutoHint = IsWorker();
-        ShowAssigneesSection = !IsWorker();
-        ApplyWorkerDefaultSelection(task.Id);
-        _ = LoadAssigneesAsync(task.Id);
     }
 
     public void SetCreateForProject(Guid projectId, Action goBack, Func<Task>? onSavedAsync = null)
@@ -238,8 +225,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ShowProjectTaskPickers = true;
         ShowProjectNameRow = true;
         ShowProjectPickerList = false;
-        ShowWorkerAutoHint = IsWorker();
-        ShowAssigneesSection = !IsWorker();
         _ = LoadProjectNameAsync(projectId);
         _ = LoadTasksForProjectAsync(projectId);
     }
@@ -256,8 +241,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ShowProjectTaskPickers = true;
         ShowProjectNameRow = false;
         ShowProjectPickerList = true;
-        ShowWorkerAutoHint = IsWorker();
-        ShowAssigneesSection = !IsWorker();
         _ = LoadProjectsForPickerAsync();
     }
 
@@ -282,11 +265,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ShowProjectTaskPickers = false;
         ShowProjectNameRow = true;
         ShowProjectPickerList = true;
-        ShowWorkerAutoHint = false;
-        ShowAssigneesSection = !IsWorker();
-        _ = LoadAssigneesAsync(task.Id, stage.Id);
+        IsViewMode = true;
+        ShowStatusManagement = !IsWorker();
+        CanStartStage = stage.Status == StageStatus.Planned && !stage.IsMarkedForDeletion;
+        CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.IsMarkedForDeletion;
+        CanMarkStageForDeletion = !IsWorker();
+        _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
-        FilesControlVM.Initialize(null, null, stage.Id);
+        FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
     public void SetViewMode(LocalTaskStage stage, LocalTask task, Action goBack)
@@ -309,16 +295,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ShowProjectTaskPickers = false;
         ShowProjectNameRow = true;
         ShowProjectPickerList = true;
-        ShowWorkerAutoHint = false;
-        ShowAssigneesSection = !IsWorker();
         IsViewMode = true;
         ShowStatusManagement = !IsWorker();
         CanStartStage = stage.Status == StageStatus.Planned && !stage.IsMarkedForDeletion;
         CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.IsMarkedForDeletion;
         CanMarkStageForDeletion = !IsWorker();
-        _ = LoadAssigneesAsync(task.Id, stage.Id);
+        _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
-        FilesControlVM.Initialize(null, null, stage.Id);
+        FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
     private void Reset()
@@ -330,14 +314,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         _peekProjectId = null;
         _selectedAssigneeIds.Clear();
         _workerAssigneeItems = [];
-        WorkerPickerItems = [];
+        _allAssigneeItems = [];
         StageName = "";
         Description = "";
         DueDate = null;
         ActiveTab = "Main";
-        WorkTypeSearchText = "";
-        WorkTypeCategoryFilter = "Все категории";
-        SelectedWorkTypes.Clear();
+        ServiceSearchText = "";
+        ServiceCategoryFilter = "Все категории";
+        SelectedServices.Clear();
         MaterialLines.Clear();
         EquipmentLines.Clear();
         ErrorMessage = null;
@@ -347,10 +331,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         MaterialCategoryFilter = "Все категории";
         EquipmentSearchText = "";
         EquipmentCategoryFilter = "Все категории";
-        WorkerSearchText = "";
-        WorkerSpecialtyFilter = "Все специальности";
-        WorkerSpecialtyOptions = new ObservableCollection<string>(["Все специальности"]);
-        WorkTypeAdjustmentPercent = 0;
+        ServiceAdjustmentPercent = 0;
         MaterialAdjustmentPercent = 0;
         ProjectRows = [];
         TaskRows = [];
@@ -363,7 +344,9 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         IsStageMarkedForDeletion = false;
         IsOverdue = false;
         StageStatus = StageStatus.Planned;
-        NotifyWorkerCounters();
+        ForemanMembers = [];
+        WorkerMembers = [];
+        _isLoaded = false;
     }
 
     private async Task LoadProjectNameAsync(Guid projectId)
@@ -373,12 +356,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ProjectNameReadOnly = p?.Name ?? "—";
     }
 
-    private void ApplyWorkerDefaultSelection(Guid taskId)
-    {
-        if (!IsWorker() || !_auth.UserId.HasValue) return;
-        _selectedAssigneeIds.Clear();
-        _selectedAssigneeIds.Add(_auth.UserId.Value);
-    }
 
     private bool IsWorker() =>
         string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
@@ -386,29 +363,35 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     public async Task LoadAsync()
     {
         if (_isLoaded) return;
-        await LoadWorkTypeCatalogAsync();
+        await LoadServiceCatalogAsync();
         await LoadMaterialCatalogAsync();
         await LoadEquipmentCatalogAsync();
         RecalculateTotals();
         _isLoaded = true;
     }
-
+    public async Task ReloadAllAsync()
+    {
+        if (_editStage is null || _task is null) return;
+        _isLoaded = false;
+        await LoadAssigneesForDisplayAsync(_task.Id, _editStage.Id);
+        await LoadExistingServicesAndMaterialsAsync(_editStage.Id);
+        await LoadAsync();
+    }
     private async Task LoadExistingServicesAndMaterialsAsync(Guid stageId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        var workTypes = await db.StageWorkTypes
+        var svcs = await db.StageWorkTypes
             .Where(s => s.StageId == stageId)
             .OrderBy(s => s.WorkTypeName)
             .ToListAsync();
-        foreach (var s in workTypes)
+        foreach (var s in svcs)
         {
             var line = new StageWorkTypeLineVm(s.WorkTypeTemplateId, s.WorkTypeName, s.Unit, s.PricePerUnit)
             {
                 Quantity = s.Quantity
             };
-            SelectedWorkTypes.Add(line);
+            SelectedServices.Add(line);
         }
-
         var mats = await db.StageMaterials
             .Where(m => m.StageId == stageId)
             .OrderBy(m => m.MaterialName)
@@ -431,7 +414,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             if (stocks.TryGetValue(line.MaterialId, out var stock))
                 line.StockAvailable = stock + line.Quantity;
         }
-
         var stageEquipments = await db.StageEquipments
             .Where(x => x.StageId == stageId)
             .OrderBy(x => x.EquipmentName)
@@ -447,42 +429,40 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             };
             EquipmentLines.Add(line);
         }
-        ApplyWorkTypeFilters();
+        ApplyServiceFilters();
         ApplyMaterialFilters();
         ApplyEquipmentFilters();
     }
 
-    private async Task LoadWorkTypeCatalogAsync()
+    private async Task LoadServiceCatalogAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
-        _allWorkTypeTemplates = await db.WorkTypeTemplates
+        _allServiceTemplates = await db.WorkTypeTemplates
             .Where(t => t.IsActive)
             .OrderBy(t => t.CategoryName)
             .ThenBy(t => t.Name)
             .ToListAsync();
-        var cats = _allWorkTypeTemplates.Select(t => t.CategoryName).Distinct().OrderBy(x => x).ToList();
-        WorkTypeCategoryOptions = new ObservableCollection<string>(["Все категории", .. cats]);
-        ApplyWorkTypeFilters();
+        var cats = _allServiceTemplates.Select(t => t.CategoryName).Distinct().OrderBy(x => x).ToList();
+        ServiceCategoryOptions = new ObservableCollection<string>(["Все категории", .. cats]);
+        ApplyServiceFilters();
     }
 
-    partial void OnWorkTypeSearchTextChanged(string value) => ApplyWorkTypeFilters();
-    partial void OnWorkTypeCategoryFilterChanged(string value) => ApplyWorkTypeFilters();
+    partial void OnServiceSearchTextChanged(string value) => ApplyServiceFilters();
+    partial void OnServiceCategoryFilterChanged(string value) => ApplyServiceFilters();
     partial void OnMaterialSearchTextChanged(string value) => ApplyMaterialFilters();
     partial void OnMaterialCategoryFilterChanged(string value) => ApplyMaterialFilters();
     partial void OnEquipmentSearchTextChanged(string value) => ApplyEquipmentFilters();
     partial void OnEquipmentCategoryFilterChanged(string value) => ApplyEquipmentFilters();
-    partial void OnWorkerSearchTextChanged(string value) => ApplyWorkerFilters();
-    partial void OnWorkerSpecialtyFilterChanged(string value) => ApplyWorkerFilters();
-    partial void OnWorkTypeAdjustmentPercentChanged(decimal value)
+    partial void OnServiceAdjustmentPercentChanged(decimal value)
     {
         if (value > 999m)
         {
-            WorkTypeAdjustmentPercent = 999m;
+            ServiceAdjustmentPercent = 999m;
             return;
         }
         if (value < -999m)
         {
-            WorkTypeAdjustmentPercent = -999m;
+            ServiceAdjustmentPercent = -999m;
             return;
         }
         RecalculateTotals();
@@ -528,23 +508,22 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         if (value is { } tid)
         {
             RefreshPickerSelection(TaskRows, tid);
-            _ = LoadAssigneesAsync(tid);
         }
     }
 
-    private void ApplyWorkTypeFilters()
+    private void ApplyServiceFilters()
     {
-        var selectedWorkTypeIds = SelectedWorkTypes.Select(s => s.TemplateId).ToHashSet();
-        IEnumerable<LocalWorkTypeTemplate> q = _allWorkTypeTemplates;
-        q = q.Where(t => !selectedWorkTypeIds.Contains(t.Id));
-        if (!string.IsNullOrWhiteSpace(WorkTypeCategoryFilter) && WorkTypeCategoryFilter != "Все категории")
-            q = q.Where(t => t.CategoryName == WorkTypeCategoryFilter);
-        var s = WorkTypeSearchText.Trim();
+        var selectedServiceIds = SelectedServices.Select(s => s.TemplateId).ToHashSet();
+        IEnumerable<LocalWorkTypeTemplate> q = _allServiceTemplates;
+        q = q.Where(t => !selectedServiceIds.Contains(t.Id));
+        if (!string.IsNullOrWhiteSpace(ServiceCategoryFilter) && ServiceCategoryFilter != "Все категории")
+            q = q.Where(t => t.CategoryName == ServiceCategoryFilter);
+        var s = ServiceSearchText.Trim();
         if (s.Length > 0)
             q = q.Where(t => t.Name.Contains(s, StringComparison.OrdinalIgnoreCase)
                              || (t.Description?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                              || (t.Article?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false));
-        WorkTypeCatalogFiltered = new ObservableCollection<LocalWorkTypeTemplate>(q.ToList());
+        ServiceCatalogFiltered = new ObservableCollection<LocalWorkTypeTemplate>(q.ToList());
     }
 
     private async Task LoadMaterialCatalogAsync()
@@ -626,42 +605,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         catch (TaskCanceledException) { }
     }
 
-    private static string GetWorkerPrimarySpecialty(AssigneePickerItem item)
-    {
-        var subtitle = item.RoleSubtitle?.Trim();
-        if (string.IsNullOrWhiteSpace(subtitle))
-            return "Без специальности";
-        var cut = subtitle.IndexOf('·');
-        if (cut >= 0)
-            subtitle = subtitle[..cut].Trim();
-        return string.IsNullOrWhiteSpace(subtitle) ? "Без специальности" : subtitle;
-    }
-
-    private void RebuildWorkerSpecialtyOptions()
-    {
-        var options = _workerAssigneeItems
-            .Select(GetWorkerPrimarySpecialty)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        WorkerSpecialtyOptions = new ObservableCollection<string>(["Все специальности", .. options]);
-        if (!WorkerSpecialtyOptions.Contains(WorkerSpecialtyFilter))
-            WorkerSpecialtyFilter = "Все специальности";
-    }
-
-    private void ApplyWorkerFilters()
-    {
-        var search = WorkerSearchText.Trim();
-        IEnumerable<AssigneePickerItem> q = _workerAssigneeItems;
-        if (!string.IsNullOrWhiteSpace(WorkerSpecialtyFilter) && WorkerSpecialtyFilter != "Все специальности")
-            q = q.Where(i => string.Equals(GetWorkerPrimarySpecialty(i), WorkerSpecialtyFilter, StringComparison.OrdinalIgnoreCase));
-        if (search.Length > 0)
-            q = q.Where(i => i.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
-                             || (i.RoleSubtitle?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
-        WorkerPickerItems = new ObservableCollection<AssigneePickerItem>(q);
-        NotifyWorkerCounters();
-    }
 
     private async Task LoadProjectsForPickerAsync()
     {
@@ -681,6 +624,75 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             r.IsSelected = r.Id == selectedId;
     }
 
+    private async Task LoadAssigneesForDisplayAsync(Guid taskId, Guid? stageId = null)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
+
+        List<Guid> assigneeIds;
+        if (stageId.HasValue)
+        {
+            assigneeIds = await db.StageAssignees
+                .Where(sa => sa.StageId == stageId.Value && !blockedUserIds.Contains(sa.UserId))
+                .Select(sa => sa.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            if (assigneeIds.Count == 0)
+            {
+                var stage = await db.TaskStages.FindAsync(stageId.Value);
+                if (stage?.AssignedUserId.HasValue == true && !blockedUserIds.Contains(stage.AssignedUserId.Value))
+                    assigneeIds.Add(stage.AssignedUserId.Value);
+            }
+        }
+        else
+        {
+            assigneeIds = await db.TaskAssignees
+                .Where(ta => ta.TaskId == taskId && !blockedUserIds.Contains(ta.UserId))
+                .Select(ta => ta.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            if (assigneeIds.Count == 0)
+            {
+                var task = await db.Tasks.FindAsync(taskId);
+                if (task?.AssignedUserId.HasValue == true && !blockedUserIds.Contains(task.AssignedUserId.Value))
+                    assigneeIds.Add(task.AssignedUserId.Value);
+            }
+        }
+
+        if (assigneeIds.Count == 0)
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                ForemanMembers = [];
+                WorkerMembers = [];
+            });
+            return;
+        }
+
+        var users = await db.Users
+            .Where(u => assigneeIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.Name, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
+            .ToListAsync();
+
+        var assigneeItems = users.Select(u => new AssigneePickerItem(
+            u.Id,
+            u.Name ?? "—",
+            u.RoleName ?? "Worker",
+            new HashSet<Guid>(),
+            u.AvatarPath,
+            u.AvatarData,
+            u.SubRole,
+            u.AdditionalSubRoles)).ToList();
+
+        await Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            ForemanMembers = assigneeItems.Where(i => i.IsForemanPicker).ToList();
+            WorkerMembers = assigneeItems.Where(i => i.RoleDisplay == "Работник").ToList();
+        });
+    }
+
     private async Task LoadTasksForProjectAsync(Guid projectId)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
@@ -695,102 +707,9 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         {
             SelectedTaskId = null;
             _selectedAssigneeIds.Clear();
-            WorkerPickerItems = [];
         }
     }
 
-    private async Task LoadAssigneesAsync(Guid taskId, Guid? stageId = null)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        var blockedUserIds = await db.Users.Where(u => u.IsBlocked).Select(u => u.Id).ToListAsync();
-        var taskAssignees = await db.TaskAssignees
-            .Where(ta => ta.TaskId == taskId && !blockedUserIds.Contains(ta.UserId))
-            .OrderBy(ta => ta.UserName)
-            .ToListAsync();
-
-        var taskEntity = await db.Tasks.FindAsync(taskId);
-        if (taskAssignees.Count == 0 && taskEntity?.AssignedUserId is { } legacyId
-                                       && !blockedUserIds.Contains(legacyId))
-        {
-            taskAssignees.Add(new LocalTaskAssignee
-            {
-                TaskId = taskId,
-                UserId = legacyId,
-                UserName = taskEntity.AssignedUserName ?? "—"
-            });
-        }
-
-        if (IsWorker() && !stageId.HasValue && _auth.UserId.HasValue)
-        {
-            _selectedAssigneeIds.Clear();
-            _selectedAssigneeIds.Add(_auth.UserId.Value);
-            if (taskAssignees.All(ta => ta.UserId != _auth.UserId.Value))
-            {
-                var self = await db.Users.FindAsync(_auth.UserId.Value);
-                taskAssignees.Insert(0, new LocalTaskAssignee
-                {
-                    TaskId = taskId,
-                    UserId = _auth.UserId.Value,
-                    UserName = self?.Name ?? _auth.UserName ?? "—"
-                });
-            }
-        }
-
-        var userIds = taskAssignees.Select(ta => ta.UserId).Distinct().ToList();
-        var userRows = await db.Users
-            .Where(u => userIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.AvatarPath, u.AvatarData, u.RoleName, u.SubRole, u.AdditionalSubRoles })
-            .ToDictionaryAsync(u => u.Id);
-        foreach (var ta in taskAssignees)
-        {
-            if (userRows.TryGetValue(ta.UserId, out var ur))
-            {
-                ta.AvatarPath = ur.AvatarPath;
-                ta.AvatarData = ur.AvatarData;
-            }
-        }
-
-        if (stageId.HasValue)
-        {
-            var stageAssignees = await db.StageAssignees
-                .Where(sa => sa.StageId == stageId.Value && !blockedUserIds.Contains(sa.UserId))
-                .ToListAsync();
-            foreach (var sa in stageAssignees)
-                _selectedAssigneeIds.Add(sa.UserId);
-
-            var stageEntity = await db.TaskStages.FindAsync(stageId.Value);
-            if (stageEntity?.AssignedUserId is { } aid && !blockedUserIds.Contains(aid)
-                                                        && !_selectedAssigneeIds.Contains(aid))
-                _selectedAssigneeIds.Add(aid);
-        }
-
-        _workerAssigneeItems = taskAssignees.Select(ta =>
-        {
-            userRows.TryGetValue(ta.UserId, out var ur);
-            var role = string.IsNullOrWhiteSpace(ur?.RoleName) ? "Worker" : ur.RoleName;
-            return new AssigneePickerItem(
-                ta.UserId,
-                ta.UserName,
-                role,
-                _selectedAssigneeIds,
-                ta.AvatarPath,
-                ta.AvatarData,
-                ur?.SubRole,
-                ur?.AdditionalSubRoles);
-        }).ToList();
-
-        _workerAssigneeItems = _workerAssigneeItems.Where(i => i.RoleDisplay == "Работник").ToList();
-        var workerIds = _workerAssigneeItems.Select(i => i.UserId).ToHashSet();
-        _selectedAssigneeIds.RemoveWhere(id => !workerIds.Contains(id));
-
-        await Application.Current.Dispatcher.InvokeAsync(() =>
-        {
-            foreach (var i in _workerAssigneeItems)
-                i.RefreshSelected(_selectedAssigneeIds);
-            RebuildWorkerSpecialtyOptions();
-            ApplyWorkerFilters();
-        });
-    }
 
     [RelayCommand]
     private void GoBack() => _goBack?.Invoke();
@@ -840,51 +759,29 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         CanCompleteStage = !IsStageMarkedForDeletion && StageStatus == StageStatus.InProgress;
     }
 
-    [RelayCommand]
-    public void ToggleAssignee(AssigneePickerItem? item)
-    {
-        if (item is null) return;
-        if (_selectedAssigneeIds.Contains(item.UserId))
-        {
-            if (!IsWorker() && _selectedAssigneeIds.Count <= 1)
-            {
-                ErrorMessage = "На этапе должен остаться хотя бы один работник";
-                return;
-            }
-            _selectedAssigneeIds.Remove(item.UserId);
-        }
-        else
-        {
-            _selectedAssigneeIds.Add(item.UserId);
-            ErrorMessage = null;
-        }
-        foreach (var i in _workerAssigneeItems)
-            i.RefreshSelected(_selectedAssigneeIds);
-        NotifyWorkerCounters();
-    }
 
     [RelayCommand]
     private void AddWorkTypeTemplate(LocalWorkTypeTemplate? tpl)
     {
         if (tpl is null) return;
-        if (SelectedWorkTypes.Any(x => x.TemplateId == tpl.Id))
+        if (SelectedServices.Any(x => x.TemplateId == tpl.Id))
         {
-            ErrorMessage = "Этот вид работ уже добавлен в этап";
+            ErrorMessage = "Эта услуга уже добавлена в этап";
             return;
         }
         var line = new StageWorkTypeLineVm(tpl.Id, tpl.Name, tpl.Unit, tpl.BasePrice)
         {
             Quantity = 1
         };
-        SelectedWorkTypes.Add(line);
+        SelectedServices.Add(line);
         ErrorMessage = null;
     }
 
     [RelayCommand]
-    private void RemoveWorkTypeLine(StageWorkTypeLineVm? line)
+    private void RemoveServiceLine(StageWorkTypeLineVm? line)
     {
         if (line is null) return;
-        SelectedWorkTypes.Remove(line);
+        SelectedServices.Remove(line);
     }
 
     [RelayCommand]
@@ -934,16 +831,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void AddWorkTypeMarkup()
+    private void AddServiceMarkup()
     {
-        WorkTypeAdjustmentPercent += 5;
+        ServiceAdjustmentPercent += 5;
         RecalculateTotals();
     }
 
     [RelayCommand]
-    private void AddWorkTypeDiscount()
+    private void AddServiceDiscount()
     {
-        WorkTypeAdjustmentPercent -= 5;
+        ServiceAdjustmentPercent -= 5;
         RecalculateTotals();
     }
 
@@ -962,9 +859,9 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     }
 
     [RelayCommand]
-    private void ResetWorkTypeAdjustment()
+    private void ResetServiceAdjustment()
     {
-        WorkTypeAdjustmentPercent = 0;
+        ServiceAdjustmentPercent = 0;
         RecalculateTotals();
     }
 
@@ -1020,10 +917,12 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ApplyEquipmentFilters();
     }
 
-    private void NotifyWorkerCounters()
+    private void RebuildMemberLists()
     {
-        OnPropertyChanged(nameof(SelectedWorkersCount));
-        OnPropertyChanged(nameof(AvailableWorkersCount));
+        ForemanMembers = [.. _allAssigneeItems
+            .Where(i => i.IsForemanPicker)];
+        WorkerMembers = [.. _workerAssigneeItems
+            .Where(i => _selectedAssigneeIds.Contains(i.UserId))];
     }
 
     [RelayCommand]
@@ -1081,23 +980,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             return;
         }
 
-        if (!IsWorker() && _selectedAssigneeIds.Count == 0)
-        {
-            ErrorMessage = "Назначьте хотя бы одного работника на этап";
-            return;
-        }
 
-        if (IsWorker() && _editStage is null && _auth.UserId.HasValue)
-        {
-            _selectedAssigneeIds.Clear();
-            _selectedAssigneeIds.Add(_auth.UserId.Value);
-        }
-
-        Guid? primaryAssigneeId = _workerAssigneeItems
-            .Select(i => i.UserId)
-            .FirstOrDefault(id => _selectedAssigneeIds.Contains(id));
-        if (primaryAssigneeId == Guid.Empty)
-            primaryAssigneeId = null;
+        Guid? primaryAssigneeId = _selectedAssigneeIds.Count > 0 ? _selectedAssigneeIds.FirstOrDefault() : null;
 
         DateOnly? dueDate = DueDate is { } sd ? DateOnly.FromDateTime(sd) : null;
         if (!DueDatePolicy.IsAllowed(dueDate))
@@ -1125,16 +1009,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             }
         }
 
-        foreach (var sl in SelectedWorkTypes)
+        foreach (var sl in SelectedServices)
         {
             if (sl.Quantity < 1m)
             {
-                ErrorMessage = "Количество видов работ не может быть меньше 1";
+                ErrorMessage = "Количество услуг не может быть меньше 1";
                 return;
             }
         }
 
-        var workTypeItems = SelectedWorkTypes
+        var serviceItems = SelectedServices
             .Select(s => new StageWorkTypeItemRequest(s.TemplateId, s.Quantity, s.PricePerUnit))
             .ToList();
         var equipmentEntities = EquipmentLines
@@ -1167,24 +1051,25 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
                     null,
                     0,
                     null,
-                    workTypeItems);
+                    serviceItems);
                 await taskVm.SaveNewStageAsync(req, localId);
                 stageId = localId;
             }
             else
             {
+                var status = _editStage.Status;
                 var req = new UpdateStageRequest(
                     StageName.Trim(),
                     string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
                     primaryAssigneeId,
-                    _editStage.Status,
+                    status,
                     dueDate,
                     _editStage.IsMarkedForDeletion,
                     _editStage.IsArchived,
                     null,
                     0,
                     0,
-                    workTypeItems);
+                    serviceItems);
                 await taskVm.SaveUpdatedStageAsync(_editStage.Id, req);
                 stageId = _editStage.Id;
             }

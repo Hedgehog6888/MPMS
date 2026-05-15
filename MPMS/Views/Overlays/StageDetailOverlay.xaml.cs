@@ -206,6 +206,7 @@ public partial class StageDetailOverlay : UserControl
                 var peek = UserPeekAccess.CanInteractPeekRow(auth, db, role);
                 return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec, peek);
             })
+            .Where(item => item.RoleDisplay is "Worker" or "Работник")
             .ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>

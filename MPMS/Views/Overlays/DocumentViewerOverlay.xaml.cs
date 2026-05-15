@@ -21,12 +21,10 @@ public partial class DocumentViewerOverlay : UserControl
     private string _filePath = string.Empty;
     private string _fileName = string.Empty;
     private string? _description;
-    private bool _hasUnsavedChanges;
     private readonly Func<string, string, string?, Task>? _savedFileHandler;
     private string _fileExtension = string.Empty;
     private enum DocumentType { Text, Word, Excel, Unsupported }
     private DocumentType _docType = DocumentType.Unsupported;
-    private int _currentPage = 1;
     private int _totalPages = 1;
     private readonly List<ExcelSheetView> _excelSheets = new();
     private ExcelSheetView? _currentExcelSheet;
@@ -44,7 +42,6 @@ public partial class DocumentViewerOverlay : UserControl
 
         DocumentNameText.Text = _fileName;
         LoadDocument(filePath);
-        _hasUnsavedChanges = false;
         UpdateOpenInAppButtonText();
 
         DocumentScrollViewer.PreviewMouseWheel += (s, e) =>

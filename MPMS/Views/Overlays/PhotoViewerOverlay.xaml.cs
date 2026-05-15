@@ -35,7 +35,6 @@ public partial class PhotoViewerOverlay : UserControl
     private bool _isPanning = false;
     private Point _panStartPoint;
     private double _panStartX = 0, _panStartY = 0;
-    private bool _viewportReady = false;
 
     // ── Вращение
     private double _rotationAngle = 0;
@@ -149,8 +148,6 @@ public partial class PhotoViewerOverlay : UserControl
             ImageContainer.Height = ph;
             DrawCanvas.Width = pw;
             DrawCanvas.Height = ph;
-
-            _viewportReady = false;
         }
         catch
         {
@@ -261,7 +258,6 @@ public partial class PhotoViewerOverlay : UserControl
 
         ApplyTransform();
         UpdateZoomDisplay();
-        _viewportReady = true;
     }
 
     private void ViewportGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -1524,7 +1520,6 @@ public partial class PhotoViewerOverlay : UserControl
         ImageContainer.Height = bitmap.PixelHeight;
         DrawCanvas.Width = bitmap.PixelWidth;
         DrawCanvas.Height = bitmap.PixelHeight;
-        _viewportReady = false;
         FitImageToViewport();
         UpdateZoomDisplay();
         UpdateFileInfo();

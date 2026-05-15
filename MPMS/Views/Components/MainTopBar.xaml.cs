@@ -189,8 +189,8 @@ namespace MPMS.Views.Components
                     s.TaskName = taskNames.GetValueOrDefault(s.TaskId, "—");
 
                 // Заполнение ProjectName и StageName для файлов
-                var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId.Value).Distinct().ToList();
-                var fileStageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId.Value).Distinct().ToList();
+                var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value).Distinct().ToList();
+                var fileStageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId!.Value).Distinct().ToList();
                 var fileProjectNames = await db.Projects.Where(p => fileProjectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);
                 var fileStageNames = await db.TaskStages.Where(s => fileStageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
                 foreach (var f in files)

@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -15,16 +17,29 @@ public partial class StageManagementPanel : UserControl
         InitializeComponent();
     }
 
-    private async void EditStage_Click(object sender, RoutedEventArgs e)
+    private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not StageDetailViewModel vm || vm.EditStage is null || vm.EditTask is null) return;
+        var stage = vm.EditStage;
+        var task = vm.EditTask;
+        var goBack = vm.GoBackCommand;
         var overlay = new CreateStageOverlay();
-        overlay.SetEditMode(vm.EditStage, vm.EditTask,
+        overlay.SetEditMode(stage, task,
             onSaved: async () =>
             {
-                await vm.LoadAsync();
+                var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+                await using var db = await dbFactory.CreateDbContextAsync();
+                var freshStage = await db.TaskStages.FindAsync(stage.Id);
+                var freshTask = await db.Tasks.FindAsync(task.Id);
+                if (freshStage is not null && freshTask is not null)
+                {
+                    vm.SetEditMode(freshStage, freshTask,
+                        goBack: () => goBack.Execute(null));
+                    await vm.ReloadAllAsync();
+                }
                 UpdateButtons();
-            });
+            },
+            onAfterSave: () => MainWindow.Instance?.HideDrawer());
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 

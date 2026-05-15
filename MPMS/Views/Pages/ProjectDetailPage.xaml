@@ -374,9 +374,6 @@
                         <RadioButton Content="Файлы" Tag="Files"
                                      Style="{StaticResource TabButton}"
                                      Click="Tab_Click"/>
-                        <RadioButton Content="Материалы" Tag="Materials"
-                                     Style="{StaticResource TabButton}"
-                                     Click="Tab_Click"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="StageViewModeSwitcher" Grid.Column="2"
@@ -591,6 +588,11 @@
                                                    Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                                     <ItemsControl ItemsSource="{Binding WorkerMembers}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <UniformGrid Columns="2"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Grid Margin="0,0,0,6">
@@ -847,7 +849,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <panels:ProjectManagementPanel x:Name="ProjectManagementPanel" Margin="0,0,0,16"/>
+                            <panels:ProjectManagementPanel x:Name="ProjectManagementPanel" Margin="0,0,0,8"/>
 
                             <panels:QuickActionsPanel x:Name="QuickActionsPanel"/>
                         </StackPanel>
@@ -2094,34 +2096,6 @@
                 <components:FilesControl DataContext="{Binding FilesControlVM}"/>
             </Grid>
 
-            <ScrollViewer x:Name="MaterialsPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="24,8">
-                    <TextBlock Text="Материалы использованные в этапах проекта"
-                               FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,12"/>
-
-                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,0">
-                        <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}"
-                               Width="48" Height="48" HorizontalAlignment="Center" Margin="0,0,0,12" Opacity="0.4"/>
-                        <TextBlock Text="Материалы не найдены" FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Добавьте материалы к этапам задач проекта" FontSize="13"
-                                   Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
-                                   Margin="0,6,0,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Project.IsClosed}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
 
         </Grid>
 
