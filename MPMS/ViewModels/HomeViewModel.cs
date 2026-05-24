@@ -449,7 +449,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 else
                 {
                     Card1DoneOffset = 0;
-                    Card1InProgressOffset = 0;
+                    Card1InProgressOffset = 0.01; 
                 }
 
                 // Для внимания считаем ВСЕ просроченные задачи, назначенные пользователю
@@ -593,7 +593,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 else
                 {
                     Card1DoneOffset = 0;
-                    Card1InProgressOffset = 0;
+                    Card1InProgressOffset = 0.01; 
                 }
 
                 Card1Value = GetPlural(Card1Total, "проект", "проекта", "проектов");
@@ -636,9 +636,25 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
                 else
                 {
                     Card2Title = "На удаление";
-                    var projectsMarked = await db.Projects.CountAsync(p => p.IsMarkedForDeletion);
-                    var tasksMarked = await db.Tasks.CountAsync(t => t.IsMarkedForDeletion);
-                    var stagesMarked = await db.TaskStages.CountAsync(s => s.IsMarkedForDeletion);
+                    // Считаем только проекты, которые НЕ закрыты и НЕ в архиве
+                    var projectsMarked = await db.Projects.CountAsync(p => p.IsMarkedForDeletion && !p.IsClosed && !p.IsArchived);
+                    
+                    // Считаем только задачи, которые НЕ в архиве и принадлежат НЕ закрытым и НЕ архивированным проектам
+                    var tasksMarked = await (from t in db.Tasks
+                                             join p in db.Projects on t.ProjectId equals p.Id
+                                             where t.IsMarkedForDeletion && !t.IsArchived
+                                                && !p.IsClosed && !p.IsArchived
+                                             select t).CountAsync();
+                    
+                    // Считаем только этапы, которые НЕ в архиве и принадлежат задачам в НЕ закрытых и НЕ архивированных проектах
+                    var stagesMarked = await (from s in db.TaskStages
+                                              join t in db.Tasks on s.TaskId equals t.Id
+                                              join p in db.Projects on t.ProjectId equals p.Id
+                                              where s.IsMarkedForDeletion && !s.IsArchived
+                                                 && !t.IsArchived
+                                                 && !p.IsClosed && !p.IsArchived
+                                              select s).CountAsync();
+                    
                     var totalMarked = projectsMarked + tasksMarked + stagesMarked;
 
                     Card2Value = GetPlural(totalMarked, "объект", "объекта", "объектов");

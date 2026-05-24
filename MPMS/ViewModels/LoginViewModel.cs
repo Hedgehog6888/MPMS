@@ -29,7 +29,7 @@ public partial class LoginViewModel : ViewModelBase
         _dbFactory = dbFactory;
         _sync = sync;
         _apiBaseUrl = auth.ApiBaseUrl;
-        _ = LoadRecentAccountsAsync();
+        _ = LoadRecentAccountsSafeAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanLogin))]
@@ -137,6 +137,12 @@ public partial class LoginViewModel : ViewModelBase
             await _sync.QueueLocalActivityLogAsync(log);
         }
         catch { /* некритичная ошибка */ }
+    }
+
+    private async Task LoadRecentAccountsSafeAsync()
+    {
+        try { await LoadRecentAccountsAsync(); }
+        catch { /* игнорируем ошибки загрузки недавних аккаунтов */ }
     }
 
     private async Task LoadRecentAccountsAsync()

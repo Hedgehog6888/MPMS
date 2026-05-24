@@ -123,15 +123,15 @@
         </Style>
     </Window.Resources>
 
-    <Border Margin="16" CornerRadius="14" Background="White" ClipToBounds="True">
+    <Border CornerRadius="8" Background="White" ClipToBounds="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="40" Opacity="0.22"
                               ShadowDepth="8" Direction="270"/>
         </Border.Effect>
 
-        <Grid MouseLeftButtonDown="DragBar_MouseLeftButtonDown">
+        <Grid MouseLeftButtonDown="DragBar_MouseLeftButtonDown" Margin="16">
 
-            <Grid Background="{StaticResource BackgroundBrush}">
+            <Grid Background="White">
 
                 <Button x:Name="CloseBtn" Click="CloseButton_Click"
                         HorizontalAlignment="Right" VerticalAlignment="Top"

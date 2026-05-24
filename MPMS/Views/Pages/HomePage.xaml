@@ -339,8 +339,8 @@
                                             <GradientStop Color="#10B981" Offset="{Binding Card1DoneOffset}"/>
                                             <GradientStop Color="#3B82F6" Offset="{Binding Card1DoneOffset}"/>
                                             <GradientStop Color="#3B82F6" Offset="{Binding Card1InProgressOffset}"/>
-                                            <GradientStop Color="#CBD5E1" Offset="{Binding Card1InProgressOffset}"/>
-                                            <GradientStop Color="#CBD5E1" Offset="1.0"/>
+                                            <GradientStop Color="#64748B" Offset="{Binding Card1InProgressOffset}"/>
+                                            <GradientStop Color="#64748B" Offset="1.0"/>
                                         </LinearGradientBrush>
                                     </ProgressBar.Foreground>
                                 </ProgressBar>

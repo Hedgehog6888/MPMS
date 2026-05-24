@@ -2,6 +2,7 @@ using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using System.Windows.Threading;
 using MPMS.Data;
 using MPMS.Services;
 using MPMS.Services.Sync;
@@ -17,35 +18,66 @@ public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
+    public App()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            var ex = e.ExceptionObject as Exception;
+            MessageBox.Show($"Критическая ошибка: {ex?.Message}\n\n{ex?.StackTrace}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        };
+        TaskScheduler.UnobservedTaskException += (s, e) =>
+        {
+            e.SetObserved();
+        };
+        DispatcherUnhandledException += (s, e) =>
+        {
+            MessageBox.Show($"Ошибка: {e.Exception.Message}\n\n{e.Exception.StackTrace}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true;
+        };
+    }
+
     private async void OnStartup(object sender, StartupEventArgs e)
     {
-        var splash = new SplashWindow();
-        splash.Show();
-
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        Services = services.BuildServiceProvider();
-
-        splash.SetLoadingText("Инициализация базы данных...");
-        EnsureLocalDatabase();
-
-        splash.SetLoadingText("Проверка авторизации...");
-        var authService = Services.GetRequiredService<IAuthService>();
-
-        if (await authService.TryRestoreSessionAsync())
+        try
         {
-            splash.SetLoadingText("Загрузка данных...");
-            await Services.GetRequiredService<IApiService>().ProbeAsync();
+            var splash = new SplashWindow();
+            splash.Show();
 
-            splash.SetLoadingText("Открытие приложения...");
-            await OpenMainWindowAsync(splash);
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            Services = services.BuildServiceProvider();
+
+            splash.SetLoadingText("Инициализация базы данных...");
+            EnsureLocalDatabase();
+
+            splash.SetLoadingText("Проверка авторизации...");
+            var authService = Services.GetRequiredService<IAuthService>();
+
+            if (await authService.TryRestoreSessionAsync())
+            {
+                splash.SetLoadingText("Загрузка данных...");
+                await Services.GetRequiredService<IApiService>().ProbeAsync();
+
+                splash.SetLoadingText("Открытие приложения...");
+                await OpenMainWindowAsync(splash);
+            }
+            else
+            {
+                splash.SetLoadingText("Открытие входа...");
+                var loginWindow = Services.GetRequiredService<LoginWindow>();
+
+                // Не закрываем splash до тех пор пока LoginWindow не загрузится полностью
+                // Иначе приложение закроется из-за ShutdownMode=OnLastWindowClose
+                loginWindow.Loaded += (s, _) => splash.CloseWithFadeOut();
+
+                loginWindow.Show();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            splash.SetLoadingText("Открытие входа...");
-            splash.CloseWithFadeOut();
-            var loginWindow = Services.GetRequiredService<LoginWindow>();
-            loginWindow.Show();
+            MessageBox.Show($"Критическая ошибка при запуске:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
         }
     }
 
