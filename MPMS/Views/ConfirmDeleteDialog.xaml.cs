@@ -10,12 +10,61 @@ public partial class ConfirmDeleteDialog : Window
     public string? ClosureReason { get; private set; }
     public string? BlockReason { get; private set; }
 
+    private string? _pendingBlockMessage;
+    private string? _pendingCascadeMessage;
+
     public ConfirmDeleteDialog()
     {
         InitializeComponent();
+        Loaded += (s, e) => ApplyPendingMessages();
     }
 
-    public void Configure(string entityType, string itemName, string? cascadeMessage = null)
+    private void ApplyPendingMessages()
+    {
+        var blockWarning = FindName("BlockWarning") as Border;
+        var blockText = FindName("BlockText") as TextBlock;
+
+        if (!string.IsNullOrWhiteSpace(_pendingBlockMessage))
+        {
+            if (blockText != null && blockWarning != null)
+            {
+                blockText.Text = _pendingBlockMessage;
+                blockWarning.Visibility = Visibility.Visible;
+                CascadeWarning.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                // Fallback: use cascade warning if block elements not found
+                CascadeText.Text = _pendingBlockMessage;
+                CascadeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B91C1C"));
+                CascadeWarning.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEE2E2"));
+                CascadeWarning.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"));
+                CascadeWarning.Visibility = Visibility.Visible;
+            }
+            ConfirmBtn.IsEnabled = false;
+            ConfirmBtn.Opacity = 0.5;
+        }
+        else if (!string.IsNullOrWhiteSpace(_pendingCascadeMessage))
+        {
+            CascadeText.Text = _pendingCascadeMessage;
+            CascadeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#856404"));
+            CascadeWarning.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF8E1"));
+            CascadeWarning.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFC107"));
+            CascadeWarning.Visibility = Visibility.Visible;
+            if (blockWarning != null) blockWarning.Visibility = Visibility.Collapsed;
+            ConfirmBtn.IsEnabled = true;
+            ConfirmBtn.Opacity = 1.0;
+        }
+        else
+        {
+            CascadeWarning.Visibility = Visibility.Collapsed;
+            if (blockWarning != null) blockWarning.Visibility = Visibility.Collapsed;
+            ConfirmBtn.IsEnabled = true;
+            ConfirmBtn.Opacity = 1.0;
+        }
+    }
+
+    public void Configure(string entityType, string itemName, string? cascadeMessage = null, string? blockMessage = null)
     {
         TitleText.Text = $"Удалить {entityType.ToLower()}?";
         EntityTypeText.Text = entityType;
@@ -24,22 +73,17 @@ public partial class ConfirmDeleteDialog : Window
         HeaderBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2"));
         ConfirmBtn.Style = (Style)FindResource("RedDialogBtn");
 
-        if (!string.IsNullOrWhiteSpace(cascadeMessage))
-        {
-            CascadeText.Text = cascadeMessage;
-            CascadeWarning.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            CascadeWarning.Visibility = Visibility.Collapsed;
-        }
+        _pendingBlockMessage = blockMessage;
+        _pendingCascadeMessage = cascadeMessage;
+
+        ApplyPendingMessages();
     }
 
-    public static bool Show(Window owner, string entityType, string itemName, string? cascadeMessage = null)
+    public static bool Show(Window owner, string entityType, string itemName, string? cascadeMessage = null, string? blockMessage = null)
     {
         var dialog = new ConfirmDeleteDialog();
         dialog.Owner = owner;
-        dialog.Configure(entityType, itemName, cascadeMessage);
+        dialog.Configure(entityType, itemName, cascadeMessage, blockMessage);
         dialog.ShowDialog();
         return dialog.Confirmed;
     }

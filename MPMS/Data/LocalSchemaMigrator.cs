@@ -42,6 +42,7 @@ public static class LocalSchemaMigrator
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
         ApplyWorkTypesSchema(conn);
+        FixWorkTypeTemplateCategoryIds(conn);
 
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"FileData\" BLOB NULL;");
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"OriginalCreatedAt\" TEXT NULL;");
@@ -457,6 +458,28 @@ public static class LocalSchemaMigrator
 
         SeedDefaultWorkTypeCategories(conn);
         SeedDefaultWorkTypeTemplates(conn);
+    }
+
+    /// <summary>
+    /// Исправляет CategoryId у существующих WorkTypeTemplates (где CategoryId = empty GUID).
+    /// </summary>
+    private static void FixWorkTypeTemplateCategoryIds(SqliteConnection conn)
+    {
+        try
+        {
+            Execute(conn, """
+                UPDATE "WorkTypeTemplates"
+                SET "CategoryId" = (
+                    SELECT "Id" FROM "WorkTypeCategories"
+                    WHERE "WorkTypeCategories"."Name" = "WorkTypeTemplates"."CategoryName"
+                    LIMIT 1
+                )
+                WHERE "CategoryId" = '00000000-0000-0000-0000-000000000000'
+                   OR "CategoryId" IS NULL
+                   OR "CategoryId" = ''
+                """);
+        }
+        catch (SqliteException) { }
     }
 
     private static void TryAlterTable(SqliteConnection conn, string sql)

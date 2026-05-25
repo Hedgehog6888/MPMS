@@ -59,6 +59,13 @@ public partial class MainViewModel : ViewModelBase
         string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase);
 
+    public bool IsCatalogsVisible =>
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+
     public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp)
     {
         _auth = auth;
@@ -144,6 +151,7 @@ public partial class MainViewModel : ViewModelBase
             "Warehouse" => _sp.GetRequiredService<WarehouseViewModel>(),
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
+            "Catalogs" => _sp.GetRequiredService<CatalogsViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
             "Settings" => null,
             _ => null

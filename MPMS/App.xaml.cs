@@ -122,6 +122,7 @@ public partial class App : Application
         services.AddTransient<StagesViewModel>();
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<AdminViewModel>();
+        services.AddTransient<CatalogsViewModel>();
         services.AddTransient<CalendarViewModel>();
         services.AddTransient<TimelineViewModel>();
         services.AddTransient<FilesPageViewModel>();

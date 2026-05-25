@@ -36,6 +36,9 @@ public partial class MainWindow : Window
     private OverlayPresentationMode _overlayMode = OverlayPresentationMode.None;
 
     private readonly List<UIElement> _drawerModalStack = [];
+    private readonly List<UIElement> _modalStack = [];
+    private UIElement? _modalBaseContent = null;
+    private double _modalBaseWidth = 0;
 
     private System.Windows.Threading.DispatcherTimer? _saveSettingsTimer;
 
@@ -239,6 +242,75 @@ public partial class MainWindow : Window
         ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
     }
 
+    /// <summary>Центральный модальный оверлей поверх уже открытого модального оверлея.</summary>
+    public void ShowStackedModal(UIElement content, double width = 520)
+    {
+        if (_overlayMode != OverlayPresentationMode.Modal
+            || OverlayLayer.Visibility != Visibility.Visible)
+        {
+            ShowCenteredOverlay(content, width);
+            return;
+        }
+
+        // Save base content and width if not already saved
+        if (_modalBaseContent is null)
+        {
+            _modalBaseContent = (UIElement?)ModalOverlayContentPresenter.Content;
+            _modalBaseWidth = ModalOverlayPanel.Width;
+        }
+
+        _modalStack.Add(content);
+        ModalOverlayContentPresenter.Content = content;
+        ModalOverlayPanel.Width = width;
+
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+
+        ModalOverlayPanel.Visibility = Visibility.Visible;
+        ModalOverlayPanel.Opacity = 0;
+        ModalOverlayTransform.Y = 16;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220));
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+        var slideIn = new DoubleAnimation(16, 0, TimeSpan.FromMilliseconds(220))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
+    }
+
+    private void HideStackedModalOnly()
+    {
+        if (_modalStack.Count == 0) return;
+
+        _modalStack.RemoveAt(_modalStack.Count - 1);
+
+        if (_modalStack.Count > 0)
+        {
+            ModalOverlayContentPresenter.Content = _modalStack[^1];
+        }
+        else
+        {
+            ModalOverlayContentPresenter.Content = _modalBaseContent;
+            ModalOverlayPanel.Width = _modalBaseWidth;
+            _modalBaseContent = null;
+            _modalBaseWidth = 0;
+        }
+
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, null);
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, null);
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
+        ModalOverlayPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+
+        var slideIn = new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(180))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
+    }
+
     /// <summary>Карточка участника: админ/менеджер — любой; прораб — только работник.</summary>
     public void TryOpenUserPeek(Guid userId, Guid projectId)
     {
@@ -284,9 +356,15 @@ public partial class MainWindow : Window
 
     public void HideDrawer()
     {
-        if (_drawerModalStack.Count > 0)
+        if (_modalStack.Count > 0)
         {
             HideStackedModalOnly();
+            return;
+        }
+
+        if (_drawerModalStack.Count > 0)
+        {
+            HideDrawerStackedModal();
             return;
         }
 
@@ -349,7 +427,7 @@ public partial class MainWindow : Window
         _overlayMode = OverlayPresentationMode.None;
     }
 
-    private void HideStackedModalOnly()
+    private void HideDrawerStackedModal()
     {
         if (_drawerModalStack.Count == 0)
             return;

@@ -326,6 +326,41 @@
                 </StackPanel>
             </RadioButton>
 
+            <!-- Справочники (для Admin и Manager) -->
+            <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Catalogs, Mode=OneWay}"
+                         Style="{StaticResource NavButton}"
+                         Command="{Binding NavigateCommand}"
+                         CommandParameter="Catalogs"
+                         Visibility="{Binding IsCatalogsVisible, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal">
+                    <Image Width="20" Height="20"
+                           Margin="12,0,8,0"
+                           VerticalAlignment="Center"
+                           Source="{svgc:SvgImage Source=/icons/catalog.svg, AppName=MPMS}">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Setter Property="Opacity" Value="0.7"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+                                        <Setter Property="Opacity" Value="1"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                                        <Setter Property="Margin" Value="22,0,0,0"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <TextBlock Text="Справочники"
+                               FontSize="14"
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </RadioButton>
+
             <!-- Администрирование (только для Administrator) -->
             <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Admin, Mode=OneWay}"
                          Style="{StaticResource NavButton}"

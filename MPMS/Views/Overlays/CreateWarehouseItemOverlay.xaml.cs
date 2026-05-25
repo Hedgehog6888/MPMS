@@ -299,22 +299,30 @@ public partial class CreateWarehouseItemOverlay : UserControl
     private void AddCategory_Click(object sender, RoutedEventArgs e)
     {
         if (MainWindow.Instance is not { } mw) return;
+
         var overlay = new CreateCategoryOverlay(_mode, _vm, newCat =>
         {
+            // Refresh categories from ViewModel (SaveNew*CategoryAsync already updates them)
             if (_mode == "Equipment")
             {
                 var cats = _vm.EquipmentCategories.ToList();
                 CategoryCombo.ItemsSource = cats;
-                CategoryCombo.SelectedItem = cats.FirstOrDefault(c => c.Name == newCat);
+                if (!string.IsNullOrEmpty(newCat))
+                {
+                    CategoryCombo.SelectedItem = cats.FirstOrDefault(c => c.Name == newCat);
+                }
             }
             else
             {
                 var cats = _vm.MaterialCategories.ToList();
                 CategoryCombo.ItemsSource = cats;
-                CategoryCombo.SelectedItem = cats.FirstOrDefault(c => c.Name == newCat);
+                if (!string.IsNullOrEmpty(newCat))
+                {
+                    CategoryCombo.SelectedItem = cats.FirstOrDefault(c => c.Name == newCat);
+                }
             }
         });
-        mw.ShowStackedModalOverDrawer(overlay, 420);
+        mw.ShowStackedModal(overlay, 420);
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)

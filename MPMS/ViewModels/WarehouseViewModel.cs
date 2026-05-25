@@ -136,12 +136,42 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             .ToList();
         EquipmentCategories = new ObservableCollection<LocalEquipmentCategory>(eqCats);
 
+        await UpdateCategoryFilterOptionsAsync();
+    }
+
+    public async Task LoadCategoriesAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var cats = (await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync())
+            .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(x => x.Name).First())
+            .OrderBy(c => c.Name)
+            .ToList();
+        MaterialCategories = new ObservableCollection<LocalMaterialCategory>(cats);
+
+        var eqCats = (await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync())
+            .GroupBy(c => (c.Name ?? string.Empty).Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(x => x.Name).First())
+            .OrderBy(c => c.Name)
+            .ToList();
+        EquipmentCategories = new ObservableCollection<LocalEquipmentCategory>(eqCats);
+
+        await UpdateCategoryFilterOptionsAsync();
+    }
+
+    private async Task UpdateCategoryFilterOptionsAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var cats = await db.MaterialCategories.OrderBy(c => c.Name).ToListAsync();
         var matFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         matFilterOpts.AddRange(cats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
 
         if (MaterialCategoryFilterOptions.Count != matFilterOpts.Count)
             MaterialCategoryFilterOptions = new ObservableCollection<MaterialCategoryFilterOption>(matFilterOpts);
 
+        var eqCats = await db.EquipmentCategories.OrderBy(c => c.Name).ToListAsync();
         var eqFilterOpts = new List<MaterialCategoryFilterOption> { new(null, "Все категории") };
         eqFilterOpts.AddRange(eqCats.Select(c => new MaterialCategoryFilterOption(c.Id, c.Name)));
 

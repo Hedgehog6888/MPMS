@@ -62,15 +62,15 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Виды работ" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="-5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddWorkTypeDiscountCommand}" Margin="0,0,6,0"/>
-                    <Button Content="+5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddWorkTypeMarkupCommand}"/>
-                    <TextBox Text="{Binding WorkTypeAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CompactPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
+                    <Button Content="-5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddServiceDiscountCommand}" Margin="0,0,6,0"/>
+                    <Button Content="+5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddServiceMarkupCommand}"/>
+                    <TextBox Text="{Binding ServiceAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CompactPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
                     <TextBlock Text="%" VerticalAlignment="Center" Foreground="#6B778C" Margin="4,0,0,0"/>
-                    <Button Content="Сброс" Style="{StaticResource CompactSummaryBtn}" Command="{Binding ResetWorkTypeAdjustmentCommand}" Margin="6,0,0,0"/>
+                    <Button Content="Сброс" Style="{StaticResource CompactSummaryBtn}" Command="{Binding ResetServiceAdjustmentCommand}" Margin="6,0,0,0"/>
                 </StackPanel>
                 <ScrollViewer Grid.Row="2">
                     <StackPanel>
-                        <ItemsControl ItemsSource="{Binding WorkTypeReceiptRows}">
+                        <ItemsControl ItemsSource="{Binding ServiceReceiptRows}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:ReceiptRowVm}">
                                     <Grid Margin="0,0,0,6">
@@ -85,7 +85,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <Border Height="1" Background="#EBECF0" Margin="0,6,0,6"/>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Итого виды работ"/><TextBlock Grid.Column="1" Text="{Binding AdjustedWorkTypesTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/></Grid>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Итого виды работ"/><TextBlock Grid.Column="1" Text="{Binding AdjustedServicesTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/></Grid>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

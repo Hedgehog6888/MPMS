@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MPMS.Services;
@@ -241,6 +242,8 @@ public class LocalMaterialCategory
 {
     public Guid Id { get; set; }
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
+
+    [NotMapped] public int Count { get; set; }
 }
 
 public class LocalWorkTypeCategory
@@ -250,6 +253,8 @@ public class LocalWorkTypeCategory
     [MaxLength(500)] public string? Description { get; set; }
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
+
+    [NotMapped] public int WorkTypeCount { get; set; }
 }
 
 public class LocalWorkTypeTemplate : LocalEntity
@@ -270,6 +275,8 @@ public class LocalEquipmentCategory
 {
     public Guid Id { get; set; }
     [MaxLength(100)] public string Name { get; set; } = string.Empty;
+
+    [NotMapped] public int Count { get; set; }
 }
 
 public class LocalMaterial : LocalEntity

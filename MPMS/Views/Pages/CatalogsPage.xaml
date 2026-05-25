@@ -1,0 +1,64 @@
+<UserControl x:Class="MPMS.Views.Pages.CatalogsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:cat="clr-namespace:MPMS.Views.Components.Catalogs"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             mc:Ignorable="d"
+             Background="#F4F5F7"
+             d:DataContext="{d:DesignInstance Type=vm:CatalogsViewModel}"
+             d:DesignHeight="800" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Views/Components/Admin/AdminStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Табы навигации -->
+            <Border Grid.Row="0"
+                    Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                    CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="TabWorkTypes" GroupName="CatalogTabs" IsChecked="True"
+                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="WorkTypes">
+                        Виды работ
+                    </RadioButton>
+                    <RadioButton x:Name="TabWorkTypeCategories" GroupName="CatalogTabs" IsChecked="False"
+                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="WorkTypeCategories">
+                        Категории работ
+                    </RadioButton>
+                    <RadioButton x:Name="TabEquipmentCategories" GroupName="CatalogTabs" IsChecked="False"
+                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="EquipmentCategories">
+                        Категории оборудования
+                    </RadioButton>
+                    <RadioButton x:Name="TabMaterialCategories" GroupName="CatalogTabs" IsChecked="False"
+                                 Style="{StaticResource TabButton}" Click="Tab_Click" Tag="MaterialCategories">
+                        Категории материалов
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <!-- Панели контента -->
+            <Grid Grid.Row="2">
+                <cat:WorkTypesPanel x:Name="WorkTypesPanel" Visibility="Visible"/>
+                <cat:WorkTypeCategoriesPanel x:Name="WorkTypeCategoriesPanel" Visibility="Collapsed"/>
+                <cat:EquipmentCategoriesPanel x:Name="EquipmentCategoriesPanel" Visibility="Collapsed"/>
+                <cat:MaterialCategoriesPanel x:Name="MaterialCategoriesPanel" Visibility="Collapsed"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
