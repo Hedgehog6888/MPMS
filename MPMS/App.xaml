@@ -979,6 +979,7 @@
             <infra:ProgressPercentToBrushConverter    x:Key="ProgressPercentToBrush"/>
             <infra:EntityTypeToAccentBrushConverter     x:Key="EntityTypeToAccentBrush"/>
             <infra:ActivityLogToAccentBrushConverter     x:Key="ActivityLogToAccentBrush"/>
+            <infra:ActivityLogToGradientBrushConverter   x:Key="ActivityLogToGradientBrush"/>
             <infra:EntityTypeToBadgeLabelConverter      x:Key="EntityTypeToLabel"/>
             <infra:ActorRoleToLabelConverter            x:Key="ActorRoleToLabel"/>
             <infra:ActorRoleToBrushConverter            x:Key="ActorRoleToBrush"/>

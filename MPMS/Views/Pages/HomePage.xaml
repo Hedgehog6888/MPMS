@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <infra:ActivityLogToAccentBrushConverter x:Key="ActivityLogToAccentBrush"/>
+        <infra:ActivityLogToGradientBrushConverter x:Key="ActivityLogToGradientBrush"/>
         <infra:HexToBrushConverter x:Key="HexToBrush"/>
         <infra:AvatarBytesToImageSourceConverter x:Key="AvatarBytesToImage"/>
         <infra:NullToVisibilityConverter x:Key="NullToVis"/>
@@ -866,8 +867,8 @@
                                                     </Border.ToolTip>
                                                     <Grid>
 
-                                                        <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
-                                                                Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
+                                                        <Border Width="8" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
+                                                                Background="{Binding Converter={StaticResource ActivityLogToGradientBrush}}"/>
                                                         <Grid Margin="10,6,8,6">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>

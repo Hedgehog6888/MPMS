@@ -1025,6 +1025,230 @@ public class ActivityLogToAccentBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Сопоставляет LocalActivityLog с LinearGradientBrush для эффекта "пучка" цвета — градиент от полного цвета слева к прозрачному справа.</summary>
+public class ActivityLogToGradientBrushConverter : IValueConverter
+{
+    public static readonly ActivityLogToGradientBrushConverter Instance = new();
+
+    private static readonly LinearGradientBrush DefaultGradient = new(
+        new GradientStopCollection {
+            new GradientStop(Color.FromRgb(0x64, 0x74, 0x8B), 0.0),
+            new GradientStop(Color.FromArgb(153, 0x64, 0x74, 0x8B), 0.5),
+            new GradientStop(Color.FromArgb(26, 0x64, 0x74, 0x8B), 1.0)
+        },
+        new Point(0, 0), new Point(1, 0));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not MPMS.Models.LocalActivityLog log)
+            return DefaultGradient;
+
+        // Получаем цвет из существующей логики ActivityLogToAccentBrushConverter
+        Color baseColor = GetColorForLog(log);
+
+        // Создаём градиент от цвета с непрозрачностью 70% слева к прозрачному справа
+        return new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(1, 0),
+            GradientStops = new GradientStopCollection
+            {
+                new GradientStop(Color.FromArgb(180, baseColor.R, baseColor.G, baseColor.B), 0.0),
+                new GradientStop(Color.FromArgb(150, baseColor.R, baseColor.G, baseColor.B), 0.3),
+                new GradientStop(Color.FromArgb(100, baseColor.R, baseColor.G, baseColor.B), 0.5),
+                new GradientStop(Color.FromArgb(60, baseColor.R, baseColor.G, baseColor.B), 0.7),
+                new GradientStop(Color.FromArgb(30, baseColor.R, baseColor.G, baseColor.B), 0.85),
+                new GradientStop(Color.FromArgb(10, baseColor.R, baseColor.G, baseColor.B), 1.0)
+            }
+        };
+    }
+
+    private static Color GetColorForLog(LocalActivityLog log)
+    {
+        // Используем ту же логику, что и ActivityLogToAccentBrushConverter
+        if (IsProjectClosed(log))
+            return Color.FromRgb(0x37, 0x41, 0x51);
+
+        if (log.ActionType == ActivityActionKind.StatusChanged)
+        {
+            return log.EntityType switch
+            {
+                "Project" => Color.FromRgb(0x60, 0xA5, 0xFA),
+                "Task" => Color.FromRgb(0x6E, 0xE7, 0xB7),
+                "Stage" => Color.FromRgb(0xF8, 0x71, 0x71),
+                _ => Color.FromRgb(0x64, 0x74, 0x8B)
+            };
+        }
+        if (log.ActionType == ActivityActionKind.TaskStatusChanged)
+            return Color.FromRgb(0x6E, 0xE7, 0xB7);
+        if (log.ActionType == ActivityActionKind.StageStatusChanged)
+            return Color.FromRgb(0xF8, 0x71, 0x71);
+
+        var actionCategory = GetActionCategory(log.ActionType);
+        var entityType = GetEntityTypeFromFileExtension(log);
+
+        return (entityType, actionCategory) switch
+        {
+            (EntityType.Project, ActionCategory.Creative) => Color.FromRgb(0x1E, 0x40, 0xAF),
+            (EntityType.Project, ActionCategory.Change) => Color.FromRgb(0x25, 0x63, 0xEB),
+            (EntityType.Project, ActionCategory.Destructive) => Color.FromRgb(0x3B, 0x82, 0xF6),
+            (EntityType.Project, ActionCategory.Warning) => Color.FromRgb(0x60, 0xA5, 0xFA),
+
+            (EntityType.Task, ActionCategory.Creative) => Color.FromRgb(0x05, 0x96, 0x69),
+            (EntityType.Task, ActionCategory.Change) => Color.FromRgb(0x10, 0xB9, 0x81),
+            (EntityType.Task, ActionCategory.Destructive) => Color.FromRgb(0x34, 0xD3, 0x99),
+            (EntityType.Task, ActionCategory.Warning) => Color.FromRgb(0x6E, 0xE7, 0xB7),
+
+            (EntityType.Stage, ActionCategory.Creative) => Color.FromRgb(0x99, 0x1B, 0x1B),
+            (EntityType.Stage, ActionCategory.Change) => Color.FromRgb(0xDC, 0x26, 0x26),
+            (EntityType.Stage, ActionCategory.Destructive) => Color.FromRgb(0xEF, 0x44, 0x44),
+            (EntityType.Stage, ActionCategory.Warning) => Color.FromRgb(0xF8, 0x71, 0x71),
+
+            (EntityType.Material, ActionCategory.Creative) => Color.FromRgb(0xCA, 0x8A, 0x04),
+            (EntityType.Material, ActionCategory.Change) => Color.FromRgb(0xF5, 0x9E, 0x0B),
+            (EntityType.Material, ActionCategory.Destructive) => Color.FromRgb(0xFB, 0x92, 0x34),
+            (EntityType.Material, ActionCategory.Warning) => Color.FromRgb(0xFD, 0xB7, 0x4C),
+
+            (EntityType.Equipment, ActionCategory.Creative) => Color.FromRgb(0x0F, 0x76, 0x67),
+            (EntityType.Equipment, ActionCategory.Change) => Color.FromRgb(0x0D, 0x94, 0x88),
+            (EntityType.Equipment, ActionCategory.Destructive) => Color.FromRgb(0x14, 0xB8, 0xA6),
+            (EntityType.Equipment, ActionCategory.Warning) => Color.FromRgb(0x5E, 0xEE, 0xD4),
+
+            (EntityType.File, ActionCategory.Creative) => Color.FromRgb(0xBE, 0x18, 0x5D),
+            (EntityType.File, ActionCategory.Change) => Color.FromRgb(0xE1, 0x1D, 0x48),
+            (EntityType.File, ActionCategory.Destructive) => Color.FromRgb(0xF4, 0x3F, 0x5E),
+            (EntityType.File, ActionCategory.Warning) => Color.FromRgb(0xFB, 0x71, 0x85),
+
+            (EntityType.Image, ActionCategory.Creative) => Color.FromRgb(0x4F, 0x46, 0xE5),
+            (EntityType.Image, ActionCategory.Change) => Color.FromRgb(0x63, 0x66, 0xF1),
+            (EntityType.Image, ActionCategory.Destructive) => Color.FromRgb(0x81, 0x8C, 0xF8),
+            (EntityType.Image, ActionCategory.Warning) => Color.FromRgb(0xA5, 0xB4, 0xFC),
+
+            (EntityType.Document, ActionCategory.Creative) => Color.FromRgb(0x65, 0xA3, 0x0D),
+            (EntityType.Document, ActionCategory.Change) => Color.FromRgb(0x84, 0xCC, 0x16),
+            (EntityType.Document, ActionCategory.Destructive) => Color.FromRgb(0xA3, 0xE6, 0x35),
+            (EntityType.Document, ActionCategory.Warning) => Color.FromRgb(0xBE, 0xF2, 0x64),
+
+            (EntityType.Message, _) => Color.FromRgb(0x54, 0x74, 0xA6),
+
+            (EntityType.User, ActionCategory.Creative) => Color.FromRgb(0x4B, 0x55, 0x63),
+            (EntityType.User, ActionCategory.Change) => Color.FromRgb(0x6B, 0x72, 0x80),
+            (EntityType.User, ActionCategory.Destructive) => Color.FromRgb(0x94, 0xA3, 0xB8),
+            (EntityType.User, ActionCategory.Warning) => Color.FromRgb(0xBC, 0xBF, 0xE0),
+
+            (_, ActionCategory.System) => log.ActionType switch
+            {
+                MPMS.Models.ActivityActionKind.Login => Color.FromRgb(0x37, 0x51, 0x64),
+                MPMS.Models.ActivityActionKind.Logout => Color.FromRgb(0x37, 0x51, 0x64),
+                MPMS.Models.ActivityActionKind.PasswordChanged => Color.FromRgb(0x05, 0x96, 0x69),
+                MPMS.Models.ActivityActionKind.AvatarChanged => Color.FromRgb(0x7C, 0x3A, 0xED),
+                _ => Color.FromRgb(0x37, 0x51, 0x64)
+            },
+
+            (EntityType.Project, _) => Color.FromRgb(0x25, 0x63, 0xEB),
+            (EntityType.Task, _) => Color.FromRgb(0x10, 0xB9, 0x81),
+            (EntityType.Stage, _) => Color.FromRgb(0xDC, 0x26, 0x26),
+            (EntityType.Material, _) => Color.FromRgb(0xF5, 0x9E, 0x0B),
+            (EntityType.Equipment, _) => Color.FromRgb(0x0D, 0x94, 0x88),
+            (EntityType.File, _) => Color.FromRgb(0xE1, 0x1D, 0x48),
+            (EntityType.Image, _) => Color.FromRgb(0x63, 0x66, 0xF1),
+            (EntityType.Document, _) => Color.FromRgb(0x84, 0xCC, 0x16),
+            (EntityType.User, _) => Color.FromRgb(0x6B, 0x72, 0x80),
+            (_, _) => Color.FromRgb(0x64, 0x74, 0x8B)
+        };
+    }
+
+    private enum ActionCategory
+    {
+        Destructive,
+        Warning,
+        Creative,
+        Change,
+        Communication,
+        System,
+        None
+    }
+
+    private enum EntityType
+    {
+        Project,
+        Task,
+        Stage,
+        Material,
+        Equipment,
+        File,
+        Image,
+        Document,
+        Message,
+        User,
+        None
+    }
+
+    private static ActionCategory GetActionCategory(string? actionType) => actionType switch
+    {
+        MPMS.Models.ActivityActionKind.Deleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.PermanentlyDeleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.UserDeleted => ActionCategory.Destructive,
+        MPMS.Models.ActivityActionKind.MarkedForDeletion => ActionCategory.Warning,
+        MPMS.Models.ActivityActionKind.UserBlocked => ActionCategory.Warning,
+        MPMS.Models.ActivityActionKind.Created => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UserCreated => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.Restored => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UnmarkedForDeletion => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.UserUnblocked => ActionCategory.Creative,
+        MPMS.Models.ActivityActionKind.Updated => ActionCategory.Change,
+        MPMS.Models.ActivityActionKind.UserEdited => ActionCategory.Change,
+        MPMS.Models.ActivityActionKind.Message => ActionCategory.Communication,
+        MPMS.Models.ActivityActionKind.Login => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.Logout => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.PasswordChanged => ActionCategory.System,
+        MPMS.Models.ActivityActionKind.AvatarChanged => ActionCategory.System,
+        _ => ActionCategory.None
+    };
+
+    private static EntityType GetEntityType(string? entityType) => entityType switch
+    {
+        "Project" => EntityType.Project,
+        "Task" => EntityType.Task,
+        "Stage" or "TaskStage" => EntityType.Stage,
+        "Material" => EntityType.Material,
+        "Equipment" => EntityType.Equipment,
+        "File" => EntityType.File,
+        "Image" => EntityType.Image,
+        "Document" => EntityType.Document,
+        "Message" => EntityType.Message,
+        "User" => EntityType.User,
+        _ => EntityType.None
+    };
+
+    private static EntityType GetEntityTypeFromFileExtension(LocalActivityLog log)
+    {
+        if (log.EntityType != "File") return GetEntityType(log.EntityType);
+
+        var fileName = log.ActionText;
+        var extension = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
+
+        var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".svg" };
+        var documentExtensions = new[] { ".doc", ".docx", ".pdf", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".rtf", ".odt", ".ods", ".odp" };
+
+        if (imageExtensions.Contains(extension))
+            return EntityType.Image;
+        if (documentExtensions.Contains(extension))
+            return EntityType.Document;
+
+        return EntityType.File;
+    }
+
+    private static bool IsProjectClosed(LocalActivityLog log)
+    {
+        return string.Equals(log.EntityType, "Project", StringComparison.Ordinal) &&
+               log.ActionText.Contains("закрыт", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Сопоставляет LocalActivityLog с Brush для панели Admin Activity — простая палитра по ActionType (login/logout/password/avatar/user actions).</summary>
 public class ActivityLogToAdminActivityBrushConverter : IValueConverter
 {
