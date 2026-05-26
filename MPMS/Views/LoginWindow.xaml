@@ -23,6 +23,14 @@
             <Setter Property="Height"          Value="50"/>
         </Style>
 
+        <Style x:Key="FloatingInputContainer" TargetType="Border">
+            <Setter Property="Background"      Value="#F8FAFC"/>
+            <Setter Property="CornerRadius"    Value="8"/>
+            <Setter Property="BorderBrush"     Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height"          Value="54"/>
+        </Style>
+
         <Style x:Key="InnerTextBox" TargetType="TextBox">
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
@@ -41,6 +49,30 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style x:Key="FloatingTextBox" TargetType="TextBox">
+            <Setter Property="Background"             Value="Transparent"/>
+            <Setter Property="BorderThickness"        Value="0"/>
+            <Setter Property="FontSize"               Value="14"/>
+            <Setter Property="Foreground"             Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding"                Value="0,12,14,0"/>
+            <Setter Property="CaretBrush"             Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="SelectionBrush"         Value="{StaticResource NeutralSelectionBrush}"/>
+            <Setter Property="SelectionTextBrush"     Value="{StaticResource TextPrimaryBrush}"/>
+        </Style>
+
+        <Style x:Key="FloatingPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background"             Value="Transparent"/>
+            <Setter Property="BorderThickness"        Value="0"/>
+            <Setter Property="FontSize"               Value="14"/>
+            <Setter Property="Foreground"             Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding"                Value="0,12,14,2"/>
+            <Setter Property="CaretBrush"             Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="SelectionBrush"         Value="{StaticResource NeutralSelectionBrush}"/>
+            <Setter Property="SelectionTextBrush"     Value="{StaticResource TextPrimaryBrush}"/>
         </Style>
 
         <Style x:Key="InnerPasswordBox" TargetType="PasswordBox">
@@ -172,60 +204,80 @@
                                FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
                                Margin="0,0,0,20"/>
 
-                    <TextBlock Text="АДРЕС СЕРВЕРА (API)" FontSize="11" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                    <Border x:Name="ApiUrlContainer"
-                            Style="{StaticResource InputContainer}"
-                            Margin="0,0,0,16">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="46"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="&#xE839;"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="1"
-                                     Style="{StaticResource InnerTextBox}"
-                                     Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Например: http://localhost:5147/api/ или http://192.168.1.5:5147/api/"
-                                     GotFocus="ApiUrlBox_GotFocus"
-                                     LostFocus="ApiUrlBox_LostFocus"/>
-                        </Grid>
-                    </Border>
-
-                    <TextBlock Text="ЛОГИН" FontSize="11" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border x:Name="UsernameContainer"
-                            Style="{StaticResource InputContainer}"
+                            Style="{StaticResource FloatingInputContainer}"
                             Margin="0,0,0,16">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="46"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <TextBlock Grid.Column="0"
                                        Text="&#xE77B;"
                                        FontFamily="Segoe MDL2 Assets"
                                        FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
+                            <TextBlock x:Name="UsernamePlaceholder"
+                                       Grid.Column="1"
+                                       Text="Логин"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       Margin="0,0,0,0"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform Y="0"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=UsernameBox}" Value="0">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                             To="0" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                             To="14" Duration="0:0:0.15"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                             To="-14" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                             To="11" Duration="0:0:0.15"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFocused, ElementName=UsernameBox}" Value="True">
+                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <TextBox x:Name="UsernameBox"
                                      Grid.Column="1"
-                                     Style="{StaticResource InnerTextBox}"
+                                     Style="{StaticResource FloatingTextBox}"
                                      Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                                      GotFocus="UsernameBox_GotFocus"
                                      LostFocus="UsernameBox_LostFocus"/>
                         </Grid>
                     </Border>
 
-                    <TextBlock Text="ПАРОЛЬ" FontSize="11" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Border x:Name="PasswordContainer"
-                            Style="{StaticResource InputContainer}"
+                            Style="{StaticResource FloatingInputContainer}"
                             Margin="0,0,0,20">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -240,17 +292,76 @@
                                        FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"/>
+                            <TextBlock x:Name="PasswordPlaceholder"
+                                       Grid.Column="1"
+                                       Text="Пароль"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       Margin="0,0,0,0"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform Y="0"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Password.Length, ElementName=PwdBox}" Value="0"/>
+                                                    <Condition Binding="{Binding Text.Length, ElementName=PwdVisibleBox}" Value="0"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <MultiDataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                             To="0" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                             To="14" Duration="0:0:0.15"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </MultiDataTrigger.EnterActions>
+                                                <MultiDataTrigger.ExitActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                             To="-14" Duration="0:0:0.15"/>
+                                                            <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                             To="11" Duration="0:0:0.15"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </MultiDataTrigger.ExitActions>
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsFocused, ElementName=PwdBox}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                            </MultiDataTrigger>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsFocused, ElementName=PwdVisibleBox}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="#2563EB"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
 
                             <PasswordBox x:Name="PwdBox"
                                          Grid.Column="1"
-                                         Style="{StaticResource InnerPasswordBox}"
+                                         Style="{StaticResource FloatingPasswordBox}"
                                          PasswordChanged="PasswordBox_PasswordChanged"
                                          GotFocus="PwdBox_GotFocus"
                                          LostFocus="PwdBox_LostFocus"/>
 
                             <TextBox x:Name="PwdVisibleBox"
                                      Grid.Column="1"
-                                     Style="{StaticResource InnerTextBox}"
+                                     Style="{StaticResource FloatingTextBox}"
                                      Visibility="Collapsed"
                                      TextChanged="PwdVisibleBox_TextChanged"
                                      GotFocus="PwdBox_GotFocus"
@@ -302,6 +413,124 @@
                     <Button Content="Войти в систему"
                             Style="{StaticResource LoginBtn}"
                             Command="{Binding LoginCommand}"/>
+
+                    <Button Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Margin="0,10,0,0"
+                            Command="{Binding ToggleApiUrlExpandedCommand}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd"
+                                        Background="Transparent"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,1,0,0"
+                                        Padding="0,8,0,0">
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Center">
+                                        <TextBlock x:Name="LabelText"
+                                                   Text="Дополнительно"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Margin="0,0,4,0"/>
+                                        <TextBlock x:Name="ArrowIcon"
+                                                   Text="&#xE70D;"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#111111"/>
+                                        <Setter TargetName="LabelText" Property="Foreground" Value="#111111"/>
+                                        <Setter TargetName="ArrowIcon" Property="Foreground" Value="#111111"/>
+                                    </Trigger>
+                                    <DataTrigger Binding="{Binding IsApiUrlExpanded}" Value="True">
+                                        <Setter TargetName="ArrowIcon" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <RotateTransform Angle="180" CenterX="5" CenterY="5"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <StackPanel Visibility="{Binding IsApiUrlExpanded, Converter={StaticResource BoolToVis}}"
+                                Margin="0,16,0,0">
+                        <Border x:Name="ApiUrlContainer"
+                                Style="{StaticResource FloatingInputContainer}"
+                                Margin="0,0,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="46"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="&#xE839;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock x:Name="ApiUrlPlaceholder"
+                                           Grid.Column="1"
+                                           Text="Адрес сервера"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Left"
+                                           Margin="0,0,0,0"
+                                           IsHitTestVisible="False">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <TranslateTransform Y="0"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text.Length, ElementName=ApiUrlBox}" Value="0">
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                                 To="0" Duration="0:0:0.15"/>
+                                                                <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                                 To="14" Duration="0:0:0.15"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.EnterActions>
+                                                    <DataTrigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)"
+                                                                                 To="-14" Duration="0:0:0.15"/>
+                                                                <DoubleAnimation Storyboard.TargetProperty="FontSize"
+                                                                                 To="11" Duration="0:0:0.15"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.ExitActions>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsFocused, ElementName=ApiUrlBox}" Value="True">
+                                                    <Setter Property="Foreground" Value="#2563EB"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="ApiUrlBox"
+                                         Grid.Column="1"
+                                         Style="{StaticResource FloatingTextBox}"
+                                         Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Например: http://localhost:5147/api/ или http://192.168.1.5:5147/api/"
+                                         GotFocus="ApiUrlBox_GotFocus"
+                                         LostFocus="ApiUrlBox_LostFocus"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
 
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"

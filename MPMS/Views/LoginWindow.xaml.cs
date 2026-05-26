@@ -65,22 +65,63 @@ public partial class LoginWindow : Window
         => _vm.Password = PwdVisibleBox.Text;
 
     private void UsernameBox_GotFocus(object sender, RoutedEventArgs e)
-        => UsernameContainer.BorderBrush = FocusBrush;
+    {
+        UsernameContainer.BorderBrush = FocusBrush;
+        if (string.IsNullOrEmpty(UsernameBox.Text))
+            AnimatePlaceholder(UsernamePlaceholder, up: true);
+    }
 
     private void UsernameBox_LostFocus(object sender, RoutedEventArgs e)
-        => UsernameContainer.BorderBrush = NormalBrush;
+    {
+        UsernameContainer.BorderBrush = NormalBrush;
+        if (string.IsNullOrEmpty(UsernameBox.Text))
+            AnimatePlaceholder(UsernamePlaceholder, up: false);
+    }
 
     private void ApiUrlBox_GotFocus(object sender, RoutedEventArgs e)
-        => ApiUrlContainer.BorderBrush = FocusBrush;
+    {
+        ApiUrlContainer.BorderBrush = FocusBrush;
+        if (string.IsNullOrEmpty(ApiUrlBox.Text))
+            AnimatePlaceholder(ApiUrlPlaceholder, up: true);
+    }
 
     private void ApiUrlBox_LostFocus(object sender, RoutedEventArgs e)
-        => ApiUrlContainer.BorderBrush = NormalBrush;
+    {
+        ApiUrlContainer.BorderBrush = NormalBrush;
+        if (string.IsNullOrEmpty(ApiUrlBox.Text))
+            AnimatePlaceholder(ApiUrlPlaceholder, up: false);
+    }
 
     private void PwdBox_GotFocus(object sender, RoutedEventArgs e)
-        => PasswordContainer.BorderBrush = FocusBrush;
+    {
+        PasswordContainer.BorderBrush = FocusBrush;
+        if (string.IsNullOrEmpty(_vm.Password))
+            AnimatePlaceholder(PasswordPlaceholder, up: true);
+    }
 
     private void PwdBox_LostFocus(object sender, RoutedEventArgs e)
-        => PasswordContainer.BorderBrush = NormalBrush;
+    {
+        PasswordContainer.BorderBrush = NormalBrush;
+        if (string.IsNullOrEmpty(_vm.Password))
+            AnimatePlaceholder(PasswordPlaceholder, up: false);
+    }
+
+    private static void AnimatePlaceholder(TextBlock placeholder, bool up)
+    {
+        var transform = (TranslateTransform)placeholder.RenderTransform;
+        var yAnim = new System.Windows.Media.Animation.DoubleAnimation
+        {
+            To = up ? -14 : 0,
+            Duration = System.TimeSpan.FromMilliseconds(150)
+        };
+        var sizeAnim = new System.Windows.Media.Animation.DoubleAnimation
+        {
+            To = up ? 11 : 14,
+            Duration = System.TimeSpan.FromMilliseconds(150)
+        };
+        transform.BeginAnimation(TranslateTransform.YProperty, yAnim);
+        placeholder.BeginAnimation(TextBlock.FontSizeProperty, sizeAnim);
+    }
 
     private static void SetPasswordBoxCaretEnd(PasswordBox box)
     {

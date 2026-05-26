@@ -20,6 +20,7 @@ public partial class LoginViewModel : ViewModelBase
     [ObservableProperty] private string _password = string.Empty;
     [ObservableProperty] private ObservableCollection<RecentAccount> _recentAccounts = new();
     [ObservableProperty] private bool _hasRecentAccounts;
+    [ObservableProperty] private bool _isApiUrlExpanded;
 
     public LoginViewModel(IApiService api, IAuthService auth, IDbContextFactory<LocalDbContext> dbFactory,
         ISyncService sync)
@@ -99,6 +100,10 @@ public partial class LoginViewModel : ViewModelBase
 
     private bool CanLogin() => !string.IsNullOrWhiteSpace(Username)
                              && !string.IsNullOrWhiteSpace(Password);
+
+    [RelayCommand]
+    private void ToggleApiUrlExpanded()
+        => IsApiUrlExpanded = !IsApiUrlExpanded;
 
     private async Task OpenMainAndCloseAsync()
     {
