@@ -388,7 +388,78 @@ public static class ActivityFilterService
             return $"{actionText} {count} {usersForm}";
         }
 
+        if (entityType == "Material")
+        {
+            if (isSingleEntity && count > 1)
+            {
+                var singleActionText = actionType switch
+                {
+                    ActivityActionKind.Created => "создан",
+                    ActivityActionKind.Updated => "изменён",
+                    ActivityActionKind.Deleted => "списан",
+                    ActivityActionKind.Restored => "восстановлен",
+                    ActivityActionKind.PermanentlyDeleted => "удалён навсегда",
+                    _ => "изменён"
+                };
+
+                var timesForm = GetPluralForm(count, "раз", "раза", "раз");
+                return $"Материал «{uniqueNames[0]}» {singleActionText} {count} {timesForm}";
+            }
+
+            var actionText = actionType switch
+            {
+                ActivityActionKind.Created => "Создан",
+                ActivityActionKind.Updated => "Изменён",
+                ActivityActionKind.Deleted => "Списан",
+                ActivityActionKind.Restored => "Восстановлен",
+                ActivityActionKind.PermanentlyDeleted => "Удалён навсегда",
+                _ => "Изменён"
+            };
+
+            var materialsForm = GetPluralForm(count, "материал", "материала", "материалов");
+            if (!string.IsNullOrEmpty(namesList))
+                return $"{actionText} {materialsForm}: {namesList}";
+            return $"{actionText} {count} {materialsForm}";
+        }
+
+        if (entityType == "Equipment")
+        {
+            if (isSingleEntity && count > 1)
+            {
+                var singleActionText = actionType switch
+                {
+                    ActivityActionKind.Created => "создано",
+                    ActivityActionKind.Updated => "изменено",
+                    ActivityActionKind.Deleted => "списано",
+                    ActivityActionKind.Restored => "восстановлено",
+                    ActivityActionKind.PermanentlyDeleted => "удалено навсегда",
+                    _ => "изменено"
+                };
+
+                var timesForm = GetPluralForm(count, "раз", "раза", "раз");
+                return $"Оборудование «{uniqueNames[0]}» {singleActionText} {count} {timesForm}";
+            }
+
+            var actionText = actionType switch
+            {
+                ActivityActionKind.Created => "Создано",
+                ActivityActionKind.Updated => "Изменено",
+                ActivityActionKind.Deleted => "Списано",
+                ActivityActionKind.Restored => "Восстановлено",
+                ActivityActionKind.PermanentlyDeleted => "Удалено навсегда",
+                _ => "Изменено"
+            };
+
+            var equipmentForm = GetPluralForm(count, "единица оборудования", "единицы оборудования", "единиц оборудования");
+            if (!string.IsNullOrEmpty(namesList))
+                return $"{actionText} {count} {equipmentForm}: {namesList}";
+            return $"{actionText} {count} {equipmentForm}";
+        }
+
         var actionsForm = GetPluralForm(count, "действие", "действия", "действий");
+        var entityLabel = ActivityDetailsService.GetEntityDisplay(entityType).ToLowerInvariant();
+        if (!string.IsNullOrEmpty(entityLabel) && entityLabel != "объект")
+            return $"{count} {actionsForm} с {entityLabel}";
         return $"{count} {actionsForm}";
     }
 

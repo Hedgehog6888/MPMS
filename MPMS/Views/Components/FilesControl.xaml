@@ -7,6 +7,7 @@
              xmlns:viewmodels="clr-namespace:MPMS.ViewModels"
              xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:infrastructure="clr-namespace:MPMS.Infrastructure"
+             xmlns:local="clr-namespace:MPMS.Views.Components"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=viewmodels:FilesControlViewModel, IsDesignTimeCreatable=False}"
@@ -44,14 +45,20 @@
         <Style x:Key="TooltipHeaderSection" TargetType="Border">
             <Setter Property="CornerRadius" Value="10,10,0,0"/>
             <Setter Property="Padding" Value="16,12"/>
-            <Setter Property="Background" Value="#F8F9FA"/>
+        </Style>
+
+        <Style x:Key="FileTooltipHeaderSection" TargetType="Border" BasedOn="{StaticResource TooltipHeaderSection}">
+            <Setter Property="Background" Value="{Binding FileName, Converter={StaticResource FileExtensionToBackgroundBrush}}"/>
         </Style>
 
         <Style x:Key="TooltipHeader" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#172B4D"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="FileTooltipHeader" TargetType="TextBlock" BasedOn="{StaticResource TooltipHeader}">
+            <Setter Property="Foreground" Value="{Binding FileName, Converter={StaticResource FileExtensionToForegroundBrush}}"/>
         </Style>
 
         <Style x:Key="TooltipContentSection" TargetType="Border">
@@ -221,8 +228,8 @@
                 <Border.ToolTip>
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
                         <StackPanel>
-                            <Border Style="{StaticResource TooltipHeaderSection}">
-                                <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+                            <Border Style="{StaticResource FileTooltipHeaderSection}">
+                                <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}"/>
                             </Border>
                             <Border Style="{StaticResource TooltipContentSection}">
                                 <StackPanel>
@@ -377,8 +384,8 @@
                 <Border.ToolTip>
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
                         <StackPanel>
-                            <Border Style="{StaticResource TooltipHeaderSection}">
-                                <TextBlock Text="{Binding FileName}" Style="{StaticResource TooltipHeader}"/>
+                            <Border Style="{StaticResource FileTooltipHeaderSection}">
+                                <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}"/>
                             </Border>
                             <Border Style="{StaticResource TooltipContentSection}">
                                 <StackPanel>
@@ -497,6 +504,15 @@
             </Border>
         </DataTemplate>
 
+        <Style x:Key="FilesViewModeRadioStyle" TargetType="RadioButton" BasedOn="{StaticResource ViewToggleButton}">
+            <Setter Property="GroupName" Value="FilesViewMode"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
+                    <Setter Property="GroupName" Value="FilesViewModeInactive"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Шаблоны представления файлов -->
         <DataTemplate x:Key="FilesGridViewTemplate">
             <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}">
@@ -532,6 +548,16 @@
 
         <!-- ── Вкладки и переключатель представления ── -->
         <Grid Grid.Row="0" Margin="0,0,0,16" Background="Transparent">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -552,8 +578,7 @@
                     BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="4,4" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
-                    <RadioButton Tag="List" GroupName="FilesViewMode"
-                                 Style="{StaticResource ViewToggleButton}"
+                    <RadioButton Tag="List" Style="{StaticResource FilesViewModeRadioStyle}"
                                  IsChecked="{Binding ViewMode, Mode=TwoWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=List}"
                                  ToolTip="Список">
                         <Grid Width="20" Height="20">
@@ -583,8 +608,7 @@
                             </Image>
                         </Grid>
                     </RadioButton>
-                    <RadioButton Tag="Grid" GroupName="FilesViewMode"
-                                 Style="{StaticResource ViewToggleButton}"
+                    <RadioButton Tag="Grid" Style="{StaticResource FilesViewModeRadioStyle}"
                                  IsChecked="{Binding ViewMode, Mode=TwoWay, Converter={StaticResource StringMatchToBoolConverter}, ConverterParameter=Grid}"
                                  ToolTip="Плитка">
                         <Grid Width="20" Height="20">
@@ -619,9 +643,23 @@
         </Grid>
 
         <!-- ── Область содержимого ── -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" ClipToBounds="True">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Setter Property="Margin" Value="-24,0,-24,0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.TabsOnly}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
+                            <Setter Property="Margin" Value="0"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <!-- ScrollViewer изображений -->
-            <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+            <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,24,0" Background="Transparent">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -688,7 +726,7 @@
             </ScrollViewer>
 
             <!-- ScrollViewer документов -->
-            <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,0,0">
+            <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,24,0" Background="Transparent">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -757,7 +795,8 @@
             <!-- ── Плавающая панель поиска ── -->
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
-                HorizontalAlignment="Stretch"
+                HorizontalAlignment="Left"
+                Width="{Binding ElementName=ImagesScroll, Path=ViewportWidth}"
                 IsFloating="True"
                 ScrollTarget="{Binding ElementName=ImagesScroll}"
                 SearchText="{Binding SearchText, Mode=TwoWay}"
@@ -765,9 +804,11 @@
                 <controls:SearchFilterBarControl.Style>
                     <Style TargetType="controls:SearchFilterBarControl">
                         <Setter Property="ScrollTarget" Value="{Binding ElementName=ImagesScroll}"/>
+                        <Setter Property="Width" Value="{Binding ElementName=ImagesScroll, Path=ViewportWidth}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
                                 <Setter Property="ScrollTarget" Value="{Binding ElementName=DocumentsScroll}"/>
+                                <Setter Property="Width" Value="{Binding ElementName=DocumentsScroll, Path=ViewportWidth}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -807,6 +848,16 @@
                 MaxWidth="600"
                 Visibility="{Binding IsSuccessToastVisible, Converter={StaticResource BoolToVis}}"
                 Panel.ZIndex="1000">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="{Binding IsSuccessToastVisible, Converter={StaticResource BoolToVis}}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.TabsOnly}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <TextBlock Text="{Binding SuccessToastMessage}" 
                        Foreground="#15803D" 
                        FontSize="12"

@@ -278,37 +278,54 @@ public partial class FilesControlViewModel : ViewModelBase
 
             var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
 
-            // Оптимизация: загружаем проекты и stages за один раз
+            // Оптимизация: загружаем проекты и этапы за один раз
             var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
             var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
 
-            var projects = await db.Projects
-                .Where(p => projectIds.Contains(p.Id))
-                .Select(p => new { p.Id, p.Name })
-                .ToDictionaryAsync(p => p.Id, p => p.Name);
+            var stages = stageIds.Count == 0
+                ? new Dictionary<Guid, (string Name, Guid TaskId)>()
+                : await db.TaskStages
+                    .Where(s => stageIds.Contains(s.Id))
+                    .Select(s => new { s.Id, s.Name, s.TaskId })
+                    .ToDictionaryAsync(s => s.Id, s => (s.Name, s.TaskId));
 
-            var stages = await db.TaskStages
-                .Where(s => stageIds.Contains(s.Id))
-                .Select(s => new { s.Id, s.Name, s.TaskId })
-                .ToDictionaryAsync(s => s.Id);
-
-            // Build stage-to-project mapping for project filtering
             var taskIdsFromStages = stages.Values.Select(s => s.TaskId).Distinct().ToList();
-            var taskProjectMap = await db.Tasks
-                .Where(t => taskIdsFromStages.Contains(t.Id))
-                .Select(t => new { t.Id, t.ProjectId })
-                .ToDictionaryAsync(t => t.Id, t => t.ProjectId);
+            var taskProjectMap = taskIdsFromStages.Count == 0
+                ? new Dictionary<Guid, Guid>()
+                : await db.Tasks
+                    .Where(t => taskIdsFromStages.Contains(t.Id))
+                    .Select(t => new { t.Id, t.ProjectId })
+                    .ToDictionaryAsync(t => t.Id, t => t.ProjectId);
 
-            _stageToProjectMap = stages.Values
-                .Where(s => taskProjectMap.TryGetValue(s.TaskId, out var pid))
-                .ToDictionary(s => s.Id, s => taskProjectMap[s.TaskId]);
+            _stageToProjectMap = stages
+                .Where(kvp => taskProjectMap.ContainsKey(kvp.Value.TaskId))
+                .ToDictionary(kvp => kvp.Key, kvp => taskProjectMap[kvp.Value.TaskId]);
+
+            var allProjectIds = projectIds
+                .Concat(_stageToProjectMap.Values)
+                .Distinct()
+                .ToList();
+
+            var projects = allProjectIds.Count == 0
+                ? new Dictionary<Guid, string>()
+                : await db.Projects
+                    .Where(p => allProjectIds.Contains(p.Id))
+                    .Select(p => new { p.Id, p.Name })
+                    .ToDictionaryAsync(p => p.Id, p => p.Name);
 
             foreach (var f in files)
             {
                 if (f.ProjectId.HasValue && projects.TryGetValue(f.ProjectId.Value, out var pname))
                     f.ProjectName = pname;
-                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var s))
-                    f.StageName = s.Name;
+                else if (f.StageId.HasValue
+                         && _stageToProjectMap.TryGetValue(f.StageId.Value, out var derivedProjectId)
+                         && projects.TryGetValue(derivedProjectId, out var derivedName))
+                    f.ProjectName = derivedName;
+                else if (_projectId.HasValue && Project != null)
+                    f.ProjectName = Project.Name;
+
+                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var stageInfo))
+                    f.StageName = stageInfo.Name;
             }
 
             // Оптимизация: добавляем все сразу вместо по одному
@@ -325,11 +342,22 @@ public partial class FilesControlViewModel : ViewModelBase
                 var currentProjectFilter = ProjectFilter;
                 var projectOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
                 projectOpts.AddRange(files
-                    .Where(f => f.ProjectId.HasValue)
-                    .Select(f => new { f.ProjectId, f.ProjectName })
-                    .Distinct()
+                    .Select(f =>
+                    {
+                        var pid = f.ProjectId;
+                        if (!pid.HasValue && f.StageId.HasValue
+                            && _stageToProjectMap.TryGetValue(f.StageId.Value, out var stageProjectId))
+                            pid = stageProjectId;
+
+                        var pname = f.ProjectName;
+                        if (string.IsNullOrWhiteSpace(pname) && pid.HasValue)
+                            projects.TryGetValue(pid.Value, out pname);
+
+                        return new { ProjectId = pid, ProjectName = pname };
+                    })
                     .Where(x => x.ProjectId.HasValue && !string.IsNullOrWhiteSpace(x.ProjectName))
-                    .Select(x => new ProjectFilterOption(x.ProjectId, x.ProjectName!))
+                    .GroupBy(x => x.ProjectId!.Value)
+                    .Select(g => new ProjectFilterOption(g.Key, g.First().ProjectName!))
                     .OrderBy(p => p.Name));
                 ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(projectOpts);
                 if (currentProjectFilter.HasValue && projectOpts.Any(o => o.Id == currentProjectFilter.Value))

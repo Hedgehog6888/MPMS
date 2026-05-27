@@ -316,53 +316,34 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
+                                                        Background="{Binding HistoryIconBackground, Converter={StaticResource HexToBrush}}"
                                                         VerticalAlignment="Top" Margin="0,0,8,0">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#E3FCEF"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding EventType}" Value="CheckedOut">
-                                                                    <Setter Property="Background" Value="#FFEBE6"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
-                                                                    <Setter Property="Background" Value="#FFEBE6"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding EventType}" Value="Returned">
-                                                                    <Setter Property="Background" Value="#E3FCEF"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding EventType}" Value="Added">
-                                                                    <Setter Property="Background" Value="#E3FCEF"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               FontSize="12">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="＋"/>
-                                                                <Setter Property="Foreground" Value="#00875A"/>
+                                                    <Image Width="14" Height="14"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           RenderOptions.BitmapScalingMode="HighQuality">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_plus.svg, AppName=MPMS}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding EventType}" Value="CheckedOut">
-                                                                        <Setter Property="Text" Value="－"/>
-                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                    <DataTrigger Binding="{Binding HistoryIconPath}" Value="/icons/history_minus.svg">
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_minus.svg, AppName=MPMS}"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EventType}" Value="WrittenOff">
-                                                                        <Setter Property="Text" Value="✕"/>
-                                                                        <Setter Property="Foreground" Value="#DE350B"/>
+                                                                    <DataTrigger Binding="{Binding HistoryIconPath}" Value="/icons/history_check.svg">
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_check.svg, AppName=MPMS}"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EventType}" Value="Returned">
-                                                                        <Setter Property="Text" Value="＋"/>
-                                                                        <Setter Property="Foreground" Value="#00875A"/>
+                                                                    <DataTrigger Binding="{Binding HistoryIconPath}" Value="/icons/history_gear.svg">
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_gear.svg, AppName=MPMS}"/>
                                                                     </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding EventType}" Value="Added">
-                                                                        <Setter Property="Text" Value="＋"/>
-                                                                        <Setter Property="Foreground" Value="#00875A"/>
+                                                                    <DataTrigger Binding="{Binding HistoryIconPath}" Value="/icons/history_alert.svg">
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_alert.svg, AppName=MPMS}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding HistoryIconPath}" Value="/icons/history_close.svg">
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/history_close.svg, AppName=MPMS}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                        </Image.Style>
+                                                    </Image>
                                                 </Border>
 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">

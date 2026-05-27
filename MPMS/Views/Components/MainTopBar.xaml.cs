@@ -189,14 +189,41 @@ namespace MPMS.Views.Components
                     s.TaskName = taskNames.GetValueOrDefault(s.TaskId, "—");
 
                 // Заполнение ProjectName и StageName для файлов
-                var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value).Distinct().ToList();
                 var fileStageIds = files.Where(f => f.StageId.HasValue).Select(f => f.StageId!.Value).Distinct().ToList();
-                var fileProjectNames = await db.Projects.Where(p => fileProjectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);
-                var fileStageNames = await db.TaskStages.Where(s => fileStageIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+                var fileStages = fileStageIds.Count == 0
+                    ? []
+                    : await db.TaskStages
+                        .Where(s => fileStageIds.Contains(s.Id))
+                        .Select(s => new { s.Id, s.Name, s.TaskId })
+                        .ToListAsync(ct);
+                var fileStageTaskIds = fileStages.Select(s => s.TaskId).Distinct().ToList();
+                var fileStageTaskProjects = fileStageTaskIds.Count == 0
+                    ? new Dictionary<Guid, Guid>()
+                    : await db.Tasks
+                        .Where(t => fileStageTaskIds.Contains(t.Id))
+                        .ToDictionaryAsync(t => t.Id, t => t.ProjectId, ct);
+                var fileStageToProject = fileStages
+                    .Where(s => fileStageTaskProjects.ContainsKey(s.TaskId))
+                    .ToDictionary(s => s.Id, s => fileStageTaskProjects[s.TaskId]);
+
+                var fileProjectIds = files.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value)
+                    .Concat(fileStageToProject.Values)
+                    .Distinct()
+                    .ToList();
+                var fileProjectNames = fileProjectIds.Count == 0
+                    ? new Dictionary<Guid, string>()
+                    : await db.Projects.Where(p => fileProjectIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, p => p.Name, ct);
+                var fileStageNames = fileStages.ToDictionary(s => s.Id, s => s.Name);
+
                 foreach (var f in files)
                 {
-                    if (f.ProjectId.HasValue) f.ProjectName = fileProjectNames.GetValueOrDefault(f.ProjectId.Value);
-                    if (f.StageId.HasValue) f.StageName = fileStageNames.GetValueOrDefault(f.StageId.Value);
+                    if (f.ProjectId.HasValue)
+                        f.ProjectName = fileProjectNames.GetValueOrDefault(f.ProjectId.Value);
+                    else if (f.StageId.HasValue && fileStageToProject.TryGetValue(f.StageId.Value, out var derivedProjectId))
+                        f.ProjectName = fileProjectNames.GetValueOrDefault(derivedProjectId);
+
+                    if (f.StageId.HasValue)
+                        f.StageName = fileStageNames.GetValueOrDefault(f.StageId.Value);
                 }
 
                 ct.ThrowIfCancellationRequested();

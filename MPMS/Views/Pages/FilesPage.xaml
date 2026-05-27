@@ -9,6 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -59,11 +60,17 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="Transparent" Padding="24,8,24,24">
-            <components:FilesControl DataContext="{Binding FilesControlVM}"/>
+        <Border Grid.Row="1" Background="Transparent" Padding="24,12,24,0">
+            <components:FilesControl DataContext="{Binding FilesControlVM}"
+                                       LayoutMode="TabsOnly"/>
         </Border>
 
-        <controls:DragDropOverlay Grid.RowSpan="2" 
+        <Grid Grid.Row="2" Margin="24,12,0,24" ClipToBounds="True">
+            <components:FilesControl DataContext="{Binding FilesControlVM}"
+                                       LayoutMode="ScrollOnly"/>
+        </Grid>
+
+        <controls:DragDropOverlay Grid.RowSpan="3"
                                   UploadCommand="{Binding FilesControlVM.ProcessFilesCommand}"
                                   Panel.ZIndex="100"/>
     </Grid>

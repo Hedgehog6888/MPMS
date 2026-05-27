@@ -95,10 +95,18 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     private string _originalXaml = string.Empty;
 
     [ObservableProperty] private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
-    public string WelcomeMessage => $"Добрый день, {_auth.UserName?.Split(' ').FirstOrDefault() ?? "пользователь"}!";
+    public string WelcomeMessage
+    {
+        get
+        {
+            var name = _auth.UserName?.Split(' ').FirstOrDefault() ?? "пользователь";
+            return $"{GetTimeOfDayGreeting()}, {name}!";
+        }
+    }
     public string CurrentDateText => DateTime.Now.ToString("dd MMMM yyyy, dddd");
 
     private DispatcherTimer? _clockTimer;
+    private int _lastGreetingPeriod = -1;
 
     public HomeViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, ISyncService sync)
     {
@@ -132,13 +140,45 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
     private void SetupClock()
     {
+        _lastGreetingPeriod = GetGreetingPeriod(DateTime.Now.Hour);
+        OnPropertyChanged(nameof(WelcomeMessage));
+
         _clockTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1)
         };
-        _clockTimer.Tick += (s, e) => CurrentTime = DateTime.Now.ToString("HH:mm:ss");
+        _clockTimer.Tick += (s, e) =>
+        {
+            CurrentTime = DateTime.Now.ToString("HH:mm:ss");
+
+            var period = GetGreetingPeriod(DateTime.Now.Hour);
+            if (period == _lastGreetingPeriod)
+                return;
+
+            _lastGreetingPeriod = period;
+            OnPropertyChanged(nameof(WelcomeMessage));
+        };
         _clockTimer.Start();
     }
+
+    private static string GetTimeOfDayGreeting()
+    {
+        return DateTime.Now.Hour switch
+        {
+            >= 5 and < 12 => "Доброе утро",
+            >= 12 and < 18 => "Добрый день",
+            >= 18 and < 23 => "Добрый вечер",
+            _ => "Доброй ночи"
+        };
+    }
+
+    private static int GetGreetingPeriod(int hour) => hour switch
+    {
+        >= 5 and < 12 => 0,
+        >= 12 and < 18 => 1,
+        >= 18 and < 23 => 2,
+        _ => 3
+    };
 
     [RelayCommand]
     private void CreateNoteAsync()

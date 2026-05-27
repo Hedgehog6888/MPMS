@@ -389,11 +389,35 @@ public class LocalEquipmentHistoryEntry
         "Added" => "Добавлено",
         "CheckedOut" => "Выдано",
         "Returned" => "Возвращено",
+        "ConditionChanged" => "Смена состояния",
         "StatusChanged" => "Смена статуса",
         "StatusChange" => "Смена статуса",
         "Note" => "Заметка",
         "WrittenOff" => "Списано",
         _ => EventType
+    };
+
+    [NotMapped]
+    public string HistoryIconBackground => EventType switch
+    {
+        "CheckedOut" or "WrittenOff" => "#FFEBE6",
+        "Returned" or "Added" => "#E3FCEF",
+        "ConditionChanged" when NewStatus == "NeedsMaintenance" => "#DEEBFF",
+        "ConditionChanged" when NewStatus == "Faulty" => "#FFEBE6",
+        "ConditionChanged" => "#E3FCEF",
+        _ => "#E3FCEF"
+    };
+
+    [NotMapped]
+    public string HistoryIconPath => EventType switch
+    {
+        "CheckedOut" => "/icons/history_minus.svg",
+        "WrittenOff" => "/icons/history_close.svg",
+        "Returned" or "Added" => "/icons/history_plus.svg",
+        "ConditionChanged" when NewStatus == "NeedsMaintenance" => "/icons/history_gear.svg",
+        "ConditionChanged" when NewStatus == "Faulty" => "/icons/history_alert.svg",
+        "ConditionChanged" => "/icons/history_check.svg",
+        _ => "/icons/history_plus.svg"
     };
 }
 

@@ -84,6 +84,61 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _ => null
     };
 
+    private static string GetConditionDisplay(string condition) => condition switch
+    {
+        "Good" => "Исправно",
+        "NeedsMaintenance" => "Требует обслуживания",
+        "Faulty" => "Неисправно",
+        _ => condition
+    };
+
+    private static string GetStatusDisplay(string status) => status switch
+    {
+        "Available" => "Доступно",
+        "Unavailable" or "3" => "Недоступно",
+        "InUse" or "CheckedOut" => "Используется",
+        "Retired" => "Списано",
+        _ => status
+    };
+
+    private static string BuildConditionChangedComment(
+        string previousCondition,
+        string newCondition,
+        string previousStatus,
+        string newStatus,
+        string? userComment = null)
+    {
+        var parts = new List<string>
+        {
+            $"Состояние: {GetConditionDisplay(previousCondition)} → {GetConditionDisplay(newCondition)}"
+        };
+        if (!string.Equals(previousStatus, newStatus, StringComparison.Ordinal))
+            parts.Add($"Статус: {GetStatusDisplay(previousStatus)} → {GetStatusDisplay(newStatus)}");
+        if (!string.IsNullOrWhiteSpace(userComment))
+            parts.Add(userComment.Trim());
+        return string.Join(". ", parts);
+    }
+
+    private LocalEquipmentHistoryEntry CreateConditionChangedHistoryEntry(
+        Guid equipmentId,
+        string previousCondition,
+        string newCondition,
+        string previousStatus,
+        string newStatus,
+        string? userComment = null) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            EquipmentId = equipmentId,
+            OccurredAt = DateTime.UtcNow,
+            EventType = "ConditionChanged",
+            PreviousStatus = previousCondition,
+            NewStatus = newCondition,
+            UserId = _auth.UserId,
+            UserName = _auth.UserName,
+            Comment = BuildConditionChangedComment(previousCondition, newCondition, previousStatus, newStatus, userComment)
+        };
+
     private static bool IsLockedByStage(LocalEquipment equipment) =>
         equipment.CheckedOutTaskId.HasValue && !equipment.IsWrittenOff;
 
@@ -596,6 +651,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         if (IsLockedByStage(e))
             throw new InvalidOperationException("Оборудование закреплено за этапом. Изменения недоступны до освобождения.");
         var previousStatus = e.Status;
+        var previousCondition = e.Condition;
         e.Name = name;
         e.Description = description;
         e.CategoryId = categoryId;
@@ -605,30 +661,35 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         e.Status = ResolveStatusAfterConditionChange(e, condition);
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
+
+        var conditionChanged = !string.Equals(previousCondition, e.Condition, StringComparison.Ordinal);
+        if (conditionChanged)
+        {
+            db.EquipmentHistoryEntries.Add(CreateConditionChangedHistoryEntry(
+                id, previousCondition, e.Condition, previousStatus, e.Status));
+        }
+
         await db.SaveChangesAsync();
         var eSync = await db.Equipments.FindAsync(id);
         if (eSync is not null)
             await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update, SyncPayloads.Equipment(eSync));
-        if (!string.Equals(previousStatus, e.Status, StringComparison.Ordinal))
+        if (conditionChanged)
         {
-            var newStatus = ToEquipmentStatusEnum(e.Status);
-            if (newStatus.HasValue)
-            {
-                await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
-                    new RecordEquipmentEventRequest(
-                        EventType: EquipmentHistoryEventType.StatusChanged,
-                        NewStatus: newStatus.Value,
-                        ProjectId: null,
-                        TaskId: null,
-                        Comment: $"Статус автоматически изменен: {e.StatusDisplay} (по состоянию оборудования)"));
+            var historyComment = BuildConditionChangedComment(previousCondition, e.Condition, previousStatus, e.Status);
+            await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
+                new RecordEquipmentEventRequest(
+                    EventType: EquipmentHistoryEventType.Note,
+                    NewStatus: null,
+                    ProjectId: null,
+                    TaskId: null,
+                    Comment: historyComment));
 
-                await LogActivityAsync(
-                    db,
-                    $"Статус оборудования «{e.Name}» изменён на {e.StatusDisplay}",
-                    "Equipment",
-                    id,
-                    ActivityActionKind.Updated);
-            }
+            await LogActivityAsync(
+                db,
+                $"Состояние оборудования «{e.Name}» изменено на {GetConditionDisplay(e.Condition)}",
+                "Equipment",
+                id,
+                ActivityActionKind.Updated);
         }
         await LoadAsync();
     }
@@ -643,48 +704,37 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         if (string.Equals(e.Condition, condition.ToString(), StringComparison.Ordinal))
             return;
 
+        var previousCondition = e.Condition;
         var previousStatus = e.Status;
         e.Condition = condition.ToString();
         e.Status = ResolveStatusAfterConditionChange(e, condition);
         e.UpdatedAt = DateTime.UtcNow;
         e.IsSynced = false;
+
+        db.EquipmentHistoryEntries.Add(CreateConditionChangedHistoryEntry(
+            id, previousCondition, e.Condition, previousStatus, e.Status, comment));
+
         await db.SaveChangesAsync();
 
         var eSync = await db.Equipments.FindAsync(id);
         if (eSync is not null)
             await _sync.QueueOperationAsync("Equipment", id, SyncOperation.Update, SyncPayloads.Equipment(eSync));
 
-        var conditionComment = string.IsNullOrWhiteSpace(comment)
-            ? $"Состояние изменено: {e.ConditionDisplay}"
-            : comment;
+        var historyComment = BuildConditionChangedComment(previousCondition, e.Condition, previousStatus, e.Status, comment);
         await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
             new RecordEquipmentEventRequest(
                 EventType: EquipmentHistoryEventType.Note,
                 NewStatus: null,
                 ProjectId: null,
                 TaskId: null,
-                Comment: conditionComment));
-        if (!string.Equals(previousStatus, e.Status, StringComparison.Ordinal))
-        {
-            var newStatus = ToEquipmentStatusEnum(e.Status);
-            if (newStatus.HasValue)
-            {
-                await _sync.QueueOperationAsync("EquipmentHistory", id, SyncOperation.Create,
-                    new RecordEquipmentEventRequest(
-                        EventType: EquipmentHistoryEventType.StatusChanged,
-                        NewStatus: newStatus.Value,
-                        ProjectId: null,
-                        TaskId: null,
-                        Comment: $"Статус автоматически изменен: {e.StatusDisplay} (по состоянию оборудования)"));
+                Comment: historyComment));
 
-                await LogActivityAsync(
-                    db,
-                    $"Статус оборудования «{e.Name}» изменён на {e.StatusDisplay}",
-                    "Equipment",
-                    id,
-                    ActivityActionKind.Updated);
-            }
-        }
+        await LogActivityAsync(
+            db,
+            $"Состояние оборудования «{e.Name}» изменено на {GetConditionDisplay(e.Condition)}",
+            "Equipment",
+            id,
+            ActivityActionKind.Updated);
 
         await LoadAsync();
     }
