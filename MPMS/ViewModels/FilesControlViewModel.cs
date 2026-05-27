@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -25,6 +26,8 @@ public partial class FilesControlViewModel : ViewModelBase
     private readonly IPageUiStateStore _uiState;
     private readonly SidebarFooterViewModel _sidebarFooter;
 
+    public event Action<string>? ShowToastRequested;
+
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _currentTab = "Images"; // "Images" or "Documents"
@@ -32,6 +35,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private string _documentsViewMode = "List";
     [ObservableProperty] private string _extensionFilter = "Все";
     [ObservableProperty] private bool _isDraggingOver;
+    [ObservableProperty] private bool _isSelectionMode;
     [ObservableProperty] private bool _isWorkerRole;
     [ObservableProperty] private LocalProject? _project;
 
@@ -61,6 +65,8 @@ public partial class FilesControlViewModel : ViewModelBase
     public int ImagesCount => AllFiles.Count(f => IsImage(f.FileName));
     public int DocumentsCount => AllFiles.Count(f => !IsImage(f.FileName));
     public int FilesCount => AllFiles.Count;
+    public bool AreAllDisplayedFilesSelected => DisplayedFiles.Count > 0 && DisplayedFiles.All(f => f.IsSelected);
+    public string ToggleDisplayedSelectionText => AreAllDisplayedFilesSelected ? "Снять выделение" : "Выделить всё";
 
     private Guid? _projectId;
     private Guid? _taskId;
@@ -121,8 +127,9 @@ public partial class FilesControlViewModel : ViewModelBase
         ApplyFilters();
     }
 
-    partial void OnCurrentTabChanging(string oldValue, string newValue)
+    partial void OnCurrentTabChanging(string? oldValue, string newValue)
     {
+        IsSelectionMode = false;
         if (!string.IsNullOrEmpty(oldValue))
             SaveTabUi(oldValue);
     }
@@ -432,8 +439,19 @@ public partial class FilesControlViewModel : ViewModelBase
         DisplayedFiles.Clear();
         foreach (var f in filtered)
         {
+            f.PropertyChanged -= File_PropertyChanged;
+            f.PropertyChanged += File_PropertyChanged;
             DisplayedFiles.Add(f);
         }
+        OnPropertyChanged(nameof(AreAllDisplayedFilesSelected));
+        OnPropertyChanged(nameof(ToggleDisplayedSelectionText));
+    }
+
+    private void File_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(LocalFile.IsSelected)) return;
+        OnPropertyChanged(nameof(AreAllDisplayedFilesSelected));
+        OnPropertyChanged(nameof(ToggleDisplayedSelectionText));
     }
 
     private void UpdateExtensionFilterOptions()
@@ -484,6 +502,135 @@ public partial class FilesControlViewModel : ViewModelBase
     private void SwitchTab(string tab)
     {
         CurrentTab = tab;
+    }
+
+    [RelayCommand]
+    private void EnterSelectionMode()
+    {
+        IsSelectionMode = true;
+    }
+
+    [RelayCommand]
+    private void CancelSelectionMode()
+    {
+        IsSelectionMode = false;
+        foreach (var file in AllFiles)
+            file.IsSelected = false;
+    }
+
+    [RelayCommand]
+    private void ToggleDisplayedSelection()
+    {
+        var selectAll = !AreAllDisplayedFilesSelected;
+        foreach (var file in DisplayedFiles)
+            file.IsSelected = selectAll;
+        OnPropertyChanged(nameof(AreAllDisplayedFilesSelected));
+        OnPropertyChanged(nameof(ToggleDisplayedSelectionText));
+    }
+
+    [RelayCommand]
+    private async Task SelectionDeleteAsync()
+    {
+        var selectedFiles = AllFiles.Where(f => f.IsSelected).ToList();
+        if (selectedFiles.Count == 0)
+        {
+            ShowToastRequested?.Invoke("Выберите файлы для удаления");
+            return;
+        }
+
+        var imagesCount = selectedFiles.Count(f => IsImage(f.FileName));
+        var documentsCount = selectedFiles.Count - imagesCount;
+
+        var result = Views.ConfirmDeleteDialog.ShowFileDeletionConfirmation(
+            Application.Current.MainWindow,
+            selectedFiles.Count,
+            imagesCount,
+            documentsCount);
+
+        if (!result)
+            return;
+
+        _sidebarFooter.BeginDelete(selectedFiles.Count);
+        string? lastDeletedName = null;
+
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var deletedCount = 0;
+
+            for (var fileIndex = 0; fileIndex < selectedFiles.Count; fileIndex++)
+            {
+                var file = selectedFiles[fileIndex];
+                _sidebarFooter.SetCurrentDeleteFile(file.FileName, fileIndex);
+
+                if (await DeleteFileCoreAsync(db, file))
+                {
+                    deletedCount++;
+                    lastDeletedName = file.FileName;
+                    _sidebarFooter.ReportDeleteCompleted(deletedCount);
+                }
+            }
+
+            await LoadFilesAsync();
+            IsSelectionMode = false;
+            _sidebarFooter.CompleteDelete(deletedCount, lastDeletedName);
+        }
+        catch (Exception ex)
+        {
+            _sidebarFooter.CancelDelete();
+            MessageBox.Show($"Ошибка при удалении выбранных файлов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task SelectionDownloadAsync()
+    {
+        var selectedFiles = AllFiles.Where(f => f.IsSelected).ToList();
+        if (selectedFiles.Count == 0)
+        {
+            ShowToastRequested?.Invoke("Выберите файлы для скачивания");
+            return;
+        }
+
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Выберите папку для сохранения файлов"
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        var savedCount = 0;
+        var skippedFiles = new List<string>();
+
+        foreach (var file in selectedFiles)
+        {
+            try
+            {
+                var data = await EnsureFileDataAsync(file);
+                if (data == null || data.Length == 0)
+                {
+                    skippedFiles.Add(file.FileName);
+                    continue;
+                }
+
+                var targetPath = GetUniqueFilePath(dialog.FolderName, file.FileName);
+                await File.WriteAllBytesAsync(targetPath, data);
+                savedCount++;
+            }
+            catch
+            {
+                skippedFiles.Add(file.FileName);
+            }
+        }
+
+        IsSelectionMode = false;
+
+        if (skippedFiles.Count > 0)
+        {
+            var message = $"Не удалось сохранить:\n• {string.Join("\n• ", skippedFiles)}";
+            MessageBox.Show(message, "Скачивание завершено", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     [RelayCommand]
@@ -724,63 +871,67 @@ public partial class FilesControlViewModel : ViewModelBase
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-            var dbFile = await db.Files.FindAsync(file.Id);
-            if (dbFile != null)
-            {
-                if (dbFile.IsSynced)
-                {
-                    await _sync.QueueOperationAsync("File", file.Id, SyncOperation.Delete, new { });
-                }
-                db.Files.Remove(dbFile);
-                var entityType = GetFileEntityType(file.FileName);
-                var entityLabel = entityType switch
-                {
-                    "Image" => "изображение",
-                    "Document" => "документ",
-                    _ => "файл"
-                };
-
-                // Получаем названия проекта, задачи и этапа для лога
-                string? projectName = null;
-                string? taskName = null;
-                string? stageName = null;
-                if (dbFile.ProjectId.HasValue)
-                {
-                    var project = await db.Projects.FindAsync(dbFile.ProjectId.Value);
-                    projectName = project?.Name;
-                }
-                if (dbFile.TaskId.HasValue)
-                {
-                    var task = await db.Tasks.FindAsync(dbFile.TaskId.Value);
-                    taskName = task?.Name;
-                }
-                if (dbFile.StageId.HasValue)
-                {
-                    var stage = await db.TaskStages.FindAsync(dbFile.StageId.Value);
-                    stageName = stage?.Name;
-                }
-
-                string locationText;
-                if (stageName != null && projectName != null)
-                    locationText = $"из этапа «{stageName}» проекта «{projectName}»";
-                else if (taskName != null && projectName != null)
-                    locationText = $"из задачи «{taskName}» проекта «{projectName}»";
-                else if (projectName != null)
-                    locationText = $"из проекта «{projectName}»";
-                else
-                    locationText = "";
-
-                var logText = string.IsNullOrEmpty(locationText)
-                    ? $"Удалён {entityLabel} «{file.FileName}»"
-                    : $"Удалён {entityLabel} «{file.FileName}» {locationText}";
-                await LogActivityAsync(db, logText, entityType, file.Id, ActivityActionKind.Deleted);
+            if (await DeleteFileCoreAsync(db, file))
                 await LoadFilesAsync();
-            }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Ошибка при удалении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private async Task<bool> DeleteFileCoreAsync(LocalDbContext db, LocalFile file)
+    {
+        var dbFile = await db.Files.FindAsync(file.Id);
+        if (dbFile == null)
+            return false;
+
+        if (dbFile.IsSynced)
+            await _sync.QueueOperationAsync("File", file.Id, SyncOperation.Delete, new { });
+
+        db.Files.Remove(dbFile);
+        var entityType = GetFileEntityType(file.FileName);
+        var entityLabel = entityType switch
+        {
+            "Image" => "изображение",
+            "Document" => "документ",
+            _ => "файл"
+        };
+
+        string? projectName = null;
+        string? taskName = null;
+        string? stageName = null;
+        if (dbFile.ProjectId.HasValue)
+        {
+            var project = await db.Projects.FindAsync(dbFile.ProjectId.Value);
+            projectName = project?.Name;
+        }
+        if (dbFile.TaskId.HasValue)
+        {
+            var task = await db.Tasks.FindAsync(dbFile.TaskId.Value);
+            taskName = task?.Name;
+        }
+        if (dbFile.StageId.HasValue)
+        {
+            var stage = await db.TaskStages.FindAsync(dbFile.StageId.Value);
+            stageName = stage?.Name;
+        }
+
+        string locationText;
+        if (stageName != null && projectName != null)
+            locationText = $"из этапа «{stageName}» проекта «{projectName}»";
+        else if (taskName != null && projectName != null)
+            locationText = $"из задачи «{taskName}» проекта «{projectName}»";
+        else if (projectName != null)
+            locationText = $"из проекта «{projectName}»";
+        else
+            locationText = "";
+
+        var logText = string.IsNullOrEmpty(locationText)
+            ? $"Удалён {entityLabel} «{file.FileName}»"
+            : $"Удалён {entityLabel} «{file.FileName}» {locationText}";
+        await LogActivityAsync(db, logText, entityType, file.Id, ActivityActionKind.Deleted);
+        return true;
     }
 
     [RelayCommand]
@@ -864,6 +1015,17 @@ public partial class FilesControlViewModel : ViewModelBase
             MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenFromList(LocalFile file)
+    {
+        if (file == null) return;
+
+        if (IsImage(file.FileName))
+            await OpenPhotoViewer(file);
+        else
+            await OpenFile(file);
     }
 
     [RelayCommand]
@@ -1067,42 +1229,9 @@ public partial class FilesControlViewModel : ViewModelBase
     {
         if (file == null) return;
 
-        if (file.FileData == null || file.FileData.Length == 0)
-        {
-            if (!_api.IsOnline)
-            {
-                MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            IsLoading = true;
-            try
-            {
-                var data = await _api.DownloadFileAsync(file.Id);
-                if (data != null)
-                {
-                    file.FileData = data;
-                    await using var db = await _dbFactory.CreateDbContextAsync();
-                    var dbFile = await db.Files.FindAsync(file.Id);
-                    if (dbFile != null)
-                    {
-                        dbFile.FileData = data;
-                        await db.SaveChangesAsync();
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Не удалось скачать файл с сервера.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при скачивании: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            finally { IsLoading = false; }
-        }
+        var data = await EnsureFileDataAsync(file);
+        if (data == null || data.Length == 0)
+            return;
 
         var dialog = new SaveFileDialog
         {
@@ -1115,13 +1244,80 @@ public partial class FilesControlViewModel : ViewModelBase
         {
             try
             {
-                await File.WriteAllBytesAsync(dialog.FileName, file.FileData);
+                await File.WriteAllBytesAsync(dialog.FileName, data);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+    }
+
+    private async Task<byte[]?> EnsureFileDataAsync(LocalFile file)
+    {
+        if (file.FileData != null && file.FileData.Length > 0)
+            return file.FileData;
+
+        if (!_api.IsOnline)
+        {
+            MessageBox.Show("Данные файла отсутствуют локально, а сервер недоступен.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return null;
+        }
+
+        IsLoading = true;
+        try
+        {
+            var data = await _api.DownloadFileAsync(file.Id);
+            if (data == null || data.Length == 0)
+            {
+                MessageBox.Show($"Не удалось скачать файл «{file.FileName}» с сервера.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
+
+            file.FileData = data;
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var dbFile = await db.Files.FindAsync(file.Id);
+            if (dbFile != null)
+            {
+                dbFile.FileData = data;
+                await db.SaveChangesAsync();
+            }
+
+            return data;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка при скачивании файла «{file.FileName}»: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            return null;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static string GetUniqueFilePath(string folderPath, string fileName)
+    {
+        var safeFileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        if (string.IsNullOrWhiteSpace(safeFileName))
+            safeFileName = "file";
+
+        var basePath = Path.Combine(folderPath, safeFileName);
+        if (!File.Exists(basePath))
+            return basePath;
+
+        var name = Path.GetFileNameWithoutExtension(safeFileName);
+        var extension = Path.GetExtension(safeFileName);
+        var index = 1;
+        string candidate;
+        do
+        {
+            candidate = Path.Combine(folderPath, $"{name} ({index}){extension}");
+            index++;
+        }
+        while (File.Exists(candidate));
+
+        return candidate;
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)

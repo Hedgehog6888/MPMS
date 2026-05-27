@@ -38,7 +38,31 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Click="UploadFile_Click" Style="{StaticResource BlackBtn}" Height="38" Padding="18,0">
+                    <Button Content="Выбрать"
+                            Command="{Binding FilesControlVM.EnterSelectionModeCommand}"
+                            Height="38" Padding="18,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Click="UploadFile_Click" Height="38" Padding="18,0" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource BlackBtn}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{svgc:SvgImage Source=/icons/upload_white.svg, AppName=MPMS}" 
                                    Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
@@ -56,6 +80,48 @@
                             </TextBlock>
                         </StackPanel>
                     </Button>
+                    <Button Content="Отменить"
+                            Command="{Binding FilesControlVM.CancelSelectionModeCommand}"
+                            Height="38" Padding="18,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Удалить"
+                            Command="{Binding FilesControlVM.SelectionDeleteCommand}"
+                            Height="38" Padding="18,0" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="Скачать"
+                            Command="{Binding FilesControlVM.SelectionDownloadCommand}"
+                            Height="38" Padding="18,0" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -72,6 +138,27 @@
 
         <controls:DragDropOverlay Grid.RowSpan="3"
                                   UploadCommand="{Binding FilesControlVM.ProcessFilesCommand}"
-                                  Panel.ZIndex="100"/>
+                                  Panel.ZIndex="100">
+            <controls:DragDropOverlay.Style>
+                <Style TargetType="controls:DragDropOverlay">
+                    <Setter Property="IsDragDropEnabled" Value="True"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                            <Setter Property="IsDragDropEnabled" Value="False"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </controls:DragDropOverlay.Style>
+        </controls:DragDropOverlay>
+
+        <Border x:Name="ToastLayer" Panel.ZIndex="200" Grid.RowSpan="3"
+                Background="Transparent" IsHitTestVisible="False"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border x:Name="Toast" HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,61,24,0" Background="#000000" CornerRadius="8"
+                    Padding="12,8" Visibility="Collapsed" IsHitTestVisible="False">
+                <TextBlock x:Name="ToastText" Text="" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+            </Border>
+        </Border>
     </Grid>
 </UserControl>

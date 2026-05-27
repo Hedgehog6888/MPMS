@@ -142,6 +142,9 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     public void Navigate(string page)
     {
+        if (CurrentPage != page && CurrentPageViewModel is FilesPageViewModel filesPageViewModel)
+            filesPageViewModel.FilesControlVM.CancelSelectionModeCommand.Execute(null);
+
         CurrentPage = page;
         ViewModelBase? vm = page switch
         {

@@ -223,6 +223,39 @@ public partial class ConfirmDeleteDialog : Window
         return dialog.Confirmed;
     }
 
+    public void ConfigureFileDeletion(int totalFiles, int imagesCount, int documentsCount)
+    {
+        TitleText.Text = "Удалить файлы?";
+        EntityTypeText.Text = "Файлы";
+        ItemNameText.Text = $"{totalFiles} файл(ов)";
+        ConfirmBtn.Content = "Удалить";
+        HeaderBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FEF2F2"));
+        ConfirmBtn.Style = (Style)FindResource("RedDialogBtn");
+        CascadeWarning.Visibility = Visibility.Collapsed;
+        if (BlockWarning != null) BlockWarning.Visibility = Visibility.Collapsed;
+
+        var fileDetailsPanel = FindName("FileDetailsPanel") as StackPanel;
+        var totalFilesText = FindName("TotalFilesText") as TextBlock;
+        var imagesCountText = FindName("ImagesCountText") as TextBlock;
+        var documentsCountText = FindName("DocumentsCountText") as TextBlock;
+
+        if (fileDetailsPanel != null) fileDetailsPanel.Visibility = Visibility.Visible;
+        if (totalFilesText != null) totalFilesText.Text = $"Всего: {totalFiles}";
+        if (imagesCountText != null) imagesCountText.Text = $"Изображений: {imagesCount}";
+        if (documentsCountText != null) documentsCountText.Text = $"Документов: {documentsCount}";
+    }
+
+    public static bool ShowFileDeletionConfirmation(Window owner, int totalFiles, int imagesCount, int documentsCount)
+    {
+        var dialog = new ConfirmDeleteDialog
+        {
+            Owner = owner
+        };
+        dialog.ConfigureFileDeletion(totalFiles, imagesCount, documentsCount);
+        dialog.ShowDialog();
+        return dialog.Confirmed;
+    }
+
     private void Confirm_Click(object sender, RoutedEventArgs e)
     {
         Confirmed = true;

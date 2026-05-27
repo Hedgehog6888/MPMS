@@ -81,6 +81,61 @@
             <Setter Property="Foreground" Value="#172B4D"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+
+        <Style x:Key="FileSelectionCheckStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <Grid>
+                                <Path x:Name="CheckMark"
+                                      Data="M6 14L11 19L20 8"
+                                      Stroke="White"
+                                      StrokeThickness="2.4"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      Stretch="Uniform"
+                                      Width="14"
+                                      Height="14"
+                                      Visibility="Collapsed"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#111111"/>
+                                <Setter TargetName="Bg" Property="Background" Value="#F3F4F6"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#111111"/>
+                                <Setter TargetName="Bg" Property="BorderBrush" Value="#111111"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
                 
         <!-- Стиль круглой кнопки удаления, появляющейся при наведении -->
         <Style x:Key="CircularDeleteButtonStyle" TargetType="Button">
@@ -197,6 +252,7 @@
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
                         <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsDocument}}" Value="Visible"/>
+                        <Condition Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False"/>
                     </MultiDataTrigger.Conditions>
                     <Setter Property="Visibility" Value="Visible"/>
                 </MultiDataTrigger>
@@ -341,6 +397,19 @@
                     
                     <!-- Наложение действий (видимо при наведении) -->
                     <StackPanel Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" Margin="6">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <ToggleButton IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                      Style="{StaticResource FileSelectionCheckStyle}"
+                                      Margin="0"/>
+
                         <Button ToolTip="Просмотр"
                                 Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Style="{StaticResource CircularViewButtonStyle}"
@@ -350,14 +419,30 @@
 
                         <Button ToolTip="Скачать"
                                 Command="{Binding DataContext.DownloadFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                                Style="{StaticResource CircularDownloadButtonStyle}"
                                 Margin="0,0,6,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource CircularDownloadButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Image Source="{svgc:SvgImage Source=/icons/download.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
                         </Button>
 
                         <Button ToolTip="Удалить"
-                                Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
-                                Style="{StaticResource CircularDeleteButtonStyle}">
+                                Command="{Binding DataContext.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource CircularDeleteButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}" Width="14" Height="14" Opacity="0.8"/>
                         </Button>
                     </StackPanel>
@@ -419,7 +504,7 @@
                     </ToolTip>
                 </Border.ToolTip>
                 <Border.InputBindings>
-                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenFromListCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                 </Border.InputBindings>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -462,6 +547,16 @@
                                VerticalAlignment="Center" Margin="0,0,24,0"/>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsSelectionMode, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
                         <Button ToolTip="Просмотр"
                                 Command="{Binding DataContext.OpenDocumentViewerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
                                 Margin="0,0,8,0"
@@ -500,6 +595,12 @@
                                    VerticalAlignment="Center" Opacity="0.9"/>
                         </Button>
                     </StackPanel>
+
+                    <ToggleButton Grid.Column="3"
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  Style="{StaticResource FileSelectionCheckStyle}"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Right"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -561,6 +662,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- TabBar: Изображения / Документы -->
@@ -573,8 +675,27 @@
                 </controls:TabBarControl.Tabs>
             </controls:TabBarControl>
 
+            <Button Grid.Column="1"
+                    Content="{Binding ToggleDisplayedSelectionText}"
+                    Command="{Binding ToggleDisplayedSelectionCommand}"
+                    Height="36"
+                    Padding="14,0"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSelectionMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
             <!-- Переключатель режима представления (Список / Плитка) -->
-            <Border Grid.Column="1" Background="White"
+            <Border Grid.Column="2" Background="White"
                     BorderBrush="#DFE1E6" BorderThickness="1"
                     CornerRadius="8" Padding="4,4" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">

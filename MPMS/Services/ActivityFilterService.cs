@@ -235,6 +235,34 @@ public static class ActivityFilterService
             return $"Загружено {count} {filesForm}";
         }
 
+        if ((entityType == "File" || entityType == "Image" || entityType == "Document") && 
+            (actionType == ActivityActionKind.Deleted || actionType == ActivityActionKind.PermanentlyDeleted))
+        {
+            var inProject = first.ActionText.Contains("в проект");
+            var label = entityType switch
+            {
+                "Image" => "изображение",
+                "Document" => "документ",
+                _ => "файл"
+            };
+            var labelForm2 = entityType switch
+            {
+                "Image" => "изображения",
+                "Document" => "документа",
+                _ => "файла"
+            };
+            var labelForm5 = entityType switch
+            {
+                "Image" => "изображений",
+                "Document" => "документов",
+                _ => "файлов"
+            };
+            var filesForm = GetPluralForm(count, label, labelForm2, labelForm5);
+            if (inProject && !string.IsNullOrEmpty(context))
+                return $"Удалено {count} {filesForm} из проекта «{context}»";
+            return $"Удалено {count} {filesForm}";
+        }
+
         if (entityType == "Message" && actionType == ActivityActionKind.Message)
         {
             var messagesForm = GetPluralForm(count, "сообщение", "сообщения", "сообщений");

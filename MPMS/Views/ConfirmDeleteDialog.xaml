@@ -187,7 +187,28 @@
                         Visibility="Collapsed">
                     <TextBlock x:Name="BlockText"
                                FontSize="12" Foreground="#B91C1C" TextWrapping="Wrap"/>
-                </Border> 
+                </Border>
+
+                <StackPanel x:Name="FileDetailsPanel" Visibility="Collapsed" Margin="0,12,0,0">
+                    <TextBlock Text="Детали удаления" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#6B778C" Margin="0,0,0,6"/>
+                    <Border Background="#F4F5F7" CornerRadius="8" Padding="12,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock x:Name="TotalFilesText" Text="Всего: 0"
+                                           FontSize="13" Foreground="#000000" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="ImagesCountText" Text="Изображений: 0"
+                                           FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="DocumentsCountText" Text="Документов: 0"
+                                           FontSize="12" Foreground="#6B778C" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel> 
 
                 <StackPanel x:Name="ClosureReasonPanel" Visibility="Collapsed" Margin="0,14,0,0">
                     <TextBlock Text="Причина закрытия (необязательно)" FontSize="12" FontWeight="SemiBold"

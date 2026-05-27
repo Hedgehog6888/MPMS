@@ -13,10 +13,19 @@ public partial class DragDropOverlay : UserControl
     public static readonly DependencyProperty UploadCommandProperty =
         DependencyProperty.Register(nameof(UploadCommand), typeof(ICommand), typeof(DragDropOverlay));
 
+    public static readonly DependencyProperty IsDragDropEnabledProperty =
+        DependencyProperty.Register(nameof(IsDragDropEnabled), typeof(bool), typeof(DragDropOverlay), new PropertyMetadata(true));
+
     public ICommand UploadCommand
     {
         get => (ICommand)GetValue(UploadCommandProperty);
         set => SetValue(UploadCommandProperty, value);
+    }
+
+    public bool IsDragDropEnabled
+    {
+        get => (bool)GetValue(IsDragDropEnabledProperty);
+        set => SetValue(IsDragDropEnabledProperty, value);
     }
 
     private DispatcherTimer _dragTimer;
@@ -49,6 +58,14 @@ public partial class DragDropOverlay : UserControl
 
     private void Parent_PreviewDragEnter(object sender, DragEventArgs e)
     {
+        if (!IsDragDropEnabled)
+        {
+            HideOverlay();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             ShowOverlay();
@@ -58,6 +75,14 @@ public partial class DragDropOverlay : UserControl
 
     private void OnDragEnter(object sender, DragEventArgs e)
     {
+        if (!IsDragDropEnabled)
+        {
+            HideOverlay();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             ShowOverlay();
@@ -68,6 +93,14 @@ public partial class DragDropOverlay : UserControl
 
     private void OnDragOver(object sender, DragEventArgs e)
     {
+        if (!IsDragDropEnabled)
+        {
+            HideOverlay();
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             ShowOverlay();
@@ -87,6 +120,13 @@ public partial class DragDropOverlay : UserControl
         _dragTimer.Stop();
         HideOverlay();
 
+        if (!IsDragDropEnabled)
+        {
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+            return;
+        }
+
         if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -103,6 +143,12 @@ public partial class DragDropOverlay : UserControl
 
     public void ShowOverlay()
     {
+        if (!IsDragDropEnabled)
+        {
+            HideOverlay();
+            return;
+        }
+
         _dragTimer.Stop();
         if (!_isDragging)
         {

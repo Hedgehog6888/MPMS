@@ -581,6 +581,117 @@
                     </controls:CircularProgressRing.CenterContent>
                 </controls:CircularProgressRing>
             </StackPanel>
+
+            <!-- Удаление -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDeletingMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый: текст + линейный прогресс (красный) -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding DeleteProgressTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000"
+                               Margin="8,0,8,4" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding DeleteCurrentFileNameDisplay}" FontSize="10"
+                               Foreground="#000000"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" Margin="8,0,8,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSingleFileDelete}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Value="{Binding DeleteProgressPercent}" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="#DC2626"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий: круговой прогресс (красный) -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="{Binding DeleteProgressPercent}"
+                    ProgressBrush="#DC2626"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DeleteCompleted}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#000000" HorizontalAlignment="Center" LineHeight="12"/>
+                            <TextBlock Text="из" FontSize="7" Foreground="#000000"
+                                       HorizontalAlignment="Center" Margin="0,-1,0,-1"/>
+                            <TextBlock Text="{Binding DeleteTotal}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#000000" HorizontalAlignment="Center" LineHeight="12"/>
+                        </StackPanel>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
+
+            <!-- Итог удаления -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDeletionSummaryMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding DeleteSummaryTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000" HorizontalAlignment="Center" Margin="8,0,8,4"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding DeleteCurrentFileNameDisplay}" FontSize="10"
+                               Foreground="#000000"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" Margin="8,0,8,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSingleFileDelete}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Value="100" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="#DC2626"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="100"
+                    ProgressBrush="#DC2626"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <TextBlock Text="{Binding DeleteCompleted}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
             </StackPanel>
         </Border>
 

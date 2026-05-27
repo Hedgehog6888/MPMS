@@ -483,6 +483,18 @@ public class LocalFile : LocalEntity, INotifyPropertyChanged
 
     [NotMapped] public string? ProjectName { get; set; }
     [NotMapped] public string? StageName { get; set; }
+    private bool _isSelected;
+    [NotMapped]
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value) return;
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 }

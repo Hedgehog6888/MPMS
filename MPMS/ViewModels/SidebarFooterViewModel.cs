@@ -11,7 +11,9 @@ public enum SidebarFooterMode
 {
     Stats,
     Uploading,
-    UploadSummary
+    UploadSummary,
+    Deleting,
+    DeletionSummary
 }
 
 public partial class SidebarFooterViewModel : ViewModelBase
@@ -30,10 +32,18 @@ public partial class SidebarFooterViewModel : ViewModelBase
     [ObservableProperty] private string _uploadSummaryTitle = string.Empty;
     [ObservableProperty] private bool _isSingleFileUpload;
     [ObservableProperty] private double _uploadProgressPercent;
+    [ObservableProperty] private int _deleteCompleted;
+    [ObservableProperty] private int _deleteTotal;
+    [ObservableProperty] private string _deleteCurrentFileName = string.Empty;
+    [ObservableProperty] private string _deleteSummaryTitle = string.Empty;
+    [ObservableProperty] private bool _isSingleFileDelete;
+    [ObservableProperty] private double _deleteProgressPercent;
 
     public bool IsStatsMode => Mode == SidebarFooterMode.Stats;
     public bool IsUploadingMode => Mode == SidebarFooterMode.Uploading;
     public bool IsUploadSummaryMode => Mode == SidebarFooterMode.UploadSummary;
+    public bool IsDeletingMode => Mode == SidebarFooterMode.Deleting;
+    public bool IsDeletionSummaryMode => Mode == SidebarFooterMode.DeletionSummary;
 
     public string UploadProgressTitle =>
         IsSingleFileUpload
@@ -45,6 +55,17 @@ public partial class SidebarFooterViewModel : ViewModelBase
 
     public string UploadCurrentFileNameDisplay =>
         TruncateFileName(UploadCurrentFileName, 18);
+
+    public string DeleteProgressTitle =>
+        IsSingleFileDelete
+            ? "Удаляется файл"
+            : $"Удаляется {DeleteCompleted} из {DeleteTotal} {FilesGenitive(DeleteTotal)}";
+
+    public string DeleteProgressTitleShort =>
+        IsSingleFileDelete ? "Файл" : $"{DeleteCompleted}/{DeleteTotal}";
+
+    public string DeleteCurrentFileNameDisplay =>
+        TruncateFileName(DeleteCurrentFileName, 18);
 
     public int StatsTotalFiles => StatsImages + StatsDocuments + StatsReports;
 
@@ -59,6 +80,8 @@ public partial class SidebarFooterViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsStatsMode));
         OnPropertyChanged(nameof(IsUploadingMode));
         OnPropertyChanged(nameof(IsUploadSummaryMode));
+        OnPropertyChanged(nameof(IsDeletingMode));
+        OnPropertyChanged(nameof(IsDeletionSummaryMode));
     }
 
     partial void OnUploadCompletedChanged(int value)
@@ -81,6 +104,31 @@ public partial class SidebarFooterViewModel : ViewModelBase
         OnPropertyChanged(nameof(UploadProgressTitleShort));
     }
 
+    partial void OnDeleteCompletedChanged(int value)
+    {
+        UpdateDeleteProgressPercent();
+        OnPropertyChanged(nameof(DeleteProgressTitle));
+        OnPropertyChanged(nameof(DeleteProgressTitleShort));
+    }
+
+    partial void OnDeleteTotalChanged(int value)
+    {
+        UpdateDeleteProgressPercent();
+        OnPropertyChanged(nameof(DeleteProgressTitle));
+        OnPropertyChanged(nameof(DeleteProgressTitleShort));
+    }
+
+    partial void OnIsSingleFileDeleteChanged(bool value)
+    {
+        OnPropertyChanged(nameof(DeleteProgressTitle));
+        OnPropertyChanged(nameof(DeleteProgressTitleShort));
+    }
+
+    partial void OnDeleteCurrentFileNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(DeleteCurrentFileNameDisplay));
+    }
+
     partial void OnUploadCurrentFileNameChanged(string value)
     {
         OnPropertyChanged(nameof(UploadCurrentFileNameDisplay));
@@ -94,6 +142,13 @@ public partial class SidebarFooterViewModel : ViewModelBase
     {
         UploadProgressPercent = UploadTotal > 0
             ? Math.Round(100.0 * UploadCompleted / UploadTotal, 1)
+            : 0;
+    }
+
+    private void UpdateDeleteProgressPercent()
+    {
+        DeleteProgressPercent = DeleteTotal > 0
+            ? Math.Round(100.0 * DeleteCompleted / DeleteTotal, 1)
             : 0;
     }
 
@@ -173,6 +228,69 @@ public partial class SidebarFooterViewModel : ViewModelBase
     }
 
     public void CancelUpload()
+    {
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = null;
+        Mode = SidebarFooterMode.Stats;
+    }
+
+    public void BeginDelete(int total)
+    {
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = null;
+        Mode = SidebarFooterMode.Deleting;
+        DeleteTotal = total;
+        DeleteCompleted = 0;
+        IsSingleFileDelete = total == 1;
+        DeleteCurrentFileName = string.Empty;
+        DeleteSummaryTitle = string.Empty;
+        DeleteProgressPercent = 0;
+    }
+
+    public void SetCurrentDeleteFile(string fileName, int fileIndexZeroBased = 0)
+    {
+        DeleteCurrentFileName = fileName;
+    }
+
+    public void ReportDeleteCompleted(int completed)
+    {
+        DeleteCompleted = completed;
+    }
+
+    public void CompleteDelete(int deletedCount, string? lastFileName)
+    {
+        if (deletedCount <= 0)
+        {
+            Mode = SidebarFooterMode.Stats;
+            return;
+        }
+
+        IsSingleFileDelete = deletedCount == 1;
+        DeleteCompleted = deletedCount;
+        DeleteTotal = deletedCount;
+        DeleteProgressPercent = 100;
+
+        if (deletedCount == 1 && !string.IsNullOrWhiteSpace(lastFileName))
+        {
+            DeleteCurrentFileName = lastFileName;
+            DeleteSummaryTitle = "Файл удалён";
+        }
+        else
+        {
+            DeleteCurrentFileName = string.Empty;
+            DeleteSummaryTitle = $"Удалено {deletedCount} {FilesNominative(deletedCount)}";
+        }
+
+        Mode = SidebarFooterMode.DeletionSummary;
+        _ = RefreshStatsAsync();
+
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        _revertToStatsTimer.Tick += OnRevertToStatsTick;
+        _revertToStatsTimer.Start();
+    }
+
+    public void CancelDelete()
     {
         _revertToStatsTimer?.Stop();
         _revertToStatsTimer = null;
