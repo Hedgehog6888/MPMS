@@ -92,7 +92,15 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _card4TooltipDesc = "Техническое состояние и синхронизация";
 
     private string _originalTitle = string.Empty;
-    private string _originalXaml = string.Empty;
+
+    /// <summary>
+    /// Устанавливается из View: вызывает сериализацию RTB → CurrentNoteXaml.
+    /// Вызывается только в момент сохранения.
+    /// </summary>
+    public Action? SyncContentFromView { get; set; }
+
+    /// <summary>Флаг изменений контента — устанавливает View через TextChanged, без XAML-сериализации.</summary>
+    public bool IsNoteDirty { get; set; }
 
     [ObservableProperty] private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
     public string WelcomeMessage
@@ -195,7 +203,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         SelectedNote = note;
         CurrentNoteXaml = "";
         _originalTitle = "";
-        _originalXaml = "";
+        IsNoteDirty = false;
         IsNoteEditing = true;
     }
 
@@ -205,7 +213,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
         SelectedNote = note;
         CurrentNoteXaml = note.Content;
         _originalTitle = note.Title ?? "";
-        _originalXaml = note.Content ?? "";
+        IsNoteDirty = false;
         IsNoteEditing = true;
     }
 
@@ -216,6 +224,9 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
         try
         {
+            // Сериализуем RTB → CurrentNoteXaml только здесь, при сохранении
+            SyncContentFromView?.Invoke();
+
             await using var db = await _dbFactory.CreateDbContextAsync();
 
             SelectedNote.Content = CurrentNoteXaml;
@@ -234,9 +245,8 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
 
             await db.SaveChangesAsync();
 
-            // Обновляем исходные значения для отражения сохранённого состояния
             _originalTitle = SelectedNote.Title ?? "";
-            _originalXaml = SelectedNote.Content ?? "";
+            IsNoteDirty = false;
 
             await LoadNotesAsync();
         }
@@ -300,8 +310,7 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
     private bool HasChanges()
     {
         if (SelectedNote == null) return false;
-        // Сравниваем с исходными значениями
-        return (SelectedNote.Title ?? "") != _originalTitle || (CurrentNoteXaml ?? "") != _originalXaml;
+        return (SelectedNote.Title ?? "") != _originalTitle || IsNoteDirty;
     }
 
     private void CloseEditing()

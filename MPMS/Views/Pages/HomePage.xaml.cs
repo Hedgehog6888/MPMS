@@ -3,28 +3,170 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 using MPMS.Infrastructure;
+using MPMS.ViewModels;
 using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
 
 public partial class HomePage : UserControl
 {
+    private DispatcherTimer? _formattingUpdateTimer;
+
     public HomePage()
     {
         InitializeComponent();
     }
 
-    private void NotesRichTextBox_Loaded(object sender, System.Windows.RoutedEventArgs e)
+    // ── Инициализация RichTextBox ────────────────────────────────────────────
+
+    private void NotesRichTextBox_Loaded(object sender, RoutedEventArgs e)
     {
-        if (sender is RichTextBox rtb)
+        if (sender is not RichTextBox rtb) return;
+        if (DataContext is not HomeViewModel vm) return;
+
+        // View → ViewModel: только при сохранении
+        vm.SyncContentFromView = () =>
         {
-            RichTextHelper.RegisterRichTextBox(rtb);
+            vm.CurrentNoteXaml = RichTextHelper.ReadDocumentXaml(rtb);
+        };
+
+        // Отслеживание изменений без сериализации
+        rtb.TextChanged += (_, _) =>
+        {
+            if (DataContext is HomeViewModel v)
+                v.IsNoteDirty = true;
+        };
+    }
+
+    // ── Форматирование ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Debounce для SelectionChanged — обновляем кнопки форматирования не чаще раза в 100мс.
+    /// Это не влияет на кнопки форматирования при клике (они вызывают UpdateFormattingButtons напрямую).
+    /// </summary>
+    private void NotesRTB_SelectionChanged(object sender, RoutedEventArgs e)
+    {
+        if (_formattingUpdateTimer == null)
+        {
+            _formattingUpdateTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(100)
+            };
+            _formattingUpdateTimer.Tick += (_, _) =>
+            {
+                _formattingUpdateTimer.Stop();
+                UpdateFormattingButtons();
+            };
+        }
+        else
+        {
+            _formattingUpdateTimer.Stop();
+        }
+        _formattingUpdateTimer.Start();
+    }
+
+    private void UpdateFormattingButtons()
+    {
+        if (NotesRTB == null || BoldBtn == null) return;
+
+        var selection = NotesRTB.Selection;
+        if (selection == null) return;
+
+        object fontWeight = selection.GetPropertyValue(TextElement.FontWeightProperty);
+        BoldBtn.IsChecked = fontWeight != DependencyProperty.UnsetValue && (FontWeight)fontWeight == FontWeights.Bold;
+
+        object fontStyle = selection.GetPropertyValue(TextElement.FontStyleProperty);
+        ItalicBtn.IsChecked = fontStyle != DependencyProperty.UnsetValue && (FontStyle)fontStyle == FontStyles.Italic;
+
+        object textDecorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
+        if (textDecorations != DependencyProperty.UnsetValue && textDecorations is TextDecorationCollection coll)
+        {
+            UnderlineBtn.IsChecked = coll.Any(d => d.Location == TextDecorationLocation.Underline);
+            StrikethroughBtn.IsChecked = coll.Any(d => d.Location == TextDecorationLocation.Strikethrough);
+        }
+        else
+        {
+            UnderlineBtn.IsChecked = false;
+            StrikethroughBtn.IsChecked = false;
+        }
+
+        object background = selection.GetPropertyValue(TextElement.BackgroundProperty);
+        HighlightBtn.IsChecked = background != DependencyProperty.UnsetValue && background != null;
+
+        Paragraph? p = selection.Start.Paragraph;
+        BlockquoteBtn.IsChecked = p != null && p.BorderThickness.Left > 0;
+        ChecklistBtn.IsChecked = false;
+
+        UpdateListButtons(selection);
+    }
+
+    private void UpdateListButtons(TextSelection selection)
+    {
+        BulletsBtn.IsChecked = false;
+        NumberingBtn.IsChecked = false;
+
+        Paragraph? p = selection.Start.Paragraph;
+        if (p == null) return;
+
+        DependencyObject? parent = p.Parent;
+        while (parent != null)
+        {
+            if (parent is List list)
+            {
+                var style = list.MarkerStyle;
+                if (style is TextMarkerStyle.Disc or TextMarkerStyle.Circle or TextMarkerStyle.Square)
+                {
+                    BulletsBtn.IsChecked = true;
+                }
+                else
+                {
+                    NumberingBtn.IsChecked = true;
+                }
+                return;
+            }
+            parent = (parent as FrameworkContentElement)?.Parent;
         }
     }
 
+    private void FormatButton_Click(object sender, RoutedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            MergeAdjacentLists(NotesRTB);
+            UpdateFormattingButtons();
+        }), DispatcherPriority.Input);
+    }
 
-    private void ClearFormatting_Click(object sender, System.Windows.RoutedEventArgs e)
+    private void MergeAdjacentLists(RichTextBox rtb)
+    {
+        var doc = rtb.Document;
+        if (doc == null) return;
+
+        bool changed = false;
+        for (int i = 0; i < doc.Blocks.Count - 1; i++)
+        {
+            if (doc.Blocks.ElementAt(i) is List list1 && doc.Blocks.ElementAt(i + 1) is List list2 &&
+                list1.MarkerStyle == list2.MarkerStyle)
+            {
+                var items = list2.ListItems.ToList();
+                foreach (var item in items)
+                {
+                    list2.ListItems.Remove(item);
+                    list1.ListItems.Add(item);
+                }
+                doc.Blocks.Remove(list2);
+                i--;
+                changed = true;
+            }
+        }
+
+        if (changed && DataContext is HomeViewModel vm)
+            vm.IsNoteDirty = true;
+    }
+
+    private void ClearFormatting_Click(object sender, RoutedEventArgs e)
     {
         var selection = NotesRTB.Selection;
         if (selection.IsEmpty) return;
@@ -56,48 +198,6 @@ public partial class HomePage : UserControl
         UpdateFormattingButtons();
     }
 
-    private void FormatButton_Click(object sender, RoutedEventArgs e)
-    {
-        Dispatcher.BeginInvoke(new Action(() =>
-        {
-            MergeAdjacentLists(NotesRTB);
-            UpdateFormattingButtons();
-        }), System.Windows.Threading.DispatcherPriority.Input);
-    }
-
-    private void MergeAdjacentLists(RichTextBox rtb)
-    {
-        var doc = rtb.Document;
-        if (doc == null) return;
-
-        bool changed = false;
-        for (int i = 0; i < doc.Blocks.Count - 1; i++)
-        {
-            if (doc.Blocks.ElementAt(i) is List list1 && doc.Blocks.ElementAt(i + 1) is List list2)
-            {
-                if (list1.MarkerStyle == list2.MarkerStyle)
-                {
-                    var items = list2.ListItems.ToList();
-                    foreach (var item in items)
-                    {
-                        list2.ListItems.Remove(item);
-                        list1.ListItems.Add(item);
-                    }
-
-                    doc.Blocks.Remove(list2);
-
-                    i--;
-                    changed = true;
-                }
-            }
-        }
-
-        if (changed)
-        {
-            RichTextHelper.UpdateDocumentXaml(rtb);
-        }
-    }
-
     private void Strikethrough_Click(object sender, RoutedEventArgs e)
     {
         var selection = NotesRTB.Selection;
@@ -111,16 +211,12 @@ public partial class HomePage : UserControl
             foreach (var decoration in currentDecorations)
             {
                 if (decoration.Location != TextDecorationLocation.Strikethrough)
-                {
                     newDecorations.Add(decoration);
-                }
             }
         }
 
         if (StrikethroughBtn.IsChecked == true)
-        {
             newDecorations.Add(TextDecorations.Strikethrough[0]);
-        }
 
         selection.ApplyPropertyValue(Inline.TextDecorationsProperty, newDecorations);
         UpdateFormattingButtons();
@@ -131,17 +227,13 @@ public partial class HomePage : UserControl
         var selection = NotesRTB.Selection;
         if (selection == null) return;
 
-        var currentBackground = selection.GetPropertyValue(TextElement.BackgroundProperty);
         var highlightBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF9C4"));
 
         if (HighlightBtn.IsChecked == true)
-        {
             selection.ApplyPropertyValue(TextElement.BackgroundProperty, highlightBrush);
-        }
         else
-        {
             selection.ApplyPropertyValue(TextElement.BackgroundProperty, null);
-        }
+
         UpdateFormattingButtons();
     }
 
@@ -151,8 +243,7 @@ public partial class HomePage : UserControl
         if (selection == null) return;
 
         var paragraphs = GetSelectedParagraphs(selection);
-
-        string blockId = System.Guid.NewGuid().ToString();
+        string blockId = Guid.NewGuid().ToString();
 
         foreach (var p in paragraphs)
         {
@@ -187,64 +278,48 @@ public partial class HomePage : UserControl
         var blocks = NotesRTB.Document.Blocks.ToList();
         foreach (var block in blocks)
         {
-            if (block is Paragraph p)
+            if (block is not Paragraph p) continue;
+
+            var existingFloater = p.Inlines.OfType<Floater>().FirstOrDefault(f => Equals(f.Tag, "QuoteIcon"));
+            if (existingFloater != null) p.Inlines.Remove(existingFloater);
+
+            bool isQuoted = p.BorderThickness.Left > 0;
+            if (!isQuoted) continue;
+
+            bool prevIsQuoted = p.PreviousBlock is Paragraph prevP && prevP.BorderThickness.Left > 0 && Equals(prevP.Tag, p.Tag);
+            bool nextIsQuoted = p.NextBlock is Paragraph nextP && nextP.BorderThickness.Left > 0 && Equals(nextP.Tag, p.Tag);
+
+            p.Margin = new Thickness(0, prevIsQuoted ? 0 : 10, 0, nextIsQuoted ? 0 : 10);
+            p.Padding = new Thickness(20, prevIsQuoted ? 2 : 8, 0, nextIsQuoted ? 2 : 8);
+
+            if (!prevIsQuoted)
             {
-                var existingFloater = p.Inlines.OfType<Floater>().FirstOrDefault(f => Equals(f.Tag, "QuoteIcon"));
-                if (existingFloater != null) p.Inlines.Remove(existingFloater);
-
-                bool isQuoted = p.BorderThickness.Left > 0;
-                if (isQuoted)
+                var quoteIcon = new TextBlock
                 {
-                    bool prevIsQuoted = (p.PreviousBlock is Paragraph prevP) &&
-                                        prevP.BorderThickness.Left > 0 &&
-                                        Equals(prevP.Tag, p.Tag);
+                    Text = "\u201c",
+                    FontSize = 32,
+                    FontFamily = new FontFamily("Georgia"),
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromArgb(60, 0, 0, 0)),
+                    Margin = new Thickness(0, -8, 4, 0),
+                    IsHitTestVisible = false,
+                    Focusable = false
+                };
 
-                    bool nextIsQuoted = (p.NextBlock is Paragraph nextP) &&
-                                        nextP.BorderThickness.Left > 0 &&
-                                        Equals(nextP.Tag, p.Tag);
+                var floater = new Floater
+                {
+                    Tag = "QuoteIcon",
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Width = 24,
+                    Margin = new Thickness(0),
+                    Padding = new Thickness(0)
+                };
+                floater.Blocks.Add(new BlockUIContainer(quoteIcon) { IsEnabled = false });
 
-                    double topMargin = prevIsQuoted ? 0 : 10;
-                    double bottomMargin = nextIsQuoted ? 0 : 10;
-                    p.Margin = new Thickness(0, topMargin, 0, bottomMargin);
-
-                    // Reduced padding for a tighter look
-                    double topPadding = prevIsQuoted ? 2 : 8;
-                    double bottomPadding = nextIsQuoted ? 2 : 8;
-                    p.Padding = new Thickness(20, topPadding, 0, bottomPadding);
-
-                    if (!prevIsQuoted)
-                    {
-                        Floater floater = new Floater
-                        {
-                            Tag = "QuoteIcon",
-                            HorizontalAlignment = HorizontalAlignment.Right,
-                            Width = 24,
-                            Margin = new Thickness(0),
-                            Padding = new Thickness(0)
-                        };
-
-                        TextBlock quoteIcon = new TextBlock
-                        {
-                            Text = "“",
-                            FontSize = 32,
-                            FontFamily = new FontFamily("Georgia"),
-                            FontWeight = FontWeights.Bold,
-                            Foreground = new SolidColorBrush(Color.FromArgb(60, 0, 0, 0)),
-                            Margin = new Thickness(0, -8, 4, 0),
-                            IsHitTestVisible = false,
-                            Focusable = false
-                        };
-
-                        var container = new BlockUIContainer(quoteIcon);
-                        container.IsEnabled = false;
-                        floater.Blocks.Add(container);
-
-                        if (p.Inlines.FirstInline != null)
-                            p.Inlines.InsertBefore(p.Inlines.FirstInline, floater);
-                        else
-                            p.Inlines.Add(floater);
-                    }
-                }
+                if (p.Inlines.FirstInline != null)
+                    p.Inlines.InsertBefore(p.Inlines.FirstInline, floater);
+                else
+                    p.Inlines.Add(floater);
             }
         }
 
@@ -265,97 +340,16 @@ public partial class HomePage : UserControl
         {
             var p = pointer.Paragraph;
             if (p != null && !paragraphs.Contains(p))
-            {
                 paragraphs.Add(p);
-            }
             pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
         }
 
         if (paragraphs.Count == 0 && selection.Start.Paragraph != null)
-        {
             paragraphs.Add(selection.Start.Paragraph);
-        }
 
         return paragraphs;
     }
 
-
-    private void NotesRTB_SelectionChanged(object sender, RoutedEventArgs e)
-    {
-        UpdateFormattingButtons();
-    }
-
-    private void UpdateFormattingButtons()
-    {
-        if (NotesRTB == null || BoldBtn == null) return;
-
-        var selection = NotesRTB.Selection;
-        if (selection == null) return;
-
-        object fontWeight = selection.GetPropertyValue(TextElement.FontWeightProperty);
-        BoldBtn.IsChecked = (fontWeight != DependencyProperty.UnsetValue) && (FontWeight)fontWeight == FontWeights.Bold;
-
-        object fontStyle = selection.GetPropertyValue(TextElement.FontStyleProperty);
-        ItalicBtn.IsChecked = (fontStyle != DependencyProperty.UnsetValue) && (FontStyle)fontStyle == FontStyles.Italic;
-
-        object textDecorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
-        if (textDecorations != DependencyProperty.UnsetValue && textDecorations is TextDecorationCollection coll)
-        {
-            UnderlineBtn.IsChecked = coll.Any(d => d.Location == TextDecorationLocation.Underline);
-            StrikethroughBtn.IsChecked = coll.Any(d => d.Location == TextDecorationLocation.Strikethrough);
-        }
-        else
-        {
-            UnderlineBtn.IsChecked = false;
-            StrikethroughBtn.IsChecked = false;
-        }
-
-        object background = selection.GetPropertyValue(TextElement.BackgroundProperty);
-        HighlightBtn.IsChecked = (background != DependencyProperty.UnsetValue && background != null);
-
-        Paragraph p = selection.Start.Paragraph;
-        if (p != null)
-        {
-            BlockquoteBtn.IsChecked = p.BorderThickness.Left > 0;
-        }
-        else
-        {
-            BlockquoteBtn.IsChecked = false;
-        }
-        ChecklistBtn.IsChecked = false;
-
-        UpdateListButtons(selection);
-    }
-
-    private void UpdateListButtons(TextSelection selection)
-    {
-        BulletsBtn.IsChecked = false;
-        NumberingBtn.IsChecked = false;
-
-        Paragraph p = selection.Start.Paragraph;
-        if (p == null) return;
-
-        DependencyObject? parent = p.Parent;
-        while (parent != null)
-        {
-            if (parent is List list)
-            {
-                var style = list.MarkerStyle;
-                if (style == TextMarkerStyle.Disc || style == TextMarkerStyle.Circle || style == TextMarkerStyle.Square)
-                {
-                    BulletsBtn.IsChecked = true;
-                    NumberingBtn.IsChecked = false;
-                }
-                else
-                {
-                    NumberingBtn.IsChecked = true;
-                    BulletsBtn.IsChecked = false;
-                }
-                return;
-            }
-            parent = (parent as FrameworkContentElement)?.Parent;
-        }
-    }
     private void PreventScrollBubbling(object sender, System.Windows.Input.MouseWheelEventArgs e)
     {
         e.Handled = true;

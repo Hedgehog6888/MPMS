@@ -1249,9 +1249,11 @@
                                              Loaded="NotesRichTextBox_Loaded"
                                              SelectionChanged="NotesRTB_SelectionChanged"
                                              BorderThickness="0" AcceptsTab="True" 
-                                             VerticalScrollBarVisibility="Auto" 
+                                             VerticalScrollBarVisibility="Visible"
                                              MouseWheel="PreventScrollBubbling"
-                                             FontSize="13" Foreground="#0F172A" SelectionBrush="#DFE1E6">
+                                             FontSize="13" Foreground="#0F172A" SelectionBrush="#DFE1E6"
+                                             SpellCheck.IsEnabled="False"
+                                             TextOptions.TextFormattingMode="Display">
                                     <RichTextBox.Resources>
                                         <Style TargetType="{x:Type Paragraph}">
                                             <Setter Property="Margin" Value="0,0,0,8"/>

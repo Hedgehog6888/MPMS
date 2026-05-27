@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
     private readonly PageUiStateBinder _ui;
+
+    private CancellationTokenSource _searchDebounce = new();
 
     [ObservableProperty] private string _activeTab = "Materials";
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materials = [];
@@ -145,7 +148,14 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     partial void OnSearchTextChanged(string value)
     {
         PersistActiveTabUi();
-        _ = LoadAsync();
+        _searchDebounce.Cancel();
+        _searchDebounce = new CancellationTokenSource();
+        var ct = _searchDebounce.Token;
+        _ = Task.Delay(350, ct).ContinueWith(t =>
+        {
+            if (t.IsCanceled) return;
+            App.Current.Dispatcher.Invoke(() => _ = LoadAsync());
+        }, TaskScheduler.Default);
     }
 
     partial void OnSelectedMaterialCategoryIdChanged(Guid? value)

@@ -1,5 +1,6 @@
-using System.Text.Json;
 using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace MPMS.Infrastructure;
 
@@ -42,20 +43,21 @@ public static class LocalSettings
 
     private static void SaveSettings()
     {
-        try
+        // Запускаем запись файла в фоновом потоке, чтобы не блокировать UI
+        var snapshot = new Dictionary<string, string>(_settings);
+        _ = Task.Run(() =>
         {
-            var directory = Path.GetDirectoryName(SettingsFilePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            try
             {
-                Directory.CreateDirectory(directory);
-            }
+                var directory = Path.GetDirectoryName(SettingsFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
 
-            var json = JsonSerializer.Serialize(_settings);
-            File.WriteAllText(SettingsFilePath, json);
-        }
-        catch
-        {
-        }
+                var json = JsonSerializer.Serialize(snapshot);
+                File.WriteAllText(SettingsFilePath, json);
+            }
+            catch { }
+        });
     }
 
     public static string Get(string key, string defaultValue = "")

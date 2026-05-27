@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
     private readonly PageUiStateBinder _ui;
     private bool _suppressProjectFilterReload;
+    private CancellationTokenSource _searchDebounce = new();
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
     [ObservableProperty] private ObservableCollection<ProjectTaskGroup> _taskGroups = [];
@@ -50,7 +52,14 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     partial void OnSearchTextChanged(string value)
     {
         _ui.SetString("SearchText", value);
-        _ = LoadAsync();
+        _searchDebounce.Cancel();
+        _searchDebounce = new CancellationTokenSource();
+        var ct = _searchDebounce.Token;
+        _ = Task.Delay(350, ct).ContinueWith(t =>
+        {
+            if (t.IsCanceled) return;
+            App.Current.Dispatcher.Invoke(() => _ = LoadAsync());
+        }, TaskScheduler.Default);
     }
 
     partial void OnStatusFilterChanged(string value)
