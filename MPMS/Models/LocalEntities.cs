@@ -451,13 +451,27 @@ public class LocalStageEquipment : LocalEntity
     [MaxLength(100)] public string? InventoryNumber { get; set; }
 }
 
-public class LocalFile : LocalEntity
+public class LocalFile : LocalEntity, INotifyPropertyChanged
 {
     [MaxLength(255)] public string FileName { get; set; } = string.Empty;
     [MaxLength(1000)] public string FilePath { get; set; } = string.Empty;
     [MaxLength(100)] public string? FileType { get; set; }
     public long FileSize { get; set; }
-    public byte[]? FileData { get; set; }
+
+    private byte[]? _fileData;
+    public byte[]? FileData
+    {
+        get => _fileData;
+        set
+        {
+            if (!ReferenceEquals(_fileData, value))
+            {
+                _fileData = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FileData)));
+            }
+        }
+    }
+
     public Guid UploadedById { get; set; }
     [MaxLength(100)] public string UploadedByName { get; set; } = string.Empty;
     public Guid? ProjectId { get; set; }
@@ -469,6 +483,8 @@ public class LocalFile : LocalEntity
 
     [NotMapped] public string? ProjectName { get; set; }
     [NotMapped] public string? StageName { get; set; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }
 
 /// <summary>Участник проекта — пользователи назначенные на проект (исполнители).</summary>

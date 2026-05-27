@@ -208,19 +208,19 @@ public partial class FilesControlViewModel : ViewModelBase
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
-            IQueryable<LocalFile> query = db.Files;
+            IQueryable<LocalFile> query = db.Files.AsNoTracking();
 
             // Загружаем проект, если указан projectId
             if (_projectId.HasValue)
             {
-                Project = await db.Projects.FindAsync(_projectId.Value);
-                
+                Project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == _projectId.Value);
+
                 // Получаем все этапы проекта через задачи (как в API)
-                var projectTaskIds = await db.Tasks
+                var projectTaskIds = await db.Tasks.AsNoTracking()
                     .Where(t => t.ProjectId == _projectId.Value)
                     .Select(t => t.Id)
                     .ToListAsync();
-                var projectStageIds = await db.TaskStages
+                var projectStageIds = await db.TaskStages.AsNoTracking()
                     .Where(s => projectTaskIds.Contains(s.TaskId))
                     .Select(s => s.Id)
                     .ToListAsync();
@@ -243,11 +243,11 @@ public partial class FilesControlViewModel : ViewModelBase
                 if (userRole == "Administrator" || userRole == "Admin")
                 {
                     // Админ видит файлы проектов, кроме закрытых проектов (файлы этапов не показываются)
-                    var closedProjectIds = db.Projects
+                    var closedProjectIds = await db.Projects.AsNoTracking()
                         .Where(p => p.IsClosed)
                         .Select(p => p.Id)
-                        .ToList();
-                    
+                        .ToListAsync();
+
                     query = query.Where(f => 
                         !f.StageId.HasValue &&
                         (!f.ProjectId.HasValue || !closedProjectIds.Contains(f.ProjectId.Value)));
@@ -259,15 +259,15 @@ public partial class FilesControlViewModel : ViewModelBase
                 }
                 else
                 {
-                    var userProjectIds = db.ProjectMembers
+                    var userProjectIds = await db.ProjectMembers.AsNoTracking()
                         .Where(pm => pm.UserId == userId)
                         .Select(pm => pm.ProjectId)
-                        .ToList();
+                        .ToListAsync();
 
-                    var closedProjectIds = db.Projects
+                    var closedProjectIds = await db.Projects.AsNoTracking()
                         .Where(p => p.IsClosed)
                         .Select(p => p.Id)
-                        .ToList();
+                        .ToListAsync();
 
                     query = query.Where(f =>
                         !f.StageId.HasValue &&
@@ -276,7 +276,30 @@ public partial class FilesControlViewModel : ViewModelBase
                 }
             }
 
-            var files = await query.OrderByDescending(f => f.CreatedAt).ToListAsync();
+            // Тянем только метаданные (без байтов FileData), чтобы первичная загрузка была быстрой.
+            // Байты изображений дозагрузим в фоне после показа списка.
+            var files = await query
+                .OrderByDescending(f => f.CreatedAt)
+                .Select(f => new LocalFile
+                {
+                    Id = f.Id,
+                    FileName = f.FileName,
+                    FilePath = f.FilePath,
+                    FileType = f.FileType,
+                    FileSize = f.FileSize,
+                    FileData = null,
+                    UploadedById = f.UploadedById,
+                    UploadedByName = f.UploadedByName,
+                    ProjectId = f.ProjectId,
+                    TaskId = f.TaskId,
+                    StageId = f.StageId,
+                    CreatedAt = f.CreatedAt,
+                    OriginalCreatedAt = f.OriginalCreatedAt,
+                    Description = f.Description,
+                    IsSynced = f.IsSynced,
+                    LastModifiedLocally = f.LastModifiedLocally
+                })
+                .ToListAsync();
 
             // Оптимизация: загружаем проекты и этапы за один раз
             var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
@@ -370,10 +393,44 @@ public partial class FilesControlViewModel : ViewModelBase
             ApplyFilters();
             OnPropertyChanged(nameof(ImagesCount));
             OnPropertyChanged(nameof(DocumentsCount));
+
+            // Фоновая дозагрузка превью только для изображений (без блокировки UI).
+            _ = LoadImagePreviewsAsync(_cachedImagesFiles.Select(f => f.Id).ToList());
         }
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadImagePreviewsAsync(List<Guid> imageIds)
+    {
+        if (imageIds.Count == 0) return;
+        try
+        {
+            // Грузим батчами, чтобы не держать одно большое подключение к БД и не тянуть сразу все байты.
+            const int batchSize = 12;
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            for (int i = 0; i < imageIds.Count; i += batchSize)
+            {
+                var batch = imageIds.Skip(i).Take(batchSize).ToList();
+                var data = await db.Files.AsNoTracking()
+                    .Where(f => batch.Contains(f.Id))
+                    .Select(f => new { f.Id, f.FileData })
+                    .ToListAsync();
+
+                foreach (var d in data)
+                {
+                    if (d.FileData == null || d.FileData.Length == 0) continue;
+                    var target = _cachedImagesFiles.FirstOrDefault(x => x.Id == d.Id);
+                    if (target != null && target.FileData == null)
+                        target.FileData = d.FileData; // вызовет PropertyChanged, UI подтянет миниатюру
+                }
+            }
+        }
+        catch
+        {
+            // Превью не критичны для работы — глотаем ошибки.
         }
     }
 

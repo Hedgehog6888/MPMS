@@ -10,7 +10,7 @@ namespace MPMS.ViewModels;
 public partial class FilesPageViewModel : ViewModelBase, ILoadable
 {
     public FilesControlViewModel FilesControlVM { get; }
-    private bool _isLoaded = false;
+    private bool _isInitialized;
 
     public FilesPageViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
@@ -23,13 +23,19 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
         FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState);
     }
 
-    public async Task LoadAsync()
+    public Task LoadAsync()
     {
-        if (!_isLoaded)
+        if (!_isInitialized)
         {
+            _isInitialized = true;
             FilesControlVM.Initialize(null);
-            _isLoaded = true;
         }
-        await Task.CompletedTask;
+        else
+        {
+            // Повторное открытие страницы: данные уже есть в памяти,
+            // обновляем их в фоне без показа скелетона.
+            _ = FilesControlVM.LoadFilesAsync();
+        }
+        return Task.CompletedTask;
     }
 }
