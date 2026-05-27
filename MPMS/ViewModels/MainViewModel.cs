@@ -18,6 +18,8 @@ public partial class MainViewModel : ViewModelBase
     private readonly IServiceProvider _sp;
     private readonly DispatcherTimer _onlineTimer;
 
+    public SidebarFooterViewModel SidebarFooter { get; }
+
     [ObservableProperty] private string _currentPage = "Home";
     [ObservableProperty] private bool _isSidebarExpanded = true;
     [ObservableProperty] private bool _isOnline;
@@ -66,12 +68,13 @@ public partial class MainViewModel : ViewModelBase
         string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
 
-    public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp)
+    public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp, SidebarFooterViewModel sidebarFooter)
     {
         _auth = auth;
         _api = api;
         _sync = sync;
         _sp = sp;
+        SidebarFooter = sidebarFooter;
 
         // Загружаем сохранённое состояние боковой панели
         _isSidebarExpanded = LocalSettings.GetBool("SidebarExpanded", true);
@@ -90,6 +93,7 @@ public partial class MainViewModel : ViewModelBase
         _sync.OnlineStatusChanged += OnSyncStatusChanged;
 
         _ = RefreshAvatarAsync();
+        _ = SidebarFooter.RefreshStatsAsync();
         Navigate("Home");
     }
 
@@ -288,6 +292,7 @@ public partial class MainViewModel : ViewModelBase
         IsBusy = false;
         IsSyncing = false;
         await RefreshSyncCountsAsync();
+        await SidebarFooter.RefreshStatsAsync();
     }
 
     [RelayCommand]
@@ -318,6 +323,7 @@ public partial class MainViewModel : ViewModelBase
     public void RefreshUserInfoAndNavigateHome()
     {
         RefreshUserInfo();
+        _ = SidebarFooter.RefreshStatsAsync();
         Navigate("Home");
     }
 

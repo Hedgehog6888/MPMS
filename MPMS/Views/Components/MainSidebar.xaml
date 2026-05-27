@@ -4,11 +4,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:MPMS.ViewModels"
+             xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance Type=vm:MainViewModel}">
     
     <UserControl.Resources>
+        <ControlTemplate x:Key="SidebarSlimProgressBar" TargetType="ProgressBar">
+            <Grid x:Name="ProgressRoot" SnapsToDevicePixels="True">
+                <Border Background="{TemplateBinding Background}" CornerRadius="4"/>
+                <Border x:Name="PART_Track" Background="Transparent" CornerRadius="4"/>
+                <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
+                        CornerRadius="4" HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
+            </Grid>
+        </ControlTemplate>
+
         <!-- Стиль кнопки навигации (светлая тема, белая боковая панель) -->
         <Style x:Key="NavButton" TargetType="RadioButton">
             <Setter Property="Background"     Value="Transparent"/>
@@ -51,7 +61,13 @@
     <Border Background="White"
             BorderBrush="{StaticResource BorderBrush}"
             BorderThickness="0,0,1,0">
-        <StackPanel Margin="0,16,0,0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,16,0,0">
             <!-- Главная -->
             <RadioButton IsChecked="{Binding CurrentPage, Converter={StaticResource EqualityToBool}, ConverterParameter=Home, Mode=OneWay}"
                          Style="{StaticResource NavButton}"
@@ -396,5 +412,178 @@
                 </StackPanel>
             </RadioButton>
         </StackPanel>
+
+        <!-- ── Нижняя панель (ширина как у кнопок навигации: Margin 8,2) ── -->
+        <Border Grid.Row="1"
+                DataContext="{Binding SidebarFooter}"
+                Margin="8,2,8,12"
+                Background="White"
+                CornerRadius="6"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1"
+                Padding="0,6"
+                SnapsToDevicePixels="True">
+
+            <StackPanel>
+            <!-- Статистика -->
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsStatsMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый sidebar: три категории -->
+                <Grid Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding StatsImages}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                                   Text="Изображения"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding StatsDocuments}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                                   Text="Документы"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{Binding StatsReports}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                                   Text="Отчёты"/>
+                    </StackPanel>
+                </Grid>
+                <!-- Узкий sidebar: общее количество -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <TextBlock Text="{Binding StatsTotalFiles}" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Файлы" FontSize="9" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Загрузка -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsUploadingMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый: текст + линейный прогресс -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding UploadProgressTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000"
+                               Margin="8,0,8,4" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding UploadCurrentFileNameDisplay}" FontSize="10"
+                               Foreground="#000000"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" Margin="8,0,8,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSingleFileUpload}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Value="{Binding UploadProgressPercent}" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="{StaticResource PrimaryBrush}"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий: круговой прогресс -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="{Binding UploadProgressPercent}"
+                    ProgressBrush="{StaticResource PrimaryBrush}"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding UploadCompleted}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#000000" HorizontalAlignment="Center" LineHeight="12"/>
+                            <TextBlock Text="из" FontSize="7" Foreground="#000000"
+                                       HorizontalAlignment="Center" Margin="0,-1,0,-1"/>
+                            <TextBlock Text="{Binding UploadTotal}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#000000" HorizontalAlignment="Center" LineHeight="12"/>
+                        </StackPanel>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
+
+            <!-- Итог загрузки -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsUploadSummaryMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding UploadSummaryTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000" HorizontalAlignment="Center" Margin="8,0,8,4"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding UploadCurrentFileNameDisplay}" FontSize="10"
+                               Foreground="#000000"
+                               TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" Margin="8,0,8,4">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSingleFileUpload}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar Value="100" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="{StaticResource SuccessBrush}"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="100"
+                    ProgressBrush="{StaticResource SuccessBrush}"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <TextBlock Text="{Binding UploadCompleted}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
+            </StackPanel>
+        </Border>
+
+        </Grid>
     </Border>
 </UserControl>

@@ -833,40 +833,5 @@
             </controls:SearchFilterBarControl>
         </Grid>
 
-        <!-- ── Уведомление об успехе (только в Full / ScrollOnly; на FilesPage TabsOnly не дублирует) ── -->
-        <Border x:Name="SuccessToast" 
-                Grid.Row="0" Grid.RowSpan="2"
-                Background="#F0FDF4" 
-                BorderBrush="#86EFAC" 
-                BorderThickness="1"
-                CornerRadius="8" 
-                Padding="12,8" 
-                Margin="24,0,24,16"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Center"
-                MinWidth="320"
-                MaxWidth="600"
-                Panel.ZIndex="1000">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSuccessToastVisible}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.TabsOnly}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-            <TextBlock Text="{Binding SuccessToastMessage}" 
-                       Foreground="#15803D" 
-                       FontSize="12"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"
-                       VerticalAlignment="Center"/>
-        </Border>
-
     </Grid>
 </UserControl>

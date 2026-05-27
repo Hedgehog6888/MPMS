@@ -18,9 +18,10 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
         IApiService api,
         IUserSettingsService settings,
         ISyncService sync,
-        IPageUiStateStore uiState)
+        IPageUiStateStore uiState,
+        SidebarFooterViewModel sidebarFooter)
     {
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState, sidebarFooter);
     }
 
     public Task LoadAsync()

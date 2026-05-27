@@ -130,6 +130,7 @@ public partial class App : Application
         services.AddTransient<LoginWindow>();
         services.AddTransient<LoginViewModel>();
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<SidebarFooterViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddTransient(sp => new ConfirmDeleteDialog());
     }

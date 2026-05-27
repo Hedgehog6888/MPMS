@@ -23,6 +23,7 @@ public partial class FilesControlViewModel : ViewModelBase
     private readonly IUserSettingsService _settings;
     private readonly ISyncService _sync;
     private readonly IPageUiStateStore _uiState;
+    private readonly SidebarFooterViewModel _sidebarFooter;
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _searchText = string.Empty;
@@ -31,8 +32,6 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private string _documentsViewMode = "List";
     [ObservableProperty] private string _extensionFilter = "Все";
     [ObservableProperty] private bool _isDraggingOver;
-    [ObservableProperty] private bool _isSuccessToastVisible;
-    [ObservableProperty] private string _successToastMessage = string.Empty;
     [ObservableProperty] private bool _isWorkerRole;
     [ObservableProperty] private LocalProject? _project;
 
@@ -76,7 +75,8 @@ public partial class FilesControlViewModel : ViewModelBase
         IApiService api,
         IUserSettingsService settings,
         ISyncService sync,
-        IPageUiStateStore uiState)
+        IPageUiStateStore uiState,
+        SidebarFooterViewModel sidebarFooter)
     {
         _dbFactory = dbFactory;
         _auth = auth;
@@ -84,6 +84,7 @@ public partial class FilesControlViewModel : ViewModelBase
         _settings = settings;
         _sync = sync;
         _uiState = uiState;
+        _sidebarFooter = sidebarFooter;
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
         _isWorkerRole = auth.UserRole == "Worker" || auth.UserRole == "Работник";
@@ -236,44 +237,7 @@ public partial class FilesControlViewModel : ViewModelBase
             else
             {
                 Project = null;
-                // Фильтрация по ролям
-                var userRole = _auth.UserRole;
-                var userId = _auth.UserId;
-
-                if (userRole == "Administrator" || userRole == "Admin")
-                {
-                    // Админ видит файлы проектов, кроме закрытых проектов (файлы этапов не показываются)
-                    var closedProjectIds = await db.Projects.AsNoTracking()
-                        .Where(p => p.IsClosed)
-                        .Select(p => p.Id)
-                        .ToListAsync();
-
-                    query = query.Where(f => 
-                        !f.StageId.HasValue &&
-                        (!f.ProjectId.HasValue || !closedProjectIds.Contains(f.ProjectId.Value)));
-                }
-                else if (userRole == "Worker" || userRole == "Работник")
-                {
-                    // Работники не видят файлы в общем списке - только на своих этапах
-                    query = query.Where(f => false);
-                }
-                else
-                {
-                    var userProjectIds = await db.ProjectMembers.AsNoTracking()
-                        .Where(pm => pm.UserId == userId)
-                        .Select(pm => pm.ProjectId)
-                        .ToListAsync();
-
-                    var closedProjectIds = await db.Projects.AsNoTracking()
-                        .Where(p => p.IsClosed)
-                        .Select(p => p.Id)
-                        .ToListAsync();
-
-                    query = query.Where(f =>
-                        !f.StageId.HasValue &&
-                        (!f.ProjectId.HasValue || 
-                        (userProjectIds.Contains(f.ProjectId.Value) && !closedProjectIds.Contains(f.ProjectId.Value))));
-                }
+                query = await AvailableFilesQuery.ApplyGlobalFilterAsync(query, db, _auth);
             }
 
             // Тянем только метаданные (без байтов FileData), чтобы первичная загрузка была быстрой.
@@ -396,6 +360,7 @@ public partial class FilesControlViewModel : ViewModelBase
 
             // Фоновая дозагрузка превью только для изображений (без блокировки UI).
             _ = LoadImagePreviewsAsync(_cachedImagesFiles.Select(f => f.Id).ToList());
+            _ = _sidebarFooter.RefreshStatsAsync();
         }
         finally
         {
@@ -546,21 +511,26 @@ public partial class FilesControlViewModel : ViewModelBase
 
     private async Task ProcessFilesInternalAsync(IEnumerable<string> filePaths)
     {
-        IsLoading = true;
+        var paths = filePaths.Where(File.Exists).ToList();
+        if (paths.Count == 0) return;
+
         var successfullyUploaded = 0;
         var skippedFiles = new List<string>();
+        string? lastUploadedName = null;
+
+        _sidebarFooter.BeginUpload(paths.Count);
 
         try
         {
             await using var db = await _dbFactory.CreateDbContextAsync();
 
-            foreach (var filePath in filePaths)
+            for (var fileIndex = 0; fileIndex < paths.Count; fileIndex++)
             {
-                if (!File.Exists(filePath)) continue;
-
+                var filePath = paths[fileIndex];
                 var fileInfo = new FileInfo(filePath);
-                byte[] fileData;
+                _sidebarFooter.SetCurrentFile(fileInfo.Name, fileIndex);
 
+                byte[] fileData;
                 try
                 {
                     fileData = await File.ReadAllBytesAsync(filePath);
@@ -605,7 +575,6 @@ public partial class FilesControlViewModel : ViewModelBase
                     _ => "файл"
                 };
 
-                // Получаем названия проекта, задачи и этапа для лога
                 string? projectName = null;
                 string? taskName = null;
                 string? stageName = null;
@@ -640,10 +609,11 @@ public partial class FilesControlViewModel : ViewModelBase
                     : $"Загружен {entityLabel} «{newFile.FileName}» {locationText}";
                 await LogActivityAsync(db, logText, entityType, newFile.Id, ActivityActionKind.Created);
 
+                await EnrichAndAddFileToUiAsync(db, newFile, projectName, stageName);
                 successfullyUploaded++;
+                lastUploadedName = newFile.FileName;
+                _sidebarFooter.ReportFileCompleted(successfullyUploaded);
             }
-
-            await LoadFilesAsync();
 
             if (skippedFiles.Count > 0)
             {
@@ -656,20 +626,90 @@ public partial class FilesControlViewModel : ViewModelBase
             }
 
             if (successfullyUploaded > 0)
-            {
-                ShowSuccessToast(successfullyUploaded == 1 ? "Файл успешно загружен" : "Файлы успешно загружены");
-            }
+                _sidebarFooter.CompleteUpload(successfullyUploaded, lastUploadedName);
+            else
+                _sidebarFooter.CancelUpload();
         }
         catch (Exception ex)
         {
+            _sidebarFooter.CancelUpload();
             var msg = ex.Message;
             if (ex.InnerException != null) msg += $"\nInner: {ex.InnerException.Message}";
             MessageBox.Show($"Ошибка при загрузке файлов: {msg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        finally
+    }
+
+    private async Task EnrichAndAddFileToUiAsync(LocalDbContext db, LocalFile newFile, string? projectName, string? stageName)
+    {
+        if (!string.IsNullOrEmpty(projectName))
+            newFile.ProjectName = projectName;
+        else if (_projectId.HasValue && Project != null)
+            newFile.ProjectName = Project.Name;
+        else if (newFile.ProjectId.HasValue)
         {
-            IsLoading = false;
+            var p = await db.Projects.AsNoTracking()
+                .Where(x => x.Id == newFile.ProjectId.Value)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync();
+            if (p != null) newFile.ProjectName = p;
         }
+
+        if (!string.IsNullOrEmpty(stageName))
+            newFile.StageName = stageName;
+        else if (newFile.StageId.HasValue)
+        {
+            var stage = await db.TaskStages.AsNoTracking()
+                .Where(s => s.Id == newFile.StageId.Value)
+                .Select(s => new { s.Name, s.TaskId })
+                .FirstOrDefaultAsync();
+            if (stage != null)
+            {
+                newFile.StageName = stage.Name;
+                var taskProjectId = await db.Tasks.AsNoTracking()
+                    .Where(t => t.Id == stage.TaskId)
+                    .Select(t => t.ProjectId)
+                    .FirstOrDefaultAsync();
+                if (taskProjectId != Guid.Empty)
+                {
+                    _stageToProjectMap[newFile.StageId.Value] = taskProjectId;
+                    if (string.IsNullOrEmpty(newFile.ProjectName))
+                    {
+                        var pname = await db.Projects.AsNoTracking()
+                            .Where(p => p.Id == taskProjectId)
+                            .Select(p => p.Name)
+                            .FirstOrDefaultAsync();
+                        if (pname != null) newFile.ProjectName = pname;
+                    }
+                }
+            }
+        }
+
+        AllFiles.Insert(0, newFile);
+        if (IsImage(newFile.FileName))
+            _cachedImagesFiles.Insert(0, newFile);
+        else
+            _cachedDocumentsFiles.Insert(0, newFile);
+
+        if (!_projectId.HasValue && !_stageId.HasValue && newFile.ProjectId.HasValue
+            && !string.IsNullOrWhiteSpace(newFile.ProjectName))
+        {
+            if (!ProjectFilterOptions.Any(o => o.Id == newFile.ProjectId))
+            {
+                var opts = ProjectFilterOptions.ToList();
+                opts.Add(new ProjectFilterOption(newFile.ProjectId, newFile.ProjectName));
+                ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(
+                    opts.OrderBy(o => o.Id == null).ThenBy(o => o.Name));
+            }
+        }
+
+        UpdateExtensionFilterOptions();
+        ApplyFilters();
+        OnPropertyChanged(nameof(ImagesCount));
+        OnPropertyChanged(nameof(DocumentsCount));
+        OnPropertyChanged(nameof(FilesCount));
+
+        if (IsImage(newFile.FileName))
+            _ = LoadImagePreviewsAsync([newFile.Id]);
     }
 
     [RelayCommand]
@@ -996,7 +1036,6 @@ public partial class FilesControlViewModel : ViewModelBase
 
         await db.SaveChangesAsync();
         await LoadFilesAsync();
-        ShowSuccessToast("Документ сохранен");
     }
 
     private async Task SaveEditedPhotoAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string mpmsPath)
@@ -1021,7 +1060,6 @@ public partial class FilesControlViewModel : ViewModelBase
 
         await db.SaveChangesAsync();
         await LoadFilesAsync();
-        ShowSuccessToast("Фото сохранено");
     }
 
     [RelayCommand]
@@ -1078,21 +1116,12 @@ public partial class FilesControlViewModel : ViewModelBase
             try
             {
                 await File.WriteAllBytesAsync(dialog.FileName, file.FileData);
-                ShowSuccessToast("Файл успешно сохранён");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при сохранении файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-    }
-
-    private async void ShowSuccessToast(string message)
-    {
-        SuccessToastMessage = message;
-        IsSuccessToastVisible = true;
-        await Task.Delay(7000);
-        IsSuccessToastVisible = false;
     }
 
     private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)

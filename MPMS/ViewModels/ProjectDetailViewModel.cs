@@ -85,13 +85,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         IAuthService auth,
         IApiService api,
         IUserSettingsService settings,
-        IPageUiStateStore uiState)
+        IPageUiStateStore uiState,
+        SidebarFooterViewModel sidebarFooter)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
         _settings = settings;
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState, sidebarFooter);
         _stageViewMode = _settings.GetValue("StagesViewMode", "List");
     }
 
