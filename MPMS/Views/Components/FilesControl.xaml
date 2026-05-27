@@ -773,11 +773,21 @@
                     </Style>
                 </controls:SearchFilterBarControl.Style>
                 <controls:SearchFilterBarControl.Filters>
-                    <!-- Фильтр расширений -->
-                    <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
-                               SelectedItem="{Binding ExtensionFilter}"
-                               Style="{StaticResource FormCombo}"
-                               Width="160" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Фильтр проектов -->
+                        <ComboBox ItemsSource="{Binding ProjectFilterOptions}"
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding ProjectFilter}"
+                                  Visibility="{Binding IsProjectFilterVisible, Converter={StaticResource BoolToVis}}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="180" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <!-- Фильтр расширений -->
+                        <ComboBox ItemsSource="{Binding ExtensionFilterOptions}"
+                                   SelectedItem="{Binding ExtensionFilter}"
+                                   Style="{StaticResource FormCombo}"
+                                   Width="160" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </controls:SearchFilterBarControl.Filters>
             </controls:SearchFilterBarControl>
         </Grid>

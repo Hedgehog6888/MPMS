@@ -13,6 +13,7 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly PageUiStateBinder _ui;
     private CancellationTokenSource _loadCts = new();
 
     [ObservableProperty] private ObservableCollection<LocalProject> _projects = [];
@@ -22,16 +23,29 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
 
     private List<LocalProject> _allProjects = [];
 
-    public ClosedProjectsViewModel(IDbContextFactory<LocalDbContext> dbFactory,
-        ISyncService sync, IAuthService auth)
+    public ClosedProjectsViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.ClosedProjects);
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        SearchText = _ui.GetString("SearchText");
+        StartDateFilter = _ui.GetDate("StartDateFilter");
+        EndDateFilter = _ui.GetDate("EndDateFilter");
     }
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         _loadCts.Cancel();
         _loadCts = new CancellationTokenSource();
         var ct = _loadCts.Token;
@@ -115,16 +129,19 @@ public partial class ClosedProjectsViewModel : ViewModelBase, ILoadable
 
     partial void OnSearchTextChanged(string value)
     {
+        _ui.SetString("SearchText", value);
         ApplySearch();
     }
 
     partial void OnStartDateFilterChanged(DateOnly? value)
     {
+        _ui.SetDate("StartDateFilter", value);
         ApplySearch();
     }
 
     partial void OnEndDateFilterChanged(DateOnly? value)
     {
+        _ui.SetDate("EndDateFilter", value);
         ApplySearch();
     }
 

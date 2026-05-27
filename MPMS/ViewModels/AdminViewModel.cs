@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.Views;
@@ -90,6 +91,7 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
     private readonly IAuthService _auth;
     private readonly IApiService _api;
     private readonly ISyncService _sync;
+    private readonly PageUiStateBinder _ui;
 
     // События для открытия панелей (обрабатываются в AdminPage.xaml.cs)
     public event Action<AdminUserRow>? OpenUserInfoRequested;
@@ -184,16 +186,99 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
 
     // ── Помощники блокировки/разблокировки
 
-    public AdminViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, ISyncService sync)
+    public AdminViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        IAuthService auth,
+        IApiService api,
+        ISyncService sync,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _auth = auth;
         _api = api;
         _sync = sync;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Admin);
     }
+
+    private void SaveTabUi(string tab)
+    {
+        if (_ui.IsRestoring) return;
+        switch (tab)
+        {
+            case "Users":
+                _ui.SetString("Users:Search", UserSearchText);
+                _ui.SetString("Users:RoleFilter", UserRoleFilter);
+                _ui.SetString("Users:StatusFilter", UserStatusFilter);
+                break;
+            case "Archive":
+                _ui.SetString("Archive:Search", ArchiveSearchText);
+                _ui.SetString("Archive:Tab", ArchiveTab);
+                break;
+            case "History":
+                _ui.SetString("History:Search", HistorySearchText);
+                _ui.SetString("History:ActionFilter", HistoryActionFilter);
+                _ui.SetString("History:UserFilter", HistoryUserFilter);
+                break;
+            case "Activity":
+                _ui.SetString("Activity:Search", ActivitySearchText);
+                _ui.SetString("Activity:UserFilter", ActivityUserFilter);
+                _ui.SetString("Activity:EventFilter", ActivityEventFilter);
+                break;
+        }
+    }
+
+    private void RestoreTabUi(string tab)
+    {
+        switch (tab)
+        {
+            case "Users":
+                UserSearchText = _ui.GetString("Users:Search");
+                UserRoleFilter = _ui.GetString("Users:RoleFilter", "Все");
+                UserStatusFilter = _ui.GetString("Users:StatusFilter", "Все");
+                break;
+            case "Archive":
+                ArchiveSearchText = _ui.GetString("Archive:Search");
+                ArchiveTab = _ui.GetString("Archive:Tab", "Projects");
+                break;
+            case "History":
+                HistorySearchText = _ui.GetString("History:Search");
+                HistoryActionFilter = _ui.GetString("History:ActionFilter", "Все");
+                HistoryUserFilter = _ui.GetString("History:UserFilter", "Все");
+                break;
+            case "Activity":
+                ActivitySearchText = _ui.GetString("Activity:Search");
+                ActivityUserFilter = _ui.GetString("Activity:UserFilter", "Все");
+                ActivityEventFilter = _ui.GetString("Activity:EventFilter", "Все");
+                break;
+        }
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        var tab = _ui.GetString("CurrentTab", "Users");
+        CurrentTab = tab is "Archive" or "History" or "Activity" ? tab : "Users";
+        RestoreTabUi(CurrentTab);
+    }
+
+    partial void OnCurrentTabChanging(string oldValue, string newValue)
+    {
+        if (!string.IsNullOrEmpty(oldValue))
+            SaveTabUi(oldValue);
+    }
+
+    partial void OnCurrentTabChanged(string value)
+    {
+        _ui.SetString("CurrentTab", value);
+        using var _ = _ui.BeginRestore();
+        RestoreTabUi(value);
+    }
+
+    partial void OnArchiveTabChanged(string value) => _ui.SetString("Archive:Tab", value);
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         IsBusy = true;
         try
         {
@@ -539,7 +624,11 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         });
     }
 
-    partial void OnArchiveSearchTextChanged(string value) => ApplyArchiveFilter();
+    partial void OnArchiveSearchTextChanged(string value)
+    {
+        _ui.SetString("Archive:Search", value);
+        ApplyArchiveFilter();
+    }
 
     private void ApplyArchiveFilter()
     {
@@ -906,9 +995,23 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         });
     }
 
-    partial void OnHistorySearchTextChanged(string value) => ApplyHistoryFilter();
-    partial void OnHistoryActionFilterChanged(string value) => ApplyHistoryFilter();
-    partial void OnHistoryUserFilterChanged(string value) => ApplyHistoryFilter();
+    partial void OnHistorySearchTextChanged(string value)
+    {
+        _ui.SetString("History:Search", value);
+        ApplyHistoryFilter();
+    }
+
+    partial void OnHistoryActionFilterChanged(string value)
+    {
+        _ui.SetString("History:ActionFilter", value);
+        ApplyHistoryFilter();
+    }
+
+    partial void OnHistoryUserFilterChanged(string value)
+    {
+        _ui.SetString("History:UserFilter", value);
+        ApplyHistoryFilter();
+    }
 
     private void ApplyHistoryFilter()
     {
@@ -1014,9 +1117,23 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         });
     }
 
-    partial void OnActivitySearchTextChanged(string value) => ApplyActivityFilter();
-    partial void OnActivityUserFilterChanged(string value) => ApplyActivityFilter();
-    partial void OnActivityEventFilterChanged(string value) => ApplyActivityFilter();
+    partial void OnActivitySearchTextChanged(string value)
+    {
+        _ui.SetString("Activity:Search", value);
+        ApplyActivityFilter();
+    }
+
+    partial void OnActivityUserFilterChanged(string value)
+    {
+        _ui.SetString("Activity:UserFilter", value);
+        ApplyActivityFilter();
+    }
+
+    partial void OnActivityEventFilterChanged(string value)
+    {
+        _ui.SetString("Activity:EventFilter", value);
+        ApplyActivityFilter();
+    }
 
     private void ApplyActivityFilter()
     {

@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
+using MPMS.Infrastructure;
 
 namespace MPMS.Controls;
 
@@ -42,7 +44,8 @@ public partial class SearchFilterBarControl : UserControl
 
     public static readonly DependencyProperty ScrollTargetProperty =
         DependencyProperty.Register(nameof(ScrollTarget), typeof(ScrollViewer),
-            typeof(SearchFilterBarControl), new PropertyMetadata(null));
+            typeof(SearchFilterBarControl),
+            new PropertyMetadata(null, OnScrollTargetChanged));
 
 
     /// <summary>Текст поиска — биндится к VM.SearchText.</summary>
@@ -97,15 +100,33 @@ public partial class SearchFilterBarControl : UserControl
     public SearchFilterBarControl()
     {
         InitializeComponent();
+        PreviewMouseWheel += OnFilterBarPreviewMouseWheel;
+    }
 
-        PreviewMouseWheel += (_, e) =>
-        {
-            if (ScrollTarget is { } sv)
-            {
-                sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta / 3.0);
-                e.Handled = true;
-            }
-        };
+    private static void OnScrollTargetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not SearchFilterBarControl bar) return;
+        if (e.OldValue is ScrollViewer oldSv)
+            oldSv.PreviewMouseWheel -= bar.OnScrollTargetPreviewMouseWheel;
+        if (e.NewValue is ScrollViewer newSv)
+            newSv.PreviewMouseWheel += bar.OnScrollTargetPreviewMouseWheel;
+    }
+
+    private void OnFilterBarPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (FormComboHelpers.IsMouseWheelOverOpenComboBox(e)
+            || FormComboHelpers.HasAnyDropDownOpen(FiltersPresenter))
+            return;
+
+        if (ScrollTarget is not { } sv) return;
+        sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta / 3.0);
+        e.Handled = true;
+    }
+
+    private void OnScrollTargetPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (FormComboHelpers.HasAnyDropDownOpen(FiltersPresenter))
+            e.Handled = true;
     }
 
 

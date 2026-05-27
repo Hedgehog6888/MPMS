@@ -12,9 +12,15 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
     public FilesControlViewModel FilesControlVM { get; }
     private bool _isLoaded = false;
 
-    public FilesPageViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
+    public FilesPageViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        IAuthService auth,
+        IApiService api,
+        IUserSettingsService settings,
+        ISyncService sync,
+        IPageUiStateStore uiState)
     {
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState);
     }
 
     public async Task LoadAsync()

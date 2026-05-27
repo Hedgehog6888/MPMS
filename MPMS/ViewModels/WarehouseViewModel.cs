@@ -14,6 +14,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly PageUiStateBinder _ui;
 
     [ObservableProperty] private string _activeTab = "Materials";
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materials = [];
@@ -49,11 +50,16 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     public bool CanDeletePermanently =>
         _auth.UserRole is "Administrator" or "Admin";
 
-    public WarehouseViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
+    public WarehouseViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Warehouse);
     }
 
     private static bool ShouldBeUnavailable(EquipmentCondition condition) =>
@@ -81,43 +87,124 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
     private static bool IsLockedByStage(LocalEquipment equipment) =>
         equipment.CheckedOutTaskId.HasValue && !equipment.IsWrittenOff;
 
-    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
+    partial void OnSearchTextChanged(string value)
+    {
+        PersistActiveTabUi();
+        _ = LoadAsync();
+    }
 
     partial void OnSelectedMaterialCategoryIdChanged(Guid? value)
     {
         if (_suppressWarehouseFilterReload) return;
+        _ui.SetGuid(PageUiStateBinder.TabField("Materials", "CategoryId"), value);
         _ = LoadAsync();
     }
 
     partial void OnSelectedEquipmentCategoryIdChanged(Guid? value)
     {
         if (_suppressWarehouseFilterReload) return;
+        _ui.SetGuid(PageUiStateBinder.TabField("Equipment", "CategoryId"), value);
         _ = LoadAsync();
     }
 
-    partial void OnLifecycleFilterChanged(string value) => _ = LoadAsync();
+    partial void OnLifecycleFilterChanged(string value)
+    {
+        PersistActiveTabUi();
+        _ = LoadAsync();
+    }
 
     partial void OnMaterialStockFilterChanged(string value)
     {
         if (_suppressWarehouseFilterReload) return;
+        _ui.SetString(PageUiStateBinder.TabField("Materials", "StockFilter"), value);
         _ = LoadAsync();
     }
 
     partial void OnEquipmentStatusFilterChanged(string value)
     {
         if (_suppressWarehouseFilterReload) return;
+        _ui.SetString(PageUiStateBinder.TabField("Equipment", "StatusFilter"), value);
         _ = LoadAsync();
+    }
+
+    partial void OnActiveTabChanging(string oldValue, string newValue)
+    {
+        if (!string.IsNullOrEmpty(oldValue))
+            SaveTabUi(oldValue);
     }
 
     partial void OnActiveTabChanged(string value)
     {
-        // Мы НЕ сбрасываем SelectedMaterialCategoryId / SelectedEquipmentCategoryId,
-        // чтобы при возвращении на вкладку фильтр сохранялся.
+        _ui.SetString("ActiveTab", value);
+        RestoreTabUi(value);
         _ = LoadAsync();
+    }
+
+    private void PersistActiveTabUi()
+    {
+        SaveTabUi(ActiveTab);
+    }
+
+    private void SaveTabUi(string tab)
+    {
+        if (_ui.IsRestoring) return;
+        _ui.SetString(PageUiStateBinder.TabField(tab, "SearchText"), SearchText);
+        _ui.SetString(PageUiStateBinder.TabField(tab, "LifecycleFilter"), LifecycleFilter);
+        if (tab == "Materials")
+        {
+            _ui.SetGuid(PageUiStateBinder.TabField(tab, "CategoryId"), SelectedMaterialCategoryId);
+            _ui.SetString(PageUiStateBinder.TabField(tab, "StockFilter"), MaterialStockFilter);
+        }
+        else if (tab == "Equipment")
+        {
+            _ui.SetGuid(PageUiStateBinder.TabField(tab, "CategoryId"), SelectedEquipmentCategoryId);
+            _ui.SetString(PageUiStateBinder.TabField(tab, "StatusFilter"), EquipmentStatusFilter);
+        }
+    }
+
+    private void RestoreTabUi(string tab)
+    {
+        _suppressWarehouseFilterReload = true;
+        try
+        {
+            SearchText = _ui.GetString(PageUiStateBinder.TabField(tab, "SearchText"));
+            LifecycleFilter = _ui.GetString(PageUiStateBinder.TabField(tab, "LifecycleFilter"), "Все");
+            if (tab == "Materials")
+            {
+                SelectedMaterialCategoryId = _ui.GetGuid(PageUiStateBinder.TabField(tab, "CategoryId"));
+                MaterialStockFilter = _ui.GetString(PageUiStateBinder.TabField(tab, "StockFilter"), "Все");
+            }
+            else if (tab == "Equipment")
+            {
+                SelectedEquipmentCategoryId = _ui.GetGuid(PageUiStateBinder.TabField(tab, "CategoryId"));
+                EquipmentStatusFilter = _ui.GetString(PageUiStateBinder.TabField(tab, "StatusFilter"), "Все");
+            }
+        }
+        finally
+        {
+            _suppressWarehouseFilterReload = false;
+        }
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        _suppressWarehouseFilterReload = true;
+        try
+        {
+            var tab = _ui.GetString("ActiveTab", "Materials");
+            ActiveTab = tab is "Equipment" ? "Equipment" : "Materials";
+            RestoreTabUi(ActiveTab);
+        }
+        finally
+        {
+            _suppressWarehouseFilterReload = false;
+        }
     }
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         // Загружаем категории только если они еще не загружены или нужно обновить.

@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
+using MPMS.Services;
 using MPMS.Views;
 using MPMS.Views.Overlays;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,7 @@ namespace MPMS.ViewModels;
 public partial class CatalogsViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
+    private readonly PageUiStateBinder _ui;
 
     // Search texts
     [ObservableProperty] private string _workTypeSearchText = string.Empty;
@@ -34,13 +37,25 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
 
     public List<string> WorkTypeCategoryFilterOptions => new() { "Все категории" };
 
-    public CatalogsViewModel(IDbContextFactory<LocalDbContext> dbFactory)
+    public CatalogsViewModel(IDbContextFactory<LocalDbContext> dbFactory, IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Catalogs);
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        WorkTypeSearchText = _ui.GetString("WorkTypeSearchText");
+        CategorySearchText = _ui.GetString("CategorySearchText");
+        EquipmentCategorySearchText = _ui.GetString("EquipmentCategorySearchText");
+        MaterialCategorySearchText = _ui.GetString("MaterialCategorySearchText");
+        WorkTypeCategoryFilter = _ui.GetString("WorkTypeCategoryFilter", "Все категории");
     }
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         await LoadWorkTypesAsync();
         await LoadWorkTypeCategoriesAsync();
         await LoadEquipmentCategoriesAsync();
@@ -115,12 +130,35 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
         ApplyMaterialCategoryFilter();
     }
 
-    // Filter methods called when search text changes
-    partial void OnWorkTypeSearchTextChanged(string value) => ApplyWorkTypeFilter();
-    partial void OnWorkTypeCategoryFilterChanged(string value) => ApplyWorkTypeFilter();
-    partial void OnCategorySearchTextChanged(string value) => ApplyWorkTypeCategoryFilter();
-    partial void OnEquipmentCategorySearchTextChanged(string value) => ApplyEquipmentCategoryFilter();
-    partial void OnMaterialCategorySearchTextChanged(string value) => ApplyMaterialCategoryFilter();
+    partial void OnWorkTypeSearchTextChanged(string value)
+    {
+        _ui.SetString("WorkTypeSearchText", value);
+        ApplyWorkTypeFilter();
+    }
+
+    partial void OnWorkTypeCategoryFilterChanged(string value)
+    {
+        _ui.SetString("WorkTypeCategoryFilter", value);
+        ApplyWorkTypeFilter();
+    }
+
+    partial void OnCategorySearchTextChanged(string value)
+    {
+        _ui.SetString("CategorySearchText", value);
+        ApplyWorkTypeCategoryFilter();
+    }
+
+    partial void OnEquipmentCategorySearchTextChanged(string value)
+    {
+        _ui.SetString("EquipmentCategorySearchText", value);
+        ApplyEquipmentCategoryFilter();
+    }
+
+    partial void OnMaterialCategorySearchTextChanged(string value)
+    {
+        _ui.SetString("MaterialCategorySearchText", value);
+        ApplyMaterialCategoryFilter();
+    }
 
     private void ApplyWorkTypeFilter()
     {

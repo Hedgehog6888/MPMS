@@ -15,6 +15,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly PageUiStateBinder _ui;
     private bool _suppressProjectFilterReload;
 
     [ObservableProperty] private ObservableCollection<LocalTask> _tasks = [];
@@ -33,24 +34,64 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
     public IReadOnlyList<string> PriorityOptions { get; } =
         ["Все", "Низкий", "Средний", "Высокий", "Критический"];
 
-    public TasksViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
+    public TasksViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Tasks);
     }
     private bool CanMarkTaskDeletion() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
-    partial void OnSearchTextChanged(string value) => _ = LoadAsync();
-    partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
-    partial void OnPriorityFilterChanged(string value) => _ = LoadAsync();
+    partial void OnSearchTextChanged(string value)
+    {
+        _ui.SetString("SearchText", value);
+        _ = LoadAsync();
+    }
+
+    partial void OnStatusFilterChanged(string value)
+    {
+        _ui.SetString("StatusFilter", value);
+        _ = LoadAsync();
+    }
+
+    partial void OnPriorityFilterChanged(string value)
+    {
+        _ui.SetString("PriorityFilter", value);
+        _ = LoadAsync();
+    }
+
     partial void OnProjectFilterChanged(Guid? value)
     {
         if (_suppressProjectFilterReload) return;
+        _ui.SetGuid("ProjectFilter", value);
         _ = LoadAsync();
     }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        _suppressProjectFilterReload = true;
+        try
+        {
+            SearchText = _ui.GetString("SearchText");
+            StatusFilter = _ui.GetString("StatusFilter", "Все");
+            PriorityFilter = _ui.GetString("PriorityFilter", "Все");
+            ProjectFilter = _ui.GetGuid("ProjectFilter");
+        }
+        finally
+        {
+            _suppressProjectFilterReload = false;
+        }
+    }
+
     public async Task LoadAsync()
     {
+        RestorePageUi();
         await using var db = await _dbFactory.CreateDbContextAsync();
 
         var projectQuery = db.Projects.Where(p => !p.IsArchived && !p.IsClosed);

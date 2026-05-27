@@ -19,6 +19,7 @@ public partial class AdminPage : UserControl
     {
         if (e.OldValue is AdminViewModel oldVm)
         {
+            oldVm.PropertyChanged -= Vm_PropertyChanged;
             oldVm.OpenCreateFormRequested -= OnOpenCreateForm;
             oldVm.OpenEditFormRequested -= OnOpenEditForm;
             oldVm.OpenUserInfoRequested -= OnOpenUserInfo;
@@ -28,6 +29,8 @@ public partial class AdminPage : UserControl
         if (e.NewValue is not AdminViewModel vm) return;
         _vm = vm;
 
+        vm.PropertyChanged += Vm_PropertyChanged;
+        ApplyMainTab(vm.CurrentTab);
         vm.OpenCreateFormRequested += OnOpenCreateForm;
         vm.OpenEditFormRequested += OnOpenEditForm;
         vm.OpenUserInfoRequested += OnOpenUserInfo;
@@ -60,17 +63,35 @@ public partial class AdminPage : UserControl
         MainWindow.Instance?.ShowDrawer(overlay);
     }
 
+    private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AdminViewModel.CurrentTab) && _vm is not null)
+            ApplyMainTab(_vm.CurrentTab);
+    }
+
     private void Tab_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not RadioButton rb) return;
         var tag = rb.Tag?.ToString() ?? "Users";
+        if (_vm is not null)
+            _vm.CurrentTab = tag;
 
+        ApplyMainTab(tag);
+
+        if (tag == "Archive" && _vm is not null)
+            _ = _vm.RefreshArchiveAsync();
+    }
+
+    private void ApplyMainTab(string tag)
+    {
         UsersPanel.Visibility = tag == "Users" ? Visibility.Visible : Visibility.Collapsed;
         ArchivePanel.Visibility = tag == "Archive" ? Visibility.Visible : Visibility.Collapsed;
         HistoryPanel.Visibility = tag == "History" ? Visibility.Visible : Visibility.Collapsed;
         ActivityPanel.Visibility = tag == "Activity" ? Visibility.Visible : Visibility.Collapsed;
 
-        if (tag == "Archive" && _vm is not null)
-            _ = _vm.RefreshArchiveAsync();
+        TabUsers.IsChecked = tag == "Users";
+        TabArchive.IsChecked = tag == "Archive";
+        TabHistory.IsChecked = tag == "History";
+        TabActivity.IsChecked = tag == "Activity";
     }
 }

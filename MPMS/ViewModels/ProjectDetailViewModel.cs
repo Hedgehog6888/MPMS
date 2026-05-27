@@ -79,13 +79,19 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<StageItem> _filteredCompletedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredMarkedStages = [];
 
-    public ProjectDetailViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth, IApiService api, IUserSettingsService settings)
+    public ProjectDetailViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IApiService api,
+        IUserSettingsService settings,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
         _settings = settings;
-        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync);
+        FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState);
         _stageViewMode = _settings.GetValue("StagesViewMode", "List");
     }
 

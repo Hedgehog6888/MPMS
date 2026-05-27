@@ -26,6 +26,8 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly PageUiStateBinder _ui;
+    private bool _suppressFilterReload;
 
     [ObservableProperty] private ObservableCollection<StageItem> _stages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredStages = [];
@@ -44,11 +46,16 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     public List<string> StatusOptions { get; } =
         ["Все статусы", "Запланирован", "Выполняется", "Завершён", "Пометка удаления"];
 
-    public StagesViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IAuthService auth)
+    public StagesViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Stages);
     }
 
     private bool CanMarkStageDeletion() =>
@@ -57,18 +64,53 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
     private bool CanDeleteStage() =>
         _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
-    partial void OnSearchTextChanged(string value) => ApplyFilter();
-    partial void OnStatusFilterChanged(string value) => ApplyFilter();
+    partial void OnSearchTextChanged(string value)
+    {
+        _ui.SetString("SearchText", value);
+        ApplyFilter();
+    }
+
+    partial void OnStatusFilterChanged(string value)
+    {
+        _ui.SetString("StatusFilter", value);
+        ApplyFilter();
+    }
+
     partial void OnProjectFilterChanged(Guid? value)
     {
+        if (_suppressFilterReload) return;
+        _ui.SetGuid("ProjectFilter", value);
         UpdateTaskFilterOptions();
         ApplyFilter();
     }
 
-    partial void OnTaskFilterChanged(Guid? value) => ApplyFilter();
+    partial void OnTaskFilterChanged(Guid? value)
+    {
+        if (_suppressFilterReload) return;
+        _ui.SetGuid("TaskFilter", value);
+        ApplyFilter();
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        _suppressFilterReload = true;
+        try
+        {
+            SearchText = _ui.GetString("SearchText");
+            StatusFilter = _ui.GetString("StatusFilter", "Все статусы");
+            ProjectFilter = _ui.GetGuid("ProjectFilter");
+            TaskFilter = _ui.GetGuid("TaskFilter");
+        }
+        finally
+        {
+            _suppressFilterReload = false;
+        }
+    }
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         IsBusy = true;
         ClearMessages();
         try

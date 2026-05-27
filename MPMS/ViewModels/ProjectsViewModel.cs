@@ -15,6 +15,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly ISyncService _sync;
     private readonly IAuthService _auth;
+    private readonly PageUiStateBinder _ui;
     private CancellationTokenSource _loadCts = new();
     private bool _isDeleting = false;
 
@@ -28,19 +29,40 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
     public IReadOnlyList<string> StatusOptions { get; } =
         ["Все", "Планирование", "Выполняется", "Завершён", "Пометка удаления"];
 
-    public ProjectsViewModel(IDbContextFactory<LocalDbContext> dbFactory,
-        ISyncService sync, IAuthService auth)
+    public ProjectsViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        ISyncService sync,
+        IAuthService auth,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _sync = sync;
         _auth = auth;
+        _ui = new PageUiStateBinder(uiState, PageUiKeys.Projects);
     }
 
-    partial void OnSearchTextChanged(string value) => ApplyFilter();
-    partial void OnStatusFilterChanged(string value) => ApplyFilter();
+    partial void OnSearchTextChanged(string value)
+    {
+        _ui.SetString("SearchText", value);
+        ApplyFilter();
+    }
+
+    partial void OnStatusFilterChanged(string value)
+    {
+        _ui.SetString("StatusFilter", value);
+        ApplyFilter();
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = _ui.BeginRestore();
+        SearchText = _ui.GetString("SearchText");
+        StatusFilter = _ui.GetString("StatusFilter", "Все");
+    }
 
     public async Task LoadAsync()
     {
+        RestorePageUi();
         // Предотвращаем перезагрузку во время операций удаления
         if (_isDeleting) return;
 

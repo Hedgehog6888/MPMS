@@ -100,6 +100,7 @@ public partial class App : Application
 
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IUserSettingsService, UserSettingsService>();
+        services.AddSingleton<IPageUiStateStore, PageUiStateStore>();
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);

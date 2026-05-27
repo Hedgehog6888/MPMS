@@ -1601,6 +1601,23 @@ public static class FormComboHelpers
 
         return false;
     }
+
+    /// <summary>Есть ли в поддереве открытый выпадающий список (для блокировки прокрутки фона).</summary>
+    public static bool HasAnyDropDownOpen(DependencyObject? root)
+    {
+        if (root is null) return false;
+
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is ComboBox { IsDropDownOpen: true })
+                return true;
+            if (HasAnyDropDownOpen(child))
+                return true;
+        }
+
+        return false;
+    }
 }
 
 public class StringMatchToBoolConverter : IValueConverter

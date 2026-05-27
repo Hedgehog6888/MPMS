@@ -38,7 +38,10 @@ namespace MPMS.Views.Components.Admin
             ArchEquipmentPanel.Visibility = tag == "Equipment" ? Visibility.Visible : Visibility.Collapsed;
 
             if (DataContext is AdminViewModel vm)
+            {
+                vm.ArchiveTab = tag;
                 _ = vm.RefreshArchiveAsync();
+            }
         }
 
         private void ArchiveRow_Click(object sender, MouseButtonEventArgs e)

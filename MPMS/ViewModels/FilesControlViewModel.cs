@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Infrastructure;
 using MPMS.Services;
 
 namespace MPMS.ViewModels;
@@ -21,6 +22,7 @@ public partial class FilesControlViewModel : ViewModelBase
     private readonly IApiService _api;
     private readonly IUserSettingsService _settings;
     private readonly ISyncService _sync;
+    private readonly IPageUiStateStore _uiState;
 
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _searchText = string.Empty;
@@ -33,6 +35,13 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private string _successToastMessage = string.Empty;
     [ObservableProperty] private bool _isWorkerRole;
     [ObservableProperty] private LocalProject? _project;
+
+    // Фильтры по проектам (отдельные для каждой вкладки)
+    [ObservableProperty] private Guid? _projectFilter;
+    [ObservableProperty] private Guid? _imagesProjectFilter;
+    [ObservableProperty] private Guid? _documentsProjectFilter;
+    [ObservableProperty] private ObservableCollection<ProjectFilterOption> _projectFilterOptions = [];
+    [ObservableProperty] private bool _isProjectFilterVisible;
 
     public string ViewMode
     {
@@ -57,16 +66,24 @@ public partial class FilesControlViewModel : ViewModelBase
     private Guid? _projectId;
     private Guid? _taskId;
     private Guid? _stageId;
-    private List<LocalFile> _cachedImagesFiles = new();
-    private List<LocalFile> _cachedDocumentsFiles = new();
+    private List<LocalFile> _cachedImagesFiles = [];
+    private List<LocalFile> _cachedDocumentsFiles = [];
+    private Dictionary<Guid, Guid> _stageToProjectMap = []; // StageId -> ProjectId mapping for filtering
 
-    public FilesControlViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth, IApiService api, IUserSettingsService settings, ISyncService sync)
+    public FilesControlViewModel(
+        IDbContextFactory<LocalDbContext> dbFactory,
+        IAuthService auth,
+        IApiService api,
+        IUserSettingsService settings,
+        ISyncService sync,
+        IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
         _auth = auth;
         _api = api;
         _settings = settings;
         _sync = sync;
+        _uiState = uiState;
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
         _isWorkerRole = auth.UserRole == "Worker" || auth.UserRole == "Работник";
@@ -77,21 +94,49 @@ public partial class FilesControlViewModel : ViewModelBase
         }
     }
 
+    private PageUiStateBinder Ui => new(_uiState, ResolveUiPageKey());
+
+    private string ResolveUiPageKey()
+    {
+        if (_projectId is { } pid) return $"{PageUiKeys.Files}:Project:{pid}";
+        if (_taskId is { } tid) return $"{PageUiKeys.Files}:Task:{tid}";
+        if (_stageId is { } sid) return $"{PageUiKeys.Files}:Stage:{sid}";
+        return PageUiKeys.Files;
+    }
+
     public void Initialize(Guid? projectId = null, Guid? taskId = null, Guid? stageId = null)
     {
         _projectId = projectId;
         _taskId = taskId;
         _stageId = stageId;
+        IsProjectFilterVisible = !projectId.HasValue && !stageId.HasValue;
+        RestorePageUi();
         _ = LoadFilesAsync();
     }
 
     partial void OnSearchTextChanged(string value)
     {
+        Ui.SetString(PageUiStateBinder.TabField(CurrentTab, "SearchText"), value);
         ApplyFilters();
+    }
+
+    partial void OnCurrentTabChanging(string oldValue, string newValue)
+    {
+        if (!string.IsNullOrEmpty(oldValue))
+            SaveTabUi(oldValue);
     }
 
     partial void OnCurrentTabChanged(string value)
     {
+        Ui.SetString("CurrentTab", value);
+        if (value == "Images")
+            DocumentsProjectFilter = ProjectFilter;
+        else
+            ImagesProjectFilter = ProjectFilter;
+
+        ProjectFilter = value == "Images" ? ImagesProjectFilter : DocumentsProjectFilter;
+        RestoreTabUi(value);
+
         UpdateExtensionFilterOptions();
         ApplyFilters();
         OnPropertyChanged(nameof(ViewMode));
@@ -99,7 +144,50 @@ public partial class FilesControlViewModel : ViewModelBase
 
     partial void OnExtensionFilterChanged(string value)
     {
+        Ui.SetString(PageUiStateBinder.TabField(CurrentTab, "ExtensionFilter"), value);
         ApplyFilters();
+    }
+
+    partial void OnProjectFilterChanged(Guid? value)
+    {
+        if (CurrentTab == "Images")
+            ImagesProjectFilter = value;
+        else
+            DocumentsProjectFilter = value;
+
+        Ui.SetGuid(PageUiStateBinder.TabField(CurrentTab, "ProjectFilter"), value);
+        ApplyFilters();
+    }
+
+    private void SaveTabUi(string tab)
+    {
+        if (Ui.IsRestoring) return;
+        Ui.SetString(PageUiStateBinder.TabField(tab, "SearchText"), SearchText);
+        Ui.SetString(PageUiStateBinder.TabField(tab, "ExtensionFilter"), ExtensionFilter);
+        Ui.SetGuid(PageUiStateBinder.TabField(tab, "ProjectFilter"),
+            tab == "Images" ? ImagesProjectFilter : DocumentsProjectFilter);
+    }
+
+    private void RestoreTabUi(string tab)
+    {
+        SearchText = Ui.GetString(PageUiStateBinder.TabField(tab, "SearchText"));
+        ExtensionFilter = Ui.GetString(PageUiStateBinder.TabField(tab, "ExtensionFilter"), "Все");
+        var projectId = Ui.GetGuid(PageUiStateBinder.TabField(tab, "ProjectFilter"));
+        if (tab == "Images")
+            ImagesProjectFilter = projectId;
+        else
+            DocumentsProjectFilter = projectId;
+        ProjectFilter = projectId;
+    }
+
+    private void RestorePageUi()
+    {
+        using var _ = Ui.BeginRestore();
+        var tab = Ui.GetString("CurrentTab", "Images");
+        CurrentTab = tab == "Documents" ? "Documents" : "Images";
+        ImagesProjectFilter = Ui.GetGuid(PageUiStateBinder.TabField("Images", "ProjectFilter"));
+        DocumentsProjectFilter = Ui.GetGuid(PageUiStateBinder.TabField("Documents", "ProjectFilter"));
+        RestoreTabUi(CurrentTab);
     }
 
     partial void OnImagesViewModeChanged(string value)
@@ -201,15 +289,26 @@ public partial class FilesControlViewModel : ViewModelBase
 
             var stages = await db.TaskStages
                 .Where(s => stageIds.Contains(s.Id))
-                .Select(s => new { s.Id, s.Name })
-                .ToDictionaryAsync(s => s.Id, s => s.Name);
+                .Select(s => new { s.Id, s.Name, s.TaskId })
+                .ToDictionaryAsync(s => s.Id);
+
+            // Build stage-to-project mapping for project filtering
+            var taskIdsFromStages = stages.Values.Select(s => s.TaskId).Distinct().ToList();
+            var taskProjectMap = await db.Tasks
+                .Where(t => taskIdsFromStages.Contains(t.Id))
+                .Select(t => new { t.Id, t.ProjectId })
+                .ToDictionaryAsync(t => t.Id, t => t.ProjectId);
+
+            _stageToProjectMap = stages.Values
+                .Where(s => taskProjectMap.TryGetValue(s.TaskId, out var pid))
+                .ToDictionary(s => s.Id, s => taskProjectMap[s.TaskId]);
 
             foreach (var f in files)
             {
                 if (f.ProjectId.HasValue && projects.TryGetValue(f.ProjectId.Value, out var pname))
                     f.ProjectName = pname;
-                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var sname))
-                    f.StageName = sname;
+                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var s))
+                    f.StageName = s.Name;
             }
 
             // Оптимизация: добавляем все сразу вместо по одному
@@ -219,6 +318,25 @@ public partial class FilesControlViewModel : ViewModelBase
 
             _cachedImagesFiles = files.Where(f => IsImage(f.FileName)).ToList();
             _cachedDocumentsFiles = files.Where(f => !IsImage(f.FileName)).ToList();
+
+            // Построение опций фильтра по проектам (только для общего списка файлов)
+            if (!_projectId.HasValue && !_stageId.HasValue)
+            {
+                var currentProjectFilter = ProjectFilter;
+                var projectOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
+                projectOpts.AddRange(files
+                    .Where(f => f.ProjectId.HasValue)
+                    .Select(f => new { f.ProjectId, f.ProjectName })
+                    .Distinct()
+                    .Where(x => x.ProjectId.HasValue && !string.IsNullOrWhiteSpace(x.ProjectName))
+                    .Select(x => new ProjectFilterOption(x.ProjectId, x.ProjectName!))
+                    .OrderBy(p => p.Name));
+                ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(projectOpts);
+                if (currentProjectFilter.HasValue && projectOpts.Any(o => o.Id == currentProjectFilter.Value))
+                    ProjectFilter = currentProjectFilter;
+                else if (currentProjectFilter.HasValue)
+                    ProjectFilter = null;
+            }
 
             UpdateExtensionFilterOptions();
             ApplyFilters();
@@ -236,6 +354,15 @@ public partial class FilesControlViewModel : ViewModelBase
         // Используем кэшированные данные для быстрого переключения вкладок
         var baseList = CurrentTab == "Images" ? _cachedImagesFiles : _cachedDocumentsFiles;
         var filtered = baseList.AsEnumerable();
+
+        // Фильтр по проекту: включаем файлы проекта и файлы этапов проекта
+        if (ProjectFilter.HasValue)
+        {
+            var projectId = ProjectFilter.Value;
+            filtered = filtered.Where(f =>
+                f.ProjectId == projectId ||
+                (f.StageId.HasValue && _stageToProjectMap.TryGetValue(f.StageId.Value, out var pid) && pid == projectId));
+        }
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
