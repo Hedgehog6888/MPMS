@@ -29,7 +29,7 @@ public static class ActivityFilterService
     }
 
     public static async Task<List<LocalActivityLog>> GetFilteredActivitiesAsync(
-        LocalDbContext db, IAuthService auth, int take = 10, bool excludeAuthEvents = true, CancellationToken ct = default)
+        LocalDbContext db, IAuthService auth, int take = 100, int skipGrouped = 0, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
         var userRole = auth.UserRole ?? "";
         var currentUserId = auth.UserId;
@@ -37,14 +37,6 @@ public static class ActivityFilterService
         IQueryable<LocalActivityLog> query = db.ActivityLogs.OrderByDescending(a => a.CreatedAt);
         if (excludeAuthEvents)
             query = query.Where(a => a.ActionType == null || !AdminOnlyEventKinds.Contains(a.ActionType));
-
-        if (IsAdminRole(userRole))
-        {
-            var adminList = await query.Take(take).ToListAsync(ct);
-            ct.ThrowIfCancellationRequested();
-            await AttachAvatarsAsync(db, adminList, ct);
-            return GroupActivities(adminList);
-        }
 
         HashSet<Guid>? managerVisibleIds = null;
         if (IsManagerRole(userRole) && currentUserId.HasValue)
@@ -68,11 +60,14 @@ public static class ActivityFilterService
         }
 
         const int batchSize = 150;
-        var maxScan = Math.Min(20_000, Math.Max(2_000, take * 100));
-        var result = new List<LocalActivityLog>(Math.Min(take, 32));
+        var targetGroupedCount = skipGrouped + take;
+        var maxScan = Math.Min(50_000, Math.Max(2_000, targetGroupedCount * 120));
+        var rawBuffer = new List<LocalActivityLog>(Math.Min(targetGroupedCount * 2, 256));
+        List<LocalActivityLog> grouped = [];
         var skip = 0;
 
-        while (result.Count < take && skip < maxScan)
+        // take — число плашек после группировки; одна суммарная плашка = одно действие
+        while (grouped.Count < targetGroupedCount && skip < maxScan)
         {
             var batch = await query.Skip(skip).Take(batchSize).ToListAsync(ct);
             ct.ThrowIfCancellationRequested();
@@ -82,15 +77,22 @@ public static class ActivityFilterService
 
             foreach (var a in batch)
             {
-                if (result.Count >= take)
-                    break;
-                if (PassesRoleFilter(a, userRole, currentUserId, managerVisibleIds, foremanVisibleIds, workerFilterData))
-                    result.Add(a);
+                if (IsAdminRole(userRole) ||
+                    PassesRoleFilter(a, userRole, currentUserId, managerVisibleIds, foremanVisibleIds, workerFilterData))
+                    rawBuffer.Add(a);
             }
+
+            grouped = GroupActivities(rawBuffer);
         }
 
+        var result = grouped
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(skipGrouped)
+            .Take(take)
+            .ToList();
+
         await AttachAvatarsAsync(db, result, ct);
-        return GroupActivities(result);
+        return result;
     }
 
     private static List<LocalActivityLog> GroupActivities(List<LocalActivityLog> activities)
@@ -177,8 +179,7 @@ public static class ActivityFilterService
             UserColor = first.UserColor,
             ActionType = first.ActionType,
             ActionText = actionText,
-            DetailsText = string.Join(Environment.NewLine + "───" + Environment.NewLine,
-                activities.Select(a => a.ActivityTooltipText).Where(x => !string.IsNullOrWhiteSpace(x))),
+            DetailsText = ActivityDetailsService.BuildGroupedDetailsText(activities),
             EntityType = first.EntityType,
             EntityId = first.EntityId,
             CreatedAt = last.CreatedAt,
@@ -652,7 +653,7 @@ public static class ActivityFilterService
     public static async Task<int> GetFilteredActivityCountAsync(
         LocalDbContext db, IAuthService auth, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
-        var activities = await GetFilteredActivitiesAsync(db, auth, 500, excludeAuthEvents, ct);
+        var activities = await GetFilteredActivitiesAsync(db, auth, take: 500, excludeAuthEvents: excludeAuthEvents, ct: ct);
         return activities.Count;
     }
 

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 
@@ -16,6 +17,7 @@ public sealed class CalendarChipItem
     public LocalTask? Task { get; init; }
     public LocalTaskStage? Stage { get; init; }
     public LocalTask? StageParentTask { get; init; }
+    public bool IsFromClosedProject { get; init; }
 }
 
 /// <summary>Этап в календаре с родительской задачей (дедлайн этапа может не совпадать с дедлайном задачи).</summary>
@@ -23,6 +25,14 @@ public sealed class CalendarDayStage
 {
     public LocalTaskStage Stage { get; init; } = null!;
     public LocalTask ParentTask { get; init; } = null!;
+    public bool IsFromClosedProject { get; init; }
+}
+
+/// <summary>Задача в оверлее дня календаря.</summary>
+public sealed class CalendarDayTaskEntry
+{
+    public LocalTask Task { get; init; } = null!;
+    public bool IsFromClosedProject { get; init; }
 }
 
 /// <summary>Данные для одной ячейки сетки календаря.</summary>
@@ -41,11 +51,14 @@ public sealed class CalendarCell
 
 public partial class CalendarViewModel : ViewModelBase, ILoadable
 {
+    private const string ShowClosedProjectsSettingKey = "Calendar.ShowClosedProjects";
+
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
 
     private List<LocalTask>? _cachedAllTasks;
     private List<LocalTaskStage>? _cachedStagesForCalendar;
+    private HashSet<Guid> _closedProjectIds = [];
     private int _maxVisibleChipsPerDay = 2;
 
     /// <summary>Сколько плашек показывать в ячейке (2–4), по ширине области календаря.</summary>
@@ -66,17 +79,27 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private DateTime _currentDate = DateTime.Today;
     [ObservableProperty] private ObservableCollection<CalendarCell> _calendarCells = [];
     [ObservableProperty] private string _monthTitle = string.Empty;
+    [ObservableProperty] private bool _showClosedProjects;
+
+    public IReadOnlySet<Guid> ClosedProjectIds => _closedProjectIds;
 
     public CalendarViewModel(IDbContextFactory<LocalDbContext> dbFactory, IAuthService auth)
     {
         _dbFactory = dbFactory;
         _auth = auth;
+        _showClosedProjects = LocalSettings.GetBool(ShowClosedProjectsSettingKey, defaultValue: false);
         UpdateMonthTitle();
     }
 
     partial void OnCurrentDateChanged(DateTime value)
     {
         UpdateMonthTitle();
+        _ = LoadAsync();
+    }
+
+    partial void OnShowClosedProjectsChanged(bool value)
+    {
+        LocalSettings.SetBool(ShowClosedProjectsSettingKey, value);
         _ = LoadAsync();
     }
 
@@ -106,8 +129,7 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
             bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
-            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion && t.DueDate != null &&
-                db.Projects.Any(p => p.Id == t.ProjectId && !p.IsArchived && !p.IsClosed));
+            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion && t.DueDate != null);
 
             if (userId.HasValue && !isAdmin)
             {
@@ -134,14 +156,25 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
             }
 
             var allTasks = await taskQuery.ToListAsync();
+            _closedProjectIds = (await db.Projects
+                .Where(p => p.IsClosed)
+                .Select(p => p.Id)
+                .ToListAsync())
+                .ToHashSet();
 
-            var taskIds = allTasks.Select(t => t.Id).ToList();
+            var openTasks = allTasks.Where(t => !_closedProjectIds.Contains(t.ProjectId)).ToList();
+            var closedTasks = ShowClosedProjects
+                ? allTasks.Where(t => _closedProjectIds.Contains(t.ProjectId)).ToList()
+                : [];
+            var orderedTasks = openTasks.Concat(closedTasks).ToList();
+
+            var taskIds = orderedTasks.Select(t => t.Id).ToList();
             List<LocalTaskStage> allStagesForTasks = [];
             if (taskIds.Count > 0)
             {
                 allStagesForTasks = await db.TaskStages
                     .Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
-                foreach (var t in allTasks)
+                foreach (var t in orderedTasks)
                     ProgressCalculator.ApplyTaskMetrics(t, allStagesForTasks.Where(s => s.TaskId == t.Id).ToList());
             }
 
@@ -149,9 +182,9 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
                 .Where(s => !s.IsMarkedForDeletion && s.DueDate != null)
                 .ToList();
 
-            _cachedAllTasks = allTasks;
+            _cachedAllTasks = orderedTasks;
             _cachedStagesForCalendar = stagesForCalendar;
-            BuildCells(allTasks, stagesForCalendar);
+            BuildCells(orderedTasks, stagesForCalendar);
         }
         finally
         {
@@ -179,28 +212,78 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
         {
             var date = new DateTime(year, month, d);
             var dateOnly = DateOnly.FromDateTime(date);
-            var dayTasks = allTasks
-                .Where(t => t.DueDate == dateOnly)
+            var openDayTasks = allTasks
+                .Where(t => t.DueDate == dateOnly && !_closedProjectIds.Contains(t.ProjectId))
                 .OrderBy(t => t.Status)
                 .ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
-            var dayStages = stagesWithDueDate
-                .Where(s => s.DueDate == dateOnly && taskById.ContainsKey(s.TaskId))
+            var closedDayTasks = allTasks
+                .Where(t => t.DueDate == dateOnly && _closedProjectIds.Contains(t.ProjectId))
+                .OrderBy(t => t.Status)
+                .ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+            var openDayStages = stagesWithDueDate
+                .Where(s => s.DueDate == dateOnly && taskById.ContainsKey(s.TaskId) && !_closedProjectIds.Contains(taskById[s.TaskId].ProjectId))
                 .OrderBy(s => s.Status)
                 .ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
-                .Select(s => new CalendarDayStage { Stage = s, ParentTask = taskById[s.TaskId] })
+                .Select(s =>
+                {
+                    var parent = taskById[s.TaskId];
+                    return new CalendarDayStage { Stage = s, ParentTask = parent, IsFromClosedProject = false };
+                })
                 .ToList();
+            var closedDayStages = stagesWithDueDate
+                .Where(s => s.DueDate == dateOnly && taskById.ContainsKey(s.TaskId) && _closedProjectIds.Contains(taskById[s.TaskId].ProjectId))
+                .OrderBy(s => s.Status)
+                .ThenBy(s => s.Name, StringComparer.CurrentCultureIgnoreCase)
+                .Select(s =>
+                {
+                    var parent = taskById[s.TaskId];
+                    return new CalendarDayStage { Stage = s, ParentTask = parent, IsFromClosedProject = true };
+                })
+                .ToList();
+            var dayTasks = openDayTasks.Concat(closedDayTasks).ToList();
+            var dayStages = openDayStages.Concat(closedDayStages).ToList();
 
             var chips = new List<CalendarChipItem>();
-            foreach (var t in dayTasks)
-                chips.Add(new CalendarChipItem { IsStage = false, Task = t });
-            foreach (var ds in dayStages)
+            foreach (var t in openDayTasks)
+            {
+                chips.Add(new CalendarChipItem
+                {
+                    IsStage = false,
+                    Task = t,
+                    IsFromClosedProject = false
+                });
+            }
+            foreach (var ds in openDayStages)
+            {
                 chips.Add(new CalendarChipItem
                 {
                     IsStage = true,
                     Stage = ds.Stage,
-                    StageParentTask = ds.ParentTask
+                    StageParentTask = ds.ParentTask,
+                    IsFromClosedProject = false
                 });
+            }
+            foreach (var t in closedDayTasks)
+            {
+                chips.Add(new CalendarChipItem
+                {
+                    IsStage = false,
+                    Task = t,
+                    IsFromClosedProject = true
+                });
+            }
+            foreach (var ds in closedDayStages)
+            {
+                chips.Add(new CalendarChipItem
+                {
+                    IsStage = true,
+                    Stage = ds.Stage,
+                    StageParentTask = ds.ParentTask,
+                    IsFromClosedProject = true
+                });
+            }
 
             var cap = MaxVisibleChipsPerDay;
             var more = Math.Max(0, chips.Count - cap);

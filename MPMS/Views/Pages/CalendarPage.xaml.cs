@@ -62,7 +62,7 @@ public partial class CalendarPage : UserControl
         e.Handled = true;
 
         var overlay = new CalendarDayTasksOverlay();
-        overlay.SetDay(cell.Date, cell.Tasks, cell.DayStages, OpenTaskDetail, OpenStageDetail);
+        overlay.SetDay(cell.Date, cell.Tasks, cell.DayStages, _vm?.ClosedProjectIds ?? new HashSet<Guid>(), OpenTaskDetail, OpenStageDetail);
         MainWindow.Instance?.ShowCenteredOverlay(overlay, 480);
     }
 

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using TaskStatus = MPMS.Models.TaskStatus;
@@ -23,6 +24,7 @@ public sealed class TimelineTaskRow
     public string BarColorHex { get; init; } = "#EF4444";
     public string BarRangeLabel { get; init; } = "";
     public bool IsOverdue { get; init; }
+    public bool IsFromClosedProject { get; init; }
 }
 
 /// <summary>Одна строка в диаграмме Timeline (этап).</summary>
@@ -39,16 +41,21 @@ public sealed class TimelineStageRow
     public string BarColorHex { get; init; } = "#EF4444";
     public string BarRangeLabel { get; init; } = "";
     public bool IsOverdue { get; init; }
+    public bool IsFromClosedProject { get; init; }
 }
 
 public partial class TimelineViewModel : ViewModelBase, ILoadable
 {
+    private const string ClosedProjectBarColor = "#000000";
+    private const string ShowClosedProjectsSettingKey = "Timeline.ShowClosedProjects";
+
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
 
     [ObservableProperty] private DateTime _currentDate = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     [ObservableProperty] private string _monthTitle = string.Empty;
     [ObservableProperty] private string _activeTab = "Tasks";
+    [ObservableProperty] private bool _showClosedProjects;
 
     [ObservableProperty] private ObservableCollection<TimelineTaskRow> _taskRows = [];
     [ObservableProperty] private ObservableCollection<TimelineStageRow> _stageRows = [];
@@ -61,6 +68,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
     {
         _dbFactory = dbFactory;
         _auth = auth;
+        _showClosedProjects = LocalSettings.GetBool(ShowClosedProjectsSettingKey, defaultValue: false);
         UpdateMonthTitle();
     }
 
@@ -71,6 +79,12 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
     }
 
     partial void OnActiveTabChanged(string value) => _ = LoadAsync();
+
+    partial void OnShowClosedProjectsChanged(bool value)
+    {
+        LocalSettings.SetBool(ShowClosedProjectsSettingKey, value);
+        _ = LoadAsync();
+    }
 
     private void UpdateMonthTitle()
     {
@@ -100,22 +114,20 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
             bool isForeman = string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
             bool isWorker = string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
 
-            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion)
-                .Where(t => !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
+            var taskQuery = db.Tasks.Where(t => !t.IsArchived && !t.IsMarkedForDeletion);
 
             if (userId.HasValue && !isAdmin)
             {
                 if (isManager)
                 {
                     taskQuery = taskQuery.Where(t =>
-                        db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value && !p.IsClosed));
+                        db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
                 }
                 else if (isForeman)
                 {
                     var pids = await db.ProjectMembers
                         .Where(m => m.UserId == userId.Value).Select(m => m.ProjectId).ToListAsync();
-                    taskQuery = taskQuery.Where(t => pids.Contains(t.ProjectId)
-                        && !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
+                    taskQuery = taskQuery.Where(t => pids.Contains(t.ProjectId));
                 }
                 else if (isWorker)
                 {
@@ -124,18 +136,28 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                     var via = await db.TaskAssignees.Where(a => a.UserId == userId.Value)
                         .Select(a => a.TaskId).ToListAsync();
                     var ids = direct.Concat(via).Distinct().ToList();
-                    taskQuery = taskQuery.Where(t => ids.Contains(t.Id)
-                        && !db.Projects.Any(p => p.Id == t.ProjectId && p.IsClosed));
+                    taskQuery = taskQuery.Where(t => ids.Contains(t.Id));
                 }
             }
 
             var allTasks = await taskQuery.ToListAsync();
-            var taskIds = allTasks.Select(t => t.Id).ToList();
+            var closedProjectIds = (await db.Projects
+                .Where(p => p.IsClosed)
+                .Select(p => p.Id)
+                .ToListAsync())
+                .ToHashSet();
+            var openTasks = allTasks.Where(t => !closedProjectIds.Contains(t.ProjectId)).ToList();
+            var closedTasks = ShowClosedProjects
+                ? allTasks.Where(t => closedProjectIds.Contains(t.ProjectId)).ToList()
+                : [];
+            var orderedTasks = openTasks.Concat(closedTasks).ToList();
+
+            var taskIds = orderedTasks.Select(t => t.Id).ToList();
             var allStages = taskIds.Count > 0
                 ? await db.TaskStages.Where(s => !s.IsArchived && !s.IsMarkedForDeletion && taskIds.Contains(s.TaskId)).ToListAsync()
                 : new List<LocalTaskStage>();
 
-            foreach (var t in allTasks)
+            foreach (var t in orderedTasks)
                 ProgressCalculator.ApplyTaskMetrics(t, allStages.Where(s => s.TaskId == t.Id).ToList());
 
             var stageList = allStages.ToList();
@@ -176,12 +198,13 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 ? ((today - start).TotalDays + 0.5) / totalDays
                 : -1;
 
-            var taskDict = allTasks.ToDictionary(t => t.Id);
+            var taskDict = orderedTasks.ToDictionary(t => t.Id);
 
             // Формируем строки задач (полоса: от даты создания до срока); только пересечение с выбранным месяцем
-            var taskRows = allTasks
+            var taskRows = orderedTasks
                 .Select(t =>
                 {
+                    var fromClosed = closedProjectIds.Contains(t.ProjectId);
                     var barStart = DateOnlyFromCreatedAt(t.CreatedAt);
                     TryComputeBarForRange(
                         barStart, t.DueDate,
@@ -196,13 +219,15 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
                         StatusLabel = TaskStatusLabel(t.Status),
                         StatusColor = TaskStatusColor(t.Status),
-                        BarColorHex = ProgressToHex(t.ProgressPercent),
+                        BarColorHex = fromClosed ? ClosedProjectBarColor : ProgressToHex(t.ProgressPercent),
                         BarRangeLabel = FormatTimelineBarRangeLabel(barStart, t.DueDate),
-                        IsOverdue = t.IsOverdue
+                        IsOverdue = t.IsOverdue,
+                        IsFromClosedProject = fromClosed
                     };
                 })
                 .Where(r => r.HasBar)
-                .OrderBy(r => r.Task.CreatedAt)
+                .OrderBy(r => r.IsFromClosedProject)
+                .ThenBy(r => r.Task.CreatedAt)
                 .ThenBy(r => r.Task.Name)
                 .ToList();
             TaskRows = new ObservableCollection<TimelineTaskRow>(taskRows);
@@ -212,6 +237,7 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                 .Select(s =>
                 {
                     taskDict.TryGetValue(s.TaskId, out var parentTask);
+                    var fromClosed = parentTask is not null && closedProjectIds.Contains(parentTask.ProjectId);
                     var item = new StageItem
                     {
                         Stage = s,
@@ -236,13 +262,15 @@ public partial class TimelineViewModel : ViewModelBase, ILoadable
                         BarRemainder = Math.Max(0.001, 1.0 - left - width),
                         StatusLabel = StageStatusLabel(s.Status),
                         StatusColor = StageStatusColor(s.Status),
-                        BarColorHex = StageBarColor(s.Status),
+                        BarColorHex = fromClosed ? ClosedProjectBarColor : StageBarColor(s.Status),
                         BarRangeLabel = FormatTimelineBarRangeLabel(stageBarStart, s.DueDate),
-                        IsOverdue = s.IsOverdue
+                        IsOverdue = s.IsOverdue,
+                        IsFromClosedProject = fromClosed
                     };
                 })
                 .Where(r => r.HasBar)
-                .OrderBy(r => r.Stage.Stage.CreatedAt)
+                .OrderBy(r => r.IsFromClosedProject)
+                .ThenBy(r => r.Stage.Stage.CreatedAt)
                 .ThenBy(r => r.Stage.Stage.Name)
                 .ToList();
             StageRows = new ObservableCollection<TimelineStageRow>(stageRows);

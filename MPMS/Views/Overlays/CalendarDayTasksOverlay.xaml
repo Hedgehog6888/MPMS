@@ -86,7 +86,7 @@
                 <Grid x:Name="TasksTabPanel" Visibility="Collapsed">
                     <ItemsControl x:Name="TasksList" Visibility="Collapsed">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:CalendarDayTaskEntry}">
                                 <Border Background="Transparent" Cursor="Hand"
                                         Padding="0,0,0,8"
                                         MouseLeftButtonDown="TaskRow_Click"
@@ -114,7 +114,7 @@
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Grid.Row="0" Grid.Column="0"
-                                                       Text="{Binding Name}"
+                                                       Text="{Binding Task.Name}"
                                                        FontSize="14" FontWeight="SemiBold"
                                                        Foreground="#000000"
                                                        TextWrapping="Wrap"
@@ -125,9 +125,9 @@
                                                     CornerRadius="4" Padding="8,4">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="{Binding Status, Converter={StaticResource TaskStatusToBrush}}"/>
+                                                        <Setter Property="Background" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToBrush}}"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                            <DataTrigger Binding="{Binding Task.EffectiveTaskMarkedForDeletion}" Value="True">
                                                                 <Setter Property="Background" Value="#DE350B"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
@@ -137,9 +137,9 @@
                                                            FontSize="11" FontWeight="SemiBold">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="{Binding Status, Converter={StaticResource TaskStatusToString}}"/>
+                                                            <Setter Property="Text" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                <DataTrigger Binding="{Binding Task.EffectiveTaskMarkedForDeletion}" Value="True">
                                                                     <Setter Property="Text" Value="Пометка удаления"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -149,7 +149,7 @@
                                             </Border>
 
                                             <TextBlock Grid.Row="1" Grid.Column="0"
-                                                       Text="{Binding ProjectName}"
+                                                       Text="{Binding Task.ProjectName}"
                                                        FontSize="12" Foreground="#6B778C"
                                                        Margin="0,8,10,0"
                                                        VerticalAlignment="Bottom"
@@ -160,11 +160,36 @@
                                                     BorderBrush="#FCA5A5" BorderThickness="1"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Bottom"
-                                                    Margin="0,8,0,0"
-                                                    Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                    Margin="0,8,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                    <Condition Binding="{Binding Task.IsOverdue}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                                 <TextBlock Text="Просрочена"
                                                            FontSize="10" FontWeight="SemiBold"
                                                            Foreground="#DC2626"/>
+                                            </Border>
+                                            <Border Grid.Row="1" Grid.Column="1"
+                                                    CornerRadius="4" Padding="6,3"
+                                                    Background="#F1F5F9"
+                                                    BorderBrush="#CBD5E1" BorderThickness="1"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="0,8,0,0"
+                                                    Visibility="{Binding IsFromClosedProject, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Закрыта"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="#475569"/>
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -238,11 +263,36 @@
                                                     BorderBrush="#FCA5A5" BorderThickness="1"
                                                     HorizontalAlignment="Right"
                                                     VerticalAlignment="Bottom"
-                                                    Margin="0,8,0,0"
-                                                    Visibility="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                    Margin="0,8,0,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                    <Condition Binding="{Binding Stage.IsOverdue}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                                 <TextBlock Text="Просрочен"
                                                            FontSize="10" FontWeight="SemiBold"
                                                            Foreground="#DC2626"/>
+                                            </Border>
+                                            <Border Grid.Row="1" Grid.Column="1"
+                                                    CornerRadius="4" Padding="6,3"
+                                                    Background="#F1F5F9"
+                                                    BorderBrush="#CBD5E1" BorderThickness="1"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="0,8,0,0"
+                                                    Visibility="{Binding IsFromClosedProject, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Закрыт"
+                                                           FontSize="10" FontWeight="SemiBold"
+                                                           Foreground="#475569"/>
                                             </Border>
                                         </Grid>
                                     </Border>

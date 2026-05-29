@@ -52,17 +52,23 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="ЦВЕТА ПЛАШЕК ЗАДАЧ" FontSize="11" FontWeight="SemiBold" Foreground="#8993A4" Margin="0,0,0,10"/>
-                <UniformGrid Grid.Row="1" Columns="1" Rows="3">
-                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#FEE2E2" BorderBrush="#EF4444" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Красный — запланировано" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
-                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#DBEAFE" BorderBrush="#3B82F6" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Синий — выполняется" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
-                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#D1FAE5" BorderBrush="#10B981" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Зелёный — завершено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                <UniformGrid Grid.Row="1" Columns="1" Rows="4">
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#F8FAFC" BorderBrush="#475569" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Серый — запланировано" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#EFF6FF" BorderBrush="#2563EB" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Синий — выполняется" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#F0FDF4" BorderBrush="#16A34A" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Зелёный — завершено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#111827" BorderBrush="#000000" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Чёрный — закрытый проект" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                 </UniformGrid>
 
-                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0" VerticalAlignment="Stretch">
-                    <TextBlock Text="Плашки задач отображаются в ячейках календаря в соответствии с дедлайном. Цвет плашки указывает на текущий статус задачи: запланировано, выполняется или завершено." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16"/>
+                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+                    <TextBlock Text="Плашки задач отображаются в ячейках календаря по дедлайну. Светлый фон и цветная рамка с текстом соответствуют статусу в активных проектах. У задач и этапов из закрытых проектов плашка всегда чёрная, независимо от статуса." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16"/>
+                </Border>
+
+                <Border Grid.Row="3" Background="#EEF2FF" CornerRadius="8" Padding="10" Margin="0,8,0,0" VerticalAlignment="Stretch">
+                    <TextBlock Text="Сегодняшний день подсвечивается серым фоном с тёмно-серым кругом вокруг номера. При наведении на ячейку показывается фон. Клик по ячейке открывает список всех задач и этапов на этот день. Клик по плашке открывает детальную карточку." FontSize="11" Foreground="#334155" TextWrapping="Wrap" LineHeight="16" VerticalAlignment="Top"/>
                 </Border>
             </Grid>
 
@@ -70,32 +76,43 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="ЦВЕТА ПЛАШЕК ЭТАПОВ" FontSize="11" FontWeight="SemiBold" Foreground="#8993A4" Margin="0,0,0,10"/>
-                <UniformGrid Grid.Row="1" Columns="1" Rows="1">
+                <UniformGrid Grid.Row="1" Columns="1" Rows="2">
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#EDE9FE" BorderBrush="#7C3AED" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Фиолетовый — этапы задач" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#111827" BorderBrush="#000000" BorderThickness="1" Margin="0,0,8,0"/><TextBlock Text="Чёрный — закрытый проект" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                 </UniformGrid>
 
-                <Border Grid.Row="2" Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,10">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <Ellipse Width="18" Height="18" Fill="#DE350B" Margin="0,0,8,0"/>
-                            <TextBlock Text="Красная точка" FontSize="11" FontWeight="SemiBold" Foreground="#7F1D1D"/>
+                <StackPanel Grid.Row="3">
+                    <Border Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="10" Height="10" Fill="#DE350B" Margin="0,0,8,0"/>
+                                <TextBlock Text="Красная точка" FontSize="11" FontWeight="SemiBold" Foreground="#7F1D1D" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Появляется рядом с плашкой задач и этапов активных проектов, если дедлайн уже прошёл." FontSize="11" Foreground="#7F1D1D" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
                         </StackPanel>
-                        <TextBlock Text="появляется рядом с плашкой, если задача или этап просрочены (дедлайн уже прошёл)." FontSize="11" Foreground="#7F1D1D" TextWrapping="Wrap" LineHeight="16" Margin="26,0,0,0"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <Border Grid.Row="3" Background="#EEF2FF" CornerRadius="8" Padding="10" VerticalAlignment="Stretch">
-                    <TextBlock Text="Сегодняшний день подсвечивается серым фоном с тёмно-серым кругом вокруг номера. При наведении на ячейку показывается фон. Клик по ячейке открывает список всех задач и этапов на этот день. Клик по плашке открывает детальную карточку задачи или этапа." FontSize="11" Foreground="#334155" TextWrapping="Wrap" LineHeight="16" VerticalAlignment="Top"/>
-                </Border>
+                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border CornerRadius="4" Padding="5,2" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" Margin="0,0,8,0">
+                                    <TextBlock Text="Закрыт" FontSize="9" FontWeight="Bold" Foreground="#475569"/>
+                                </Border>
+                                <TextBlock Text="Серый бейдж «Закрыт»" FontSize="11" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Отображается в списке дня вместо «Просрочен» для задач и этапов из закрытых проектов. Цветной бейдж статуса сохраняет значение на момент закрытия проекта." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Grid>
 
         <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1,1,0,0" Padding="24,14">
-            <TextBlock Text="Окно «Календарь» показывает задачи и этапы с дедлайнами в виде календарной сетки выбранного месяца. Используйте стрелки для перехода между месяцами и кнопку «Сегодня» для быстрого возврата к текущему месяцу. В каждой ячейке отображаются плашки задач и этапов, срок которых приходится на этот день. Если плашек больше 3–4, показывается счётчик «+N»." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap" LineHeight="17"/>
+            <TextBlock Text="Окно «Календарь» показывает задачи и этапы с дедлайнами в виде календарной сетки выбранного месяца. Используйте стрелки для перехода между месяцами и кнопку «Сегодня» для быстрого возврата к текущему месяцу. Переключатель «Закрытые проекты» (по умолчанию выключен) показывает или скрывает элементы из закрытых проектов; при включении они отображаются ниже всех активных. Выбор запоминается между сеансами. Если плашек больше 3–4, показывается счётчик «+N»." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap" LineHeight="17"/>
         </Border>
     </Grid>
 </UserControl>

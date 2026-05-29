@@ -408,13 +408,13 @@
                                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Проекты:" FontSize="11" Foreground="#333333"/>
                                                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card2Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right"/>
 
-                                                        <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F97316" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Row="1" Grid.Column="1" Text="Задачи:" FontSize="11" Foreground="#333333" Margin="0,6"/>
-                                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card2Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F59E0B" Margin="0,6" HorizontalAlignment="Right"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card2Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F97316" Margin="0,6" HorizontalAlignment="Right"/>
 
-                                                        <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                        <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#FACC15" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                                         <TextBlock Grid.Row="2" Grid.Column="1" Text="Этапы:" FontSize="11" Foreground="#333333"/>
-                                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card2Segment3}" FontWeight="Bold" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right"/>
+                                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card2Segment3}" FontWeight="Bold" FontSize="11" Foreground="#CA8A04" HorizontalAlignment="Right"/>
                                                     </Grid>
                                                 </Border>
                                             </StackPanel>
@@ -529,13 +529,13 @@
                                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1Label}" FontSize="11" Foreground="#333333" Visibility="{Binding Card3Segment1Label, Converter={StaticResource NullToVis}}"/>
                                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Card3Segment1}" FontWeight="Bold" FontSize="11" Foreground="#EF4444" HorizontalAlignment="Right" Visibility="{Binding Card3Segment1Label, Converter={StaticResource NullToVis}}"/>
 
-                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
+                                                    <Ellipse Grid.Row="1" Width="8" Height="8" Fill="#F97316" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
                                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2Label}" FontSize="11" Foreground="#333333" Margin="0,6" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F59E0B" Margin="0,6" HorizontalAlignment="Right" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card3Segment2}" FontWeight="Bold" FontSize="11" Foreground="#F97316" Margin="0,6" HorizontalAlignment="Right" Visibility="{Binding Card3Segment2Label, Converter={StaticResource NullToVis}}"/>
 
-                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#64748B" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
+                                                    <Ellipse Grid.Row="2" Width="8" Height="8" Fill="#FACC15" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
                                                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3Label}" FontSize="11" Foreground="#333333" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#64748B" HorizontalAlignment="Right" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card3Segment3}" FontWeight="Bold" FontSize="11" Foreground="#CA8A04" HorizontalAlignment="Right" Visibility="{Binding Card3Segment3Label, Converter={StaticResource NullToVis}}"/>
                                                 </Grid>
                                             </Border>
                                         </StackPanel>
@@ -568,10 +568,10 @@
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                             <GradientStop Color="#EF4444" Offset="0"/>
                                             <GradientStop Color="#EF4444" Offset="{Binding Card3Offset1}"/>
-                                            <GradientStop Color="#F59E0B" Offset="{Binding Card3Offset1}"/>
-                                            <GradientStop Color="#F59E0B" Offset="{Binding Card3Offset2}"/>
-                                            <GradientStop Color="#64748B" Offset="{Binding Card3Offset2}"/>
-                                            <GradientStop Color="#64748B" Offset="1.0"/>
+                                            <GradientStop Color="#F97316" Offset="{Binding Card3Offset1}"/>
+                                            <GradientStop Color="#F97316" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#FACC15" Offset="{Binding Card3Offset2}"/>
+                                            <GradientStop Color="#FACC15" Offset="1.0"/>
                                         </LinearGradientBrush>
                                     </ProgressBar.Foreground>
                                 </ProgressBar>
@@ -775,7 +775,13 @@
 
                             <Grid>
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" MouseWheel="PreventScrollBubbling">
+                                    <StackPanel>
                                     <ItemsControl ItemsSource="{Binding RecentActivities}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Margin="0,0,0,6" CornerRadius="6"
@@ -951,6 +957,21 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                    <Border Margin="0,12,0,8" Padding="0,4"
+                                            Visibility="{Binding HasMoreActivities, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <Button Content="Загрузить ещё…"
+                                                    Style="{StaticResource OutlineBtn}"
+                                                    HorizontalAlignment="Center"
+                                                    Command="{Binding LoadMoreActivitiesCommand}"/>
+                                            <TextBlock Text="Загрузка…"
+                                                       FontSize="12" Foreground="#64748B"
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"
+                                                       Visibility="{Binding IsLoadingMoreActivities, Converter={StaticResource BoolToVis}}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    </StackPanel>
                                 </ScrollViewer>
 
                                 <Grid Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}">

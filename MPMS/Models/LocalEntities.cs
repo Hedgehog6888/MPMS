@@ -121,6 +121,9 @@ public class LocalProject : LocalEntity
     public bool IsOverdue => EndDate.HasValue
         && EndDate < DateOnly.FromDateTime(DateTime.Today)
         && Status != ProjectStatus.Completed;
+
+    /// <summary>Единственная карточка в последней строке сетки — расширенный вид на всю ширину.</summary>
+    [NotMapped] public bool IsWideCard { get; set; }
 }
 
 public class LocalTask : LocalEntity

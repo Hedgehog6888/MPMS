@@ -22,6 +22,7 @@ public partial class CalendarDayTasksOverlay : UserControl
         DateTime day,
         IReadOnlyList<LocalTask> tasks,
         IReadOnlyList<CalendarDayStage> dayStages,
+        IReadOnlySet<Guid> closedProjectIds,
         Action<LocalTask> onTaskSelected,
         Action<LocalTaskStage, LocalTask> onStageSelected)
     {
@@ -53,13 +54,20 @@ public partial class CalendarDayTasksOverlay : UserControl
         TabsBorder.Visibility = Visibility.Visible;
 
         var orderedTasks = tasks
-            .OrderBy(t => t.Status)
-            .ThenBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(t => new CalendarDayTaskEntry
+            {
+                Task = t,
+                IsFromClosedProject = closedProjectIds.Contains(t.ProjectId)
+            })
+            .OrderBy(x => x.IsFromClosedProject)
+            .ThenBy(x => x.Task.Status)
+            .ThenBy(x => x.Task.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         TasksList.ItemsSource = orderedTasks;
 
         var orderedStages = dayStages
-            .OrderBy(ds => ds.Stage.Status)
+            .OrderBy(ds => ds.IsFromClosedProject)
+            .ThenBy(ds => ds.Stage.Status)
             .ThenBy(ds => ds.Stage.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         StagesList.ItemsSource = orderedStages;
@@ -151,9 +159,9 @@ public partial class CalendarDayTasksOverlay : UserControl
 
     private void TaskRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Border b || b.Tag is not LocalTask task) return;
+        if (sender is not Border b || b.Tag is not CalendarDayTaskEntry row) return;
         e.Handled = true;
-        _onTaskSelected?.Invoke(task);
+        _onTaskSelected?.Invoke(row.Task);
     }
 
     private void StageRow_Click(object sender, MouseButtonEventArgs e)

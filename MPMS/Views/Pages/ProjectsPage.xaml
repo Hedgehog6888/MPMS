@@ -126,7 +126,7 @@
                         <ItemsControl ItemsSource="{Binding Projects}" Margin="2,0,2,0">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <UniformGrid Columns="2"/>
+                                    <controls:TwoColumnProjectPanel ColumnSpacing="0"/>
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
@@ -184,7 +184,17 @@
                                         <Border.RenderTransform>
                                             <TranslateTransform/>
                                         </Border.RenderTransform>
+
                                         <Grid Margin="24">
+                                            <Grid.Style>
+                                                <Style TargetType="Grid">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsWideCard}" Value="True">
+                                                            <Setter Property="Margin" Value="28,24,28,24"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Grid.Style>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>

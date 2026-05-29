@@ -30,6 +30,38 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="CalendarSwitchToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid Width="36" Height="20">
+                            <Border x:Name="Track" CornerRadius="10" Background="#CBD5E1"/>
+                            <Border x:Name="Thumb" Width="16" Height="16" CornerRadius="8"
+                                    Background="White" HorizontalAlignment="Left" Margin="2,0,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="2" ShadowDepth="0.5" Opacity="0.18"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#0F172A"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="#F4F5F7">
@@ -52,6 +84,20 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="White" CornerRadius="8"
+                            BorderBrush="#DFE1E6" BorderThickness="1"
+                            Margin="0,0,10,0" Padding="12,0" Height="30">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Закрытые проекты"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#64748B" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <ToggleButton Style="{StaticResource CalendarSwitchToggle}"
+                                          IsChecked="{Binding ShowClosedProjects, Mode=TwoWay}"
+                                          ToolTip="Показывать задачи и этапы из закрытых проектов"/>
+                        </StackPanel>
+                    </Border>
+
                     <Button Height="30" Padding="14,0" Margin="0,0,10,0"
                             Command="{Binding GoToTodayCommand}" Cursor="Hand">
                         <Button.Template>
@@ -241,14 +287,26 @@
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsStage}" Value="False">
-                                                                    <Setter Property="Background"   Value="{Binding Task.Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
-                                                                    <Setter Property="BorderBrush"  Value="{Binding Task.Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                <DataTrigger Binding="{Binding IsFromClosedProject}" Value="True">
+                                                                    <Setter Property="Background" Value="#111827"/>
+                                                                    <Setter Property="BorderBrush" Value="#000000"/>
                                                                 </DataTrigger>
-                                                                <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                        <Condition Binding="{Binding IsStage}" Value="False"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToPaleBrush}}"/>
+                                                                    <Setter Property="BorderBrush" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
+                                                                </MultiDataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                        <Condition Binding="{Binding IsStage}" Value="True"/>
+                                                                    </MultiDataTrigger.Conditions>
                                                                     <Setter Property="Background" Value="#EDE9FE"/>
                                                                     <Setter Property="BorderBrush" Value="#7C3AED"/>
-                                                                </DataTrigger>
+                                                                </MultiDataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
@@ -264,33 +322,66 @@
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsStage}" Value="False">
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="True"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="False"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Text" Value="{Binding Task.Name}"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                        </MultiDataTrigger>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="True"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="True"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Text" Value="{Binding Stage.Name}"/>
+                                                                            <Setter Property="Foreground" Value="White"/>
+                                                                        </MultiDataTrigger>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="False"/>
+                                                                            </MultiDataTrigger.Conditions>
                                                                             <Setter Property="Text" Value="{Binding Task.Name}"/>
                                                                             <Setter Property="Foreground" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToFgBrush}}"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                        </MultiDataTrigger>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="True"/>
+                                                                            </MultiDataTrigger.Conditions>
                                                                             <Setter Property="Text" Value="{Binding Stage.Name}"/>
                                                                             <Setter Property="Foreground" Value="#5B21B6"/>
-                                                                        </DataTrigger>
+                                                                        </MultiDataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </TextBlock.Style>
                                                         </TextBlock>
                                                         <Ellipse Grid.Column="1"
                                                                  Width="6" Height="6"
-                                                                 Fill="#DE350B"
                                                                  Margin="3,0,0,0"
                                                                  VerticalAlignment="Center">
                                                             <Ellipse.Style>
                                                                 <Style TargetType="Ellipse">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                     <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding IsStage}" Value="False">
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="False"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Fill" Value="#DE350B"/>
                                                                             <Setter Property="Visibility" Value="{Binding Task.IsOverdue, Converter={StaticResource BoolToVis}}"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding IsStage}" Value="True">
+                                                                        </MultiDataTrigger>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                                <Condition Binding="{Binding IsStage}" Value="True"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Fill" Value="#DE350B"/>
                                                                             <Setter Property="Visibility" Value="{Binding Stage.IsOverdue, Converter={StaticResource BoolToVis}}"/>
-                                                                        </DataTrigger>
+                                                                        </MultiDataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </Ellipse.Style>

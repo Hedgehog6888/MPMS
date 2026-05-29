@@ -52,18 +52,24 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="ЦВЕТА ПОЛОС ПРОГРЕССА" FontSize="11" FontWeight="SemiBold" Foreground="#8993A4" Margin="0,0,0,10"/>
-                <UniformGrid Grid.Row="1" Columns="1" Rows="4">
+                <UniformGrid Grid.Row="1" Columns="1" Rows="5">
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#EF4444" Margin="0,0,8,0"/><TextBlock Text="Красный — менее 30% выполнено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#F59E0B" Margin="0,0,8,0"/><TextBlock Text="Оранжевый — 30–59% выполнено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#3B82F6" Margin="0,0,8,0"/><TextBlock Text="Синий — 60–99% выполнено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#10B981" Margin="0,0,8,0"/><TextBlock Text="Зелёный — 100% выполнено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
+                    <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#000000" Margin="0,0,8,0"/><TextBlock Text="Чёрный — закрытый проект" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                 </UniformGrid>
 
-                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0" VerticalAlignment="Stretch">
-                    <TextBlock Text="Цвет полосы на шкале показывает прогресс выполнения задачи или этапа. Для задач процент вычисляется на основе завершённых подэтапов, для этапов — на основе статуса (запланирован/выполняется/завершён)." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16"/>
+                <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,0">
+                    <TextBlock Text="Цвет полосы показывает прогресс выполнения задачи или этапа в активных проектах. Для задач процент вычисляется по завершённым подэтапам, для этапов — по статусу. У элементов из закрытых проектов полоса всегда чёрная, независимо от прогресса." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16"/>
+                </Border>
+
+                <Border Grid.Row="3" Background="#EEF2FF" CornerRadius="8" Padding="10" Margin="0,8,0,0" VerticalAlignment="Stretch">
+                    <TextBlock Text="Текущий день отмечен красной пунктирной вертикальной линией. В заголовке шкалы сегодняшний день подсвечивается красным фоном. При наведении на полосу показывается диапазон дат от создания до срока выполнения." FontSize="11" Foreground="#334155" TextWrapping="Wrap" LineHeight="16" VerticalAlignment="Top"/>
                 </Border>
             </Grid>
 
@@ -71,8 +77,8 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="ЦВЕТА БЕЙДЖЕЙ СТАТУСА" FontSize="11" FontWeight="SemiBold" Foreground="#8993A4" Margin="0,0,0,10"/>
                 <UniformGrid Grid.Row="1" Columns="1" Rows="3">
@@ -81,24 +87,36 @@
                     <Border Style="{StaticResource ColorLegendItem}"><StackPanel Orientation="Horizontal"><Border Width="18" Height="18" CornerRadius="5" Background="#10B981" Margin="0,0,8,0"/><TextBlock Text="Зелёный — завершено" FontSize="13" FontWeight="SemiBold" Foreground="#172B4D"/></StackPanel></Border>
                 </UniformGrid>
 
-                <Border Grid.Row="2" Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,8,0,10">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <Border Width="18" Height="18" CornerRadius="5" Background="#DC2626" Margin="0,0,8,0"/>
-                            <TextBlock Text="Красный бейдж «Просрочен»" FontSize="11" FontWeight="SemiBold" Foreground="#7F1D1D"/>
+                <StackPanel Grid.Row="3">
+                    <Border Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border CornerRadius="4" Padding="5,2" Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1" Margin="0,0,8,0">
+                                    <TextBlock Text="Просрочен" FontSize="9" FontWeight="Bold" Foreground="#DC2626"/>
+                                </Border>
+                                <TextBlock Text="Красный бейдж «Просрочен»" FontSize="11" FontWeight="SemiBold" Foreground="#7F1D1D" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Появляется у задач и этапов активных проектов, если срок выполнения уже прошёл." FontSize="11" Foreground="#7F1D1D" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
                         </StackPanel>
-                        <TextBlock Text="появляется, если срок выполнения задачи или этапа уже прошёл." FontSize="11" Foreground="#7F1D1D" TextWrapping="Wrap" LineHeight="16" Margin="26,0,0,0"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <Border Grid.Row="3" Background="#EEF2FF" CornerRadius="8" Padding="10" VerticalAlignment="Stretch">
-                    <TextBlock Text="Текущий день отмечен красной пунктирной вертикальной линией. В заголовке шкалы сегодняшний день подсвечивается красным фоном. При наведении на полосу показывается диапазон дат от создания до срока выполнения." FontSize="11" Foreground="#334155" TextWrapping="Wrap" LineHeight="16" VerticalAlignment="Top"/>
-                </Border>
+                    <Border Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="10">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border CornerRadius="4" Padding="5,2" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" Margin="0,0,8,0">
+                                    <TextBlock Text="Закрыт" FontSize="9" FontWeight="Bold" Foreground="#475569"/>
+                                </Border>
+                                <TextBlock Text="Серый бейдж «Закрыт»" FontSize="11" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="Отображается у задач и этапов из закрытых проектов вместо «Просрочен». Цветной бейдж статуса сохраняет значение на момент закрытия проекта." FontSize="11" Foreground="#475569" TextWrapping="Wrap" LineHeight="16" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Grid>
 
         <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1,1,0,0" Padding="24,14">
-            <TextBlock Text="Окно «Таймлайн» показывает задачи и этапы на временной шкале выбранного месяца. Полоса отображает период от даты создания до срока выполнения. Переключайтесь между вкладками «Задачи» и «Этапы», используйте стрелки для перехода между месяцами и кнопку «Сегодня» для быстрого возврата к текущему месяцу. Клик по строке открывает детальную карточку." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap" LineHeight="17"/>
+            <TextBlock Text="Окно «Таймлайн» показывает задачи и этапы на временной шкале выбранного месяца. Полоса отображает период от даты создания до срока выполнения. Переключайтесь между вкладками «Задачи» и «Этапы», используйте стрелки для перехода между месяцами и кнопку «Сегодня» для быстрого возврата к текущему месяцу. Переключатель «Закрытые проекты» (по умолчанию выключен) показывает или скрывает элементы из закрытых проектов; при включении они отображаются ниже всех активных. Выбор запоминается между сеансами. Клик по строке открывает детальную карточку." FontSize="11.5" Foreground="#475569" TextWrapping="Wrap" LineHeight="17"/>
         </Border>
     </Grid>
 </UserControl>

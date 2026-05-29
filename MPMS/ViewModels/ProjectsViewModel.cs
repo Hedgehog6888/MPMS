@@ -240,6 +240,9 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
             .ThenByDescending(p => p.CreatedAt)
             .ToList();
 
+        for (var i = 0; i < sorted.Count; i++)
+            sorted[i].IsWideCard = sorted.Count % 2 == 1 && i == sorted.Count - 1;
+
         Projects = new ObservableCollection<LocalProject>(sorted);
     }
 

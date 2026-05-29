@@ -73,6 +73,38 @@
                 </Grid>
             </Border>
         </DataTemplate>
+        <Style x:Key="TimelineSwitchToggle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid Width="36" Height="20">
+                            <Border x:Name="Track" CornerRadius="10" Background="#CBD5E1"/>
+                            <Border x:Name="Thumb" Width="16" Height="16" CornerRadius="8"
+                                    Background="White" HorizontalAlignment="Left" Margin="2,0,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="2" ShadowDepth="0.5" Opacity="0.18"/>
+                                </Border.Effect>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#0F172A"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="#F8FAFC">
@@ -96,6 +128,20 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="White" CornerRadius="8"
+                            BorderBrush="#E2E8F0" BorderThickness="1"
+                            Margin="0,0,10,0" Padding="12,0" Height="30">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Закрытые проекты"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#64748B" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <ToggleButton Style="{StaticResource TimelineSwitchToggle}"
+                                          IsChecked="{Binding ShowClosedProjects, Mode=TwoWay}"
+                                          ToolTip="Показывать задачи и этапы из закрытых проектов"/>
+                        </StackPanel>
+                    </Border>
+
                     <Button Height="30" Padding="14,0" Margin="0,0,10,0"
                             Command="{Binding GoToTodayCommand}" Cursor="Hand">
                         <Button.Template>
@@ -279,10 +325,29 @@
                                                                        Foreground="White"/>
                                                         </Border>
                                                         <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
-                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsOverdue}" Value="True"/>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </MultiDataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
                                                             <TextBlock Text="Просрочен" FontSize="9" FontWeight="Bold"
                                                                        Foreground="#DC2626" HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                        <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
+                                                                Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1"
+                                                                Visibility="{Binding IsFromClosedProject, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="Закрыт" FontSize="9" FontWeight="Bold"
+                                                                       Foreground="#475569" HorizontalAlignment="Center"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </StackPanel>
@@ -467,10 +532,29 @@
                                                                        Foreground="White"/>
                                                         </Border>
                                                         <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
-                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                                                Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
+                                                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsOverdue}" Value="True"/>
+                                                                                <Condition Binding="{Binding IsFromClosedProject}" Value="False"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </MultiDataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
                                                             <TextBlock Text="Просрочен" FontSize="9" FontWeight="Bold"
                                                                        Foreground="#DC2626" HorizontalAlignment="Center"/>
+                                                        </Border>
+                                                        <Border CornerRadius="4" Padding="5,2" Margin="6,0,0,0"
+                                                                Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1"
+                                                                Visibility="{Binding IsFromClosedProject, Converter={StaticResource BoolToVis}}">
+                                                            <TextBlock Text="Закрыт" FontSize="9" FontWeight="Bold"
+                                                                       Foreground="#475569" HorizontalAlignment="Center"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </StackPanel>

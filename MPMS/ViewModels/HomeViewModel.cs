@@ -11,12 +11,17 @@ namespace MPMS.ViewModels;
 
 public partial class HomeViewModel : ViewModelBase, ILoadable
 {
+    private const int ActivityPageSize = 100;
+
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
     private readonly ISyncService _sync;
 
+    private int _activitiesGroupedSkip;
 
     [ObservableProperty] private ObservableCollection<LocalActivityLog> _recentActivities = [];
+    [ObservableProperty] private bool _hasMoreActivities;
+    [ObservableProperty] private bool _isLoadingMoreActivities;
 
     [ObservableProperty] private ObservableCollection<LocalNote> _notes = [];
     [ObservableProperty] private LocalNote? _selectedNote;
@@ -348,8 +353,11 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             await using var db = await _dbFactory.CreateDbContextAsync();
             var userId = _auth.UserId ?? Guid.Empty;
 
-            var activities = await ActivityFilterService.GetFilteredActivitiesAsync(db, _auth, 100, excludeAuthEvents: true);
+            _activitiesGroupedSkip = 0;
+            var activities = await ActivityFilterService.GetFilteredActivitiesAsync(
+                db, _auth, ActivityPageSize, skipGrouped: 0, excludeAuthEvents: true);
             RecentActivities = new ObservableCollection<LocalActivityLog>(activities);
+            HasMoreActivities = activities.Count == ActivityPageSize;
 
             await LoadNotesAsync();
 
@@ -837,4 +845,40 @@ public partial class HomeViewModel : ViewModelBase, ILoadable
             IsBusy = false;
         }
     }
+
+    private bool CanLoadMoreActivities() => HasMoreActivities && !IsLoadingMoreActivities;
+
+    [RelayCommand(CanExecute = nameof(CanLoadMoreActivities))]
+    private async Task LoadMoreActivitiesAsync()
+    {
+        if (!CanLoadMoreActivities()) return;
+
+        IsLoadingMoreActivities = true;
+        try
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            _activitiesGroupedSkip += ActivityPageSize;
+
+            var more = await ActivityFilterService.GetFilteredActivitiesAsync(
+                db, _auth, ActivityPageSize, skipGrouped: _activitiesGroupedSkip, excludeAuthEvents: true);
+
+            HasMoreActivities = more.Count == ActivityPageSize;
+
+            foreach (var activity in more)
+                RecentActivities.Add(activity);
+        }
+        catch (Exception ex)
+        {
+            _activitiesGroupedSkip -= ActivityPageSize;
+            SetError("Не удалось загрузить действия: " + ex.Message);
+        }
+        finally
+        {
+            IsLoadingMoreActivities = false;
+        }
+    }
+
+    partial void OnHasMoreActivitiesChanged(bool value) => LoadMoreActivitiesCommand.NotifyCanExecuteChanged();
+
+    partial void OnIsLoadingMoreActivitiesChanged(bool value) => LoadMoreActivitiesCommand.NotifyCanExecuteChanged();
 }
