@@ -29,6 +29,7 @@ public partial class FilesControlViewModel : ViewModelBase
     public event Action<string>? ShowToastRequested;
 
     [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] private bool _isFirstLoad = true;
     [ObservableProperty] private string _searchText = string.Empty;
     [ObservableProperty] private string _currentTab = "Images"; // "Images" or "Documents"
     [ObservableProperty] private string _imagesViewMode = "Grid";
@@ -74,6 +75,29 @@ public partial class FilesControlViewModel : ViewModelBase
     private List<LocalFile> _cachedImagesFiles = [];
     private List<LocalFile> _cachedDocumentsFiles = [];
     private Dictionary<Guid, Guid> _stageToProjectMap = []; // StageId -> ProjectId mapping for filtering
+
+    // Тянем только метаданные (без байтов FileData), чтобы первичная загрузка была быстрой.
+    // Байты изображений дозагрузим в фоне после показа списка.
+    private static readonly System.Linq.Expressions.Expression<Func<LocalFile, LocalFile>> FileMetadataSelector =
+        f => new LocalFile
+        {
+            Id = f.Id,
+            FileName = f.FileName,
+            FilePath = f.FilePath,
+            FileType = f.FileType,
+            FileSize = f.FileSize,
+            FileData = null,
+            UploadedById = f.UploadedById,
+            UploadedByName = f.UploadedByName,
+            ProjectId = f.ProjectId,
+            TaskId = f.TaskId,
+            StageId = f.StageId,
+            CreatedAt = f.CreatedAt,
+            OriginalCreatedAt = f.OriginalCreatedAt,
+            Description = f.Description,
+            IsSynced = f.IsSynced,
+            LastModifiedLocally = f.LastModifiedLocally
+        };
 
     public FilesControlViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
@@ -210,156 +234,45 @@ public partial class FilesControlViewModel : ViewModelBase
         OnPropertyChanged(nameof(ViewMode));
     }
 
+    private sealed record FilesQueryResult(
+        List<LocalFile> Files,
+        Dictionary<Guid, Guid> StageToProjectMap,
+        LocalProject? Project);
+
     public async Task LoadFilesAsync()
     {
         IsLoading = true;
         try
         {
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            IQueryable<LocalFile> query = db.Files.AsNoTracking();
-
-            // Загружаем проект, если указан projectId
-            if (_projectId.HasValue)
+            // ВАЖНО: провайдер SQLite выполняет запросы синхронно, поэтому всю работу с БД
+            // уносим на фоновый поток. Иначе UI-поток блокируется и скелетон не успевает отрисоваться.
+            var result = await Task.Run(async () =>
             {
-                Project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == _projectId.Value);
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var (query, project) = await BuildScopedQueryAsync(db);
 
-                // Получаем все этапы проекта через задачи (как в API)
-                var projectTaskIds = await db.Tasks.AsNoTracking()
-                    .Where(t => t.ProjectId == _projectId.Value)
-                    .Select(t => t.Id)
-                    .ToListAsync();
-                var projectStageIds = await db.TaskStages.AsNoTracking()
-                    .Where(s => projectTaskIds.Contains(s.TaskId))
-                    .Select(s => s.Id)
+                var files = await query
+                    .OrderByDescending(f => f.CreatedAt)
+                    .Select(FileMetadataSelector)
                     .ToListAsync();
 
-                // Фильтруем файлы проекта и файлы этапов проекта
-                query = query.Where(f => f.ProjectId == _projectId.Value || 
-                    (f.StageId.HasValue && projectStageIds.Contains(f.StageId.Value)));
-            }
-            else if (_stageId.HasValue)
-            {
-                query = query.Where(f => f.StageId == _stageId.Value);
-            }
-            else
-            {
-                Project = null;
-                query = await AvailableFilesQuery.ApplyGlobalFilterAsync(query, db, _auth);
-            }
+                var stageMap = new Dictionary<Guid, Guid>();
+                await EnrichFilesAsync(db, files, stageMap, project);
+                return new FilesQueryResult(files, stageMap, project);
+            });
 
-            // Тянем только метаданные (без байтов FileData), чтобы первичная загрузка была быстрой.
-            // Байты изображений дозагрузим в фоне после показа списка.
-            var files = await query
-                .OrderByDescending(f => f.CreatedAt)
-                .Select(f => new LocalFile
-                {
-                    Id = f.Id,
-                    FileName = f.FileName,
-                    FilePath = f.FilePath,
-                    FileType = f.FileType,
-                    FileSize = f.FileSize,
-                    FileData = null,
-                    UploadedById = f.UploadedById,
-                    UploadedByName = f.UploadedByName,
-                    ProjectId = f.ProjectId,
-                    TaskId = f.TaskId,
-                    StageId = f.StageId,
-                    CreatedAt = f.CreatedAt,
-                    OriginalCreatedAt = f.OriginalCreatedAt,
-                    Description = f.Description,
-                    IsSynced = f.IsSynced,
-                    LastModifiedLocally = f.LastModifiedLocally
-                })
-                .ToListAsync();
+            // Применяем результат на UI-потоке.
+            Project = result.Project;
+            _stageToProjectMap = result.StageToProjectMap;
 
-            // Оптимизация: загружаем проекты и этапы за один раз
-            var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
-            var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
-
-            var stages = stageIds.Count == 0
-                ? new Dictionary<Guid, (string Name, Guid TaskId)>()
-                : await db.TaskStages
-                    .Where(s => stageIds.Contains(s.Id))
-                    .Select(s => new { s.Id, s.Name, s.TaskId })
-                    .ToDictionaryAsync(s => s.Id, s => (s.Name, s.TaskId));
-
-            var taskIdsFromStages = stages.Values.Select(s => s.TaskId).Distinct().ToList();
-            var taskProjectMap = taskIdsFromStages.Count == 0
-                ? new Dictionary<Guid, Guid>()
-                : await db.Tasks
-                    .Where(t => taskIdsFromStages.Contains(t.Id))
-                    .Select(t => new { t.Id, t.ProjectId })
-                    .ToDictionaryAsync(t => t.Id, t => t.ProjectId);
-
-            _stageToProjectMap = stages
-                .Where(kvp => taskProjectMap.ContainsKey(kvp.Value.TaskId))
-                .ToDictionary(kvp => kvp.Key, kvp => taskProjectMap[kvp.Value.TaskId]);
-
-            var allProjectIds = projectIds
-                .Concat(_stageToProjectMap.Values)
-                .Distinct()
-                .ToList();
-
-            var projects = allProjectIds.Count == 0
-                ? new Dictionary<Guid, string>()
-                : await db.Projects
-                    .Where(p => allProjectIds.Contains(p.Id))
-                    .Select(p => new { p.Id, p.Name })
-                    .ToDictionaryAsync(p => p.Id, p => p.Name);
-
-            foreach (var f in files)
-            {
-                if (f.ProjectId.HasValue && projects.TryGetValue(f.ProjectId.Value, out var pname))
-                    f.ProjectName = pname;
-                else if (f.StageId.HasValue
-                         && _stageToProjectMap.TryGetValue(f.StageId.Value, out var derivedProjectId)
-                         && projects.TryGetValue(derivedProjectId, out var derivedName))
-                    f.ProjectName = derivedName;
-                else if (_projectId.HasValue && Project != null)
-                    f.ProjectName = Project.Name;
-
-                if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var stageInfo))
-                    f.StageName = stageInfo.Name;
-            }
-
-            // Оптимизация: добавляем все сразу вместо по одному
             AllFiles.Clear();
-            foreach (var f in files)
+            foreach (var f in result.Files)
                 AllFiles.Add(f);
 
-            _cachedImagesFiles = files.Where(f => IsImage(f.FileName)).ToList();
-            _cachedDocumentsFiles = files.Where(f => !IsImage(f.FileName)).ToList();
+            _cachedImagesFiles = result.Files.Where(f => IsImage(f.FileName)).ToList();
+            _cachedDocumentsFiles = result.Files.Where(f => !IsImage(f.FileName)).ToList();
 
-            // Построение опций фильтра по проектам (только для общего списка файлов)
-            if (!_projectId.HasValue && !_stageId.HasValue)
-            {
-                var currentProjectFilter = ProjectFilter;
-                var projectOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
-                projectOpts.AddRange(files
-                    .Select(f =>
-                    {
-                        var pid = f.ProjectId;
-                        if (!pid.HasValue && f.StageId.HasValue
-                            && _stageToProjectMap.TryGetValue(f.StageId.Value, out var stageProjectId))
-                            pid = stageProjectId;
-
-                        var pname = f.ProjectName;
-                        if (string.IsNullOrWhiteSpace(pname) && pid.HasValue)
-                            projects.TryGetValue(pid.Value, out pname);
-
-                        return new { ProjectId = pid, ProjectName = pname };
-                    })
-                    .Where(x => x.ProjectId.HasValue && !string.IsNullOrWhiteSpace(x.ProjectName))
-                    .GroupBy(x => x.ProjectId!.Value)
-                    .Select(g => new ProjectFilterOption(g.Key, g.First().ProjectName!))
-                    .OrderBy(p => p.Name));
-                ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(projectOpts);
-                if (currentProjectFilter.HasValue && projectOpts.Any(o => o.Id == currentProjectFilter.Value))
-                    ProjectFilter = currentProjectFilter;
-                else if (currentProjectFilter.HasValue)
-                    ProjectFilter = null;
-            }
-
+            RebuildProjectFilterOptions();
             UpdateExtensionFilterOptions();
             ApplyFilters();
             OnPropertyChanged(nameof(ImagesCount));
@@ -372,7 +285,231 @@ public partial class FilesControlViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            IsFirstLoad = false;
         }
+    }
+
+    /// <summary>
+    /// Инкрементальное обновление: данные уже в памяти, поэтому мы не пересоздаём весь список
+    /// (это дорого — элементы не виртуализируются), а только добавляем новые файлы и убираем удалённые.
+    /// </summary>
+    public async Task RefreshFilesAsync()
+    {
+        // Первое открытие — нужна полноценная загрузка со скелетоном.
+        if (IsFirstLoad)
+        {
+            await LoadFilesAsync();
+            return;
+        }
+
+        try
+        {
+            // Снимок текущих файлов делаем на UI-потоке, дальше работаем с БД в фоне.
+            var existingFiles = AllFiles.ToList();
+            var existingIds = existingFiles.Select(f => f.Id).ToHashSet();
+
+            var diff = await Task.Run(async () =>
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var (query, project) = await BuildScopedQueryAsync(db);
+
+                var dbIdSet = (await query.Select(f => f.Id).ToListAsync()).ToHashSet();
+                var newIds = dbIdSet.Where(id => !existingIds.Contains(id)).ToList();
+                var removedIds = existingIds.Where(id => !dbIdSet.Contains(id)).ToHashSet();
+
+                var stageMap = new Dictionary<Guid, Guid>();
+                var newFiles = new List<LocalFile>();
+                if (newIds.Count > 0)
+                {
+                    newFiles = await query
+                        .Where(f => newIds.Contains(f.Id))
+                        .OrderByDescending(f => f.CreatedAt)
+                        .Select(FileMetadataSelector)
+                        .ToListAsync();
+                    await EnrichFilesAsync(db, newFiles, stageMap, project);
+                }
+
+                return (Project: project, NewFiles: newFiles, RemovedIds: removedIds, StageMap: stageMap);
+            });
+
+            // Ничего не изменилось — список не трогаем, перерисовки нет.
+            if (diff.NewFiles.Count == 0 && diff.RemovedIds.Count == 0)
+            {
+                _ = _sidebarFooter.RefreshStatsAsync();
+                return;
+            }
+
+            Project = diff.Project;
+            foreach (var kv in diff.StageMap)
+                _stageToProjectMap[kv.Key] = kv.Value;
+
+            if (diff.RemovedIds.Count > 0)
+            {
+                foreach (var rf in existingFiles.Where(f => diff.RemovedIds.Contains(f.Id)))
+                {
+                    rf.PropertyChanged -= File_PropertyChanged;
+                    AllFiles.Remove(rf);
+                    _cachedImagesFiles.Remove(rf);
+                    _cachedDocumentsFiles.Remove(rf);
+                }
+            }
+
+            foreach (var nf in diff.NewFiles)
+            {
+                InsertSortedByCreatedAt(AllFiles, nf);
+                if (IsImage(nf.FileName))
+                    InsertSortedByCreatedAt(_cachedImagesFiles, nf);
+                else
+                    InsertSortedByCreatedAt(_cachedDocumentsFiles, nf);
+            }
+
+            RebuildProjectFilterOptions();
+            UpdateExtensionFilterOptions();
+            ApplyFilters();
+            OnPropertyChanged(nameof(ImagesCount));
+            OnPropertyChanged(nameof(DocumentsCount));
+            OnPropertyChanged(nameof(FilesCount));
+
+            var newImageIds = diff.NewFiles.Where(f => IsImage(f.FileName)).Select(f => f.Id).ToList();
+            if (newImageIds.Count > 0)
+                _ = LoadImagePreviewsAsync(newImageIds);
+            _ = _sidebarFooter.RefreshStatsAsync();
+        }
+        catch
+        {
+            // Фоновое обновление не критично — если упало, остаёмся на старых данных.
+        }
+    }
+
+    private static void InsertSortedByCreatedAt<T>(IList<T> list, LocalFile file) where T : LocalFile
+    {
+        var index = 0;
+        while (index < list.Count && list[index].CreatedAt >= file.CreatedAt)
+            index++;
+        list.Insert(index, (T)(object)file);
+    }
+
+    private async Task<(IQueryable<LocalFile> Query, LocalProject? Project)> BuildScopedQueryAsync(LocalDbContext db)
+    {
+        IQueryable<LocalFile> query = db.Files.AsNoTracking();
+        LocalProject? project = null;
+
+        // Загружаем проект, если указан projectId
+        if (_projectId.HasValue)
+        {
+            project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == _projectId.Value);
+
+            // Получаем все этапы проекта через задачи (как в API)
+            var projectTaskIds = await db.Tasks.AsNoTracking()
+                .Where(t => t.ProjectId == _projectId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var projectStageIds = await db.TaskStages.AsNoTracking()
+                .Where(s => projectTaskIds.Contains(s.TaskId))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            // Фильтруем файлы проекта и файлы этапов проекта
+            query = query.Where(f => f.ProjectId == _projectId.Value ||
+                (f.StageId.HasValue && projectStageIds.Contains(f.StageId.Value)));
+        }
+        else if (_stageId.HasValue)
+        {
+            query = query.Where(f => f.StageId == _stageId.Value);
+        }
+        else
+        {
+            query = await AvailableFilesQuery.ApplyGlobalFilterAsync(query, db, _auth);
+        }
+
+        return (query, project);
+    }
+
+    private async Task EnrichFilesAsync(LocalDbContext db, List<LocalFile> files,
+        Dictionary<Guid, Guid> stageMap, LocalProject? scopeProject)
+    {
+        if (files.Count == 0) return;
+
+        // Оптимизация: загружаем проекты и этапы за один раз
+        var projectIds = files.Select(f => f.ProjectId).OfType<Guid>().Distinct().ToList();
+        var stageIds = files.Select(f => f.StageId).OfType<Guid>().Distinct().ToList();
+
+        var stages = stageIds.Count == 0
+            ? new Dictionary<Guid, (string Name, Guid TaskId)>()
+            : await db.TaskStages
+                .Where(s => stageIds.Contains(s.Id))
+                .Select(s => new { s.Id, s.Name, s.TaskId })
+                .ToDictionaryAsync(s => s.Id, s => (s.Name, s.TaskId));
+
+        var taskIdsFromStages = stages.Values.Select(s => s.TaskId).Distinct().ToList();
+        var taskProjectMap = taskIdsFromStages.Count == 0
+            ? new Dictionary<Guid, Guid>()
+            : await db.Tasks
+                .Where(t => taskIdsFromStages.Contains(t.Id))
+                .Select(t => new { t.Id, t.ProjectId })
+                .ToDictionaryAsync(t => t.Id, t => t.ProjectId);
+
+        foreach (var kvp in stages)
+            if (taskProjectMap.TryGetValue(kvp.Value.TaskId, out var pid))
+                stageMap[kvp.Key] = pid;
+
+        var allProjectIds = projectIds
+            .Concat(stages.Values
+                .Where(s => taskProjectMap.ContainsKey(s.TaskId))
+                .Select(s => taskProjectMap[s.TaskId]))
+            .Distinct()
+            .ToList();
+
+        var projects = allProjectIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : await db.Projects
+                .Where(p => allProjectIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.Name })
+                .ToDictionaryAsync(p => p.Id, p => p.Name);
+
+        foreach (var f in files)
+        {
+            if (f.ProjectId.HasValue && projects.TryGetValue(f.ProjectId.Value, out var pname))
+                f.ProjectName = pname;
+            else if (f.StageId.HasValue
+                     && stageMap.TryGetValue(f.StageId.Value, out var derivedProjectId)
+                     && projects.TryGetValue(derivedProjectId, out var derivedName))
+                f.ProjectName = derivedName;
+            else if (_projectId.HasValue && scopeProject != null)
+                f.ProjectName = scopeProject.Name;
+
+            if (f.StageId.HasValue && stages.TryGetValue(f.StageId.Value, out var stageInfo))
+                f.StageName = stageInfo.Name;
+        }
+    }
+
+    private void RebuildProjectFilterOptions()
+    {
+        // Опции фильтра по проектам строим только для общего списка файлов.
+        if (_projectId.HasValue || _stageId.HasValue)
+            return;
+
+        var currentProjectFilter = ProjectFilter;
+        var projectOpts = new List<ProjectFilterOption> { new(null, "Все проекты") };
+        projectOpts.AddRange(AllFiles
+            .Select(f =>
+            {
+                var pid = f.ProjectId;
+                if (!pid.HasValue && f.StageId.HasValue
+                    && _stageToProjectMap.TryGetValue(f.StageId.Value, out var stageProjectId))
+                    pid = stageProjectId;
+
+                return new { ProjectId = pid, f.ProjectName };
+            })
+            .Where(x => x.ProjectId.HasValue && !string.IsNullOrWhiteSpace(x.ProjectName))
+            .GroupBy(x => x.ProjectId!.Value)
+            .Select(g => new ProjectFilterOption(g.Key, g.First().ProjectName!))
+            .OrderBy(p => p.Name));
+        ProjectFilterOptions = new ObservableCollection<ProjectFilterOption>(projectOpts);
+        if (currentProjectFilter.HasValue && projectOpts.Any(o => o.Id == currentProjectFilter.Value))
+            ProjectFilter = currentProjectFilter;
+        else if (currentProjectFilter.HasValue)
+            ProjectFilter = null;
     }
 
     private async Task LoadImagePreviewsAsync(List<Guid> imageIds)
@@ -380,25 +517,51 @@ public partial class FilesControlViewModel : ViewModelBase
         if (imageIds.Count == 0) return;
         try
         {
-            // Грузим батчами, чтобы не держать одно большое подключение к БД и не тянуть сразу все байты.
+            // Чтение байтов изображений из SQLite — синхронное и тяжёлое, поэтому выполняем его
+            // на фоновом потоке, а присвоение FileData (оно дёргает биндинг миниатюры) маршалим в UI-поток.
             const int batchSize = 12;
-            await using var db = await _dbFactory.CreateDbContextAsync();
-            for (int i = 0; i < imageIds.Count; i += batchSize)
-            {
-                var batch = imageIds.Skip(i).Take(batchSize).ToList();
-                var data = await db.Files.AsNoTracking()
-                    .Where(f => batch.Contains(f.Id))
-                    .Select(f => new { f.Id, f.FileData })
-                    .ToListAsync();
+            var dispatcher = Application.Current?.Dispatcher;
 
-                foreach (var d in data)
+            await Task.Run(async () =>
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                for (int i = 0; i < imageIds.Count; i += batchSize)
                 {
-                    if (d.FileData == null || d.FileData.Length == 0) continue;
-                    var target = _cachedImagesFiles.FirstOrDefault(x => x.Id == d.Id);
-                    if (target != null && target.FileData == null)
-                        target.FileData = d.FileData; // вызовет PropertyChanged, UI подтянет миниатюру
+                    var batch = imageIds.Skip(i).Take(batchSize).ToList();
+                    var data = await db.Files.AsNoTracking()
+                        .Where(f => batch.Contains(f.Id))
+                        .Select(f => new { f.Id, f.FileData })
+                        .ToListAsync();
+
+                    if (dispatcher == null)
+                        break;
+
+                    // Тяжёлое декодирование миниатюр делаем здесь, на фоновом потоке.
+                    // BitmapImage замораживается внутри хелпера, поэтому его можно отдать в UI-поток.
+                    var decoded = data
+                        .Where(d => d.FileData is { Length: > 0 })
+                        .Select(d => new
+                        {
+                            d.Id,
+                            d.FileData,
+                            Thumb = MPMS.Services.AvatarHelper.BytesToBitmapImage(d.FileData, 480)
+                        })
+                        .ToList();
+
+                    await dispatcher.InvokeAsync(() =>
+                    {
+                        foreach (var d in decoded)
+                        {
+                            var target = _cachedImagesFiles.FirstOrDefault(x => x.Id == d.Id);
+                            if (target == null) continue;
+                            if (target.FileData == null)
+                                target.FileData = d.FileData; // нужно для открытия полноразмерного фото
+                            if (target.Thumbnail == null && d.Thumb != null)
+                                target.Thumbnail = d.Thumb; // миниатюра уже декодирована — UI только покажет
+                        }
+                    });
                 }
-            }
+            });
         }
         catch
         {

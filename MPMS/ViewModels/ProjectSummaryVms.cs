@@ -290,10 +290,14 @@ public static class ProjectPricingSummaryBuilder
         IReadOnlyDictionary<Guid, List<LocalStageWorkType>> workTypesByStage,
         bool groupByStage)
     {
-        if (groupByStage || filteredStages.Count == 1)
+        var stagesWithServices = filteredStages
+            .Where(s => (workTypesByStage.GetValueOrDefault(s.Id)?.Count ?? 0) > 0)
+            .ToList();
+
+        if (groupByStage || stagesWithServices.Count == 1)
         {
-            var showHeaders = groupByStage && filteredStages.Count > 1;
-            return filteredStages.OrderBy(s => s.Name).Select((stage, index) =>
+            var showHeaders = groupByStage && stagesWithServices.Count > 1;
+            return stagesWithServices.OrderBy(s => s.Name).Select((stage, index) =>
             {
                 var receipt = BuildSingleStageReceipt(
                     stage,
@@ -310,7 +314,7 @@ public static class ProjectPricingSummaryBuilder
             }).ToList();
         }
 
-        return [BuildMergedServiceSection(filteredStages, workTypesByStage)];
+        return [BuildMergedServiceSection(stagesWithServices, workTypesByStage)];
     }
 
     private static List<ProjectSummaryReceiptStageSectionVm> BuildMaterialSections(
@@ -318,10 +322,14 @@ public static class ProjectPricingSummaryBuilder
         IReadOnlyDictionary<Guid, List<LocalStageMaterial>> materialsByStage,
         bool groupByStage)
     {
-        if (groupByStage || filteredStages.Count == 1)
+        var stagesWithMaterials = filteredStages
+            .Where(s => (materialsByStage.GetValueOrDefault(s.Id)?.Count ?? 0) > 0)
+            .ToList();
+
+        if (groupByStage || stagesWithMaterials.Count == 1)
         {
-            var showHeaders = groupByStage && filteredStages.Count > 1;
-            return filteredStages.OrderBy(s => s.Name).Select((stage, index) =>
+            var showHeaders = groupByStage && stagesWithMaterials.Count > 1;
+            return stagesWithMaterials.OrderBy(s => s.Name).Select((stage, index) =>
             {
                 var receipt = BuildSingleStageReceipt(
                     stage,
@@ -338,7 +346,7 @@ public static class ProjectPricingSummaryBuilder
             }).ToList();
         }
 
-        return [BuildMergedMaterialSection(filteredStages, materialsByStage)];
+        return [BuildMergedMaterialSection(stagesWithMaterials, materialsByStage)];
     }
 
     private static ProjectSummaryReceiptStageSectionVm BuildMergedServiceSection(

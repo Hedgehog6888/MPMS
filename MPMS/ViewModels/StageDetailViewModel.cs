@@ -16,7 +16,7 @@ using MPMS.Views.Overlays;
 
 namespace MPMS.ViewModels;
 
-public partial class StageDetailViewModel : ViewModelBase, ILoadable
+public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
     private readonly IAuthService _auth;
@@ -1092,6 +1092,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         _goBack?.Invoke();
     }
 
+    public async Task OnNavigatingFromAsync()
+    {
+        if (_editStage is not null && !IsStageMarkedForDeletion && (_catalogDirty || IsCatalogEditMode))
+        {
+            var saved = await SaveStageCatalogAsync();
+            if (saved)
+                IsCatalogEditMode = false;
+        }
+    }
+
     [RelayCommand]
     private async Task StartStageAsync()
     {
@@ -1116,6 +1126,62 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(_editStage.Id);
         if (stage is null) return;
+        
+        // Release equipment when stage is completed
+        var eqIds = await db.StageEquipments
+            .Where(x => x.StageId == stage.Id)
+            .Select(x => x.EquipmentId)
+            .Distinct()
+            .ToListAsync();
+        
+        var task = await db.Tasks.FindAsync(stage.TaskId);
+        var projectId = task?.ProjectId;
+        
+        foreach (var eqId in eqIds)
+        {
+            var eq = await db.Equipments.FindAsync(eqId);
+            if (eq is null || eq.IsWrittenOff) continue;
+            
+            // Check if equipment is still used by other active stages in the same task
+            var stillUsed = await db.StageEquipments
+                .Where(x => x.EquipmentId == eqId && x.StageId != stage.Id)
+                .Join(db.TaskStages, se => se.StageId, st => st.Id, (se, st) => new
+                {
+                    st.TaskId,
+                    st.Status,
+                    st.IsMarkedForDeletion,
+                    st.IsArchived
+                })
+                .AnyAsync(x => x.TaskId == stage.TaskId
+                               && x.Status != StageStatus.Completed
+                               && !x.IsMarkedForDeletion
+                               && !x.IsArchived);
+            if (stillUsed) continue;
+            if (eq.CheckedOutTaskId != stage.TaskId) continue;
+            
+            var prevStatus = eq.Status;
+            eq.Status = "Available";
+            eq.CheckedOutTaskId = null;
+            eq.CheckedOutProjectId = null;
+            eq.UpdatedAt = DateTime.UtcNow;
+            eq.IsSynced = false;
+            
+            db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
+            {
+                Id = Guid.NewGuid(),
+                EquipmentId = eq.Id,
+                OccurredAt = DateTime.UtcNow,
+                EventType = "Returned",
+                PreviousStatus = prevStatus,
+                NewStatus = "Available",
+                ProjectId = projectId,
+                TaskId = stage.TaskId,
+                UserId = _auth.UserId,
+                UserName = _auth.UserName,
+                Comment = $"Возвращено с этапа: {stage.Name}"
+            });
+        }
+        
         stage.Status = StageStatus.Completed;
         stage.IsSynced = false;
         await db.SaveChangesAsync();

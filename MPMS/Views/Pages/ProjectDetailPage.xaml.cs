@@ -507,14 +507,18 @@ public partial class ProjectDetailPage : UserControl
     private void AddProjectStage_Click(object sender, RoutedEventArgs e)
     {
         if (VM?.Project is null) return;
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
+        var overlay = new CreateStageOverlay();
         var vm = VM;
-        var project = VM.Project;
-        stageEditor.SetCreateForProject(project.Id,
-            goBack: () => main.NavigateToProject(project),
-            onSavedAsync: async () => { if (vm != null) await vm.LoadAsync(); });
-        main.NavigateToStageEditor(stageEditor);
+        overlay.SetCreateMode(fixedProjectId: vm.Project.Id,
+            onSaved: async () =>
+            {
+                if (vm != null)
+                {
+                    await vm.LoadAsync();
+                    _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
+                }
+            });
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)

@@ -145,6 +145,9 @@ public partial class MainViewModel : ViewModelBase
         if (CurrentPage != page && CurrentPageViewModel is FilesPageViewModel filesPageViewModel)
             filesPageViewModel.FilesControlVM.CancelSelectionModeCommand.Execute(null);
 
+        if (CurrentPageViewModel is INavigable navigable)
+            _ = navigable.OnNavigatingFromAsync();
+
         CurrentPage = page;
         ViewModelBase? vm = page switch
         {
@@ -206,6 +209,9 @@ public partial class MainViewModel : ViewModelBase
     {
         if (addToHistory)
             PushNavigationHistory(page);
+
+        if (CurrentPageViewModel is INavigable navigable)
+            _ = navigable.OnNavigatingFromAsync();
 
         CurrentPage = page;
         ViewModelBase? vm = page switch

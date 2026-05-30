@@ -134,51 +134,81 @@ namespace MPMS.Views.Components
                 var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
                 await using var db = await dbFactory.CreateDbContextAsync(ct);
 
+                var auth = App.Services.GetRequiredService<IAuthService>();
+                var currentUserId = auth.UserId;
+                var userRole = UserPeekAccess.ResolveViewerRole(auth, db);
+                var accessibleProjectIds = currentUserId.HasValue
+                    ? await UserPeekAccess.GetViewerAccessibleProjectIdsAsync(db, currentUserId.Value, auth, ct)
+                    : new HashSet<Guid>();
+
+                var closedProjectIds = (await db.Projects
+                    .Where(p => p.IsClosed)
+                    .Select(p => p.Id)
+                    .ToListAsync(ct)).ToHashSet();
+
+                var accessibleNonClosedProjectIds = accessibleProjectIds.Except(closedProjectIds).ToHashSet();
+
                 var searchTerm = SearchHelper.Normalize(query);
-                var projects = searchTerm is null
+                var canSearchProjects = !UserPeekAccess.IsWorker(userRole);
+                var projects = searchTerm is null || !canSearchProjects
                     ? new List<LocalProject>()
                     : (await db.Projects.ToListAsync(ct))
-                        .Where(p => SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(p.Client, searchTerm))
+                        .Where(p => accessibleNonClosedProjectIds.Contains(p.Id) && !p.IsClosed &&
+                            (SearchHelper.ContainsIgnoreCase(p.Name, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(p.Client, searchTerm)))
                         .Take(5).ToList();
 
                 var tasks = searchTerm is null
                     ? new List<LocalTask>()
                     : (await db.Tasks.ToListAsync(ct))
-                        .Where(t => SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(t.Description, searchTerm))
+                        .Where(t => accessibleNonClosedProjectIds.Contains(t.ProjectId) &&
+                            (SearchHelper.ContainsIgnoreCase(t.Name, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(t.Description, searchTerm)))
                         .Take(5).ToList();
+
+                var allTasks = await db.Tasks
+                    .Where(t => accessibleNonClosedProjectIds.Contains(t.ProjectId))
+                    .Select(t => new { t.Id, t.ProjectId })
+                    .ToDictionaryAsync(t => t.Id, t => t.ProjectId, ct);
 
                 var stages = searchTerm is null
                     ? new List<LocalTaskStage>()
                     : (await db.TaskStages.ToListAsync(ct))
-                        .Where(s => SearchHelper.ContainsIgnoreCase(s.Name, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(s.Description, searchTerm))
+                        .Where(s => allTasks.ContainsKey(s.TaskId) &&
+                            (SearchHelper.ContainsIgnoreCase(s.Name, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(s.Description, searchTerm)))
                         .Take(5).ToList();
 
                 var materials = searchTerm is null
                     ? new List<LocalMaterial>()
                     : (await db.Materials.ToListAsync(ct))
-                        .Where(m => SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(m.Description, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(m.CategoryName, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(m.InventoryNumber, searchTerm))
+                        .Where(m => !m.IsArchived &&
+                            (SearchHelper.ContainsIgnoreCase(m.Name, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(m.Description, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(m.CategoryName, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(m.InventoryNumber, searchTerm)))
                         .Take(5).ToList();
 
                 var equipment = searchTerm is null
                     ? new List<LocalEquipment>()
                     : (await db.Equipments.ToListAsync(ct))
-                        .Where(eq => SearchHelper.ContainsIgnoreCase(eq.Name, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(eq.Description, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(eq.CategoryName, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(eq.InventoryNumber, searchTerm))
+                        .Where(eq => !eq.IsArchived &&
+                            (SearchHelper.ContainsIgnoreCase(eq.Name, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(eq.Description, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(eq.CategoryName, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(eq.InventoryNumber, searchTerm)))
                         .Take(5).ToList();
 
                 var files = searchTerm is null
                     ? new List<LocalFile>()
                     : (await db.Files.ToListAsync(ct))
-                        .Where(f => SearchHelper.ContainsIgnoreCase(f.FileName, searchTerm) ||
-                            SearchHelper.ContainsIgnoreCase(f.UploadedByName, searchTerm))
+                        .Where(f => (f.ProjectId.HasValue && accessibleNonClosedProjectIds.Contains(f.ProjectId.Value) ||
+                                     f.StageId.HasValue && accessibleNonClosedProjectIds.Contains(
+                                         db.TaskStages.Where(s => s.Id == f.StageId.Value)
+                                             .Join(db.Tasks, s => s.TaskId, t => t.Id, (s, t) => t.ProjectId)
+                                             .FirstOrDefault())) &&
+                            (SearchHelper.ContainsIgnoreCase(f.FileName, searchTerm) ||
+                             SearchHelper.ContainsIgnoreCase(f.UploadedByName, searchTerm)))
                         .Take(5).ToList();
 
                 // Заполнение TaskName для этапов

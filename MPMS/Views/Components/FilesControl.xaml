@@ -4,6 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
              xmlns:viewmodels="clr-namespace:MPMS.ViewModels"
              xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:infrastructure="clr-namespace:MPMS.Infrastructure"
@@ -339,7 +341,7 @@
                                             <DataTrigger Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="False">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding FileData, Converter={StaticResource NullToVisInv}}" Value="Visible">
+                                            <DataTrigger Binding="{Binding Thumbnail, Converter={StaticResource NullToVisInv}}" Value="Visible">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -363,7 +365,7 @@
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding FileName, Converter={StaticResource FileTypeToIsImage}}" Value="True"/>
-                                                    <Condition Binding="{Binding FileData, Converter={StaticResource NullToVis}}" Value="Visible"/>
+                                                    <Condition Binding="{Binding Thumbnail, Converter={StaticResource NullToVis}}" Value="Visible"/>
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </MultiDataTrigger>
@@ -371,7 +373,7 @@
                                     </Style>
                                 </Border.Style>
                                 <Border.Background>
-                                    <ImageBrush ImageSource="{Binding FileData, Converter={StaticResource AvatarBytesToImage}, ConverterParameter=480}" 
+                                    <ImageBrush ImageSource="{Binding Thumbnail}"
                                                 Stretch="UniformToFill"
                                                 RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border.Background>
@@ -614,24 +616,163 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Шаблоны представления файлов -->
-        <DataTemplate x:Key="FilesGridViewTemplate">
-            <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource ImageCardTemplate}">
+        <!-- ═══ Виртуализированный список файлов ═══ -->
+        <!-- Контейнер элемента без выделения/чрома -->
+        <Style x:Key="FilesListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.ViewMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="Grid">
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Виртуализированный ListBox: список (VirtualizingStackPanel) или плитка (VirtualizingWrapPanel) -->
+        <Style x:Key="FilesListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0,0,16,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Visible"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+            <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel"/>
+            <Setter Property="VirtualizingPanel.CacheLengthUnit" Value="Page"/>
+            <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource FilesListBoxItemStyle}"/>
+            <!-- По умолчанию — вид "Список" -->
+            <Setter Property="ItemTemplate" Value="{StaticResource DocumentListTemplate}"/>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ViewMode}" Value="Grid">
+                    <Setter Property="ItemTemplate" Value="{StaticResource ImageCardTemplate}"/>
+                    <Setter Property="ItemsPanel">
+                        <Setter.Value>
+                            <ItemsPanelTemplate>
+                                <vwp:VirtualizingWrapPanel Orientation="Horizontal"
+                                                           SpacingMode="None"
+                                                           StretchItems="False"/>
+                            </ItemsPanelTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ═══ Скелетоны загрузки ═══ -->
+        <!-- Пульсирующий серый блок-заглушка -->
+        <Style x:Key="SkeletonBlock" TargetType="Border">
+            <Setter Property="Background" Value="#E9EDF2"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                             From="0.5" To="1" Duration="0:0:0.85"
+                                             AutoReverse="True" RepeatBehavior="Forever"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Источник для повторения заглушек -->
+        <x:Array x:Key="SkeletonItems" Type="{x:Type sys:Int32}">
+            <sys:Int32>0</sys:Int32>
+            <sys:Int32>1</sys:Int32>
+            <sys:Int32>2</sys:Int32>
+            <sys:Int32>3</sys:Int32>
+            <sys:Int32>4</sys:Int32>
+            <sys:Int32>5</sys:Int32>
+            <sys:Int32>6</sys:Int32>
+            <sys:Int32>7</sys:Int32>
+            <sys:Int32>8</sys:Int32>
+            <sys:Int32>9</sys:Int32>
+            <sys:Int32>10</sys:Int32>
+            <sys:Int32>11</sys:Int32>
+        </x:Array>
+
+        <!-- Заглушка карточки (вид "Плитка") -->
+        <DataTemplate x:Key="SkeletonCardTemplate">
+            <Border Width="160" Height="180" Background="White" CornerRadius="8" Margin="0,0,6,6"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="120"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" CornerRadius="8,8,0,0" Style="{StaticResource SkeletonBlock}"/>
+                    <StackPanel Grid.Row="1" Margin="8,10">
+                        <Border Height="11" Width="120" CornerRadius="5" HorizontalAlignment="Left"
+                                Style="{StaticResource SkeletonBlock}"/>
+                        <Border Height="9" Width="64" CornerRadius="4" HorizontalAlignment="Left"
+                                Margin="0,8,0,0" Style="{StaticResource SkeletonBlock}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Заглушка строки (вид "Список") -->
+        <DataTemplate x:Key="SkeletonRowTemplate">
+            <Border Background="White" CornerRadius="8" Margin="0,0,0,6" Padding="16,12"
+                    BorderBrush="#DFE1E6" BorderThickness="1.5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="8" Margin="0,0,16,0"
+                            Style="{StaticResource SkeletonBlock}"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <Border Height="13" Width="220" CornerRadius="6" HorizontalAlignment="Left"
+                                Style="{StaticResource SkeletonBlock}"/>
+                        <Border Height="11" Width="150" CornerRadius="5" HorizontalAlignment="Left"
+                                Margin="0,8,0,0" Style="{StaticResource SkeletonBlock}"/>
+                    </StackPanel>
+                    <Border Grid.Column="2" Width="60" Height="11" CornerRadius="5"
+                            VerticalAlignment="Center" Margin="0,0,24,0"
+                            Style="{StaticResource SkeletonBlock}"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Скелетон вида "Плитка" -->
+        <DataTemplate x:Key="GridSkeletonTemplate">
+            <ItemsControl ItemsSource="{StaticResource SkeletonItems}" ItemTemplate="{StaticResource SkeletonCardTemplate}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemContainerStyle>
-                    <Style TargetType="ContentPresenter">
-                        <Setter Property="Margin" Value="0"/>
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
             </ItemsControl>
         </DataTemplate>
 
-        <DataTemplate x:Key="FilesListViewTemplate">
-            <ItemsControl ItemsSource="{Binding DisplayedFiles}" ItemTemplate="{StaticResource DocumentListTemplate}">
+        <!-- Скелетон вида "Список" -->
+        <DataTemplate x:Key="ListSkeletonTemplate">
+            <ItemsControl ItemsSource="{StaticResource SkeletonItems}" ItemTemplate="{StaticResource SkeletonRowTemplate}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel/>
@@ -779,161 +920,20 @@
                     </Style.Triggers>
                 </Style>
             </Grid.Style>
-            <!-- ScrollViewer изображений -->
-            <ScrollViewer x:Name="ImagesScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,24,0" Background="Transparent">
-                <ScrollViewer.Style>
-                    <Style TargetType="ScrollViewer">
-                        <Setter Property="Visibility" Value="Visible"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ScrollViewer.Style>
-                <Grid Margin="0,10,0,24">
-                    <!-- Пустое состояние (изображения) -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding CurrentTab}" Value="Images"/>
-                                            <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
-                                            <Condition Binding="{Binding IsLoading}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <Image Source="{svgc:SvgImage Source=/icons/empty_images.svg, AppName=MPMS}"
-                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                        <TextBlock Text="Изображения не найдены"
-                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="Загрузите первое изображение"
-                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
-                                   Margin="0,8,0,0" LineHeight="18">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                    <!-- Сетка/список файлов для изображений -->
-                    <ContentControl Content="{Binding}">
-                        <ContentControl.Style>
-                            <Style TargetType="ContentControl">
-                                <Setter Property="ContentTemplate" Value="{StaticResource FilesGridViewTemplate}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ViewMode}" Value="List">
-                                        <Setter Property="ContentTemplate" Value="{StaticResource FilesListViewTemplate}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ContentControl.Style>
-                    </ContentControl>
-                </Grid>
-            </ScrollViewer>
-
-            <!-- ScrollViewer документов -->
-            <ScrollViewer x:Name="DocumentsScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,62,24,0" Background="Transparent">
-                <ScrollViewer.Style>
-                    <Style TargetType="ScrollViewer">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ScrollViewer.Style>
-                <Grid Margin="0,10,0,24">
-                    <!-- Пустое состояние (документы) -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,40,0,40">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding CurrentTab}" Value="Documents"/>
-                                            <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
-                                            <Condition Binding="{Binding IsLoading}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <Image Source="{svgc:SvgImage Source=/icons/empty_documents.svg, AppName=MPMS}"
-                               Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
-                        <TextBlock Text="Документы не найдены"
-                                   FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="Загрузите первый документ"
-                                   FontSize="12" Foreground="#64748B" TextAlignment="Center"
-                                   Margin="0,8,0,0" LineHeight="18">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-
-                    <!-- Список/сетка файлов для документов -->
-                    <ContentControl Content="{Binding}">
-                        <ContentControl.Style>
-                            <Style TargetType="ContentControl">
-                                <Setter Property="ContentTemplate" Value="{StaticResource FilesListViewTemplate}"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ViewMode}" Value="Grid">
-                                        <Setter Property="ContentTemplate" Value="{StaticResource FilesGridViewTemplate}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ContentControl.Style>
-                    </ContentControl>
-                </Grid>
-            </ScrollViewer>
-
-            <!-- ── Плавающая панель поиска ── -->
+            <!-- ── Панель поиска (над списком) ── -->
             <controls:SearchFilterBarControl
-                VerticalAlignment="Top" Panel.ZIndex="1"
+                Grid.Row="0"
+                x:Name="FilesSearchBar"
                 IsFloating="True"
-                ScrollTarget="{Binding ElementName=ImagesScroll}"
+                HorizontalAlignment="Stretch"
+                Margin="0,0,24,12"
                 SearchText="{Binding SearchText, Mode=TwoWay}"
                 Placeholder="Поиск по названию файла...">
-                <controls:SearchFilterBarControl.Style>
-                    <Style TargetType="controls:SearchFilterBarControl">
-                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                        <Setter Property="ScrollTarget" Value="{Binding ElementName=ImagesScroll}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
-                                <Setter Property="Margin" Value="0,0,24,0"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
-                                <Setter Property="ScrollTarget" Value="{Binding ElementName=DocumentsScroll}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </controls:SearchFilterBarControl.Style>
                 <controls:SearchFilterBarControl.Filters>
                     <StackPanel Orientation="Horizontal">
                         <!-- Фильтр проектов -->
@@ -952,6 +952,148 @@
                     </StackPanel>
                 </controls:SearchFilterBarControl.Filters>
             </controls:SearchFilterBarControl>
+
+            <!-- ── Область списков ── -->
+            <Grid Grid.Row="1">
+            <!-- Изображения (виртуализированный список) -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <ListBox x:Name="ImagesList"
+                         ItemsSource="{Binding DisplayedFiles}"
+                         Style="{StaticResource FilesListBoxStyle}"/>
+
+                <!-- Пустое состояние (изображения) -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,40,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding CurrentTab}" Value="Images"/>
+                                        <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
+                                        <Condition Binding="{Binding IsLoading}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Image Source="{svgc:SvgImage Source=/icons/empty_images.svg, AppName=MPMS}"
+                           Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                    <TextBlock Text="Изображения не найдены"
+                               FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Загрузите первое изображение"
+                               FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                               Margin="0,8,0,0" LineHeight="18">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <!-- Документы (виртуализированный список) -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
+                <ListBox x:Name="DocumentsList"
+                         ItemsSource="{Binding DisplayedFiles}"
+                         Style="{StaticResource FilesListBoxStyle}"/>
+
+                <!-- Пустое состояние (документы) -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,40,0,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding CurrentTab}" Value="Documents"/>
+                                        <Condition Binding="{Binding DisplayedFiles.Count}" Value="0"/>
+                                        <Condition Binding="{Binding IsLoading}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Image Source="{svgc:SvgImage Source=/icons/empty_documents.svg, AppName=MPMS}"
+                           Width="48" Height="48" Opacity="0.1" Margin="0,0,0,16"/>
+                    <TextBlock Text="Документы не найдены"
+                               FontSize="15" FontWeight="SemiBold" Foreground="#0F172A"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Загрузите первый документ"
+                               FontSize="12" Foreground="#64748B" TextAlignment="Center"
+                               Margin="0,8,0,0" LineHeight="18">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.Project.IsClosed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <!-- ── Скелетон первой загрузки ── -->
+            <ContentControl x:Name="LoadingSkeleton"
+                            IsHitTestVisible="False"
+                            Panel.ZIndex="2"
+                            VerticalAlignment="Top"
+                            Margin="0,0,16,0"
+                            Content="{Binding}">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Setter Property="ContentTemplate" Value="{StaticResource GridSkeletonTemplate}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ViewMode}" Value="List">
+                                <Setter Property="ContentTemplate" Value="{StaticResource ListSkeletonTemplate}"/>
+                            </DataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsLoading}" Value="True"/>
+                                    <Condition Binding="{Binding IsFirstLoad}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+            </Grid>
         </Grid>
 
     </Grid>

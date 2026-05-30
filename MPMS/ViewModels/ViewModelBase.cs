@@ -2,6 +2,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MPMS.ViewModels;
 
+public interface INavigable
+{
+    Task OnNavigatingFromAsync();
+}
+
 public abstract partial class ViewModelBase : ObservableObject
 {
     [ObservableProperty] private bool _isBusy;

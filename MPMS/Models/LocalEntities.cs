@@ -496,6 +496,22 @@ public class LocalFile : LocalEntity, INotifyPropertyChanged
 
     [NotMapped] public string? ProjectName { get; set; }
     [NotMapped] public string? StageName { get; set; }
+
+    // Заранее декодированная (в фоне) и замороженная миниатюра для вида "Плитка".
+    // Декодирование вынесено с UI-потока, поэтому переключение на карточки не тормозит.
+    private System.Windows.Media.ImageSource? _thumbnail;
+    [NotMapped]
+    public System.Windows.Media.ImageSource? Thumbnail
+    {
+        get => _thumbnail;
+        set
+        {
+            if (ReferenceEquals(_thumbnail, value)) return;
+            _thumbnail = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Thumbnail)));
+        }
+    }
+
     private bool _isSelected;
     [NotMapped]
     public bool IsSelected

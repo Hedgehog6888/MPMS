@@ -33,9 +33,10 @@ public partial class FilesPageViewModel : ViewModelBase, ILoadable
         }
         else
         {
-            // Повторное открытие страницы: данные уже есть в памяти,
-            // обновляем их в фоне без показа скелетона.
-            _ = FilesControlVM.LoadFilesAsync();
+            // Повторное открытие страницы: данные уже есть в памяти.
+            // Не пересоздаём весь список (это дорого), а только подгружаем
+            // новые файлы и убираем удалённые — без скелетона и без перерисовки.
+            _ = FilesControlVM.RefreshFilesAsync();
         }
         return Task.CompletedTask;
     }

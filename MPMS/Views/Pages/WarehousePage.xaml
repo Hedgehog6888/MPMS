@@ -99,12 +99,61 @@
         </Border>
 
         <Grid Grid.Row="2" Margin="24,12,0,24" ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <controls:SearchFilterBarControl
+                Grid.Row="0"
+                VerticalAlignment="Top" Panel.ZIndex="1"
+                HorizontalAlignment="Stretch"
+                Margin="0,0,24,12"
+                IsFloating="False"
+                SearchText="{Binding SearchText, Mode=TwoWay}"
+                Placeholder="Поиск по названию, описанию, категории, инв. номеру…">
+                <controls:SearchFilterBarControl.Filters>
+                    <StackPanel Orientation="Horizontal">
+
+                        <ComboBox ItemsSource="{Binding MaterialCategoryFilterOptions}"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectedValue="{Binding SelectedMaterialCategoryId}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
+
+                        <ComboBox ItemsSource="{Binding EquipmentCategoryFilterOptions}"
+                                  DisplayMemberPath="Name" SelectedValuePath="Id"
+                                  SelectedValue="{Binding SelectedEquipmentCategoryId}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
+
+                        <ComboBox ItemsSource="{Binding LifecycleFilterOptions}"
+                                  SelectedItem="{Binding LifecycleFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="160" Margin="0,0,10,0"/>
+
+                        <ComboBox ItemsSource="{Binding MaterialStockFilterOptions}"
+                                  SelectedItem="{Binding MaterialStockFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="180"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
+
+                        <ComboBox ItemsSource="{Binding EquipmentStatusFilterOptions}"
+                                  SelectedItem="{Binding EquipmentStatusFilter}"
+                                  Style="{StaticResource FormCombo}"
+                                  Width="180"
+                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
+                    </StackPanel>
+                </controls:SearchFilterBarControl.Filters>
+            </controls:SearchFilterBarControl>
 
             <ScrollViewer x:Name="MaterialsScroll"
+                          Grid.Row="1"
                           VerticalScrollBarVisibility="Visible"
-                          Padding="0,62,24,0"
-                          Background="Transparent"
-                          Panel.ZIndex="0">
+                          Padding="0,0,24,0"
+                          Background="Transparent">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -118,7 +167,7 @@
                 <Grid>
                     <ItemsControl x:Name="MaterialsList"
                                   ItemsSource="{Binding Materials}"
-                                  Margin="0,10,0,0">
+                                  Margin="0,0,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Tag="{Binding}"
@@ -245,10 +294,10 @@
             </ScrollViewer>
 
             <ScrollViewer x:Name="EquipmentScroll"
+                          Grid.Row="1"
                           VerticalScrollBarVisibility="Visible"
-                          Padding="0,62,24,0"
-                          Background="Transparent"
-                          Panel.ZIndex="0">
+                          Padding="0,0,24,0"
+                          Background="Transparent">
                 <ScrollViewer.Style>
                     <Style TargetType="ScrollViewer">
                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -262,7 +311,7 @@
                 <Grid>
                     <ItemsControl x:Name="EquipmentList"
                                   ItemsSource="{Binding Equipments}"
-                                  Margin="0,10,0,0">
+                                  Margin="0,0,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Tag="{Binding}"
@@ -300,7 +349,7 @@
                                                        Foreground="#0F172A"/>
                                         </StackPanel>
 
-                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0" MaxWidth="120">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#ECFDF5"/>
@@ -380,60 +429,6 @@
                 </Grid>
             </ScrollViewer>
 
-            <controls:SearchFilterBarControl
-                VerticalAlignment="Top" Panel.ZIndex="1"
-                HorizontalAlignment="Stretch"
-                Margin="0,0,24,0"
-                IsFloating="True"
-                ScrollTarget="{Binding ElementName=MaterialsScroll}"
-                SearchText="{Binding SearchText, Mode=TwoWay}"
-                Placeholder="Поиск по названию, описанию, категории, инв. номеру…">
-                <controls:SearchFilterBarControl.Style>
-                    <Style TargetType="controls:SearchFilterBarControl">
-                        <Setter Property="ScrollTarget" Value="{Binding ElementName=MaterialsScroll}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
-                                <Setter Property="ScrollTarget" Value="{Binding ElementName=EquipmentScroll}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </controls:SearchFilterBarControl.Style>
-                <controls:SearchFilterBarControl.Filters>
-                    <StackPanel Orientation="Horizontal">
-
-                        <ComboBox ItemsSource="{Binding MaterialCategoryFilterOptions}"
-                                  DisplayMemberPath="Name" SelectedValuePath="Id"
-                                  SelectedValue="{Binding SelectedMaterialCategoryId}"
-                                  Style="{StaticResource FormCombo}"
-                                  Width="160" Margin="0,0,10,0"
-                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
-
-                        <ComboBox ItemsSource="{Binding EquipmentCategoryFilterOptions}"
-                                  DisplayMemberPath="Name" SelectedValuePath="Id"
-                                  SelectedValue="{Binding SelectedEquipmentCategoryId}"
-                                  Style="{StaticResource FormCombo}"
-                                  Width="160" Margin="0,0,10,0"
-                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
-
-                        <ComboBox ItemsSource="{Binding LifecycleFilterOptions}"
-                                  SelectedItem="{Binding LifecycleFilter}"
-                                  Style="{StaticResource FormCombo}"
-                                  Width="160" Margin="0,0,10,0"/>
-
-                        <ComboBox ItemsSource="{Binding MaterialStockFilterOptions}"
-                                  SelectedItem="{Binding MaterialStockFilter}"
-                                  Style="{StaticResource FormCombo}"
-                                  Width="180"
-                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Materials}"/>
-
-                        <ComboBox ItemsSource="{Binding EquipmentStatusFilterOptions}"
-                                  SelectedItem="{Binding EquipmentStatusFilter}"
-                                  Style="{StaticResource FormCombo}"
-                                  Width="180"
-                                  Visibility="{Binding ActiveTab, Converter={StaticResource EqToVis}, ConverterParameter=Equipment}"/>
-                    </StackPanel>
-                </controls:SearchFilterBarControl.Filters>
-            </controls:SearchFilterBarControl>
         </Grid>
     </Grid>
 </UserControl>
