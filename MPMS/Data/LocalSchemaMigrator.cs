@@ -441,6 +441,12 @@ public static class LocalSchemaMigrator
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkQuantity\" TEXT NOT NULL DEFAULT '0';");
         TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"WorkPricePerUnit\" TEXT NOT NULL DEFAULT '0';");
         TryAlterTable(conn, "ALTER TABLE \"StageMaterials\" ADD COLUMN \"PricePerUnit\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"StageMaterials\" ADD COLUMN \"BasePricePerUnit\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"StageMaterials\" ADD COLUMN \"LineAdjustmentPercent\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"StageWorkTypes\" ADD COLUMN \"BasePricePerUnit\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"StageWorkTypes\" ADD COLUMN \"LineAdjustmentPercent\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"ServicesAdjustmentPercent\" TEXT NOT NULL DEFAULT '0';");
+        TryAlterTable(conn, "ALTER TABLE \"TaskStages\" ADD COLUMN \"MaterialsAdjustmentPercent\" TEXT NOT NULL DEFAULT '0';");
         Execute(conn, """
             CREATE TABLE IF NOT EXISTS "StageWorkTypes" (
                 "Id"                TEXT NOT NULL CONSTRAINT "PK_StageWorkTypes" PRIMARY KEY,

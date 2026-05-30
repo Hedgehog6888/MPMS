@@ -774,7 +774,10 @@
                             </Grid>
 
                             <Grid>
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" MouseWheel="PreventScrollBubbling">
+                                <ScrollViewer x:Name="ActivitiesScrollViewer"
+                                              VerticalScrollBarVisibility="Auto"
+                                              MouseWheel="PreventScrollBubbling"
+                                              ScrollChanged="ActivitiesScrollViewer_ScrollChanged">
                                     <StackPanel>
                                     <ItemsControl ItemsSource="{Binding RecentActivities}">
                                         <ItemsControl.ItemsPanel>
@@ -823,21 +826,6 @@
                                                                     </Border>
                                                                     <Border Grid.Row="1" Padding="14,12">
                                                                         <StackPanel>
-                                                                            <Grid Margin="0,0,0,8">
-                                                                                <Grid.ColumnDefinitions>
-                                                                                    <ColumnDefinition Width="Auto"/>
-                                                                                    <ColumnDefinition Width="*"/>
-                                                                                </Grid.ColumnDefinitions>
-                                                                                <TextBlock Text="Автор"
-                                                                                           FontSize="11"
-                                                                                           Foreground="#64748B"
-                                                                                           Margin="0,0,10,0"/>
-                                                                                <TextBlock Grid.Column="1"
-                                                                                           Text="{Binding UserName}"
-                                                                                           FontSize="11"
-                                                                                           FontWeight="SemiBold"
-                                                                                           Foreground="#0F172A"/>
-                                                                            </Grid>
                                                                             <ItemsControl ItemsSource="{Binding ActivityTooltipDetailLines}">
                                                                                 <ItemsControl.ItemTemplate>
                                                                                     <DataTemplate>
@@ -873,7 +861,7 @@
                                                     </Border.ToolTip>
                                                     <Grid>
 
-                                                        <Border Width="8" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
+                                                        <Border Width="5" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
                                                                 Background="{Binding Converter={StaticResource ActivityLogToGradientBrush}}"/>
                                                         <Grid Margin="10,6,8,6">
                                                             <Grid.ColumnDefinitions>
@@ -890,17 +878,31 @@
                                                                             <DataTrigger Binding="{Binding AvatarData, Converter={StaticResource NullToVis}}" Value="{x:Static Visibility.Visible}">
                                                                                 <Setter Property="Background" Value="Transparent"/>
                                                                             </DataTrigger>
-
-                                                                            <DataTrigger Binding="{Binding UserId}" Value="{x:Null}">
+                                                                            <DataTrigger Binding="{Binding IsAutomaticActivity}" Value="True">
                                                                                 <Setter Property="Background" Value="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </Border.Style>
-                                                                <Image Style="{StaticResource AvatarImage}"
-                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                       Width="28" Height="28"
-                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                <Grid Width="28" Height="28">
+                                                                    <Image Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                           Width="28" Height="28">
+                                                                        <Image.Style>
+                                                                            <Style TargetType="Image" BasedOn="{StaticResource AvatarImage}">
+                                                                                <Setter Property="Visibility" Value="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsAutomaticActivity}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Image.Style>
+                                                                    </Image>
+                                                                    <Image Width="16" Height="16"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                           Source="{svgc:SvgImage Source=/icons/auto_action_bot.svg, AppName=MPMS}"
+                                                                           Visibility="{Binding IsAutomaticActivity, Converter={StaticResource BoolToVis}}"/>
+                                                                </Grid>
                                                             </Border>
 
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -930,14 +932,12 @@
                                                                     </Border>
                                                                     <Border CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
                                                                             Background="{Binding ActorRole, Converter={StaticResource ActorRoleToBrush}}"
-                                                                            BorderBrush="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"
-                                                                            BorderThickness="1"
-                                                                            Visibility="{Binding ActorRole, Converter={StaticResource NullToVis}}">
+                                                                            Visibility="{Binding ActorRole, Converter={StaticResource ActorRoleBadgeVis}}">
                                                                         <TextBlock Text="{Binding ActorRole, Converter={StaticResource ActorRoleToLabel}}"
                                                                                    FontSize="9" FontWeight="SemiBold"
                                                                                    Foreground="{Binding ActorRole, Converter={StaticResource ActorRoleToForegroundBrush}}"/>
                                                                     </Border>
-                                                                    <TextBlock Text="{Binding UserName}"
+                                                                    <TextBlock Text="{Binding ActivityActorDisplayName}"
                                                                                FontSize="12" FontWeight="SemiBold"
                                                                                Foreground="#000000" VerticalAlignment="Center"/>
                                                                 </StackPanel>
@@ -973,6 +973,45 @@
                                     </Border>
                                     </StackPanel>
                                 </ScrollViewer>
+
+                                <Button x:Name="ActivitiesScrollTopBtn"
+                                        Width="40" Height="40"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Bottom"
+                                        Margin="0,0,10,10"
+                                        Visibility="Collapsed"
+                                        Cursor="Hand"
+                                        ToolTip="В начало списка"
+                                        Click="ActivitiesScrollTopBtn_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bg" Width="40" Height="40" CornerRadius="20"
+                                                    Background="White"
+                                                    BorderBrush="#DFE1E6" BorderThickness="1">
+                                                <Border.Effect>
+                                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2"
+                                                                      Opacity="0.18" Color="#000000"/>
+                                                </Border.Effect>
+                                                <Viewbox Width="16" Height="16">
+                                                    <Canvas Width="24" Height="24">
+                                                        <Path Data="M12 5 L12 19 M5 12 L12 5 L19 12"
+                                                              Stroke="#172B4D" StrokeThickness="2"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              StrokeLineJoin="Round"/>
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#F8F9FA"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#EEF0F3"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
 
                                 <Grid Visibility="{Binding RecentActivities.Count, Converter={StaticResource IntToVisInv}}">
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">

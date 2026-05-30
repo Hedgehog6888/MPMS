@@ -359,4 +359,19 @@ public partial class HomePage : UserControl
     {
         MainWindow.Instance?.ShowCenteredOverlay(new ActivityHelpOverlay(), 760);
     }
+
+    private void ActivitiesScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (ActivitiesScrollTopBtn is null || ActivitiesScrollViewer is null)
+            return;
+
+        ActivitiesScrollTopBtn.Visibility = ActivitiesScrollViewer.VerticalOffset > 64
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void ActivitiesScrollTopBtn_Click(object sender, RoutedEventArgs e)
+    {
+        ActivitiesScrollViewer?.ScrollToTop();
+    }
 }

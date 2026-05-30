@@ -48,6 +48,20 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="StageMoneyLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Foreground" Value="#8993A4"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+        <Style x:Key="StageMoneyValue" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+        <Style x:Key="StageTotalValue" TargetType="TextBlock" BasedOn="{StaticResource StageMoneyValue}">
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -122,15 +136,15 @@
                                 <DataTemplate DataType="{x:Type vm:StageWorkTypeLineVm}">
                                     <Border Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
                                         <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="1.35*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/><ColumnDefinition Width="96"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button Content="−" Width="30" Height="30" Tag="{Binding}" Click="DecWorkTypeQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
                                                 <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StageMiniInputBox}" Margin="6,0"/>
                                                 <Button Content="+" Width="30" Height="30" Tag="{Binding}" Click="IncWorkTypeQty_Click" Style="{StaticResource OutlineBtn}" Padding="0"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000"><TextBlock.ToolTip><ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding Name}"/></TextBlock.ToolTip></TextBlock></StackPanel>
-                                            <StackPanel Grid.Column="2" Margin="8,0" VerticalAlignment="Center"><TextBlock Text="Цена" FontSize="10" Foreground="#8993A4"/><TextBlock Text="{Binding PricePerUnit, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold"/></StackPanel>
-                                            <StackPanel Grid.Column="3" Margin="10,0,0,0" VerticalAlignment="Center"><TextBlock Text="Итого" FontSize="10" Foreground="#8993A4"/><TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" FontSize="14"/></StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000"><TextBlock.ToolTip><ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding Name}"/></TextBlock.ToolTip></TextBlock></StackPanel>
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="Цена" Style="{StaticResource StageMoneyLabel}"/><TextBlock Text="{Binding PricePerUnit, StringFormat={}{0:N2} ₽}" Style="{StaticResource StageMoneyValue}"/></StackPanel>
+                                            <StackPanel Grid.Column="3" Margin="8,0,0,0" VerticalAlignment="Center"><TextBlock Text="Итого" Style="{StaticResource StageMoneyLabel}"/><TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}" Style="{StaticResource StageTotalValue}"/></StackPanel>
                                             <Button Grid.Column="4" Content="Удалить" Style="{StaticResource OutlineBtn}" Margin="12,0,0,0" Padding="10,4" VerticalAlignment="Center" Command="{Binding DataContext.RemoveServiceLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                         </Grid>
                                     </Border>
@@ -145,10 +159,56 @@
         <Border Style="{StaticResource Card}"
                 Visibility="{Binding IsStageCatalogReadOnly, Converter={StaticResource BoolToVis}}">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Виды работ в этапе" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <ScrollViewer Grid.Row="1">
-                    <ItemsControl ItemsSource="{Binding SelectedServices}">
+                <Border Grid.Row="1" x:Name="ReadOnlySearchBorder"
+                        Background="#F4F5F7" CornerRadius="6"
+                        Padding="10,0" Height="36" Margin="0,0,0,10"
+                        BorderThickness="1.5" BorderBrush="Transparent">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"
+                                   Foreground="#6B778C"/>
+                        <Grid Grid.Column="1">
+                            <TextBlock Text="Поиск по названию..."
+                                       Foreground="#6B778C" FontSize="12"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ServiceSearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding ServiceSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0"
+                                     VerticalAlignment="Center" FontSize="13"
+                                     Foreground="#000000"
+                                     GotFocus="ReadOnlySearch_GotFocus"
+                                     LostFocus="ReadOnlySearch_LostFocus"/>
+                        </Grid>
+                        <Button Grid.Column="2"
+                                Visibility="{Binding ServiceSearchText, Converter={StaticResource StringToVis}}"
+                                Style="{StaticResource IconButton}"
+                                Click="ReadOnlyClearSearch_Click">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="11" Foreground="#6B778C"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2">
+                    <ItemsControl ItemsSource="{Binding SelectedServicesFiltered}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StageWorkTypeLineVm}">
                                 <Border Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
@@ -156,26 +216,26 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="80"/>
+                                            <ColumnDefinition Width="96"/>
                                         </Grid.ColumnDefinitions>
                                         <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6" Padding="10,6" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Quantity, StringFormat={}{0:N2}}" FontWeight="SemiBold"/>
                                         </Border>
-                                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000">
                                                 <TextBlock.ToolTip>
                                                     <ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding Name}"/>
                                                 </TextBlock.ToolTip>
                                             </TextBlock>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="2" Margin="8,0" VerticalAlignment="Center">
-                                            <TextBlock Text="Цена" FontSize="10" Foreground="#8993A4"/>
-                                            <TextBlock Text="{Binding PricePerUnit, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Text="Цена" Style="{StaticResource StageMoneyLabel}"/>
+                                            <TextBlock Text="{Binding PricePerUnit, StringFormat={}{0:N2} ₽}" Style="{StaticResource StageMoneyValue}"/>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="3" Margin="10,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="Итого" FontSize="10" Foreground="#8993A4"/>
-                                            <TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" FontSize="14"/>
+                                        <StackPanel Grid.Column="3" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Итого" Style="{StaticResource StageMoneyLabel}"/>
+                                            <TextBlock Text="{Binding LineTotal, StringFormat={}{0:N2} ₽}" Style="{StaticResource StageTotalValue}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

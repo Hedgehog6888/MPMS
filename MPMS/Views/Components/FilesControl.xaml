@@ -648,13 +648,17 @@
         </Grid.RowDefinitions>
 
         <!-- ── Вкладки и переключатель представления ── -->
-        <Grid Grid.Row="0" Margin="0,0,0,16" Background="Transparent">
+        <Grid Grid.Row="0" Background="Transparent">
             <Grid.Style>
                 <Style TargetType="Grid">
+                    <Setter Property="Margin" Value="0,0,0,16"/>
                     <Setter Property="Visibility" Value="Visible"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
                             <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.TabsOnly}">
+                            <Setter Property="Margin" Value="0"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -768,13 +772,9 @@
             <Grid.Style>
                 <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Visible"/>
-                    <Setter Property="Margin" Value="-24,0,-24,0"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.TabsOnly}">
                             <Setter Property="Visibility" Value="Collapsed"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
-                            <Setter Property="Margin" Value="0"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -916,20 +916,20 @@
             <!-- ── Плавающая панель поиска ── -->
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
-                HorizontalAlignment="Left"
-                Width="{Binding ElementName=ImagesScroll, Path=ViewportWidth}"
                 IsFloating="True"
                 ScrollTarget="{Binding ElementName=ImagesScroll}"
                 SearchText="{Binding SearchText, Mode=TwoWay}"
                 Placeholder="Поиск по названию файла...">
                 <controls:SearchFilterBarControl.Style>
                     <Style TargetType="controls:SearchFilterBarControl">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
                         <Setter Property="ScrollTarget" Value="{Binding ElementName=ImagesScroll}"/>
-                        <Setter Property="Width" Value="{Binding ElementName=ImagesScroll, Path=ViewportWidth}"/>
                         <Style.Triggers>
+                            <DataTrigger Binding="{Binding LayoutMode, RelativeSource={RelativeSource AncestorType=local:FilesControl}}" Value="{x:Static local:FilesControlLayoutMode.ScrollOnly}">
+                                <Setter Property="Margin" Value="0,0,24,0"/>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding CurrentTab}" Value="Documents">
                                 <Setter Property="ScrollTarget" Value="{Binding ElementName=DocumentsScroll}"/>
-                                <Setter Property="Width" Value="{Binding ElementName=DocumentsScroll, Path=ViewportWidth}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

@@ -32,6 +32,22 @@ public partial class StageWorkTypesControl : UserControl
             vm.ServiceSearchText = string.Empty;
     }
 
+    private void ReadOnlySearch_GotFocus(object sender, RoutedEventArgs e)
+    {
+        ReadOnlySearchBorder.BorderBrush = FocusBrush;
+    }
+
+    private void ReadOnlySearch_LostFocus(object sender, RoutedEventArgs e)
+    {
+        ReadOnlySearchBorder.BorderBrush = ClearBrush;
+    }
+
+    private void ReadOnlyClearSearch_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is StageDetailViewModel vm)
+            vm.ServiceSearchText = string.Empty;
+    }
+
     private void AddWorkTypeTemplate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: LocalWorkTypeTemplate tpl }) return;

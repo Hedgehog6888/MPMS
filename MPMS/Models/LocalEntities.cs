@@ -192,6 +192,8 @@ public class LocalTaskStage : LocalEntity
     [MaxLength(50)] public string? WorkUnitSnapshot { get; set; }
     public decimal WorkQuantity { get; set; }
     public decimal WorkPricePerUnit { get; set; }
+    public decimal ServicesAdjustmentPercent { get; set; }
+    public decimal MaterialsAdjustmentPercent { get; set; }
     public Guid? AssignedUserId { get; set; }
     [MaxLength(100)] public string? AssignedUserName { get; set; }
     [NotMapped] public byte[]? AssignedUserAvatarData { get; set; }
@@ -436,6 +438,8 @@ public class LocalStageMaterial : LocalEntity
     [MaxLength(50)] public string? Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
+    public decimal BasePricePerUnit { get; set; }
+    public decimal LineAdjustmentPercent { get; set; }
     [NotMapped] public string StageName { get; set; } = string.Empty;
 }
 
@@ -448,6 +452,8 @@ public class LocalStageWorkType : LocalEntity
     [MaxLength(50)] public string? Unit { get; set; }
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
+    public decimal BasePricePerUnit { get; set; }
+    public decimal LineAdjustmentPercent { get; set; }
 }
 
 public class LocalStageEquipment : LocalEntity
@@ -678,6 +684,14 @@ public class LocalActivityLog
     [NotMapped] public string ActivityTooltipActionLabel => ActivityDetailsService.GetActionDisplay(ActionType);
     [NotMapped] public string ActivityTooltipEntityLabel => ActivityDetailsService.GetEntityDisplay(EntityType);
     [NotMapped] public IReadOnlyList<string> ActivityTooltipDetailLines => ActivityDetailsService.GetTooltipDetailLines(this);
+
+    [NotMapped] public bool IsAutomaticActivity =>
+        string.Equals(ActorRole, "System", StringComparison.OrdinalIgnoreCase);
+
+    [NotMapped] public string ActivityActorDisplayName =>
+        IsAutomaticActivity ? "Автоматическое действие" : UserName;
+
+    public const string AutomaticActivityIconPath = "/icons/auto_action_bot.svg";
 
     [NotMapped] public int GroupCount { get; set; } = 1;
 

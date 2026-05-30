@@ -88,10 +88,22 @@ public class LocalDbContext : DbContext
             .Property(e => e.QuantityAfter).HasPrecision(18, 3);
         modelBuilder.Entity<LocalStageMaterial>()
             .Property(e => e.PricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalStageMaterial>()
+            .Property(e => e.BasePricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalStageMaterial>()
+            .Property(e => e.LineAdjustmentPercent).HasPrecision(18, 2);
         modelBuilder.Entity<LocalStageWorkType>()
             .Property(e => e.Quantity).HasPrecision(18, 3);
         modelBuilder.Entity<LocalStageWorkType>()
             .Property(e => e.PricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalStageWorkType>()
+            .Property(e => e.BasePricePerUnit).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalStageWorkType>()
+            .Property(e => e.LineAdjustmentPercent).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalTaskStage>()
+            .Property(e => e.ServicesAdjustmentPercent).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalTaskStage>()
+            .Property(e => e.MaterialsAdjustmentPercent).HasPrecision(18, 2);
         modelBuilder.Entity<LocalWorkTypeTemplate>()
             .Property(e => e.BasePrice).HasPrecision(18, 2);
     }

@@ -79,8 +79,11 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private string _equipmentCategoryFilter = "Все категории";
     [ObservableProperty] private ObservableCollection<string> _equipmentCategoryOptions = [];
     [ObservableProperty] private ObservableCollection<StageWorkTypeLineVm> _selectedServices = [];
+    [ObservableProperty] private ObservableCollection<StageWorkTypeLineVm> _selectedServicesFiltered = [];
     [ObservableProperty] private ObservableCollection<StageMaterialLineVm> _materialLines = [];
+    [ObservableProperty] private ObservableCollection<StageMaterialLineVm> _materialLinesFiltered = [];
     [ObservableProperty] private ObservableCollection<StageEquipmentLineVm> _equipmentLines = [];
+    [ObservableProperty] private ObservableCollection<StageEquipmentLineVm> _equipmentLinesFiltered = [];
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materialCatalog = [];
     [ObservableProperty] private ObservableCollection<LocalMaterial> _materialCatalogFiltered = [];
     private List<LocalMaterial> _allMaterialTemplates = [];
@@ -214,7 +217,12 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
     private void OnLinePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(StageWorkTypeLineVm.LineTotal) or nameof(StageMaterialLineVm.LineTotal))
+        if (e.PropertyName is nameof(StageWorkTypeLineVm.LineTotal)
+            or nameof(StageMaterialLineVm.LineTotal)
+            or nameof(StageWorkTypeLineVm.PricePerUnit)
+            or nameof(StageMaterialLineVm.PricePerUnit)
+            or nameof(StageWorkTypeLineVm.LineAdjustmentPercent)
+            or nameof(StageMaterialLineVm.LineAdjustmentPercent))
         {
             RecalculateTotals();
             MarkCatalogDirty();
@@ -236,7 +244,9 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             s.Quantity,
             s.PricePerUnit,
             s.Name,
-            s.Unit)).ToList();
+            s.Unit,
+            s.BasePricePerUnit,
+            s.LineAdjustmentPercent)).ToList();
 
     private void RecalculateTotals()
     {
@@ -260,23 +270,17 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     {
         var serviceK = 1m + ServiceAdjustmentPercent / 100m;
         ServiceReceiptRows = new ObservableCollection<ReceiptRowVm>(
-            SelectedServices.Select(s => new ReceiptRowVm(
-                s.Name,
-                s.Quantity,
-                s.PricePerUnit,
-                s.LineTotal,
-                s.LineTotal * serviceK,
-                ServiceAdjustmentPercent)));
+            SelectedServices.Select(s => ReceiptRowVm.ForService(
+                s,
+                ServiceAdjustmentPercent,
+                serviceK)));
 
         var materialK = 1m + MaterialAdjustmentPercent / 100m;
         MaterialReceiptRows = new ObservableCollection<ReceiptRowVm>(
-            MaterialLines.Select(m => new ReceiptRowVm(
-                m.MaterialName,
-                m.Quantity,
-                m.PricePerUnit,
-                m.LineTotal,
-                m.LineTotal * materialK,
-                MaterialAdjustmentPercent)));
+            MaterialLines.Select(m => ReceiptRowVm.ForMaterial(
+                m,
+                MaterialAdjustmentPercent,
+                materialK)));
     }
 
     public void SetCreateForTask(LocalTask task, Action goBack, Func<Task>? onSavedAsync = null)
@@ -576,6 +580,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             Unit = m.Unit,
             Quantity = m.Quantity,
             PricePerUnit = m.PricePerUnit,
+            BasePricePerUnit = m.BasePricePerUnit,
+            LineAdjustmentPercent = m.LineAdjustmentPercent,
             IsSynced = false,
             LastModifiedLocally = DateTime.UtcNow
         }).ToList();
@@ -589,6 +595,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             await taskVm.ReplaceStageWorkTypesAsync(_editStage.Id, serviceItems);
             await taskVm.ReplaceStageMaterialsAsync(_editStage.Id, matEntities);
             await taskVm.ReplaceStageEquipmentsAsync(_editStage.Id, equipmentEntities);
+            await taskVm.SaveStageSummaryPricingAsync(_editStage.Id, ServiceAdjustmentPercent, MaterialAdjustmentPercent);
 
             SelectedServices.Clear();
             MaterialLines.Clear();
@@ -641,15 +648,25 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             EquipmentLines.Clear();
 
             await using var db = await _dbFactory.CreateDbContextAsync();
+            var stage = await db.TaskStages.FindAsync(stageId);
+            if (stage is not null)
+            {
+                ServiceAdjustmentPercent = stage.ServicesAdjustmentPercent;
+                MaterialAdjustmentPercent = stage.MaterialsAdjustmentPercent;
+            }
+
             var svcs = await db.StageWorkTypes
             .Where(s => s.StageId == stageId)
             .OrderBy(s => s.WorkTypeName)
             .ToListAsync();
         foreach (var s in svcs)
         {
-            var line = new StageWorkTypeLineVm(s.WorkTypeTemplateId, s.WorkTypeName, s.Unit, s.PricePerUnit)
+            var basePrice = s.BasePricePerUnit > 0m ? s.BasePricePerUnit : s.PricePerUnit;
+            var line = new StageWorkTypeLineVm(s.WorkTypeTemplateId, s.WorkTypeName, s.Unit, basePrice)
             {
-                Quantity = s.Quantity
+                Quantity = s.Quantity,
+                PricePerUnit = s.PricePerUnit,
+                LineAdjustmentPercent = s.LineAdjustmentPercent
             };
             SelectedServices.Add(line);
         }
@@ -659,9 +676,12 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             .ToListAsync();
         foreach (var m in mats)
         {
-            var line = new StageMaterialLineVm(m.MaterialId, m.MaterialName, m.Unit, m.PricePerUnit)
+            var basePrice = m.BasePricePerUnit > 0m ? m.BasePricePerUnit : m.PricePerUnit;
+            var line = new StageMaterialLineVm(m.MaterialId, m.MaterialName, m.Unit, basePrice)
             {
-                Quantity = m.Quantity
+                Quantity = m.Quantity,
+                PricePerUnit = m.PricePerUnit,
+                LineAdjustmentPercent = m.LineAdjustmentPercent
             };
             MaterialLines.Add(line);
         }
@@ -693,6 +713,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ApplyServiceFilters();
         ApplyMaterialFilters();
         ApplyEquipmentFilters();
+        RecalculateTotals();
         }
         finally
         {
@@ -791,6 +812,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
                              || (t.Description?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false)
                              || (t.Article?.Contains(s, StringComparison.OrdinalIgnoreCase) ?? false));
         ServiceCatalogFiltered = new ObservableCollection<LocalWorkTypeTemplate>(q.ToList());
+        ApplySelectedServicesFilter();
+    }
+
+    private void ApplySelectedServicesFilter()
+    {
+        var search = ServiceSearchText.Trim();
+        IEnumerable<StageWorkTypeLineVm> q = SelectedServices;
+        if (search.Length > 0)
+            q = q.Where(s => s.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+        SelectedServicesFiltered = new ObservableCollection<StageWorkTypeLineVm>(q.ToList());
     }
 
     private async Task LoadMaterialCatalogAsync()
@@ -827,6 +858,17 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
                              || (m.InventoryNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                              || (m.CategoryName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
         MaterialCatalogFiltered = new ObservableCollection<LocalMaterial>(q.ToList());
+        ApplyMaterialLinesFilter();
+    }
+
+    private void ApplyMaterialLinesFilter()
+    {
+        var search = MaterialSearchText.Trim();
+        IEnumerable<StageMaterialLineVm> q = MaterialLines;
+        if (search.Length > 0)
+            q = q.Where(m => m.MaterialName.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (m.Unit?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        MaterialLinesFiltered = new ObservableCollection<StageMaterialLineVm>(q.ToList());
     }
 
     private async Task LoadEquipmentCatalogAsync()
@@ -860,6 +902,17 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
                              || (e.InventoryNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                              || (e.CategoryName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
         EquipmentCatalogFiltered = new ObservableCollection<LocalEquipment>(q.ToList());
+        ApplyEquipmentLinesFilter();
+    }
+
+    private void ApplyEquipmentLinesFilter()
+    {
+        var search = EquipmentSearchText.Trim();
+        IEnumerable<StageEquipmentLineVm> q = EquipmentLines;
+        if (search.Length > 0)
+            q = q.Where(e => e.EquipmentName.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (e.InventoryNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+        EquipmentLinesFiltered = new ObservableCollection<StageEquipmentLineVm>(q.ToList());
     }
 
     private async Task ClearErrorDelayedAsync(CancellationToken token)
@@ -1152,6 +1205,60 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         RecalculateTotals();
     }
 
+    public void OpenReceiptLinePricing(ReceiptRowVm row)
+    {
+        if (!CanEditStageSummary) return;
+        if (MainWindow.Instance is null) return;
+
+        if (row.IsServiceLine)
+        {
+            var line = SelectedServices.FirstOrDefault(s => s.TemplateId == row.RowKey);
+            if (line is null) return;
+            var overlay = new StageLinePricingOverlay(
+                line.Name,
+                line.BasePricePerUnit,
+                line.Quantity,
+                line.PricePerUnit,
+                line.LineAdjustmentPercent,
+                new StageLinePricingOptions { Unit = line.Unit },
+                (percent, price, quantity) => ApplyOverlayLineChangesAsync(line, null, percent, price, quantity));
+            MainWindow.Instance.ShowCenteredOverlay(overlay, 520);
+            return;
+        }
+
+        var materialLine = MaterialLines.FirstOrDefault(m => m.MaterialId == row.MaterialId);
+        if (materialLine is null) return;
+        var materialOverlay = new StageLinePricingOverlay(
+            materialLine.MaterialName,
+            materialLine.BasePricePerUnit,
+            materialLine.Quantity,
+            materialLine.PricePerUnit,
+            materialLine.LineAdjustmentPercent,
+            new StageLinePricingOptions
+            {
+                IsMaterial = true,
+                Unit = materialLine.Unit,
+                StockAvailable = materialLine.StockAvailable
+            },
+            (percent, price, quantity) => ApplyOverlayLineChangesAsync(null, materialLine, percent, price, quantity));
+        MainWindow.Instance.ShowCenteredOverlay(materialOverlay, 520);
+    }
+
+    private async Task<bool> ApplyOverlayLineChangesAsync(
+        StageWorkTypeLineVm? serviceLine,
+        StageMaterialLineVm? materialLine,
+        decimal percent,
+        decimal price,
+        decimal quantity)
+    {
+        if (serviceLine is not null)
+            serviceLine.ApplyStagePricing(percent, price, quantity);
+        else if (materialLine is not null)
+            materialLine.ApplyStagePricing(percent, price, quantity);
+
+        return await SaveStageCatalogAsync();
+    }
+
     [RelayCommand]
     private void SelectProjectRow(PickerRowVm? row)
     {
@@ -1370,11 +1477,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
                 Unit = m.Unit,
                 Quantity = m.Quantity,
                 PricePerUnit = m.PricePerUnit,
+                BasePricePerUnit = m.BasePricePerUnit,
+                LineAdjustmentPercent = m.LineAdjustmentPercent,
                 IsSynced = false,
                 LastModifiedLocally = DateTime.UtcNow
             }).ToList();
             await taskVm.ReplaceStageMaterialsAsync(stageId, matEntities);
             await taskVm.ReplaceStageEquipmentsAsync(stageId, equipmentEntities);
+            await taskVm.SaveStageSummaryPricingAsync(stageId, ServiceAdjustmentPercent, MaterialAdjustmentPercent);
 
             if (_onSavedAsync is not null)
                 await _onSavedAsync();
@@ -1416,27 +1526,73 @@ public sealed class ReceiptRowVm
 {
     public string Name { get; }
     public decimal Quantity { get; }
-    public decimal UnitPrice { get; }
+    public decimal BaseUnitPrice { get; }
+    public decimal EffectiveUnitPrice { get; }
+    public bool HasPriceOverride { get; }
     public decimal BaseTotal { get; }
     public decimal AdjustedTotal { get; }
-    public decimal AdjustmentPercent { get; }
-    public string AdjustmentLabel =>
-        AdjustmentPercent == 0 ? "0%" :
-        AdjustmentPercent > 0 ? $"+{AdjustmentPercent:N0}%" : $"{AdjustmentPercent:N0}%";
+    public decimal GlobalAdjustmentPercent { get; }
+    public decimal LineAdjustmentPercent { get; }
+    public Guid RowKey { get; }
+    public Guid MaterialId { get; }
+    public bool IsServiceLine { get; }
+    public string AdjustmentLabel => FormatPercent(GlobalAdjustmentPercent);
 
-    public ReceiptRowVm(
+    private ReceiptRowVm(
         string name,
         decimal quantity,
-        decimal unitPrice,
+        decimal baseUnitPrice,
+        decimal effectiveUnitPrice,
         decimal baseTotal,
         decimal adjustedTotal,
-        decimal adjustmentPercent)
+        decimal globalAdjustmentPercent,
+        decimal lineAdjustmentPercent,
+        Guid rowKey,
+        Guid materialId,
+        bool isServiceLine)
     {
         Name = name;
         Quantity = quantity;
-        UnitPrice = unitPrice;
+        BaseUnitPrice = baseUnitPrice;
+        EffectiveUnitPrice = effectiveUnitPrice;
+        HasPriceOverride = Math.Abs(effectiveUnitPrice - baseUnitPrice) > 0.005m;
         BaseTotal = baseTotal;
         AdjustedTotal = adjustedTotal;
-        AdjustmentPercent = adjustmentPercent;
+        GlobalAdjustmentPercent = globalAdjustmentPercent;
+        LineAdjustmentPercent = lineAdjustmentPercent;
+        RowKey = rowKey;
+        MaterialId = materialId;
+        IsServiceLine = isServiceLine;
     }
+
+    public static ReceiptRowVm ForService(StageWorkTypeLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier) =>
+        new(
+            line.Name,
+            line.Quantity,
+            line.BasePricePerUnit,
+            line.PricePerUnit,
+            line.LineTotal,
+            line.LineTotal * globalMultiplier,
+            globalAdjustmentPercent,
+            line.LineAdjustmentPercent,
+            line.TemplateId,
+            Guid.Empty,
+            isServiceLine: true);
+
+    public static ReceiptRowVm ForMaterial(StageMaterialLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier) =>
+        new(
+            line.MaterialName,
+            line.Quantity,
+            line.BasePricePerUnit,
+            line.PricePerUnit,
+            line.LineTotal,
+            line.LineTotal * globalMultiplier,
+            globalAdjustmentPercent,
+            line.LineAdjustmentPercent,
+            line.RowId,
+            line.MaterialId,
+            isServiceLine: false);
+
+    private static string FormatPercent(decimal percent) =>
+        percent > 0m ? $"+{percent:N0}%" : percent < 0m ? $"{percent:N0}%" : "0%";
 }

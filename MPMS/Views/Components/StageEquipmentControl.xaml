@@ -83,10 +83,58 @@
         <Border Style="{StaticResource Card}"
                 Visibility="{Binding IsStageCatalogReadOnly, Converter={StaticResource BoolToVis}}">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Оборудование в этапе" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <ScrollViewer Grid.Row="1">
-                    <ItemsControl ItemsSource="{Binding EquipmentLines}">
+                <Border Grid.Row="1" x:Name="ReadOnlySearchBorder"
+                        Background="#F4F5F7" CornerRadius="6"
+                        Padding="10,0" Height="36" Margin="0,0,0,10"
+                        BorderThickness="1.5" BorderBrush="Transparent">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="&#xE721;"
+                                   FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"
+                                   Foreground="#6B778C"/>
+                        <Grid Grid.Column="1">
+                            <TextBlock Text="Поиск оборудования..."
+                                       Foreground="#6B778C" FontSize="12"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding EquipmentSearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox Text="{Binding EquipmentSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0"
+                                     VerticalAlignment="Center" FontSize="13"
+                                     Foreground="#000000"
+                                     MaxLength="100"
+                                     ToolTip="Поиск по названию, инв. номеру"
+                                     GotFocus="ReadOnlySearch_GotFocus"
+                                     LostFocus="ReadOnlySearch_LostFocus"/>
+                        </Grid>
+                        <Button Grid.Column="2"
+                                Visibility="{Binding EquipmentSearchText, Converter={StaticResource StringToVis}}"
+                                Style="{StaticResource IconButton}"
+                                Click="ReadOnlyClearSearch_Click">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="11" Foreground="#6B778C"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2">
+                    <ItemsControl ItemsSource="{Binding EquipmentLinesFiltered}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StageEquipmentLineVm}">
                                 <Border Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">

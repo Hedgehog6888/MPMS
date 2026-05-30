@@ -98,13 +98,38 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="SummaryReceiptRow" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                    <Setter Property="Cursor" Value="Hand"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
+                    <Setter Property="Opacity" Value="0.72"/>
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
         <Border Grid.Column="0" Style="{StaticResource Card}">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <TextBlock Text="Виды работ" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
                     <Button Content="-5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddServiceDiscountCommand}" Margin="0,0,6,0"/>
@@ -113,31 +138,52 @@
                     <TextBlock Text="%" Style="{StaticResource SummaryAdjustPercentLabel}" Margin="4,0,0,0"/>
                     <Button Content="Сброс" Style="{StaticResource SummaryAdjustButton}" Command="{Binding ResetServiceAdjustmentCommand}" Margin="6,0,0,0"/>
                 </StackPanel>
-                <ScrollViewer Grid.Row="2">
-                    <StackPanel>
-                        <ItemsControl ItemsSource="{Binding ServiceReceiptRows}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:ReceiptRowVm}">
-                                    <Grid Margin="0,0,0,6">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="120"/><ColumnDefinition Width="80"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Name}"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:N2}}" HorizontalAlignment="Right"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2} ₽}" HorizontalAlignment="Right"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding AdjustmentLabel}" HorizontalAlignment="Right" Foreground="#6B778C"/>
-                                        <TextBlock Grid.Column="4" Text="{Binding AdjustedTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding ServiceReceiptRows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ReceiptRowVm}">
+                                <Border Style="{StaticResource SummaryReceiptRow}"
+                                        Tag="{Binding}"
+                                        MouseLeftButtonUp="ReceiptRow_Click">
+                                    <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="130"/><ColumnDefinition Width="80"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                               SizeChanged="ReceiptName_SizeChanged"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:N2}}" HorizontalAlignment="Right"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding EffectiveUnitPrice, StringFormat={}{0:N2} ₽}" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding BaseUnitPrice, StringFormat={}{0:N2} ₽}"
+                                                   TextDecorations="Strikethrough"
+                                                   Foreground="#8993A4" FontSize="11"
+                                                   Visibility="{Binding HasPriceOverride, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="3" Text="{Binding AdjustmentLabel}" HorizontalAlignment="Right" Foreground="#6B778C"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding AdjustedTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                                     </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Border Height="1" Background="#EBECF0" Margin="0,6,0,6"/>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Итого виды работ"/><TextBlock Grid.Column="1" Text="{Binding AdjustedServicesTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/></Grid>
-                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </ScrollViewer>
+                <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                    <Border Height="1" Background="#EBECF0" Margin="0,0,0,8"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Итого виды работ"/>
+                        <TextBlock Grid.Column="1" Text="{Binding AdjustedServicesTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/>
+                    </Grid>
+                </StackPanel>
             </Grid>
         </Border>
         <Border Grid.Column="2" Style="{StaticResource Card}">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <TextBlock Text="Материалы" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
                     <Button Content="-5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddMaterialDiscountCommand}" Margin="0,0,6,0"/>
@@ -146,27 +192,42 @@
                     <TextBlock Text="%" Style="{StaticResource SummaryAdjustPercentLabel}" Margin="4,0,0,0"/>
                     <Button Content="Сброс" Style="{StaticResource SummaryAdjustButton}" Command="{Binding ResetMaterialAdjustmentCommand}" Margin="6,0,0,0"/>
                 </StackPanel>
-                <ScrollViewer Grid.Row="2">
-                    <StackPanel>
-                        <ItemsControl ItemsSource="{Binding MaterialReceiptRows}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:ReceiptRowVm}">
-                                    <Grid Margin="0,0,0,6">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="120"/><ColumnDefinition Width="80"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Name}"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:N2}}" HorizontalAlignment="Right"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2} ₽}" HorizontalAlignment="Right"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding AdjustmentLabel}" HorizontalAlignment="Right" Foreground="#6B778C"/>
-                                        <TextBlock Grid.Column="4" Text="{Binding AdjustedTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding MaterialReceiptRows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ReceiptRowVm}">
+                                <Border Style="{StaticResource SummaryReceiptRow}"
+                                        Tag="{Binding}"
+                                        MouseLeftButtonUp="ReceiptRow_Click">
+                                    <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="130"/><ColumnDefinition Width="80"/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                               SizeChanged="ReceiptName_SizeChanged"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat={}{0:N2}}" HorizontalAlignment="Right"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding EffectiveUnitPrice, StringFormat={}{0:N2} ₽}" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding BaseUnitPrice, StringFormat={}{0:N2} ₽}"
+                                                   TextDecorations="Strikethrough"
+                                                   Foreground="#8993A4" FontSize="11"
+                                                   Visibility="{Binding HasPriceOverride, Converter={StaticResource BoolToVis}}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="3" Text="{Binding AdjustmentLabel}" HorizontalAlignment="Right" Foreground="#6B778C"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding AdjustedTotal, StringFormat={}{0:N2} ₽}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                                     </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Border Height="1" Background="#EBECF0" Margin="0,6,0,6"/>
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Итого материалы"/><TextBlock Grid.Column="1" Text="{Binding AdjustedMaterialsTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/></Grid>
-                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </ScrollViewer>
-                <Border Grid.Row="3" Background="#F8F9FA" CornerRadius="8" Padding="12" Margin="0,10,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Общий итог этапа" FontSize="14" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{Binding AdjustedGrandTotal, StringFormat={}{0:N2} ₽}" FontSize="22" FontWeight="Bold"/></Grid></Border>
+                <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                    <Border Height="1" Background="#EBECF0" Margin="0,0,0,8"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Итого материалы"/>
+                        <TextBlock Grid.Column="1" Text="{Binding AdjustedMaterialsTotal, StringFormat={}{0:N2} ₽}" FontWeight="Bold"/>
+                    </Grid>
+                </StackPanel>
+                <Border Grid.Row="4" Background="#F8F9FA" CornerRadius="8" Padding="12" Margin="0,10,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Общий итог этапа" FontSize="14" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{Binding AdjustedGrandTotal, StringFormat={}{0:N2} ₽}" FontSize="22" FontWeight="Bold"/></Grid></Border>
             </Grid>
         </Border>
     </Grid>

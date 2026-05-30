@@ -374,6 +374,8 @@ public partial class TaskDetailViewModel : ViewModelBase
                     Unit = tpl?.Unit ?? item.Unit,
                     Quantity = item.Quantity,
                     PricePerUnit = item.PricePerUnit ?? tpl?.BasePrice ?? 0m,
+                    BasePricePerUnit = item.BasePricePerUnit ?? item.PricePerUnit ?? tpl?.BasePrice ?? 0m,
+                    LineAdjustmentPercent = item.LineAdjustmentPercent ?? 0m,
                     IsSynced = false,
                     LastModifiedLocally = DateTime.UtcNow
                 });
@@ -501,17 +503,25 @@ public partial class TaskDetailViewModel : ViewModelBase
         }
         await db.SaveChangesAsync();
 
-        var addedMaterialNames = incomingByMaterial
+        var addedMaterialLabels = incomingByMaterial
             .Where(kvp => kvp.Value > existingByMaterial.GetValueOrDefault(kvp.Key, 0m))
-            .Select(kvp => materials.FirstOrDefault(m => m.MaterialId == kvp.Key)?.MaterialName)
-            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(kvp =>
+            {
+                var delta = kvp.Value - existingByMaterial.GetValueOrDefault(kvp.Key, 0m);
+                var mat = materials.FirstOrDefault(m => m.MaterialId == kvp.Key);
+                var name = mat?.MaterialName;
+                if (string.IsNullOrWhiteSpace(name))
+                    return null;
+                return ActivityDetailsService.FormatAddedStageItemLabel(name, delta, mat?.Unit);
+            })
+            .Where(label => !string.IsNullOrWhiteSpace(label))
             .Cast<string>()
             .Distinct()
             .ToList();
 
-        if (addedMaterialNames.Count > 0)
+        if (addedMaterialLabels.Count > 0)
         {
-            var materialNames = string.Join(", ", addedMaterialNames);
+            var materialNames = string.Join(", ", addedMaterialLabels);
             await LogActivityAsync(
                 db,
                 $"В этап «{stage.Name}» добавлены материалы: {materialNames}",
@@ -519,6 +529,20 @@ public partial class TaskDetailViewModel : ViewModelBase
                 stageId,
                 ActivityActionKind.MaterialAdded);
         }
+    }
+
+    public async Task SaveStageSummaryPricingAsync(Guid stageId, decimal servicesAdjustmentPercent, decimal materialsAdjustmentPercent)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var stage = await db.TaskStages.FindAsync(stageId);
+        if (stage is null) return;
+
+        stage.ServicesAdjustmentPercent = servicesAdjustmentPercent;
+        stage.MaterialsAdjustmentPercent = materialsAdjustmentPercent;
+        stage.IsSynced = false;
+        stage.UpdatedAt = DateTime.UtcNow;
+        stage.LastModifiedLocally = DateTime.UtcNow;
+        await db.SaveChangesAsync();
     }
 
     public async Task ReplaceStageEquipmentsAsync(Guid stageId, IReadOnlyList<LocalStageEquipment> equipments)

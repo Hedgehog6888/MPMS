@@ -382,8 +382,8 @@
 
             <controls:SearchFilterBarControl
                 VerticalAlignment="Top" Panel.ZIndex="1"
-                HorizontalAlignment="Left"
-                Width="{Binding ElementName=MaterialsScroll, Path=ViewportWidth}"
+                HorizontalAlignment="Stretch"
+                Margin="0,0,24,0"
                 IsFloating="True"
                 ScrollTarget="{Binding ElementName=MaterialsScroll}"
                 SearchText="{Binding SearchText, Mode=TwoWay}"
@@ -391,11 +391,9 @@
                 <controls:SearchFilterBarControl.Style>
                     <Style TargetType="controls:SearchFilterBarControl">
                         <Setter Property="ScrollTarget" Value="{Binding ElementName=MaterialsScroll}"/>
-                        <Setter Property="Width" Value="{Binding ElementName=MaterialsScroll, Path=ViewportWidth}"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ActiveTab}" Value="Equipment">
                                 <Setter Property="ScrollTarget" Value="{Binding ElementName=EquipmentScroll}"/>
-                                <Setter Property="Width" Value="{Binding ElementName=EquipmentScroll, Path=ViewportWidth}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

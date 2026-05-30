@@ -519,4 +519,19 @@ public static class ActivityDetailsService
             return string.Join(", ", names);
         return string.Join(", ", names.Take(maxItems)) + ", ...";
     }
+
+    /// <summary>Подпись материала/позиции в ленте активности: количество — только если добавлено не 1.</summary>
+    public static string FormatAddedStageItemLabel(string name, decimal addedQty, string? unit = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return string.Empty;
+        if (addedQty <= 1m)
+            return name;
+
+        var qtyText = MaterialUnits.IsIntegerUnit(unit) && addedQty == Math.Floor(addedQty)
+            ? ((int)addedQty).ToString(CultureInfo.InvariantCulture)
+            : addedQty.ToString("0.###", CultureInfo.InvariantCulture);
+        var unitSuffix = string.IsNullOrWhiteSpace(unit) ? string.Empty : $" {unit}";
+        return $"{name} × {qtyText}{unitSuffix}";
+    }
 }

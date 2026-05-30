@@ -82,7 +82,9 @@ public record StageWorkTypeItemRequest(
     decimal Quantity,
     decimal? PricePerUnit = null,
     string? WorkTypeName = null,
-    string? Unit = null);
+    string? Unit = null,
+    decimal? BasePricePerUnit = null,
+    decimal? LineAdjustmentPercent = null);
 
 public record StageResponse(Guid Id, Guid TaskId, string Name, string? Description,
     Guid? WorkTypeTemplateId, string? WorkTypeName, string? WorkTypeDescription, string? WorkUnit,
