@@ -26,37 +26,62 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions><ColumnDefinition Width="0.9*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
-        <Border Grid.Column="0" Style="{StaticResource Card}">
-            <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                <TextBlock Text="Каталог оборудования" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                <Grid Grid.Row="1" Margin="0,0,0,10">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource SearchBoxBorderStage}">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="8,0,6,0" VerticalAlignment="Center" Foreground="#6B778C"/>
-                            <Grid Grid.Column="1">
-                                <TextBox Text="{Binding EquipmentSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         BorderThickness="0" Background="Transparent"
-                                         VerticalContentAlignment="Center" Padding="0"
-                                         MaxLength="100"
-                                         ToolTip="Поиск по названию, инв. номеру, категории"/>
-                                <TextBlock Text="Поиск оборудования..." Foreground="#9CA3AF" Margin="2,0,0,0"
-                                           VerticalAlignment="Center" IsHitTestVisible="False"
-                                           Visibility="{Binding EquipmentSearchText, Converter={StaticResource StringToVisInv}}"/>
+        <Grid Visibility="{Binding IsStageCatalogEditable, Converter={StaticResource BoolToVis}}">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="0.9*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock Text="Каталог оборудования" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SearchBoxBorderStage}">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="8,0,6,0" VerticalAlignment="Center" Foreground="#6B778C"/>
+                                <Grid Grid.Column="1">
+                                    <TextBox Text="{Binding EquipmentSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             BorderThickness="0" Background="Transparent"
+                                             VerticalContentAlignment="Center" Padding="0"
+                                             MaxLength="100"
+                                             ToolTip="Поиск по названию, инв. номеру, категории"/>
+                                    <TextBlock Text="Поиск оборудования..." Foreground="#9CA3AF" Margin="2,0,0,0"
+                                               VerticalAlignment="Center" IsHitTestVisible="False"
+                                               Visibility="{Binding EquipmentSearchText, Converter={StaticResource StringToVisInv}}"/>
+                                </Grid>
                             </Grid>
-                        </Grid>
+                        </Border>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding EquipmentCategoryOptions}" SelectedItem="{Binding EquipmentCategoryFilter}" Style="{StaticResource FormCombo}"/>
+                    </Grid>
+                    <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8">
+                        <ScrollViewer><ItemsControl ItemsSource="{Binding EquipmentCatalogFiltered}"><ItemsControl.ItemTemplate><DataTemplate DataType="{x:Type models:LocalEquipment}"><Border Padding="10,8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{Binding Name}" FontWeight="SemiBold"/><TextBlock FontSize="11" Foreground="#6B778C"><Run Text="{Binding InventoryNumber}"/><Run Text=" · "/><Run Text="{Binding CategoryName}"/></TextBlock></StackPanel><Button Grid.Column="1" Content="Добавить" Style="{StaticResource BlackBtn}" Padding="12,4" Tag="{Binding}" Click="AddEquipmentTemplate_Click"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
                     </Border>
-                    <ComboBox Grid.Column="2" ItemsSource="{Binding EquipmentCategoryOptions}" SelectedItem="{Binding EquipmentCategoryFilter}" Style="{StaticResource FormCombo}"/>
                 </Grid>
-                <Border Grid.Row="2" Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8">
-                    <ScrollViewer><ItemsControl ItemsSource="{Binding EquipmentCatalogFiltered}"><ItemsControl.ItemTemplate><DataTemplate DataType="{x:Type models:LocalEquipment}"><Border Padding="10,8" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{Binding Name}" FontWeight="SemiBold"/><TextBlock FontSize="11" Foreground="#6B778C"><Run Text="{Binding InventoryNumber}"/><Run Text=" · "/><Run Text="{Binding CategoryName}"/></TextBlock></StackPanel><Button Grid.Column="1" Content="Добавить" Style="{StaticResource BlackBtn}" Padding="12,4" Tag="{Binding}" Click="AddEquipmentTemplate_Click"/></Grid></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
-                </Border>
-            </Grid>
-        </Border>
-        <Border Grid.Column="2" Style="{StaticResource Card}">
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock Text="Оборудование в этапе" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding EquipmentLines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:StageEquipmentLineVm}">
+                                    <Border Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6" Padding="10,6" VerticalAlignment="Center"><TextBlock Text="1 шт" FontWeight="SemiBold"/></Border>
+                                            <StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="{Binding EquipmentName}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000"><TextBlock.ToolTip><ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding EquipmentName}"/></TextBlock.ToolTip></TextBlock><TextBlock Text="{Binding InventoryNumber}" FontSize="11" Foreground="#6B778C"/></StackPanel>
+                                            <Button Grid.Column="2" Content="Удалить" Style="{StaticResource OutlineBtn}" Padding="10,4" Tag="{Binding}" Click="RemoveEquipmentRow_Click"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Style="{StaticResource Card}"
+                Visibility="{Binding IsStageCatalogReadOnly, Converter={StaticResource BoolToVis}}">
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Оборудование в этапе" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
@@ -65,10 +90,22 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:StageEquipmentLineVm}">
                                 <Border Background="#FAFBFC" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
-                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6" Padding="10,6" VerticalAlignment="Center"><TextBlock Text="1 шт" FontWeight="SemiBold"/></Border>
-                                        <StackPanel Grid.Column="1" Margin="12,0,0,0"><TextBlock Text="{Binding EquipmentName}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000"><TextBlock.ToolTip><ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding EquipmentName}"/></TextBlock.ToolTip></TextBlock><TextBlock Text="{Binding InventoryNumber}" FontSize="11" Foreground="#6B778C"/></StackPanel>
-                                        <Button Grid.Column="2" Content="Удалить" Style="{StaticResource OutlineBtn}" Padding="10,4" Tag="{Binding}" Click="RemoveEquipmentRow_Click"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6" Padding="10,6" VerticalAlignment="Center">
+                                            <TextBlock Text="1 шт" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                            <TextBlock Text="{Binding EquipmentName}" FontWeight="SemiBold" ToolTipService.ShowDuration="60000">
+                                                <TextBlock.ToolTip>
+                                                    <ToolTip Style="{StaticResource ProgramToolTip}" Content="{Binding EquipmentName}"/>
+                                                </TextBlock.ToolTip>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding InventoryNumber}" FontSize="11" Foreground="#6B778C"/>
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

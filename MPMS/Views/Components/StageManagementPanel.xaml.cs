@@ -19,7 +19,7 @@ public partial class StageManagementPanel : UserControl
 
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is not StageDetailViewModel vm || vm.EditStage is null || vm.EditTask is null) return;
+        if (DataContext is not StageDetailViewModel vm || !vm.CanEditStageDetails || vm.EditStage is null || vm.EditTask is null) return;
         var stage = vm.EditStage;
         var task = vm.EditTask;
         var goBack = vm.GoBackCommand;
@@ -102,8 +102,18 @@ public partial class StageManagementPanel : UserControl
         if (MarkStageBtn.Template?.FindName("MarkBtnText", MarkStageBtn) is System.Windows.Controls.TextBlock tb)
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
 
-        EditStageBtn.IsEnabled = !marked;
-        EditStageBtn.Opacity = marked ? 0.5 : 1.0;
+        bool canEdit = vm.CanEditStageDetails;
+        EditStageBtn.IsEnabled = canEdit;
+        EditStageBtn.Opacity = canEdit ? 1.0 : 0.5;
+        var editTooltip = vm.EditStageDisabledTooltip;
+        ToolTipService.SetIsEnabled(EditStageBtn, editTooltip is not null);
+        if (EditStageBtn.ToolTip is ToolTip editTip)
+        {
+            if (editTip.Content is System.Windows.Controls.TextBlock editTipText)
+                editTipText.Text = editTooltip ?? string.Empty;
+            else
+                editTip.Content = editTooltip ?? string.Empty;
+        }
 
         ChangeStatusBtn.IsEnabled = !marked;
         ChangeStatusBtn.Opacity = marked ? 0.5 : 1.0;

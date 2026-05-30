@@ -34,6 +34,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     private CancellationTokenSource? _errorMessageCts;
     private Guid? _peekProjectId;
     private bool _isLoaded;
+    private bool _catalogDirty;
+    private bool _suppressCatalogDirty;
 
     [ObservableProperty] private string _pageTitle = "Добавить этап";
     [ObservableProperty] private string _saveButtonText = "Добавить этап";
@@ -53,6 +55,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private bool _canMarkStageForDeletion;
     [ObservableProperty] private bool _isStageMarkedForDeletion;
     [ObservableProperty] private string _activeTab = "Main";
+    [ObservableProperty] private bool _isCatalogEditMode;
 
     [ObservableProperty] private bool _showProjectTaskPickers;
     [ObservableProperty] private bool _showProjectNameRow;
@@ -109,6 +112,59 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     public decimal ProgressMaximum => Math.Max(1m, SummaryServicesTotal + SummaryMaterialsTotal);
     public Guid? PeekProjectId => _peekProjectId;
 
+    public bool IsStagePlanned => StageStatus == StageStatus.Planned;
+
+    public bool IsStageInProgress => StageStatus == StageStatus.InProgress;
+
+    public bool CanEditStageDetails => !IsStageMarkedForDeletion && IsStagePlanned;
+
+    public string? EditStageDisabledTooltip
+    {
+        get
+        {
+            if (IsStageMarkedForDeletion)
+                return "Сначала снимите пометку удаления";
+            if (!IsStagePlanned)
+                return "Редактирование доступно только для запланированного этапа";
+            return null;
+        }
+    }
+
+    public bool IsStageCatalogEditable =>
+        !IsStageMarkedForDeletion
+        && (IsStagePlanned
+            || StageStatus == StageStatus.Completed
+            || (IsStageInProgress && IsCatalogEditMode));
+
+    public bool IsStageCatalogReadOnly => !IsStageCatalogEditable;
+
+    public bool CanUploadStageFiles => !IsStageMarkedForDeletion;
+
+    public bool CanEditStageSummary => !IsStageMarkedForDeletion;
+
+    public bool ShowSummaryTab => !IsWorker();
+
+    public bool ShowStageUploadButton => ActiveTab == "Files" && CanUploadStageFiles;
+
+    public bool CanEditServicesCatalog => IsManagerOrForeman();
+
+    public bool CanEditMaterialsCatalog => true;
+
+    public bool CanEditEquipmentCatalog => true;
+
+    public bool ShowCatalogEditButton =>
+        IsStageInProgress
+        && !IsStageMarkedForDeletion
+        && ActiveTab switch
+        {
+            "Services" => CanEditServicesCatalog,
+            "Materials" => CanEditMaterialsCatalog,
+            "Equipment" => CanEditEquipmentCatalog,
+            _ => false
+        };
+
+    public string CatalogEditButtonText => IsCatalogEditMode ? "Готово" : "Редактировать";
+
     public StageDetailViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
         IAuthService auth,
@@ -121,7 +177,13 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
         SelectedServices.CollectionChanged += OnTotalsCollectionChanged;
         MaterialLines.CollectionChanged += OnTotalsCollectionChanged;
-        EquipmentLines.CollectionChanged += (_, _) => ApplyEquipmentFilters();
+        EquipmentLines.CollectionChanged += OnEquipmentCollectionChanged;
+    }
+
+    private void OnEquipmentCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        MarkCatalogDirty();
+        ApplyEquipmentFilters();
     }
 
     private void OnTotalsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -143,6 +205,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             }
         }
         RecalculateTotals();
+        MarkCatalogDirty();
         if (ReferenceEquals(sender, SelectedServices))
             ApplyServiceFilters();
         else if (ReferenceEquals(sender, MaterialLines))
@@ -152,8 +215,28 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     private void OnLinePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(StageWorkTypeLineVm.LineTotal) or nameof(StageMaterialLineVm.LineTotal))
+        {
             RecalculateTotals();
+            MarkCatalogDirty();
+        }
     }
+
+    private void MarkCatalogDirty()
+    {
+        if (!_suppressCatalogDirty)
+            _catalogDirty = true;
+    }
+
+    private void MarkCatalogClean() => _catalogDirty = false;
+
+    private static List<StageWorkTypeItemRequest> BuildServiceItems(
+        IEnumerable<StageWorkTypeLineVm> lines) =>
+        lines.Select(s => new StageWorkTypeItemRequest(
+            s.TemplateId,
+            s.Quantity,
+            s.PricePerUnit,
+            s.Name,
+            s.Unit)).ToList();
 
     private void RecalculateTotals()
     {
@@ -319,6 +402,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         Description = "";
         DueDate = null;
         ActiveTab = "Main";
+        IsCatalogEditMode = false;
         ServiceSearchText = "";
         ServiceCategoryFilter = "Все категории";
         SelectedServices.Clear();
@@ -347,6 +431,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ForemanMembers = [];
         WorkerMembers = [];
         _isLoaded = false;
+        MarkCatalogClean();
     }
 
     private async Task LoadProjectNameAsync(Guid projectId)
@@ -359,6 +444,175 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
     private bool IsWorker() =>
         string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsManagerOrForeman() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+
+    partial void OnActiveTabChanged(string value)
+    {
+        if (value == "Summary" && !ShowSummaryTab)
+        {
+            ActiveTab = "Main";
+            return;
+        }
+
+        if (IsCatalogEditMode)
+            _ = ExitCatalogEditModeAsync(saveChanges: true);
+        else
+            RefreshCatalogModeProperties();
+        OnPropertyChanged(nameof(ShowStageUploadButton));
+    }
+
+    partial void OnStageStatusChanged(StageStatus value)
+    {
+        IsCatalogEditMode = false;
+        RefreshCatalogModeProperties();
+    }
+
+    partial void OnIsCatalogEditModeChanged(bool value) => RefreshCatalogModeProperties();
+
+    partial void OnIsStageMarkedForDeletionChanged(bool value)
+    {
+        if (value)
+            IsCatalogEditMode = false;
+        RefreshCatalogModeProperties();
+    }
+
+    private void RefreshCatalogModeProperties()
+    {
+        OnPropertyChanged(nameof(IsStagePlanned));
+        OnPropertyChanged(nameof(IsStageInProgress));
+        OnPropertyChanged(nameof(CanEditStageDetails));
+        OnPropertyChanged(nameof(EditStageDisabledTooltip));
+        OnPropertyChanged(nameof(IsStageCatalogEditable));
+        OnPropertyChanged(nameof(IsStageCatalogReadOnly));
+        OnPropertyChanged(nameof(CanUploadStageFiles));
+        OnPropertyChanged(nameof(CanEditStageSummary));
+        OnPropertyChanged(nameof(ShowStageUploadButton));
+        OnPropertyChanged(nameof(CanEditServicesCatalog));
+        OnPropertyChanged(nameof(CanEditMaterialsCatalog));
+        OnPropertyChanged(nameof(CanEditEquipmentCatalog));
+        OnPropertyChanged(nameof(ShowCatalogEditButton));
+        OnPropertyChanged(nameof(CatalogEditButtonText));
+    }
+
+    [RelayCommand]
+    private async Task ToggleCatalogEditModeAsync()
+    {
+        if (IsStageMarkedForDeletion) return;
+        if (IsCatalogEditMode)
+            await ExitCatalogEditModeAsync(saveChanges: true);
+        else
+            IsCatalogEditMode = true;
+    }
+
+    private async Task ExitCatalogEditModeAsync(bool saveChanges)
+    {
+        if (!IsCatalogEditMode) return;
+
+        if (saveChanges)
+        {
+            var saved = await SaveStageCatalogAsync();
+            if (!saved) return;
+        }
+
+        IsCatalogEditMode = false;
+    }
+
+    public async Task<bool> SaveStageCatalogAsync()
+    {
+        if (_editStage is null || _task is null) return false;
+        if (IsStageMarkedForDeletion) return false;
+
+        ErrorMessage = null;
+
+        foreach (var ml in MaterialLines)
+        {
+            if (ml.MaterialId == Guid.Empty)
+            {
+                ErrorMessage = "Укажите материал во всех строках или удалите пустые";
+                return false;
+            }
+            if (ml.Quantity < 1m)
+            {
+                ErrorMessage = "Количество материалов не может быть меньше 1";
+                return false;
+            }
+            if (ml.StockAvailable > 0m && ml.Quantity > ml.StockAvailable)
+            {
+                ErrorMessage = $"Материала \"{ml.MaterialName}\" недостаточно на складе. Доступно: {ml.StockAvailable:N2}";
+                return false;
+            }
+        }
+
+        foreach (var sl in SelectedServices)
+        {
+            if (sl.Quantity < 1m)
+            {
+                ErrorMessage = "Количество услуг не может быть меньше 1";
+                return false;
+            }
+        }
+
+        var serviceItems = BuildServiceItems(SelectedServices);
+        var equipmentEntities = EquipmentLines
+            .Select(e => new LocalStageEquipment
+            {
+                Id = Guid.NewGuid(),
+                StageId = _editStage.Id,
+                EquipmentId = e.EquipmentId,
+                EquipmentName = e.EquipmentName,
+                InventoryNumber = e.InventoryNumber,
+                IsSynced = false,
+                LastModifiedLocally = DateTime.UtcNow
+            })
+            .ToList();
+        var matEntities = MaterialLines.Select(m => new LocalStageMaterial
+        {
+            Id = Guid.NewGuid(),
+            StageId = _editStage.Id,
+            MaterialId = m.MaterialId,
+            MaterialName = m.MaterialName,
+            Unit = m.Unit,
+            Quantity = m.Quantity,
+            PricePerUnit = m.PricePerUnit,
+            IsSynced = false,
+            LastModifiedLocally = DateTime.UtcNow
+        }).ToList();
+
+        IsBusy = true;
+        try
+        {
+            var taskVm = _sp.GetRequiredService<TaskDetailViewModel>();
+            taskVm.SetTask(_task);
+
+            await taskVm.ReplaceStageWorkTypesAsync(_editStage.Id, serviceItems);
+            await taskVm.ReplaceStageMaterialsAsync(_editStage.Id, matEntities);
+            await taskVm.ReplaceStageEquipmentsAsync(_editStage.Id, equipmentEntities);
+
+            SelectedServices.Clear();
+            MaterialLines.Clear();
+            EquipmentLines.Clear();
+            await LoadExistingServicesAndMaterialsAsync(_editStage.Id);
+            RecalculateTotals();
+            MarkCatalogClean();
+            await LoadMaterialCatalogAsync();
+
+            if (_onSavedAsync is not null)
+                await _onSavedAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Ошибка: {ex.Message}";
+            return false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     public async Task LoadAsync()
     {
@@ -379,8 +633,15 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     }
     private async Task LoadExistingServicesAndMaterialsAsync(Guid stageId)
     {
-        await using var db = await _dbFactory.CreateDbContextAsync();
-        var svcs = await db.StageWorkTypes
+        _suppressCatalogDirty = true;
+        try
+        {
+            SelectedServices.Clear();
+            MaterialLines.Clear();
+            EquipmentLines.Clear();
+
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var svcs = await db.StageWorkTypes
             .Where(s => s.StageId == stageId)
             .OrderBy(s => s.WorkTypeName)
             .ToListAsync();
@@ -432,6 +693,12 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         ApplyServiceFilters();
         ApplyMaterialFilters();
         ApplyEquipmentFilters();
+        }
+        finally
+        {
+            _suppressCatalogDirty = false;
+            MarkCatalogClean();
+        }
     }
 
     private async Task LoadServiceCatalogAsync()
@@ -530,7 +797,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var mats = await db.Materials
-            .Where(m => !m.IsWrittenOff)
+            .Where(m => !m.IsWrittenOff && m.Quantity > 0m)
             .OrderBy(m => m.Name)
             .ToListAsync();
         _allMaterialTemplates = mats;
@@ -551,6 +818,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         var search = MaterialSearchText.Trim();
         var selectedMaterialIds = MaterialLines.Select(m => m.MaterialId).Where(id => id != Guid.Empty).ToHashSet();
         IEnumerable<LocalMaterial> q = _allMaterialTemplates;
+        q = q.Where(m => m.Quantity > 0m);
         q = q.Where(m => !selectedMaterialIds.Contains(m.Id));
         if (!string.IsNullOrWhiteSpace(MaterialCategoryFilter) && MaterialCategoryFilter != "Все категории")
             q = q.Where(m => string.Equals(m.CategoryName, MaterialCategoryFilter, StringComparison.OrdinalIgnoreCase));
@@ -712,7 +980,17 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
 
     [RelayCommand]
-    private void GoBack() => _goBack?.Invoke();
+    private async Task GoBackAsync()
+    {
+        if (_editStage is not null && !IsStageMarkedForDeletion && (_catalogDirty || IsCatalogEditMode))
+        {
+            var saved = await SaveStageCatalogAsync();
+            if (!saved) return;
+            IsCatalogEditMode = false;
+        }
+
+        _goBack?.Invoke();
+    }
 
     [RelayCommand]
     private async Task StartStageAsync()
@@ -725,8 +1003,10 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         stage.IsSynced = false;
         await db.SaveChangesAsync();
         StageStatus = StageStatus.InProgress;
+        IsCatalogEditMode = false;
         CanStartStage = false;
         CanCompleteStage = true;
+        RefreshCatalogModeProperties();
     }
 
     [RelayCommand]
@@ -984,7 +1264,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         Guid? primaryAssigneeId = _selectedAssigneeIds.Count > 0 ? _selectedAssigneeIds.FirstOrDefault() : null;
 
         DateOnly? dueDate = DueDate is { } sd ? DateOnly.FromDateTime(sd) : null;
-        if (!DueDatePolicy.IsAllowed(dueDate))
+        if (!DueDatePolicy.IsAllowedForUpdate(dueDate, _editStage?.DueDate))
         {
             ErrorMessage = DueDatePolicy.PastNotAllowedMessage;
             return;
@@ -1018,9 +1298,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             }
         }
 
-        var serviceItems = SelectedServices
-            .Select(s => new StageWorkTypeItemRequest(s.TemplateId, s.Quantity, s.PricePerUnit))
-            .ToList();
+        var serviceItems = BuildServiceItems(SelectedServices);
         var equipmentEntities = EquipmentLines
             .Select(e => new LocalStageEquipment
             {

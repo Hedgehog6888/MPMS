@@ -108,8 +108,7 @@ public partial class StagesPage : UserControl
     {
         if (sender is not Button btn || btn.Tag is not StageItem item || VM is null) return;
         e.Handled = true;
-        if (item.Stage.Status == StageStatus.Completed)
-            return;
+        if (!item.Stage.CanEditStageDetails) return;
         var task = await VM.GetTaskForStageAsync(item.TaskId);
         if (task is null) return;
         var vm = VM;

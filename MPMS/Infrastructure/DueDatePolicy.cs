@@ -9,4 +9,8 @@ public static class DueDatePolicy
 
     public static bool IsAllowed(DateOnly? dueDate) =>
         !dueDate.HasValue || dueDate.Value >= MinAllowed;
+
+    /// <summary>Прошлые даты допустимы, если срок не менялся.</summary>
+    public static bool IsAllowedForUpdate(DateOnly? dueDate, DateOnly? previousDueDate) =>
+        dueDate == previousDueDate || IsAllowed(dueDate);
 }

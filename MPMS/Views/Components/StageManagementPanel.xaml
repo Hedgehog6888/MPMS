@@ -7,8 +7,7 @@
     </UserControl.Resources>
     
     <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,16"
-            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-            Visibility="{Binding IsStageMarkedForDeletion, Converter={StaticResource BoolToVisInv}}">
+            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
         <StackPanel>
             <TextBlock Text="Управление этапом" FontSize="14" FontWeight="SemiBold"
                        Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
@@ -22,16 +21,6 @@
                             <TextBlock Text="Сначала снимите пометку удаления"/>
                         </ToolTip>
                     </Button.ToolTip>
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="ToolTipService.IsEnabled" Value="False"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsStageMarkedForDeletion}" Value="True">
-                                    <Setter Property="ToolTipService.IsEnabled" Value="True"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="Bg" Background="White" CornerRadius="6"

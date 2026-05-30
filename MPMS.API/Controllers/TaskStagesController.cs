@@ -131,7 +131,7 @@ public class TaskStagesController : ControllerBase
         if (stage is null) return NotFound();
 
         var restoringFromArchive = stage.IsArchived && !request.IsArchived;
-        if (!request.IsArchived && !DueDatePolicy.IsAllowed(request.DueDate) && !restoringFromArchive)
+        if (!request.IsArchived && !DueDatePolicy.IsAllowedForUpdate(request.DueDate, stage.DueDate) && !restoringFromArchive)
             return BadRequest(new { message = DueDatePolicy.PastNotAllowedMessage });
 
         var oldStatus = stage.Status;

@@ -428,7 +428,7 @@ public partial class CreateStageOverlay : UserControl
         { ShowError("Укажите срок выполнения этапа"); return; }
 
         DateOnly? dueDate = DueDatePicker.SelectedDate is { } sd ? DateOnly.FromDateTime(sd) : null;
-        if (!DueDatePolicy.IsAllowed(dueDate))
+        if (!DueDatePolicy.IsAllowedForUpdate(dueDate, _editStage?.DueDate))
         { ShowError(DueDatePolicy.PastNotAllowedMessage); return; }
 
         Guid? primaryAssigneeId = _selectedAssigneeIds.Count > 0 ? _selectedAssigneeIds.FirstOrDefault() : null;

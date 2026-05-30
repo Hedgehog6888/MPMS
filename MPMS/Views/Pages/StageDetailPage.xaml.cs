@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,8 @@ public partial class StageDetailPage
     {
         InitializeComponent();
 
+        DataContextChanged += OnDataContextChanged;
+
         Loaded += async (_, _) =>
         {
             if (FindName("DueDatePicker") is DatePicker dp)
@@ -30,6 +33,22 @@ public partial class StageDetailPage
                 await vm.LoadAsync();
             }
         };
+    }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is INotifyPropertyChanged oldVm)
+            oldVm.PropertyChanged -= Vm_PropertyChanged;
+        if (e.NewValue is INotifyPropertyChanged newVm)
+            newVm.PropertyChanged += Vm_PropertyChanged;
+    }
+
+    private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(StageDetailViewModel.IsStageMarkedForDeletion)
+            or nameof(StageDetailViewModel.StageStatus)
+            or nameof(StageDetailViewModel.ShowStageUploadButton))
+            Dispatcher.InvokeAsync(UpdatePanels);
     }
 
     private void OnOpenEditorRequested(LocalTaskStage stage, LocalTask task)
@@ -98,7 +117,7 @@ public partial class StageDetailPage
 
     private void AddFile_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is StageDetailViewModel vm)
+        if (DataContext is StageDetailViewModel vm && !vm.IsStageMarkedForDeletion)
             vm.FilesControlVM.UploadFileCommand.Execute(null);
     }
 

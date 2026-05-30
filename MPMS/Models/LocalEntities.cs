@@ -223,6 +223,10 @@ public class LocalTaskStage : LocalEntity
         StageDeletionMarkSource is DeletionMarkSource.None or DeletionMarkSource.Stage;
 
     [NotMapped]
+    public bool CanEditStageDetails =>
+        !EffectiveMarkedForDeletion && Status == StageStatus.Planned;
+
+    [NotMapped]
     public string StageInheritedDeletionHint => StageDeletionMarkSource switch
     {
         DeletionMarkSource.Project => "Пометка с уровня проекта",
@@ -669,6 +673,7 @@ public class LocalActivityLog
     public Guid EntityId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     [NotMapped] public string ActivityTooltipText => string.IsNullOrWhiteSpace(DetailsText) ? ActionText : DetailsText;
+    [NotMapped] public string ActivityDisplayText => ActivityDetailsService.GetActivityDisplayText(this);
     [NotMapped] public string ActivityTooltipTitle => ActivityDetailsService.GetTooltipTitle(this);
     [NotMapped] public string ActivityTooltipActionLabel => ActivityDetailsService.GetActionDisplay(ActionType);
     [NotMapped] public string ActivityTooltipEntityLabel => ActivityDetailsService.GetEntityDisplay(EntityType);

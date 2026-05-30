@@ -16,6 +16,24 @@
             <Setter Property="Height" Value="28"/>
             <Setter Property="FontSize" Value="11"/>
         </Style>
+        <Style x:Key="SummaryAdjustButton" TargetType="Button" BasedOn="{StaticResource CompactSummaryBtn}">
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="ToolTipService.IsEnabled" Value="False"/>
+            <Setter Property="ToolTip">
+                <Setter.Value>
+                    <ToolTip>
+                        <TextBlock Text="Сначала снимите пометку удаления"/>
+                    </ToolTip>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CanEditStageSummary}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="ToolTipService.IsEnabled" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="CompactPercentBox" TargetType="TextBox">
             <Setter Property="Width" Value="46"/>
             <Setter Property="Height" Value="28"/>
@@ -53,6 +71,33 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="SummaryAdjustPercentBox" TargetType="TextBox" BasedOn="{StaticResource CompactPercentBox}">
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True"/>
+            <Setter Property="ToolTipService.IsEnabled" Value="False"/>
+            <Setter Property="ToolTip">
+                <Setter.Value>
+                    <ToolTip>
+                        <TextBlock Text="Сначала снимите пометку удаления"/>
+                    </ToolTip>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CanEditStageSummary}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Opacity" Value="0.5"/>
+                    <Setter Property="ToolTipService.IsEnabled" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SummaryAdjustPercentLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#6B778C"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CanEditStageSummary}" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -62,11 +107,11 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Виды работ" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="-5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddServiceDiscountCommand}" Margin="0,0,6,0"/>
-                    <Button Content="+5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddServiceMarkupCommand}"/>
-                    <TextBox Text="{Binding ServiceAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CompactPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
-                    <TextBlock Text="%" VerticalAlignment="Center" Foreground="#6B778C" Margin="4,0,0,0"/>
-                    <Button Content="Сброс" Style="{StaticResource CompactSummaryBtn}" Command="{Binding ResetServiceAdjustmentCommand}" Margin="6,0,0,0"/>
+                    <Button Content="-5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddServiceDiscountCommand}" Margin="0,0,6,0"/>
+                    <Button Content="+5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddServiceMarkupCommand}"/>
+                    <TextBox Text="{Binding ServiceAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SummaryAdjustPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
+                    <TextBlock Text="%" Style="{StaticResource SummaryAdjustPercentLabel}" Margin="4,0,0,0"/>
+                    <Button Content="Сброс" Style="{StaticResource SummaryAdjustButton}" Command="{Binding ResetServiceAdjustmentCommand}" Margin="6,0,0,0"/>
                 </StackPanel>
                 <ScrollViewer Grid.Row="2">
                     <StackPanel>
@@ -95,11 +140,11 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <TextBlock Text="Материалы" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="-5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddMaterialDiscountCommand}" Margin="0,0,6,0"/>
-                    <Button Content="+5%" Style="{StaticResource CompactSummaryBtn}" Command="{Binding AddMaterialMarkupCommand}"/>
-                    <TextBox Text="{Binding MaterialAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CompactPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
-                    <TextBlock Text="%" VerticalAlignment="Center" Foreground="#6B778C" Margin="4,0,0,0"/>
-                    <Button Content="Сброс" Style="{StaticResource CompactSummaryBtn}" Command="{Binding ResetMaterialAdjustmentCommand}" Margin="6,0,0,0"/>
+                    <Button Content="-5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddMaterialDiscountCommand}" Margin="0,0,6,0"/>
+                    <Button Content="+5%" Style="{StaticResource SummaryAdjustButton}" Command="{Binding AddMaterialMarkupCommand}"/>
+                    <TextBox Text="{Binding MaterialAdjustmentPercent, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SummaryAdjustPercentBox}" Margin="6,0,0,0" MaxLength="4"/>
+                    <TextBlock Text="%" Style="{StaticResource SummaryAdjustPercentLabel}" Margin="4,0,0,0"/>
+                    <Button Content="Сброс" Style="{StaticResource SummaryAdjustButton}" Command="{Binding ResetMaterialAdjustmentCommand}" Margin="6,0,0,0"/>
                 </StackPanel>
                 <ScrollViewer Grid.Row="2">
                     <StackPanel>

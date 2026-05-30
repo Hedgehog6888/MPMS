@@ -425,7 +425,7 @@ public partial class TaskDetailOverlay : UserControl
     private void EditStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm?.Task is null) return;
-        if (stage.Status == Models.StageStatus.Completed) return;
+        if (!stage.CanEditStageDetails) return;
 
         MainWindow.Instance?.HideDrawer();
         var main = App.Services.GetRequiredService<MainViewModel>();

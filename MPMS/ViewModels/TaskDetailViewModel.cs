@@ -264,13 +264,13 @@ public partial class TaskDetailViewModel : ViewModelBase
 
     public async Task SaveUpdatedStageAsync(Guid id, UpdateStageRequest req)
     {
-        if (!DueDatePolicy.IsAllowed(req.DueDate))
-            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
-
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(id);
         if (stage is null) return;
         if (stage.Status == StageStatus.Completed) return;
+
+        if (!DueDatePolicy.IsAllowedForUpdate(req.DueDate, stage.DueDate))
+            throw new ArgumentException(DueDatePolicy.PastNotAllowedMessage);
         var wasReservedByStage = ShouldReserveStageEquipment(stage);
         var assignedName = req.AssignedUserId.HasValue
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
@@ -319,20 +319,51 @@ public partial class TaskDetailViewModel : ViewModelBase
         await UpdateTaskProgressAsync();
     }
 
+    public async Task ReplaceStageWorkTypesAsync(Guid stageId, IReadOnlyList<StageWorkTypeItemRequest> items)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var stage = await db.TaskStages.FindAsync(stageId);
+        if (stage is null) return;
+
+        await ReplaceLocalStageWorkTypesAsync(db, stageId, items);
+
+        stage.IsSynced = false;
+        stage.UpdatedAt = DateTime.UtcNow;
+        stage.LastModifiedLocally = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        var syncReq = new UpdateStageRequest(
+            stage.Name,
+            stage.Description,
+            stage.AssignedUserId,
+            stage.Status,
+            stage.DueDate,
+            stage.IsMarkedForDeletion,
+            stage.IsArchived,
+            stage.WorkTypeTemplateId,
+            stage.WorkQuantity,
+            stage.WorkPricePerUnit,
+            items.ToList());
+        await _sync.QueueOperationAsync("Stage", stageId, SyncOperation.Update, syncReq);
+    }
+
     private async System.Threading.Tasks.Task ReplaceLocalStageWorkTypesAsync(
         LocalDbContext db, Guid stageId, IReadOnlyList<StageWorkTypeItemRequest>? items)
     {
         var stage = await db.TaskStages.FindAsync(stageId);
         var existing = await db.StageWorkTypes.Where(x => x.StageId == stageId).ToListAsync();
+        var existingTemplateIds = existing.Select(x => x.WorkTypeTemplateId).ToHashSet();
         db.StageWorkTypes.RemoveRange(existing);
 
-        var addedWorkTypes = new List<string>();
+        var newlyAddedNames = new List<string>();
         if (items is not null)
         {
             foreach (var item in items)
             {
                 var tpl = await db.WorkTypeTemplates.FindAsync(item.WorkTypeTemplateId);
-                var workTypeName = tpl?.Name ?? "—";
+                var workTypeName = tpl?.Name
+                                   ?? item.WorkTypeName
+                                   ?? "—";
                 db.StageWorkTypes.Add(new LocalStageWorkType
                 {
                     Id = Guid.NewGuid(),
@@ -340,19 +371,25 @@ public partial class TaskDetailViewModel : ViewModelBase
                     WorkTypeTemplateId = item.WorkTypeTemplateId,
                     WorkTypeName = workTypeName,
                     WorkTypeDescription = tpl?.Description,
-                    Unit = tpl?.Unit,
+                    Unit = tpl?.Unit ?? item.Unit,
                     Quantity = item.Quantity,
                     PricePerUnit = item.PricePerUnit ?? tpl?.BasePrice ?? 0m,
                     IsSynced = false,
                     LastModifiedLocally = DateTime.UtcNow
                 });
-                addedWorkTypes.Add(workTypeName);
+                if (!existingTemplateIds.Contains(item.WorkTypeTemplateId))
+                    newlyAddedNames.Add(workTypeName);
             }
         }
-        if (addedWorkTypes.Count > 0)
+        if (newlyAddedNames.Count > 0)
         {
-            var workTypeNames = string.Join(", ", addedWorkTypes);
-            await LogActivityAsync(db, $"В этап «{stage?.Name}» добавлены виды работ: {workTypeNames}", "Stage", stageId, ActivityActionKind.WorkTypeAdded);
+            var workTypeNames = string.Join(", ", newlyAddedNames);
+            await LogActivityAsync(
+                db,
+                $"В этап «{stage?.Name}» добавлены виды работ: {workTypeNames}",
+                "Stage",
+                stageId,
+                ActivityActionKind.WorkTypeAdded);
         }
     }
 
@@ -464,11 +501,23 @@ public partial class TaskDetailViewModel : ViewModelBase
         }
         await db.SaveChangesAsync();
 
-        // Логируем добавление материалов
-        if (materials.Count > 0)
+        var addedMaterialNames = incomingByMaterial
+            .Where(kvp => kvp.Value > existingByMaterial.GetValueOrDefault(kvp.Key, 0m))
+            .Select(kvp => materials.FirstOrDefault(m => m.MaterialId == kvp.Key)?.MaterialName)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Cast<string>()
+            .Distinct()
+            .ToList();
+
+        if (addedMaterialNames.Count > 0)
         {
-            var materialNames = string.Join(", ", materials.Select(m => m.MaterialName));
-            await LogActivityAsync(db, $"В этап «{stage.Name}» добавлены материалы: {materialNames}", "Stage", stageId, ActivityActionKind.MaterialAdded);
+            var materialNames = string.Join(", ", addedMaterialNames);
+            await LogActivityAsync(
+                db,
+                $"В этап «{stage.Name}» добавлены материалы: {materialNames}",
+                "Stage",
+                stageId,
+                ActivityActionKind.MaterialAdded);
         }
     }
 

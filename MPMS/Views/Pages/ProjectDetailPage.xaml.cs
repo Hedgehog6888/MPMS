@@ -448,7 +448,7 @@ public partial class ProjectDetailPage : UserControl
     private void EditStageFromProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
-        if (stage.Status == StageStatus.Completed) return;
+        if (!stage.CanEditStageDetails) return;
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
         var main = App.Services.GetRequiredService<MainViewModel>();

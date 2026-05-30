@@ -77,7 +77,12 @@ public record UpdateStageRequest(string Name, string? Description,
     Guid? WorkTypeTemplateId = null, decimal WorkQuantity = 0, decimal WorkPricePerUnit = 0,
     List<StageWorkTypeItemRequest>? WorkTypeItems = null);
 
-public record StageWorkTypeItemRequest(Guid WorkTypeTemplateId, decimal Quantity, decimal? PricePerUnit = null);
+public record StageWorkTypeItemRequest(
+    Guid WorkTypeTemplateId,
+    decimal Quantity,
+    decimal? PricePerUnit = null,
+    string? WorkTypeName = null,
+    string? Unit = null);
 
 public record StageResponse(Guid Id, Guid TaskId, string Name, string? Description,
     Guid? WorkTypeTemplateId, string? WorkTypeName, string? WorkTypeDescription, string? WorkUnit,

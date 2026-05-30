@@ -6,6 +6,7 @@ namespace MPMS.Services;
 public static class ActivityDetailsService
 {
     private const int MaxGroupedNamesToShow = 5;
+    public const int MaxItemsInActivityBadge = 3;
 
     public static string GetTooltipTitle(LocalActivityLog log)
     {
@@ -73,6 +74,11 @@ public static class ActivityDetailsService
 
             return [log.ActionText];
         }
+
+        if (log.ActionType is ActivityActionKind.MaterialAdded or ActivityActionKind.WorkTypeAdded
+            && TryParseStageItemsAdded(log.ActionText, out _, out var items)
+            && items.Count > 0)
+            return items;
 
         var source = string.IsNullOrWhiteSpace(log.DetailsText)
             ? BuildGenericDetails(log.ActionText, log.EntityType, log.ActionType)
@@ -467,4 +473,50 @@ public static class ActivityDetailsService
         TaskPriority.Critical => "Критический",
         _ => value.ToString()
     };
+
+    public static string GetActivityDisplayText(LocalActivityLog log)
+    {
+        if (TryParseStageItemsAdded(log.ActionText, out var prefix, out var items)
+            && items.Count > MaxItemsInActivityBadge)
+            return prefix + FormatItemPreviewList(items);
+
+        return log.ActionText;
+    }
+
+    public static bool TryParseStageItemsAdded(
+        string actionText,
+        out string itemsPrefix,
+        out List<string> items)
+    {
+        itemsPrefix = actionText;
+        items = [];
+
+        ReadOnlySpan<string> markers = ["добавлены материалы: ", "добавлены виды работ: "];
+        foreach (var marker in markers)
+        {
+            var idx = actionText.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0) continue;
+
+            itemsPrefix = actionText[..(idx + marker.Length)];
+            var listPart = actionText[(idx + marker.Length)..].Trim();
+            if (listPart.EndsWith(", ...", StringComparison.Ordinal))
+                listPart = listPart[..^5].TrimEnd();
+
+            items = listPart
+                .Split(", ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(x => x != "...")
+                .ToList();
+            return true;
+        }
+
+        return false;
+    }
+
+    public static string FormatItemPreviewList(IReadOnlyList<string> names, int maxItems = MaxItemsInActivityBadge)
+    {
+        if (names.Count == 0) return string.Empty;
+        if (names.Count <= maxItems)
+            return string.Join(", ", names);
+        return string.Join(", ", names.Take(maxItems)) + ", ...";
+    }
 }

@@ -6,6 +6,7 @@
              xmlns:models="clr-namespace:MPMS.Models"
              xmlns:components="clr-namespace:MPMS.Views.Components"
              xmlns:panels="clr-namespace:MPMS.Views.Components"
+             xmlns:controls="clr-namespace:MPMS.Controls"
              xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              Background="{StaticResource BackgroundBrush}">
 
@@ -87,10 +88,16 @@
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="EditCatalogBtn"
+                            Command="{Binding ToggleCatalogEditModeCommand}"
+                            Content="{Binding CatalogEditButtonText}"
+                            Style="{StaticResource OutlineBtn}"
+                            Height="38" Padding="18,0" FontSize="13"
+                            Visibility="{Binding ShowCatalogEditButton, Converter={StaticResource BoolToVis}}"/>
                     <Button x:Name="AddFileBtn"
                             Click="AddFile_Click"
-                            Height="38" Padding="18,0" FontSize="13"
-                            Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Files}">
+                            Height="38" Padding="18,0" FontSize="13" Margin="8,0,0,0"
+                            Visibility="{Binding ShowStageUploadButton, Converter={StaticResource BoolToVis}}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bg" Background="Black" CornerRadius="6"
@@ -128,7 +135,8 @@
                         <RadioButton Content="Материалы" Tag="Materials" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
                         <RadioButton Content="Оборудование" Tag="Equipment" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
                         <RadioButton Content="Файлы" Tag="Files" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"
+                                     Visibility="{Binding ShowSummaryTab, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -376,7 +384,21 @@
                 <components:FilesControl DataContext="{Binding FilesControlVM}"/>
             </Grid>
 
-            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Summary}" Margin="24,8,24,16">
+            <Grid Margin="24,8,24,16">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding ActiveTab}" Value="Summary"/>
+                                    <Condition Binding="{Binding ShowSummaryTab}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <components:StageSummaryControl/>
             </Grid>
         </Grid>
@@ -386,5 +408,10 @@
                 Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVis}}">
             <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" FontSize="12" TextWrapping="Wrap" TextAlignment="Center"/>
         </Border>
+
+        <controls:DragDropOverlay Grid.RowSpan="3"
+                                  UploadCommand="{Binding FilesControlVM.ProcessFilesCommand}"
+                                  IsDragDropEnabled="{Binding CanUploadStageFiles}"
+                                  Panel.ZIndex="9999"/>
     </Grid>
 </UserControl>
