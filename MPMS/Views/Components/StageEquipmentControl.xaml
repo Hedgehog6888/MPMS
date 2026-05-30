@@ -26,7 +26,7 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid Visibility="{Binding IsStageCatalogEditable, Converter={StaticResource BoolToVis}}">
+        <Grid Visibility="{Binding IsStageEquipmentEditable, Converter={StaticResource BoolToVis}}">
             <Grid.ColumnDefinitions><ColumnDefinition Width="0.9*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
             <Border Grid.Column="0" Style="{StaticResource Card}">
                 <Grid>
@@ -81,7 +81,7 @@
         </Grid>
 
         <Border Style="{StaticResource Card}"
-                Visibility="{Binding IsStageCatalogReadOnly, Converter={StaticResource BoolToVis}}">
+                Visibility="{Binding IsStageEquipmentReadOnly, Converter={StaticResource BoolToVis}}">
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <TextBlock Text="Оборудование в этапе" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>

@@ -149,7 +149,7 @@ public partial class StageDetailOverlay : UserControl
         var isCompletedLocked = _stage.Status == StageStatus.Completed;
         BtnPlanned.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
         BtnInProgress.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
-        BtnCompleted.IsEnabled = !eff && !_isProjectClosed;
+        BtnCompleted.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()

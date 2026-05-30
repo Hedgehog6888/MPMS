@@ -47,7 +47,11 @@ public partial class StageDetailPage
     {
         if (e.PropertyName is nameof(StageDetailViewModel.IsStageMarkedForDeletion)
             or nameof(StageDetailViewModel.StageStatus)
-            or nameof(StageDetailViewModel.ShowStageUploadButton))
+            or nameof(StageDetailViewModel.ShowStageUploadButton)
+            or nameof(StageDetailViewModel.CanChangeStageStatus)
+            or nameof(StageDetailViewModel.CanMarkStageForDeletion)
+            or nameof(StageDetailViewModel.CanEditStageSummary)
+            or nameof(StageDetailViewModel.IsStageCatalogEditable))
             Dispatcher.InvokeAsync(UpdatePanels);
     }
 
@@ -117,7 +121,7 @@ public partial class StageDetailPage
 
     private void AddFile_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is StageDetailViewModel vm && !vm.IsStageMarkedForDeletion)
+        if (DataContext is StageDetailViewModel vm && vm.CanUploadStageFiles)
             vm.FilesControlVM.UploadFileCommand.Execute(null);
     }
 

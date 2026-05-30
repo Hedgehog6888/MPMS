@@ -1,0 +1,51 @@
+<UserControl x:Class="MPMS.Views.Components.ProjectSummaryControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:components="clr-namespace:MPMS.Views.Components">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Background="White"
+                    BorderBrush="#DFE1E6" BorderThickness="1"
+                    CornerRadius="8" Padding="6,4">
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Content="Сводка" Tag="Receipt" GroupName="ProjectSummarySections"
+                                 Style="{StaticResource TabButton}" Click="SummarySectionTab_Click"
+                                 IsChecked="{Binding ProjectSummarySection, Converter={StaticResource EqualityToBool}, ConverterParameter=Receipt, Mode=OneWay}"/>
+                    <RadioButton Content="Статистика" Tag="Statistics" GroupName="ProjectSummarySections"
+                                 Style="{StaticResource TabButton}" Click="SummarySectionTab_Click"
+                                 IsChecked="{Binding ProjectSummarySection, Converter={StaticResource EqualityToBool}, ConverterParameter=Statistics, Mode=OneWay}"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                        Visibility="{Binding ProjectSummarySection, Converter={StaticResource EqualityToVis}, ConverterParameter=Receipt}">
+                <ComboBox ItemsSource="{Binding ProjectSummaryReceiptTaskOptions}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding ProjectSummaryReceiptSelectedTask}"
+                          Style="{StaticResource FormCombo}"
+                          Width="200" Margin="0,0,8,0"/>
+                <ComboBox ItemsSource="{Binding ProjectSummaryReceiptStageOptions}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding ProjectSummaryReceiptSelectedStage}"
+                          Style="{StaticResource FormCombo}"
+                          Width="200"/>
+            </StackPanel>
+        </Grid>
+
+        <components:ProjectSummaryReceiptControl Grid.Row="1"
+            Visibility="{Binding ProjectSummarySection, Converter={StaticResource EqualityToVis}, ConverterParameter=Receipt}"/>
+        <components:ProjectSummaryStatisticsControl Grid.Row="1"
+            Visibility="{Binding ProjectSummarySection, Converter={StaticResource EqualityToVis}, ConverterParameter=Statistics}"/>
+    </Grid>
+</UserControl>

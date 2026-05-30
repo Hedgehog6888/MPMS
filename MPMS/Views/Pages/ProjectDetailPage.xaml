@@ -374,6 +374,10 @@
                         <RadioButton Content="Файлы" Tag="Files"
                                      Style="{StaticResource TabButton}"
                                      Click="Tab_Click"/>
+                        <RadioButton Content="Сводка" Tag="Summary"
+                                     Style="{StaticResource TabButton}"
+                                     Click="Tab_Click"
+                                     Visibility="{Binding ShowProjectSummaryTab, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="StageViewModeSwitcher" Grid.Column="2"
@@ -2094,6 +2098,10 @@
 
             <Grid x:Name="FilesPanel" Visibility="Collapsed" Margin="24,8,24,16">
                 <components:FilesControl DataContext="{Binding FilesControlVM}"/>
+            </Grid>
+
+            <Grid x:Name="SummaryPanel" Visibility="Collapsed" Margin="24,8,24,16">
+                <components:ProjectSummaryControl DataContext="{Binding}"/>
             </Grid>
 
 

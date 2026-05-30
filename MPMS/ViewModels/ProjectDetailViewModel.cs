@@ -10,6 +10,7 @@ using MPMS.Data;
 using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
+using MPMS.Views.Overlays;
 using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.ViewModels;
@@ -79,6 +80,69 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<StageItem> _filteredCompletedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredMarkedStages = [];
 
+    [ObservableProperty] private ObservableCollection<ProjectSummaryTaskGroupVm> _projectSummaryTaskGroups = [];
+    [ObservableProperty] private ObservableCollection<ProjectSummaryCatalogLineVm> _projectSummaryServiceLines = [];
+    [ObservableProperty] private ObservableCollection<ProjectSummaryCatalogLineVm> _projectSummaryMaterialLines = [];
+    [ObservableProperty] private decimal _projectSummaryServicesSubtotal;
+    [ObservableProperty] private decimal _projectSummaryMaterialsSubtotal;
+    [ObservableProperty] private decimal _projectSummaryAdjustedServicesTotal;
+    [ObservableProperty] private decimal _projectSummaryAdjustedMaterialsTotal;
+    [ObservableProperty] private decimal _projectSummaryGrandTotal;
+    [ObservableProperty] private int _projectSummaryStagesWithPricingCount;
+
+    [ObservableProperty] private string _projectSummarySection = "Receipt";
+    [ObservableProperty] private Guid? _projectSummaryReceiptTaskFilter;
+    [ObservableProperty] private Guid? _projectSummaryReceiptStageFilter;
+    [ObservableProperty] private TaskFilterOption? _projectSummaryReceiptSelectedTask;
+    [ObservableProperty] private StageFilterOption? _projectSummaryReceiptSelectedStage;
+    [ObservableProperty] private ObservableCollection<TaskFilterOption> _projectSummaryReceiptTaskOptions = [];
+    [ObservableProperty] private ObservableCollection<StageFilterOption> _projectSummaryReceiptStageOptions = [];
+    [ObservableProperty] private ObservableCollection<ProjectSummaryReceiptStageSectionVm> _projectSummaryFilteredServiceSections = [];
+    [ObservableProperty] private ObservableCollection<ProjectSummaryReceiptStageSectionVm> _projectSummaryFilteredMaterialSections = [];
+    [ObservableProperty] private bool _projectSummaryReceiptServicesGroupByStage = true;
+    [ObservableProperty] private bool _projectSummaryReceiptMaterialsGroupByStage = true;
+    [ObservableProperty] private int _projectSummaryReceiptFilteredStageCount;
+    [ObservableProperty] private decimal _projectSummaryFilteredServicesSubtotal;
+    [ObservableProperty] private decimal _projectSummaryFilteredMaterialsSubtotal;
+    [ObservableProperty] private decimal _projectSummaryFilteredAdjustedServicesTotal;
+    [ObservableProperty] private decimal _projectSummaryFilteredAdjustedMaterialsTotal;
+    [ObservableProperty] private decimal _projectSummaryFilteredGrandTotal;
+
+    private List<LocalTask> _summaryTasks = [];
+    private List<LocalTaskStage> _summaryStages = [];
+    private List<LocalStageWorkType> _summaryWorkTypes = [];
+    private List<LocalStageMaterial> _summaryMaterials = [];
+
+    public bool ShowProjectSummaryTab =>
+        !string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(_auth.UserRole, "Работник", StringComparison.OrdinalIgnoreCase);
+
+    public decimal ProjectSummaryProgressMaximum =>
+        Math.Max(1m, ProjectSummaryAdjustedServicesTotal + ProjectSummaryAdjustedMaterialsTotal);
+
+    public bool ProjectSummaryHasServiceAdjustment =>
+        ProjectSummaryServicesSubtotal != ProjectSummaryAdjustedServicesTotal;
+
+    public bool ProjectSummaryHasMaterialAdjustment =>
+        ProjectSummaryMaterialsSubtotal != ProjectSummaryAdjustedMaterialsTotal;
+
+    public bool ProjectSummaryFilteredHasServiceAdjustment =>
+        ProjectSummaryFilteredServicesSubtotal != ProjectSummaryFilteredAdjustedServicesTotal;
+
+    public bool ProjectSummaryFilteredHasMaterialAdjustment =>
+        ProjectSummaryFilteredMaterialsSubtotal != ProjectSummaryFilteredAdjustedMaterialsTotal;
+
+    public decimal ProjectSummaryFilteredProgressMaximum =>
+        Math.Max(1m, ProjectSummaryFilteredAdjustedServicesTotal + ProjectSummaryFilteredAdjustedMaterialsTotal);
+
+    public bool ProjectSummaryReceiptShowGroupToggle => ProjectSummaryReceiptFilteredStageCount > 1;
+
+    public string ProjectSummaryReceiptServicesGroupButtonText =>
+        ProjectSummaryReceiptServicesGroupByStage ? "Объединить" : "По этапам";
+
+    public string ProjectSummaryReceiptMaterialsGroupButtonText =>
+        ProjectSummaryReceiptMaterialsGroupByStage ? "Объединить" : "По этапам";
+
     public ProjectDetailViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
         ISyncService sync,
@@ -114,6 +178,40 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     partial void OnStageStatusFilterChanged(string value) => ApplyStageFilter();
     partial void OnStageTaskFilterChanged(Guid? value) => ApplyStageFilter();
 
+    partial void OnProjectSummaryReceiptSelectedTaskChanged(TaskFilterOption? value)
+    {
+        ProjectSummaryReceiptTaskFilter = value?.Id;
+        UpdateProjectSummaryReceiptStageOptions(resetStageSelection: true);
+        ApplyProjectSummaryReceiptFilter();
+    }
+
+    partial void OnProjectSummaryReceiptSelectedStageChanged(StageFilterOption? value)
+    {
+        ProjectSummaryReceiptStageFilter = value?.Id;
+        ApplyProjectSummaryReceiptFilter();
+    }
+
+    partial void OnProjectSummaryReceiptServicesGroupByStageChanged(bool value) =>
+        ApplyProjectSummaryReceiptFilter();
+
+    partial void OnProjectSummaryReceiptMaterialsGroupByStageChanged(bool value) =>
+        ApplyProjectSummaryReceiptFilter();
+
+    private bool IsProjectSummaryManagerOrAdmin() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
+
+    private bool IsProjectSummaryForeman() =>
+        _auth.UserRole is "Foreman" or "Прораб";
+
+    public bool CanEditProjectSummaryReceiptRow(ReceiptRowVm row)
+    {
+        if (!row.IsEditable || !row.StageId.HasValue) return false;
+        var stage = _summaryStages.FirstOrDefault(s => s.Id == row.StageId.Value);
+        if (stage is null || stage.EffectiveMarkedForDeletion) return false;
+        if (stage.Status == StageStatus.Completed) return IsProjectSummaryManagerOrAdmin();
+        return IsProjectSummaryManagerOrAdmin() || IsProjectSummaryForeman();
+    }
+
     private void ClearProjectData()
     {
         Tasks = [];
@@ -141,6 +239,35 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ProjectProgressPercent = 0;
         TaskStatsSegments = [];
         StageStatsSegments = [];
+        ProjectSummaryTaskGroups = [];
+        ProjectSummaryServiceLines = [];
+        ProjectSummaryMaterialLines = [];
+        ProjectSummaryServicesSubtotal = 0;
+        ProjectSummaryMaterialsSubtotal = 0;
+        ProjectSummaryAdjustedServicesTotal = 0;
+        ProjectSummaryAdjustedMaterialsTotal = 0;
+        ProjectSummaryGrandTotal = 0;
+        ProjectSummaryStagesWithPricingCount = 0;
+        _summaryTasks = [];
+        _summaryStages = [];
+        _summaryWorkTypes = [];
+        _summaryMaterials = [];
+        ProjectSummaryReceiptTaskFilter = null;
+        ProjectSummaryReceiptStageFilter = null;
+        ProjectSummaryReceiptTaskOptions = [];
+        ProjectSummaryReceiptStageOptions = [];
+        ProjectSummaryReceiptSelectedTask = null;
+        ProjectSummaryReceiptSelectedStage = null;
+        ProjectSummaryFilteredServiceSections = [];
+        ProjectSummaryFilteredMaterialSections = [];
+        ProjectSummaryReceiptServicesGroupByStage = true;
+        ProjectSummaryReceiptMaterialsGroupByStage = true;
+        ProjectSummaryReceiptFilteredStageCount = 0;
+        ProjectSummaryFilteredServicesSubtotal = 0;
+        ProjectSummaryFilteredMaterialsSubtotal = 0;
+        ProjectSummaryFilteredAdjustedServicesTotal = 0;
+        ProjectSummaryFilteredAdjustedMaterialsTotal = 0;
+        ProjectSummaryFilteredGrandTotal = 0;
         _goBackAction?.Invoke();
     }
 
@@ -379,6 +506,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         AllStages = new ObservableCollection<LocalTaskStage>(stages);
 
+        await LoadProjectPricingSummaryAsync(db, tasks, stages);
+
         // Построить опции фильтра задач для вкладки "Этапы" проекта
         var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
         taskOpts.AddRange(stages
@@ -452,6 +581,282 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             }
         }
         Messages = new ObservableCollection<LocalMessage>(messages);
+    }
+
+    private async Task LoadProjectPricingSummaryAsync(
+        LocalDbContext db,
+        IReadOnlyList<LocalTask> tasks,
+        IReadOnlyList<LocalTaskStage> stages)
+    {
+        var stageIds = stages.Where(s => !s.EffectiveMarkedForDeletion).Select(s => s.Id).ToList();
+        if (stageIds.Count == 0)
+        {
+            ResetProjectSummaryData();
+            return;
+        }
+
+        var workTypes = await db.StageWorkTypes
+            .Where(w => stageIds.Contains(w.StageId))
+            .ToListAsync();
+        var materials = await db.StageMaterials
+            .Where(m => stageIds.Contains(m.StageId))
+            .ToListAsync();
+
+        _summaryTasks = tasks.ToList();
+        _summaryStages = stages.Where(s => !s.EffectiveMarkedForDeletion).ToList();
+        _summaryWorkTypes = workTypes;
+        _summaryMaterials = materials;
+
+        var result = ProjectPricingSummaryBuilder.Build(tasks, stages, workTypes, materials);
+
+        ProjectSummaryTaskGroups = new ObservableCollection<ProjectSummaryTaskGroupVm>(result.TaskGroups);
+        ProjectSummaryServiceLines = new ObservableCollection<ProjectSummaryCatalogLineVm>(result.ServiceLines);
+        ProjectSummaryMaterialLines = new ObservableCollection<ProjectSummaryCatalogLineVm>(result.MaterialLines);
+        ProjectSummaryServicesSubtotal = result.ServicesSubtotal;
+        ProjectSummaryMaterialsSubtotal = result.MaterialsSubtotal;
+        ProjectSummaryAdjustedServicesTotal = result.AdjustedServicesTotal;
+        ProjectSummaryAdjustedMaterialsTotal = result.AdjustedMaterialsTotal;
+        ProjectSummaryGrandTotal = result.AdjustedServicesTotal + result.AdjustedMaterialsTotal;
+        ProjectSummaryStagesWithPricingCount = result.StagesWithPricingCount;
+
+        var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
+        taskOpts.AddRange(_summaryTasks
+            .OrderBy(t => t.Name)
+            .Select(t => new TaskFilterOption(t.Id, t.Name)));
+        ProjectSummaryReceiptTaskOptions = new ObservableCollection<TaskFilterOption>(taskOpts);
+        ProjectSummaryReceiptSelectedTask = taskOpts[0];
+        UpdateProjectSummaryReceiptStageOptions(resetStageSelection: true);
+        ApplyProjectSummaryReceiptFilter();
+        NotifyProjectSummaryProperties();
+    }
+
+    private void ResetProjectSummaryData()
+    {
+        ProjectSummaryTaskGroups = [];
+        ProjectSummaryServiceLines = [];
+        ProjectSummaryMaterialLines = [];
+        ProjectSummaryServicesSubtotal = 0;
+        ProjectSummaryMaterialsSubtotal = 0;
+        ProjectSummaryAdjustedServicesTotal = 0;
+        ProjectSummaryAdjustedMaterialsTotal = 0;
+        ProjectSummaryGrandTotal = 0;
+        ProjectSummaryStagesWithPricingCount = 0;
+        _summaryTasks = [];
+        _summaryStages = [];
+        _summaryWorkTypes = [];
+        _summaryMaterials = [];
+        ProjectSummaryReceiptTaskOptions = [];
+        ProjectSummaryReceiptStageOptions = [];
+        ProjectSummaryReceiptTaskFilter = null;
+        ProjectSummaryReceiptStageFilter = null;
+        ProjectSummaryReceiptSelectedTask = null;
+        ProjectSummaryReceiptSelectedStage = null;
+        ProjectSummaryFilteredServiceSections = [];
+        ProjectSummaryFilteredMaterialSections = [];
+        ProjectSummaryReceiptServicesGroupByStage = true;
+        ProjectSummaryReceiptMaterialsGroupByStage = true;
+        ProjectSummaryReceiptFilteredStageCount = 0;
+        ProjectSummaryFilteredServicesSubtotal = 0;
+        ProjectSummaryFilteredMaterialsSubtotal = 0;
+        ProjectSummaryFilteredAdjustedServicesTotal = 0;
+        ProjectSummaryFilteredAdjustedMaterialsTotal = 0;
+        ProjectSummaryFilteredGrandTotal = 0;
+        NotifyProjectSummaryProperties();
+    }
+
+    private void UpdateProjectSummaryReceiptStageOptions(bool resetStageSelection = false)
+    {
+        var opts = new List<StageFilterOption> { new(null, "Все этапы") };
+        var query = _summaryStages.AsEnumerable();
+        if (ProjectSummaryReceiptTaskFilter.HasValue)
+            query = query.Where(s => s.TaskId == ProjectSummaryReceiptTaskFilter.Value);
+        opts.AddRange(query
+            .OrderBy(s => s.Name)
+            .Select(s => new StageFilterOption(s.Id, s.Name)));
+        ProjectSummaryReceiptStageOptions = new ObservableCollection<StageFilterOption>(opts);
+
+        if (resetStageSelection)
+        {
+            ProjectSummaryReceiptSelectedStage = opts[0];
+            return;
+        }
+
+        var currentId = ProjectSummaryReceiptSelectedStage?.Id;
+        ProjectSummaryReceiptSelectedStage =
+            opts.FirstOrDefault(o => o.Id == currentId) ?? opts[0];
+    }
+
+    private void ApplyProjectSummaryReceiptFilter()
+    {
+        var receipt = ProjectPricingSummaryBuilder.BuildReceiptRows(
+            _summaryStages,
+            _summaryWorkTypes,
+            _summaryMaterials,
+            ProjectSummaryReceiptTaskFilter,
+            ProjectSummaryReceiptStageFilter,
+            ProjectSummaryReceiptServicesGroupByStage,
+            ProjectSummaryReceiptMaterialsGroupByStage);
+
+        ProjectSummaryFilteredServiceSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(receipt.ServiceSections);
+        ProjectSummaryFilteredMaterialSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(receipt.MaterialSections);
+        ProjectSummaryReceiptFilteredStageCount = receipt.FilteredStageCount;
+        ProjectSummaryFilteredServicesSubtotal = receipt.ServicesSubtotal;
+        ProjectSummaryFilteredMaterialsSubtotal = receipt.MaterialsSubtotal;
+        ProjectSummaryFilteredAdjustedServicesTotal = receipt.AdjustedServicesTotal;
+        ProjectSummaryFilteredAdjustedMaterialsTotal = receipt.AdjustedMaterialsTotal;
+        ProjectSummaryFilteredGrandTotal = receipt.GrandTotal;
+
+        OnPropertyChanged(nameof(ProjectSummaryFilteredHasServiceAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryFilteredHasMaterialAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryFilteredProgressMaximum));
+        OnPropertyChanged(nameof(ProjectSummaryReceiptShowGroupToggle));
+        OnPropertyChanged(nameof(ProjectSummaryReceiptServicesGroupButtonText));
+        OnPropertyChanged(nameof(ProjectSummaryReceiptMaterialsGroupButtonText));
+    }
+
+    [RelayCommand]
+    private void ToggleProjectSummaryReceiptServicesGrouping()
+    {
+        ProjectSummaryReceiptServicesGroupByStage = !ProjectSummaryReceiptServicesGroupByStage;
+    }
+
+    [RelayCommand]
+    private void ToggleProjectSummaryReceiptMaterialsGrouping()
+    {
+        ProjectSummaryReceiptMaterialsGroupByStage = !ProjectSummaryReceiptMaterialsGroupByStage;
+    }
+
+    public async void OpenProjectSummaryReceiptLinePricing(ReceiptRowVm row)
+    {
+        if (!CanEditProjectSummaryReceiptRow(row) || !row.StageId.HasValue) return;
+        if (MainWindow.Instance is null) return;
+
+        var stageId = row.StageId.Value;
+        if (row.IsServiceLine)
+        {
+            var wt = _summaryWorkTypes.FirstOrDefault(w => w.StageId == stageId && w.WorkTypeTemplateId == row.RowKey);
+            if (wt is null) return;
+
+            var basePrice = wt.BasePricePerUnit > 0m ? wt.BasePricePerUnit : wt.PricePerUnit;
+            var overlay = new StageLinePricingOverlay(
+                wt.WorkTypeName,
+                basePrice,
+                wt.Quantity,
+                wt.PricePerUnit,
+                wt.LineAdjustmentPercent,
+                new StageLinePricingOptions { Unit = wt.Unit },
+                (percent, price, quantity) => ApplyProjectReceiptLineChangesAsync(stageId, row, percent, price, quantity));
+            MainWindow.Instance.ShowCenteredOverlay(overlay, 520);
+            return;
+        }
+
+        var mat = _summaryMaterials.FirstOrDefault(m => m.StageId == stageId && m.MaterialId == row.MaterialId);
+        if (mat is null) return;
+
+        var matBasePrice = mat.BasePricePerUnit > 0m ? mat.BasePricePerUnit : mat.PricePerUnit;
+        decimal stockAvailable = 0m;
+        await using (var db = await _dbFactory.CreateDbContextAsync())
+        {
+            var stock = await db.Materials
+                .Where(x => x.Id == mat.MaterialId)
+                .Select(x => (decimal?)x.Quantity)
+                .FirstOrDefaultAsync();
+            if (stock.HasValue)
+                stockAvailable = Math.Max(0m, stock.Value) + mat.Quantity;
+        }
+
+        var materialOverlay = new StageLinePricingOverlay(
+            mat.MaterialName,
+            matBasePrice,
+            mat.Quantity,
+            mat.PricePerUnit,
+            mat.LineAdjustmentPercent,
+            new StageLinePricingOptions
+            {
+                IsMaterial = true,
+                Unit = mat.Unit,
+                StockAvailable = stockAvailable
+            },
+            (percent, price, quantity) => ApplyProjectReceiptLineChangesAsync(stageId, row, percent, price, quantity));
+        MainWindow.Instance.ShowCenteredOverlay(materialOverlay, 520);
+    }
+
+    private async Task<bool> ApplyProjectReceiptLineChangesAsync(
+        Guid stageId,
+        ReceiptRowVm row,
+        decimal percent,
+        decimal price,
+        decimal quantity)
+    {
+        var taskVm = App.Services.GetRequiredService<TaskDetailViewModel>();
+        var stage = _summaryStages.FirstOrDefault(s => s.Id == stageId);
+        if (stage is null) return false;
+
+        var task = _summaryTasks.FirstOrDefault(t => t.Id == stage.TaskId);
+        if (task is not null)
+            taskVm.SetTask(task);
+
+        if (row.IsServiceLine)
+        {
+            var items = _summaryWorkTypes
+                .Where(w => w.StageId == stageId)
+                .Select(w => new StageWorkTypeItemRequest(
+                    w.WorkTypeTemplateId,
+                    w.WorkTypeTemplateId == row.RowKey ? quantity : w.Quantity,
+                    w.WorkTypeTemplateId == row.RowKey ? price : w.PricePerUnit,
+                    w.WorkTypeName,
+                    w.Unit,
+                    w.BasePricePerUnit > 0m ? w.BasePricePerUnit : w.PricePerUnit,
+                    w.WorkTypeTemplateId == row.RowKey ? percent : w.LineAdjustmentPercent))
+                .ToList();
+            await taskVm.ReplaceStageWorkTypesAsync(stageId, items);
+        }
+        else
+        {
+            var entities = _summaryMaterials
+                .Where(m => m.StageId == stageId)
+                .Select(m => new LocalStageMaterial
+                {
+                    Id = Guid.NewGuid(),
+                    StageId = stageId,
+                    MaterialId = m.MaterialId,
+                    MaterialName = m.MaterialName,
+                    Unit = m.Unit,
+                    Quantity = m.MaterialId == row.MaterialId ? quantity : m.Quantity,
+                    PricePerUnit = m.MaterialId == row.MaterialId ? price : m.PricePerUnit,
+                    BasePricePerUnit = m.BasePricePerUnit > 0m ? m.BasePricePerUnit : m.PricePerUnit,
+                    LineAdjustmentPercent = m.MaterialId == row.MaterialId ? percent : m.LineAdjustmentPercent,
+                    IsSynced = false,
+                    LastModifiedLocally = DateTime.UtcNow
+                })
+                .ToList();
+            await taskVm.ReplaceStageMaterialsAsync(stageId, entities);
+        }
+
+        await ReloadProjectPricingSummaryAsync();
+        return true;
+    }
+
+    private async Task ReloadProjectPricingSummaryAsync()
+    {
+        if (Project is null) return;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == Project.Id && !t.IsArchived).ToListAsync();
+        var stages = await db.TaskStages
+            .Where(s => tasks.Select(t => t.Id).Contains(s.TaskId) && !s.IsArchived)
+            .ToListAsync();
+        await LoadProjectPricingSummaryAsync(db, tasks, stages);
+    }
+
+    private void NotifyProjectSummaryProperties()
+    {
+        OnPropertyChanged(nameof(ProjectSummaryProgressMaximum));
+        OnPropertyChanged(nameof(ProjectSummaryHasServiceAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryHasMaterialAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryFilteredHasServiceAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryFilteredHasMaterialAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryFilteredProgressMaximum));
+        OnPropertyChanged(nameof(ShowProjectSummaryTab));
     }
 
     private void ApplyTaskFilter()

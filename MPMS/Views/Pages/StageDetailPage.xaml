@@ -143,8 +143,8 @@
         </Border>
 
         <Grid Grid.Row="2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Main}">
-                <Grid Margin="24,8">
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Main}" Margin="24,8">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="16"/>
@@ -156,125 +156,207 @@
                         <ColumnDefinition Width="490"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Grid.Row="0" Background="White" CornerRadius="8" Padding="20"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                        <StackPanel>
-                            <TextBlock Text="Информация об этапе" FontSize="15" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                    <Border Grid.Column="0" Grid.Row="0" Background="White" CornerRadius="8" Padding="0"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            VerticalAlignment="Stretch">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-                            <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
-                                <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
-                                       Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
+                                          Padding="20,20,20,12">
                                 <StackPanel>
-                                    <TextBlock Text="Проект" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding ProjectNameReadOnly}"
-                                               FontSize="14" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-                            </StackPanel>
+                                    <TextBlock Text="Информация об этапе" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
-                            <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
-                                <Image Source="{svgc:SvgImage Source=/icons/list.svg, AppName=MPMS}"
-                                       Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                                    <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                                        <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
+                                               Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Проект" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding ProjectNameReadOnly}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                                        <Image Source="{svgc:SvgImage Source=/icons/list.svg, AppName=MPMS}"
+                                               Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Задача" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding ContextSubtitle}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                                        <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
+                                               Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Срок выполнения" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding DueDate, StringFormat=dd.MM.yyyy}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
+                                        <Image Source="{svgc:SvgImage Source=/icons/stage_description.svg, AppName=MPMS}"
+                                               Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Описание" FontSize="11"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
+                                            <TextBlock Text="{Binding Description}"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,0">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="РАБОТНИКИ" FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding WorkerMembers}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="2"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,6">
+                                                        <Button Style="{StaticResource PeekRowButton}" Margin="0"
+                                                                Click="WorkerPeek_Click">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Border Style="{StaticResource AvatarCircle32}"
+                                                                        Background="{Binding AvatarBrush}"
+                                                                        Margin="0,0,10,0">
+                                                                    <Grid>
+                                                                        <Image Style="{StaticResource AvatarImage}"
+                                                                               Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                                               Width="32" Height="32"
+                                                                               Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
+                                                                        <TextBlock Text="{Binding Initials}"
+                                                                                   FontSize="10" FontWeight="Bold"
+                                                                                   Foreground="White"
+                                                                                   HorizontalAlignment="Center"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                                    </Grid>
+                                                                </Border>
+                                                                <StackPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               FontSize="13" FontWeight="SemiBold"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                                    <TextBlock Text="{Binding RoleSubtitle}" FontSize="11"
+                                                                               Foreground="{Binding RoleColor, Converter={StaticResource HexToBrush}}"
+                                                                               Margin="0,2,0,0">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding RoleSubtitle}" Value="">
+                                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="Работники не назначены" FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic"
+                                                   Visibility="{Binding WorkerMembers.Count, Converter={StaticResource IntToVisInv}}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <Border Grid.Row="1"
+                                    Background="#F8FAFC"
+                                    BorderBrush="#EBEEF2"
+                                    BorderThickness="0,1,0,0"
+                                    CornerRadius="0,0,8,8"
+                                    Padding="16,14,16,16"
+                                    VerticalAlignment="Bottom"
+                                    Visibility="{Binding ShowSummaryTab, Converter={StaticResource BoolToVis}}">
                                 <StackPanel>
-                                    <TextBlock Text="Задача" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding ContextSubtitle}"
-                                               FontSize="14" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-                            </StackPanel>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <Grid Margin="0,0,0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="8" Height="8" CornerRadius="4" Background="#3B82F6"
+                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="Виды работ" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding AdjustedServicesTotal, StringFormat='{}{0:N2} ₽'}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="#111111" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding ServiceAdjustmentLabel}" FontSize="11"
+                                                   Foreground="{Binding ServiceAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                   Margin="16,0,0,0"/>
+                                    </StackPanel>
 
-                            <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
-                                <Image Source="{svgc:SvgImage Source=/icons/calendar.svg, AppName=MPMS}"
-                                       Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
-                                <StackPanel>
-                                    <TextBlock Text="Срок выполнения" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding DueDate, StringFormat=dd.MM.yyyy}"
-                                               FontSize="14" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-                            </StackPanel>
+                                    <StackPanel Margin="0,0,0,12">
+                                        <Grid Margin="0,0,0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="8" Height="8" CornerRadius="4" Background="#10B981"
+                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="Материалы" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding AdjustedMaterialsTotal, StringFormat='{}{0:N2} ₽'}"
+                                                       FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="#111111" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding MaterialAdjustmentLabel}" FontSize="11"
+                                                   Foreground="{Binding MaterialAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                   Margin="16,0,0,0"/>
+                                    </StackPanel>
 
-                            <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
-                                <Image Source="{svgc:SvgImage Source=/icons/stage_description.svg, AppName=MPMS}"
-                                       Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Top" Opacity="0.5"/>
-                                <StackPanel>
-                                    <TextBlock Text="Описание" FontSize="11"
-                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2"/>
-                                    <TextBlock Text="{Binding Description}"
-                                               FontSize="14" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap"/>
+                                    <Border Background="White" CornerRadius="8" Padding="12,10"
+                                            BorderBrush="#DFE1E6" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Итого по этапу" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding AdjustedGrandTotal, StringFormat='{}{0:N2} ₽'}"
+                                                       FontSize="20" FontWeight="Bold"
+                                                       Foreground="#111111"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
-                            </StackPanel>
-
-                            <StackPanel Margin="0,0,0,16">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <Border Width="4" Height="14" CornerRadius="2" Background="#111111" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="РАБОТНИКИ" FontSize="11" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <ItemsControl ItemsSource="{Binding WorkerMembers}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="2"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,6">
-                                                <Button Style="{StaticResource PeekRowButton}" Margin="0"
-                                                        Click="WorkerPeek_Click">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border Style="{StaticResource AvatarCircle32}"
-                                                                Background="{Binding AvatarBrush}"
-                                                                Margin="0,0,10,0">
-                                                            <Grid>
-                                                                <Image Style="{StaticResource AvatarImage}"
-                                                                       Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                                       Width="32" Height="32"
-                                                                       Visibility="{Binding AvatarData, Converter={StaticResource NullToVis}}"/>
-                                                                <TextBlock Text="{Binding Initials}"
-                                                                           FontSize="10" FontWeight="Bold"
-                                                                           Foreground="White"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center"
-                                                                           Visibility="{Binding AvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                            </Grid>
-                                                        </Border>
-                                                        <StackPanel VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Name}"
-                                                                       FontSize="13" FontWeight="SemiBold"
-                                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                            <TextBlock Text="{Binding RoleSubtitle}" FontSize="11"
-                                                                       Foreground="{Binding RoleColor, Converter={StaticResource HexToBrush}}"
-                                                                       Margin="0,2,0,0">
-                                                                <TextBlock.Style>
-                                                                    <Style TargetType="TextBlock">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding RoleSubtitle}" Value="">
-                                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBlock.Style>
-                                                            </TextBlock>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Button>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Text="Работники не назначены" FontSize="11"
-                                           Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic"
-                                           Visibility="{Binding WorkerMembers.Count, Converter={StaticResource IntToVisInv}}"/>
-                            </StackPanel>
-                        </StackPanel>
+                            </Border>
+                        </Grid>
                     </Border>
 
                     <Grid Grid.Column="2" Grid.Row="0">
@@ -293,10 +375,19 @@
                                            FontSize="12" Foreground="#64748B" Margin="0,0,0,16"/>
 
                                 <StackPanel Margin="0,0,0,16">
-                                    <TextBlock Text="Виды работ" FontSize="11" FontWeight="SemiBold"
-                                               Foreground="#64748B" Margin="0,0,0,6"/>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Виды работ" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#64748B" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ServicesCount, StringFormat='{}{0} поз.'}"
+                                                   FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    </Grid>
                                     <Grid Margin="0,0,0,8">
-                                        <ProgressBar Value="{Binding SummaryServicesTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
+                                        <ProgressBar Value="{Binding AdjustedServicesTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
                                                      Background="#E9ECEF" Foreground="#3B82F6">
                                             <ProgressBar.Template>
                                                 <ControlTemplate TargetType="ProgressBar">
@@ -311,25 +402,50 @@
                                             </ProgressBar.Template>
                                         </ProgressBar>
                                     </Grid>
-                                    <Grid Margin="0,0,0,4">
+                                    <Grid Margin="0,0,0,2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding SummaryServicesTotal, StringFormat='{}{0:N0} ₽'}"
-                                                   FontSize="13" FontWeight="SemiBold" Foreground="#111111"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding ServicesCount, StringFormat='{}{0} поз.'}"
-                                                   FontSize="11" Foreground="#64748B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="Без наценки и скидки" FontSize="11"
+                                                   Foreground="#64748B" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding SummaryServicesTotal, StringFormat='{}{0:N0} ₽'}"
+                                                   FontSize="12" FontWeight="SemiBold" Foreground="#111111"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,4"
+                                          Visibility="{Binding HasServiceAdjustment, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding ServiceAdjustmentLabel}" FontSize="11"
+                                                   Foreground="{Binding ServiceAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AdjustedServicesTotal, StringFormat='{}{0:N0} ₽'}"
+                                                   FontSize="13" FontWeight="SemiBold" Foreground="#111111"
+                                                   VerticalAlignment="Center"/>
                                     </Grid>
                                     <TextBlock Text="{Binding AverageServicePrice, StringFormat='Средняя цена: {0:N2} ₽/ед.'}"
                                                FontSize="10" Foreground="#94A3B8"/>
                                 </StackPanel>
 
                                 <StackPanel Margin="0,0,0,16">
-                                    <TextBlock Text="Материалы" FontSize="11" FontWeight="SemiBold"
-                                               Foreground="#64748B" Margin="0,0,0,6"/>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Материалы" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="#64748B" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding MaterialsCount, StringFormat='{}{0} поз.'}"
+                                                   FontSize="11" Foreground="#64748B" VerticalAlignment="Center"/>
+                                    </Grid>
                                     <Grid Margin="0,0,0,8">
-                                        <ProgressBar Value="{Binding SummaryMaterialsTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
+                                        <ProgressBar Value="{Binding AdjustedMaterialsTotal, Mode=OneWay}" Maximum="{Binding ProgressMaximum, Mode=OneWay}" Height="8"
                                                      Background="#E9ECEF" Foreground="#10B981">
                                             <ProgressBar.Template>
                                                 <ControlTemplate TargetType="ProgressBar">
@@ -344,15 +460,31 @@
                                             </ProgressBar.Template>
                                         </ProgressBar>
                                     </Grid>
-                                    <Grid Margin="0,0,0,4">
+                                    <Grid Margin="0,0,0,2">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding SummaryMaterialsTotal, StringFormat='{}{0:N0} ₽'}"
-                                                   FontSize="13" FontWeight="SemiBold" Foreground="#111111"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding MaterialsCount, StringFormat='{}{0} поз.'}"
-                                                   FontSize="11" Foreground="#64748B" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="Без наценки и скидки" FontSize="11"
+                                                   Foreground="#64748B" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding SummaryMaterialsTotal, StringFormat='{}{0:N0} ₽'}"
+                                                   FontSize="12" FontWeight="SemiBold" Foreground="#111111"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,4"
+                                          Visibility="{Binding HasMaterialAdjustment, Converter={StaticResource BoolToVis}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding MaterialAdjustmentLabel}" FontSize="11"
+                                                   Foreground="{Binding MaterialAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding AdjustedMaterialsTotal, StringFormat='{}{0:N0} ₽'}"
+                                                   FontSize="13" FontWeight="SemiBold" Foreground="#111111"
+                                                   VerticalAlignment="Center"/>
                                     </Grid>
                                     <TextBlock Text="{Binding AverageMaterialPrice, StringFormat='Средняя цена: {0:N2} ₽/ед.'}"
                                                FontSize="10" Foreground="#94A3B8"/>
@@ -366,7 +498,7 @@
                         </Border>
                     </Grid>
                 </Grid>
-            </ScrollViewer>
+            </Grid>
 
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Services}" Margin="24,8,24,16">
                 <components:StageWorkTypesControl/>

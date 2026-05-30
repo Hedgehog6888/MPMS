@@ -106,13 +106,19 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     public decimal AdjustedServicesTotal => SummaryServicesTotal * (1m + ServiceAdjustmentPercent / 100m);
     public decimal AdjustedMaterialsTotal => SummaryMaterialsTotal * (1m + MaterialAdjustmentPercent / 100m);
     public decimal AdjustedGrandTotal => AdjustedServicesTotal + AdjustedMaterialsTotal;
+    public string ServiceAdjustmentLabel => FormatStageAdjustmentLabel(ServiceAdjustmentPercent);
+    public string MaterialAdjustmentLabel => FormatStageAdjustmentLabel(MaterialAdjustmentPercent);
+    public string ServiceAdjustmentTone => AdjustmentTone(ServiceAdjustmentPercent);
+    public string MaterialAdjustmentTone => AdjustmentTone(MaterialAdjustmentPercent);
+    public bool HasServiceAdjustment => ServiceAdjustmentPercent != 0m;
+    public bool HasMaterialAdjustment => MaterialAdjustmentPercent != 0m;
     public int ServicesCount => SelectedServices.Count;
     public int MaterialsCount => MaterialLines.Count;
     public decimal ServicesQuantityTotal => SelectedServices.Sum(s => s.Quantity);
     public decimal MaterialsQuantityTotal => MaterialLines.Sum(m => m.Quantity);
     public decimal AverageServicePrice => ServicesQuantityTotal > 0 ? SummaryServicesTotal / ServicesQuantityTotal : 0;
     public decimal AverageMaterialPrice => MaterialsQuantityTotal > 0 ? SummaryMaterialsTotal / MaterialsQuantityTotal : 0;
-    public decimal ProgressMaximum => Math.Max(1m, SummaryServicesTotal + SummaryMaterialsTotal);
+    public decimal ProgressMaximum => Math.Max(1m, AdjustedServicesTotal + AdjustedMaterialsTotal);
     public Guid? PeekProjectId => _peekProjectId;
 
     public bool IsStagePlanned => StageStatus == StageStatus.Planned;
@@ -133,30 +139,43 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         }
     }
 
+    public bool IsStageCompleted => StageStatus == StageStatus.Completed;
+
     public bool IsStageCatalogEditable =>
         !IsStageMarkedForDeletion
         && (IsStagePlanned
-            || StageStatus == StageStatus.Completed
-            || (IsStageInProgress && IsCatalogEditMode));
+            || (IsStageInProgress && IsCatalogEditMode)
+            || (IsStageCompleted && IsManagerOrAdmin() && IsCatalogEditMode));
 
     public bool IsStageCatalogReadOnly => !IsStageCatalogEditable;
 
-    public bool CanUploadStageFiles => !IsStageMarkedForDeletion;
+    public bool IsStageEquipmentEditable =>
+        IsStageCatalogEditable && !IsStageCompleted;
 
-    public bool CanEditStageSummary => !IsStageMarkedForDeletion;
+    public bool IsStageEquipmentReadOnly => !IsStageEquipmentEditable;
+
+    public bool CanUploadStageFiles => !IsStageMarkedForDeletion && !IsStageCompleted;
+
+    public bool CanEditStageSummary =>
+        !IsStageMarkedForDeletion && (!IsStageCompleted || IsManagerOrAdmin());
+
+    public bool CanChangeStageStatus =>
+        !IsStageMarkedForDeletion && !IsStageCompleted;
 
     public bool ShowSummaryTab => !IsWorker();
 
     public bool ShowStageUploadButton => ActiveTab == "Files" && CanUploadStageFiles;
 
-    public bool CanEditServicesCatalog => IsManagerOrForeman();
+    public bool CanEditServicesCatalog =>
+        IsStageCompleted ? IsManagerOrAdmin() : IsManagerOrForeman();
 
-    public bool CanEditMaterialsCatalog => true;
+    public bool CanEditMaterialsCatalog =>
+        !IsStageCompleted || IsManagerOrAdmin();
 
-    public bool CanEditEquipmentCatalog => true;
+    public bool CanEditEquipmentCatalog => !IsStageCompleted;
 
     public bool ShowCatalogEditButton =>
-        IsStageInProgress
+        (IsStageInProgress || (IsStageCompleted && IsManagerOrAdmin()))
         && !IsStageMarkedForDeletion
         && ActiveTab switch
         {
@@ -166,7 +185,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
             _ => false
         };
 
-    public string CatalogEditButtonText => IsCatalogEditMode ? "Готово" : "Редактировать";
+    public string CatalogEditButtonText => IsCatalogEditMode ? "Готово" : "Изменить";
 
     public StageDetailViewModel(
         IDbContextFactory<LocalDbContext> dbFactory,
@@ -263,8 +282,24 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         OnPropertyChanged(nameof(AdjustedServicesTotal));
         OnPropertyChanged(nameof(AdjustedMaterialsTotal));
         OnPropertyChanged(nameof(AdjustedGrandTotal));
+        OnPropertyChanged(nameof(ServiceAdjustmentLabel));
+        OnPropertyChanged(nameof(MaterialAdjustmentLabel));
+        OnPropertyChanged(nameof(ServiceAdjustmentTone));
+        OnPropertyChanged(nameof(MaterialAdjustmentTone));
+        OnPropertyChanged(nameof(HasServiceAdjustment));
+        OnPropertyChanged(nameof(HasMaterialAdjustment));
         OnPropertyChanged(nameof(ProgressMaximum));
     }
+
+    private static string FormatStageAdjustmentLabel(decimal percent) =>
+        percent > 0m ? $"Наценка +{percent:N0}%"
+        : percent < 0m ? $"Скидка {percent:N0}%"
+        : "Без наценки и скидки";
+
+    private static string AdjustmentTone(decimal percent) =>
+        percent > 0m ? "#059669"
+        : percent < 0m ? "#DC2626"
+        : "#94A3B8";
 
     private void BuildReceiptRows()
     {
@@ -447,10 +482,17 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
 
 
     private bool IsWorker() =>
-        string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+        string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "Работник", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsForeman() =>
+        _auth.UserRole is "Foreman" or "Прораб";
+
+    private bool IsManagerOrAdmin() =>
+        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager";
 
     private bool IsManagerOrForeman() =>
-        _auth.UserRole is "Administrator" or "Admin" or "Project Manager" or "ProjectManager" or "Manager" or "Foreman";
+        IsManagerOrAdmin() || IsForeman();
 
     partial void OnActiveTabChanged(string value)
     {
@@ -486,12 +528,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     {
         OnPropertyChanged(nameof(IsStagePlanned));
         OnPropertyChanged(nameof(IsStageInProgress));
+        OnPropertyChanged(nameof(IsStageCompleted));
         OnPropertyChanged(nameof(CanEditStageDetails));
         OnPropertyChanged(nameof(EditStageDisabledTooltip));
         OnPropertyChanged(nameof(IsStageCatalogEditable));
         OnPropertyChanged(nameof(IsStageCatalogReadOnly));
+        OnPropertyChanged(nameof(IsStageEquipmentEditable));
+        OnPropertyChanged(nameof(IsStageEquipmentReadOnly));
         OnPropertyChanged(nameof(CanUploadStageFiles));
         OnPropertyChanged(nameof(CanEditStageSummary));
+        OnPropertyChanged(nameof(CanChangeStageStatus));
         OnPropertyChanged(nameof(ShowStageUploadButton));
         OnPropertyChanged(nameof(CanEditServicesCatalog));
         OnPropertyChanged(nameof(CanEditMaterialsCatalog));
@@ -504,6 +550,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     private async Task ToggleCatalogEditModeAsync()
     {
         if (IsStageMarkedForDeletion) return;
+        if (IsStageCompleted && !IsManagerOrAdmin()) return;
         if (IsCatalogEditMode)
             await ExitCatalogEditModeAsync(saveChanges: true);
         else
@@ -526,7 +573,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     public async Task<bool> SaveStageCatalogAsync()
     {
         if (_editStage is null || _task is null) return false;
-        if (IsStageMarkedForDeletion) return false;
+        if (IsStageMarkedForDeletion || !IsStageCatalogEditable) return false;
 
         ErrorMessage = null;
 
@@ -1048,7 +1095,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task StartStageAsync()
     {
-        if (_editStage is null) return;
+        if (_editStage is null || !CanChangeStageStatus) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(_editStage.Id);
         if (stage is null) return;
@@ -1065,7 +1112,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
     [RelayCommand]
     private async Task CompleteStageAsync()
     {
-        if (_editStage is null) return;
+        if (_editStage is null || !CanChangeStageStatus) return;
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(_editStage.Id);
         if (stage is null) return;
@@ -1075,6 +1122,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         StageStatus = StageStatus.Completed;
         CanStartStage = false;
         CanCompleteStage = false;
+        RefreshCatalogModeProperties();
     }
 
     [RelayCommand]
@@ -1090,6 +1138,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable
         IsStageMarkedForDeletion = stage.IsMarkedForDeletion;
         CanStartStage = !IsStageMarkedForDeletion && StageStatus == StageStatus.Planned;
         CanCompleteStage = !IsStageMarkedForDeletion && StageStatus == StageStatus.InProgress;
+        RefreshCatalogModeProperties();
     }
 
 
@@ -1535,7 +1584,9 @@ public sealed class ReceiptRowVm
     public decimal LineAdjustmentPercent { get; }
     public Guid RowKey { get; }
     public Guid MaterialId { get; }
+    public Guid? StageId { get; }
     public bool IsServiceLine { get; }
+    public bool IsEditable => StageId.HasValue;
     public string AdjustmentLabel => FormatPercent(GlobalAdjustmentPercent);
 
     private ReceiptRowVm(
@@ -1549,7 +1600,8 @@ public sealed class ReceiptRowVm
         decimal lineAdjustmentPercent,
         Guid rowKey,
         Guid materialId,
-        bool isServiceLine)
+        bool isServiceLine,
+        Guid? stageId = null)
     {
         Name = name;
         Quantity = quantity;
@@ -1563,9 +1615,10 @@ public sealed class ReceiptRowVm
         RowKey = rowKey;
         MaterialId = materialId;
         IsServiceLine = isServiceLine;
+        StageId = stageId;
     }
 
-    public static ReceiptRowVm ForService(StageWorkTypeLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier) =>
+    public static ReceiptRowVm ForService(StageWorkTypeLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier, Guid? stageId = null) =>
         new(
             line.Name,
             line.Quantity,
@@ -1577,9 +1630,10 @@ public sealed class ReceiptRowVm
             line.LineAdjustmentPercent,
             line.TemplateId,
             Guid.Empty,
-            isServiceLine: true);
+            isServiceLine: true,
+            stageId);
 
-    public static ReceiptRowVm ForMaterial(StageMaterialLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier) =>
+    public static ReceiptRowVm ForMaterial(StageMaterialLineVm line, decimal globalAdjustmentPercent, decimal globalMultiplier, Guid? stageId = null) =>
         new(
             line.MaterialName,
             line.Quantity,
@@ -1591,7 +1645,34 @@ public sealed class ReceiptRowVm
             line.LineAdjustmentPercent,
             line.RowId,
             line.MaterialId,
-            isServiceLine: false);
+            isServiceLine: false,
+            stageId);
+
+    public static ReceiptRowVm ForAggregated(
+        string name,
+        decimal quantity,
+        decimal subtotal,
+        decimal adjustedTotal,
+        Guid rowKey,
+        bool isServiceLine)
+    {
+        var unitPrice = quantity > 0m ? subtotal / quantity : 0m;
+        var blendedPercent = subtotal > 0m
+            ? Math.Round((adjustedTotal / subtotal - 1m) * 100m, 0, MidpointRounding.AwayFromZero)
+            : 0m;
+        return new(
+            name,
+            quantity,
+            unitPrice,
+            unitPrice,
+            subtotal,
+            adjustedTotal,
+            blendedPercent,
+            0m,
+            rowKey,
+            isServiceLine ? Guid.Empty : rowKey,
+            isServiceLine);
+    }
 
     private static string FormatPercent(decimal percent) =>
         percent > 0m ? $"+{percent:N0}%" : percent < 0m ? $"{percent:N0}%" : "0%";

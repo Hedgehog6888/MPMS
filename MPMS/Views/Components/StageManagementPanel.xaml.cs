@@ -46,7 +46,7 @@ public partial class StageManagementPanel : UserControl
     private async void ChangeStatus_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not StageDetailViewModel vm) return;
-        if (vm.EditStage is null) return;
+        if (vm.EditStage is null || !vm.CanChangeStageStatus) return;
 
         var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
         if (owner is null) return;
@@ -67,14 +67,6 @@ public partial class StageManagementPanel : UserControl
                 return;
             await vm.CompleteStageCommand.ExecuteAsync(null);
         }
-        else if (vm.StageStatus == StageStatus.Completed)
-        {
-            if (!StageStatusChangeDialog.Show(owner, vm.StageName, "Завершён", "Запланирован",
-                currentStatusColor: "#10B981", newStatusColor: "#64748B",
-                currentStatusTextColor: "#FFFFFF", newStatusTextColor: "#FFFFFF"))
-                return;
-            await vm.StartStageCommand.ExecuteAsync(null);
-        }
 
         UpdateButtons();
     }
@@ -82,6 +74,7 @@ public partial class StageManagementPanel : UserControl
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not StageDetailViewModel vm) return;
+        if (!vm.CanMarkStageForDeletion) return;
         if (!vm.IsStageMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
@@ -115,7 +108,12 @@ public partial class StageManagementPanel : UserControl
                 editTip.Content = editTooltip ?? string.Empty;
         }
 
-        ChangeStatusBtn.IsEnabled = !marked;
-        ChangeStatusBtn.Opacity = marked ? 0.5 : 1.0;
+        bool canMark = vm.CanMarkStageForDeletion;
+        MarkStageBtn.IsEnabled = canMark;
+        MarkStageBtn.Opacity = canMark ? 1.0 : 0.5;
+
+        bool canChangeStatus = vm.CanChangeStageStatus;
+        ChangeStatusBtn.IsEnabled = canChangeStatus;
+        ChangeStatusBtn.Opacity = canChangeStatus ? 1.0 : 0.5;
     }
 }
