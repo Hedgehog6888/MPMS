@@ -253,11 +253,8 @@
                                                                 Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
                                                                 HorizontalAlignment="Right"
                                                                 Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVis}}">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Image Source="{svgc:SvgImage Source=/icons/alert.svg, AppName=MPMS}" Width="10" Height="10" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                                <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
-                                                                           Foreground="#DC2626" VerticalAlignment="Center"/>
-                                                            </StackPanel>
+                                                            <TextBlock Text="Просрочено" FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="#DC2626" VerticalAlignment="Center"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </Grid>

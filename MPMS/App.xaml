@@ -4,6 +4,7 @@
              xmlns:infra="clr-namespace:MPMS.Infrastructure"
              xmlns:vm="clr-namespace:MPMS.ViewModels"
              xmlns:pages="clr-namespace:MPMS.Views.Pages"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
              Startup="OnStartup">
     <Application.Resources>
         <ResourceDictionary>
@@ -327,7 +328,7 @@
                     <Setter.Value>
                         <DataTemplate>
                             <TextBlock TextWrapping="Wrap"
-                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}, Path=Foreground}"
+                                       Foreground="#000000"
                                        FontSize="{Binding RelativeSource={RelativeSource AncestorType=ComboBox}, Path=FontSize}">
                                 <TextBlock.Text>
                                     <MultiBinding Converter="{StaticResource FormComboItemText}">
@@ -849,21 +850,22 @@
                                                        HorizontalAlignment="Stretch"
                                                        VerticalContentAlignment="Center"
                                                        Margin="0,0,2,0"
+                                                       Padding="10,0,0,0"
                                                        Focusable="True"/>
                                     <Button x:Name="PART_Button"
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
                                             HorizontalAlignment="Center"
                                             Focusable="False"
-                                            Width="28" Height="28">
+                                            Width="28" Height="28"
+                                            Margin="0,0,6,0">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="BtnBg" Background="Transparent" CornerRadius="4">
-                                                    <TextBlock Text="&#xE787;"
-                                                               FontFamily="Segoe MDL2 Assets"
-                                                               FontSize="14" Foreground="#6B778C"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"/>
+                                                    <Image Source="{svgc:SvgImage Source=/icons/calendar_gray.svg, AppName=MPMS}"
+                                                           Width="16" Height="16" Opacity="0.8"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -883,9 +885,6 @@
                                 </Grid>
                             </Border>
                             <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="Bg" Property="BorderBrush" Value="#B0BEC5"/>
-                                </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Opacity" Value="0.5"/>
                                 </Trigger>
@@ -970,6 +969,7 @@
             <infra:StageStatusToStringConverter x:Key="StageStatusToString"/>
             <infra:DateOnlyToStringConverter   x:Key="DateOnlyToString"/>
             <infra:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime"/>
+            <infra:DateTimeToStringConverter   x:Key="DateTimeToString"/>
             <infra:IntGreaterThanZeroConverter x:Key="IntToVis"/>
             <infra:IntGreaterThanZeroConverter x:Key="IntToVisInv" Invert="True"/>
             <infra:StageCountToStringConverter x:Key="StageCountToString"/>

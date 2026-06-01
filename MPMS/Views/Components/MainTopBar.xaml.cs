@@ -99,13 +99,11 @@ namespace MPMS.Views.Components
         private void GlobalSearch_GotFocus(object sender, RoutedEventArgs e)
         {
             SearchBorder.BorderBrush = _searchFocusBrush;
-            SearchBorder.Background = _searchFocusBg;
         }
 
         private void GlobalSearch_LostFocus(object sender, RoutedEventArgs e)
         {
             SearchBorder.BorderBrush = _searchNormalBrush;
-            SearchBorder.Background = _searchNormalBg;
         }
 
         private void GlobalSearch_TextChanged(object sender, TextChangedEventArgs e)

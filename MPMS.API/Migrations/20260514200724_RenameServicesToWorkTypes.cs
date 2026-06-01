@@ -154,6 +154,19 @@ namespace MPMS.API.Migrations
                 table: "WorkTypeTemplates",
                 column: "Name");
 
+            // Normalize существующие данные в TaskStages перед добавлением FK:
+            // 1) Обнулить ссылки, указывающие на несуществующие шаблоны работ
+            // 2) Обнулить нулевой GUID, если такой встретится
+            migrationBuilder.Sql(@"
+UPDATE s SET WorkTypeTemplateId = NULL
+FROM [dbo].[TaskStages] s
+LEFT JOIN [dbo].[WorkTypeTemplates] w ON w.[Id] = s.[WorkTypeTemplateId]
+WHERE (s.[WorkTypeTemplateId] IS NOT NULL AND w.[Id] IS NULL)
+   OR s.[WorkTypeTemplateId] = '00000000-0000-0000-0000-000000000000';
+
+-- Дополнительно убедимся, что индексы корректны перед FK (без действий, если всё в порядке)
+");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_TaskStages_WorkTypeTemplates_WorkTypeTemplateId",
                 table: "TaskStages",

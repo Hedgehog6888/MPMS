@@ -555,7 +555,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#F8FAFC" CornerRadius="6"
+                    <Border Grid.Column="0" Background="#F4F5F7" CornerRadius="6"
                             Padding="10,0,2,0" Height="36" Margin="0,0,12,0"
                             BorderThickness="1" BorderBrush="Transparent">
                         <Grid>
@@ -582,9 +582,6 @@
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding SearchText}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=SearchBox}" Value="True">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

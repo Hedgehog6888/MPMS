@@ -133,13 +133,11 @@ public partial class SearchFilterBarControl : UserControl
     private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
         SearchBorder.BorderBrush = _focusBorderBrush;
-        SearchBorder.Background = _focusBg;
     }
 
     private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
     {
         SearchBorder.BorderBrush = _normalBorderBrush;
-        SearchBorder.Background = _normalBg;
         SearchBorder.Effect = null;
     }
 

@@ -65,7 +65,7 @@
                             <TextBlock Grid.Column="0" Text="НАЗВАНИЕ"     Style="{StaticResource ColHeader}"/>
                             <TextBlock Grid.Column="1" Text="ЗАКАЗЧИК"     Style="{StaticResource ColHeader}"/>
                             <TextBlock Grid.Column="2" Text="СТАТУС"       Style="{StaticResource ColHeader}" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="3" Text="СРОК"         Style="{StaticResource ColHeader}"/>
+                            <TextBlock Grid.Column="3" Text="ДАТА ЗАКРЫТИЯ" Style="{StaticResource ColHeader}"/>
                             <TextBlock Grid.Column="4" Text="ПРОГРЕСС"     Style="{StaticResource ColHeader}"/>
                         </Grid>
                     </Border>
@@ -138,7 +138,7 @@
                                                    Width="14" Height="14" Margin="0,0,4,0"
                                                    VerticalAlignment="Center"
                                                    Opacity="0.5"/>
-                                            <TextBlock Text="{Binding EndDate, Converter={StaticResource DateOnlyToString}}"
+                                            <TextBlock Text="{Binding ClosedAt, Converter={StaticResource DateTimeToString}}"
                                                        FontSize="12" Foreground="#111111"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>

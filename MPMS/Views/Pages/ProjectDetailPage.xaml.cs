@@ -568,7 +568,6 @@ public partial class ProjectDetailPage : UserControl
             if (border is not null)
             {
                 border.BorderBrush = SearchFocusBrush;
-                border.Background = SearchFocusBg;
             }
         }
     }
@@ -581,7 +580,6 @@ public partial class ProjectDetailPage : UserControl
             if (border is not null)
             {
                 border.BorderBrush = SearchNormalBrush;
-                border.Background = SearchNormalBg;
                 border.Effect = null;
             }
         }

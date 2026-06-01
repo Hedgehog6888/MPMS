@@ -670,6 +670,41 @@ public class DateOnlyToDateTimeConverter : IValueConverter
     }
 }
 
+/// <summary>Конвертирует DateTime? в строку с русской культурой.</summary>
+public class DateTimeToStringConverter : IValueConverter
+{
+    private static readonly System.Globalization.CultureInfo RuCulture =
+        System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+
+    public static readonly DateTimeToStringConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not DateTime dt) return "—";
+        var local = DateTimeToRelativeConverter.ToLocalTimeForDisplay(dt);
+        string fmt = parameter as string ?? "short";
+        return fmt switch
+        {
+            "long" => local.ToString("d MMMM yyyy", RuCulture),
+            "dayname" => local.DayOfWeek switch
+            {
+                DayOfWeek.Monday => "понедельник",
+                DayOfWeek.Tuesday => "вторник",
+                DayOfWeek.Wednesday => "среда",
+                DayOfWeek.Thursday => "четверг",
+                DayOfWeek.Friday => "пятница",
+                DayOfWeek.Saturday => "суббота",
+                DayOfWeek.Sunday => "воскресенье",
+                _ => local.DayOfWeek.ToString()
+            },
+            _ => local.ToString("dd.MM.yyyy")
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>
 /// Конвертирует строку требуемой роли в Visibility на основе роли текущего пользователя.
 /// Параметр: список ролей через запятую, которые должны видеть Visible (например "Admin,Administrator").

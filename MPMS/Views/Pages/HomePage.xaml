@@ -861,8 +861,8 @@
                                                     </Border.ToolTip>
                                                     <Grid>
 
-                                                        <Border Width="5" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
-                                                                Background="{Binding Converter={StaticResource ActivityLogToGradientBrush}}"/>
+                                                        <Border Width="3" HorizontalAlignment="Left" CornerRadius="6,0,0,6"
+                                                                Background="{Binding Converter={StaticResource ActivityLogToAccentBrush}}"/>
                                                         <Grid Margin="10,6,8,6">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>

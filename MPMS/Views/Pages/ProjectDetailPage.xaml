@@ -921,9 +921,6 @@
                                                         <DataTrigger Binding="{Binding TaskSearchText}" Value="{x:Null}">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=TaskSearchBox}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
@@ -1352,9 +1349,6 @@
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding StageSearchText}" Value="{x:Null}">
                                                             <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=StageSearchBox}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>

@@ -158,7 +158,6 @@ public partial class StagesPage : UserControl
         if (sender is TextBox tb && FindSearchBorder(tb) is { } border)
         {
             border.BorderBrush = _focusBrush;
-            border.Background = _focusBg;
         }
     }
 
@@ -167,7 +166,6 @@ public partial class StagesPage : UserControl
         if (sender is TextBox tb && FindSearchBorder(tb) is { } border)
         {
             border.BorderBrush = _normalBrush;
-            border.Background = _normalBg;
             border.Effect = null;
         }
     }
