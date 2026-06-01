@@ -62,7 +62,21 @@
 
                                     <Border Background="#F4F5F7" CornerRadius="2,10,10,10"
                                             BorderBrush="#EBECF0" BorderThickness="1"
-                                            Padding="12,10" HorizontalAlignment="Left">
+                                            Padding="12,10" HorizontalAlignment="Left"
+                                            Cursor="Hand">
+                                        <Border.ContextMenu>
+                                            <ContextMenu Style="{StaticResource StatusMenu}">
+                                                <MenuItem Header="Копировать текст"
+                                                          Style="{StaticResource StatusMenuItem}"/>
+                                                <MenuItem Header="Ответить"
+                                                          Style="{StaticResource StatusMenuItem}"/>
+                                                <MenuItem Header="Изменить"
+                                                          Style="{StaticResource StatusMenuItem}"/>
+                                                <MenuItem Header="Удалить"
+                                                          Style="{StaticResource StatusMenuItem}"
+                                                          Foreground="#DE350B"/>
+                                            </ContextMenu>
+                                        </Border.ContextMenu>
                                         <TextBox Text="{Binding Text}"
                                                  FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
                                                  Background="Transparent" BorderThickness="0"
