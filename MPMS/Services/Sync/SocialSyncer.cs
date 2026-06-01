@@ -131,9 +131,11 @@ public class SocialSyncer : IEntitySyncer
     {
         var taskId = req.TaskId;
         var projectId = req.ProjectId;
+        var stageId = req.StageId;
         if (taskId == Guid.Empty) taskId = null;
         if (projectId == Guid.Empty) projectId = null;
-        return req with { TaskId = taskId, ProjectId = projectId };
+        if (stageId == Guid.Empty) stageId = null;
+        return req with { TaskId = taskId, ProjectId = projectId, StageId = stageId };
     }
 
     private static DateTime NormalizeUtcInstant(DateTime dt) => dt.Kind switch

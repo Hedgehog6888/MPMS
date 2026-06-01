@@ -13,6 +13,9 @@ public class DiscussionMessage
     public Guid? ProjectId { get; set; }
     public Project? Project { get; set; }
 
+    public Guid? StageId { get; set; }
+    public TaskStage? Stage { get; set; }
+
     public Guid UserId { get; set; }
     public User User { get; set; } = null!;
 

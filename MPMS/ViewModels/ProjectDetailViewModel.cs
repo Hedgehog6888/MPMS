@@ -559,9 +559,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ForemanMembers = [.. members.Where(m => m.UserRole is "Foreman" or "Прораб")];
         WorkerMembers = [.. members.Where(m => m.UserRole is "Worker" or "Работник")];
 
-        // Загружаем сообщения проекта (обсуждение) с AvatarData из Users
+        // Загружаем сообщения проекта (только верхнего уровня, без привязки к задаче/этапу) с AvatarData из Users
         var messages = await db.Messages
-            .Where(m => m.ProjectId == projectId)
+            .Where(m => m.ProjectId == projectId && m.TaskId == null && m.StageId == null)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
         var msgUserIds = messages.Select(m => m.UserId).Distinct().ToList();
@@ -1380,7 +1380,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
         await _sync.QueueOperationAsync("DiscussionMessage", msg.Id, SyncOperation.Create,
-            new CreateDiscussionMessageRequest(msg.Id, msg.TaskId, msg.ProjectId, msg.Text, msg.CreatedAt));
+            new CreateDiscussionMessageRequest(msg.Id, msg.TaskId, msg.ProjectId, null, msg.Text, msg.CreatedAt));
 
         await LogActivityAsync(db, $"Сообщение в обсуждении проекта «{Project.Name}»", "Message", msg.Id, ActivityActionKind.Message);
         Messages.Add(msg);

@@ -271,6 +271,7 @@ public static class LocalSchemaMigrator
                 "Id"          TEXT NOT NULL CONSTRAINT "PK_Messages" PRIMARY KEY,
                 "TaskId"      TEXT,
                 "ProjectId"   TEXT,
+                "StageId"     TEXT,
                 "UserId"      TEXT NOT NULL,
                 "UserName"    TEXT NOT NULL DEFAULT '',
                 "UserInitials" TEXT NOT NULL DEFAULT '?',
@@ -280,6 +281,7 @@ public static class LocalSchemaMigrator
                 "CreatedAt"   TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
             );
             """);
+        TryAlterTable(conn, "ALTER TABLE \"Messages\" ADD COLUMN \"StageId\" TEXT NULL;");
     }
 
     private static void AddAvatarPathColumn(SqliteConnection conn)

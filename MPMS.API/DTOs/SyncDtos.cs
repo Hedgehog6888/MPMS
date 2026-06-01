@@ -12,6 +12,7 @@ public record DiscussionMessageResponse(
     Guid Id,
     Guid? TaskId,
     Guid? ProjectId,
+    Guid? StageId,
     Guid UserId,
     string UserName,
     string UserInitials,
@@ -24,6 +25,7 @@ public record CreateDiscussionMessageRequest(
     Guid? Id,
     Guid? TaskId,
     Guid? ProjectId,
+    Guid? StageId,
     [Required] string Text,
     DateTime? CreatedAt = null);
 

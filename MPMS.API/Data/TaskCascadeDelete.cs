@@ -18,6 +18,8 @@ public static class TaskCascadeDelete
         {
             await db.Files.Where(f => f.StageId.HasValue && stageIds.Contains(f.StageId.Value))
                 .ExecuteDeleteAsync(cancellationToken);
+            await db.DiscussionMessages.Where(m => m.StageId.HasValue && stageIds.Contains(m.StageId.Value))
+                .ExecuteDeleteAsync(cancellationToken);
             await db.StageMaterials.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync(cancellationToken);
             await db.StageWorkTypes.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync(cancellationToken);
             await db.StageAssignees.Where(x => stageIds.Contains(x.StageId)).ExecuteDeleteAsync(cancellationToken);

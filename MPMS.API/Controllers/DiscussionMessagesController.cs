@@ -29,11 +29,13 @@ public class DiscussionMessagesController : ControllerBase
     public async Task<ActionResult<List<DiscussionMessageResponse>>> GetAll(
         [FromQuery] Guid? taskId,
         [FromQuery] Guid? projectId,
+        [FromQuery] Guid? stageId,
         [FromQuery] DateTime? since)
     {
         var q = _db.DiscussionMessages.AsQueryable();
         if (taskId.HasValue) q = q.Where(m => m.TaskId == taskId);
         if (projectId.HasValue) q = q.Where(m => m.ProjectId == projectId);
+        if (stageId.HasValue) q = q.Where(m => m.StageId == stageId);
         if (since.HasValue) q = q.Where(m => m.CreatedAt > since.Value);
 
         var list = await q
@@ -48,13 +50,42 @@ public class DiscussionMessagesController : ControllerBase
     {
         var taskId = request.TaskId;
         var projectId = request.ProjectId;
+        var stageId = request.StageId;
         if (taskId == Guid.Empty) taskId = null;
         if (projectId == Guid.Empty) projectId = null;
-
+        if (stageId == Guid.Empty) stageId = null;
         var hasTask = taskId.HasValue;
         var hasProject = projectId.HasValue;
-        if (hasTask == hasProject)
-            return BadRequest(new { message = "Укажите ровно одно из: TaskId или ProjectId" });
+        var hasStage = stageId.HasValue;
+
+        // Новая логика: разрешены только два варианта контекста:
+        // 1) обсуждение проекта (только ProjectId)
+        // 2) обсуждение этапа (StageId обязателен, TaskId и ProjectId соответствуют этапу)
+        if (hasStage)
+        {
+            var stage = await _db.TaskStages.AsNoTracking().FirstOrDefaultAsync(s => s.Id == stageId.Value);
+            if (stage is null)
+                return NotFound(new { message = "Этап не найден на сервере." });
+
+            // Автозаполним TaskId/ProjectId при необходимости
+            if (!hasTask) taskId = stage.TaskId;
+            var task = await _db.Tasks.AsNoTracking().FirstOrDefaultAsync(t => t.Id == taskId!.Value);
+            if (task is null)
+                return NotFound(new { message = "Задача этапа не найдена на сервере." });
+            if (!hasProject) projectId = task.ProjectId;
+
+            // Проверим согласованность, если они были переданы
+            if (hasTask && taskId != stage.TaskId)
+                return BadRequest(new { message = "Указанная TaskId не соответствует этапу." });
+            if (hasProject && projectId != task.ProjectId)
+                return BadRequest(new { message = "Указанная ProjectId не соответствует этапу." });
+        }
+        else
+        {
+            // Проектное обсуждение
+            if (!hasProject || hasTask)
+                return BadRequest(new { message = "Для проектного обсуждения укажите только ProjectId без TaskId/StageId." });
+        }
 
         var id = request.Id ?? Guid.NewGuid();
         if (await _db.DiscussionMessages.AnyAsync(m => m.Id == id))
@@ -72,13 +103,11 @@ public class DiscussionMessagesController : ControllerBase
             });
         }
 
-        if (taskId.HasValue &&
-            !await _db.Tasks.AsNoTracking().AnyAsync(t => t.Id == taskId.Value))
+        if (hasStage)
         {
-            return NotFound(new
-            {
-                message = "Задача не найдена на сервере (возможно, удалена). Обновите данные."
-            });
+            // уже проверено выше, оставлено для явности
+            if (!await _db.TaskStages.AsNoTracking().AnyAsync(s => s.Id == stageId!.Value))
+                return NotFound(new { message = "Этап не найден на сервере." });
         }
 
         var userId = CurrentUserId();
@@ -91,6 +120,7 @@ public class DiscussionMessagesController : ControllerBase
             Id = id,
             TaskId = taskId,
             ProjectId = projectId,
+            StageId = stageId,
             UserId = userId,
             UserName = fullName,
             UserInitials = InitialsFromName(fullName),

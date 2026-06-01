@@ -30,6 +30,12 @@ public partial class ProjectDetailPage : UserControl
         InitializeComponent();
         Loaded += OnLoaded;
         DataContextChanged += OnDataContextChanged;
+        // Hook discussion send handler when control is initialized
+        this.Loaded += (_, __) =>
+        {
+            if (ProjectDiscussionControl != null)
+                ProjectDiscussionControl.SendRequested += OnProjectDiscussionSendRequested;
+        };
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -152,7 +158,7 @@ public partial class ProjectDetailPage : UserControl
         if (tab == "Discussion")
         {
             Dispatcher.InvokeAsync(() =>
-                ProjectMessagesScrollViewer.ScrollToBottom(),
+                ProjectDiscussionControl.ScrollToBottom(),
                 System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
@@ -521,26 +527,13 @@ public partial class ProjectDetailPage : UserControl
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
-    private async void SendProjectMessage_Click(object sender, RoutedEventArgs e)
+    private async void OnProjectDiscussionSendRequested(object? sender, string text)
     {
-        if (VM is null || ProjectMessageInput is null) return;
+        if (VM is null) return;
         if (VM.Project?.IsClosed == true || VM.Project?.Status == ProjectStatus.Closed) return;
-        var text = ProjectMessageInput.Text;
         if (string.IsNullOrWhiteSpace(text)) return;
-        ProjectMessageInput.Text = "";
         await VM.SendMessageAsync(text);
-        _ = Dispatcher.InvokeAsync(() =>
-            ProjectMessagesScrollViewer.ScrollToBottom(),
-            System.Windows.Threading.DispatcherPriority.Loaded);
-    }
-
-    private void ProjectMessageInput_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            SendProjectMessage_Click(sender, e);
-            e.Handled = true;
-        }
+        _ = Dispatcher.InvokeAsync(() => ProjectDiscussionControl.ScrollToBottom(), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private static readonly SolidColorBrush SearchFocusBrush = new(Colors.Black);

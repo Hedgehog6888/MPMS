@@ -620,6 +620,7 @@ public class LocalMessage
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid? TaskId { get; set; }
     public Guid? ProjectId { get; set; }
+    public Guid? StageId { get; set; }
     public Guid UserId { get; set; }
     [MaxLength(100)] public string UserName { get; set; } = string.Empty;
     [MaxLength(5)] public string UserInitials { get; set; } = "?";

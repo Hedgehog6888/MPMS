@@ -166,8 +166,10 @@ public partial class TaskDetailViewModel : ViewModelBase
 
         db.Messages.Add(msg);
         await db.SaveChangesAsync();
+        var stageContextId = SelectedStage?.Id; // привязываем обсуждение к выбранному этапу, если он выбран
+        var projectId = Task.ProjectId;
         await _sync.QueueOperationAsync("DiscussionMessage", msg.Id, SyncOperation.Create,
-            new CreateDiscussionMessageRequest(msg.Id, msg.TaskId, msg.ProjectId, msg.Text, msg.CreatedAt));
+            new CreateDiscussionMessageRequest(msg.Id, msg.TaskId, projectId, stageContextId, msg.Text, msg.CreatedAt));
         await LogActivityAsync(db, $"Сообщение в задаче «{Task.Name}»", "Message", msg.Id, ActivityActionKind.Message);
         Messages.Add(msg);
     }

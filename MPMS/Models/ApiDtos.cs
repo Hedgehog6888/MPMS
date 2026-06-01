@@ -297,11 +297,11 @@ public record ReplaceTaskAssigneesRequest(List<AssigneeSyncItemDto> Assignees);
 public record ReplaceStageAssigneesRequest(List<AssigneeSyncItemDto> Assignees);
 
 public record DiscussionMessageResponse(
-    Guid Id, Guid? TaskId, Guid? ProjectId, Guid UserId,
+    Guid Id, Guid? TaskId, Guid? ProjectId, Guid? StageId, Guid UserId,
     string UserName, string UserInitials, string UserColor, string UserRole,
     string Text, DateTime CreatedAt);
 
-public record CreateDiscussionMessageRequest(Guid? Id, Guid? TaskId, Guid? ProjectId, string Text, DateTime? CreatedAt = null);
+public record CreateDiscussionMessageRequest(Guid? Id, Guid? TaskId, Guid? ProjectId, Guid? StageId, string Text, DateTime? CreatedAt = null);
 
 public record SyncedActivityLogResponse(
     Guid Id, Guid? UserId, string? ActorRole, string UserName, string UserInitials, string UserColor,

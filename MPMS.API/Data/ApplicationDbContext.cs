@@ -465,6 +465,11 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(e => e.ProjectId)
                   .OnDelete(DeleteBehavior.NoAction);
 
+            entity.HasOne(e => e.Stage)
+                  .WithMany()
+                  .HasForeignKey(e => e.StageId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasOne(e => e.User)
                   .WithMany()
                   .HasForeignKey(e => e.UserId)

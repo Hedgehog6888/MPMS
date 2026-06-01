@@ -135,6 +135,7 @@
                         <RadioButton Content="Материалы" Tag="Materials" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
                         <RadioButton Content="Оборудование" Tag="Equipment" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
                         <RadioButton Content="Файлы" Tag="Files" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Обсуждение" Tag="Discussion" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
                         <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"
                                      Visibility="{Binding ShowSummaryTab, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
@@ -514,6 +515,15 @@
 
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Files}" Margin="24,8,24,16">
                 <components:FilesControl DataContext="{Binding FilesControlVM}"/>
+            </Grid>
+
+            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Discussion}" Margin="24,8,24,16">
+                <Border Background="White" CornerRadius="8"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <components:DiscussionPanelControl x:Name="StageDiscussionControl"
+                                                       ItemsSource="{Binding Messages}"
+                                                       IsClosed="{Binding IsProjectClosed}"/>
+                </Border>
             </Grid>
 
             <Grid Margin="24,8,24,16">
