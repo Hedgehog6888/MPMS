@@ -62,10 +62,15 @@
 
                                     <Border Background="#F4F5F7" CornerRadius="2,10,10,10"
                                             BorderBrush="#EBECF0" BorderThickness="1"
-                                            Padding="12,10" MaxWidth="520" HorizontalAlignment="Left">
-                                        <TextBlock Text="{Binding Text}"
-                                                   FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
-                                                   TextWrapping="Wrap" LineHeight="19"/>
+                                            Padding="12,10" HorizontalAlignment="Left">
+                                        <TextBox Text="{Binding Text}"
+                                                 FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 IsReadOnly="True" TextWrapping="Wrap"
+                                                 VerticalScrollBarVisibility="Disabled"
+                                                 CaretBrush="Transparent"
+                                                 SelectionBrush="{StaticResource NeutralSelectionBrush}"
+                                                 SelectionTextBrush="{StaticResource TextPrimaryBrush}"/>
                                     </Border>
                                 </StackPanel>
                             </Grid>
@@ -112,33 +117,20 @@
                         Margin="0,0,10,0">
                     <TextBox x:Name="MessageInput"
                              Background="Transparent" BorderThickness="0"
-                             Padding="12,9" MinHeight="38"
+                             Padding="12,9" MinHeight="38" MaxHeight="120"
                              FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"
-                             VerticalContentAlignment="Center"
+                             VerticalContentAlignment="Top"
+                             VerticalScrollBarVisibility="Auto"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
                              CaretBrush="{StaticResource TextPrimaryBrush}"
                              SelectionBrush="{StaticResource NeutralSelectionBrush}"
                              SelectionTextBrush="{StaticResource TextPrimaryBrush}"
-                             AcceptsReturn="False"
-                             KeyDown="MessageInput_KeyDown">
-                        <TextBox.Style>
-                            <Style TargetType="TextBox">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="TextBox">
-                                            <ScrollViewer x:Name="PART_ContentHost"
-                                                          Background="Transparent"
-                                                          Foreground="{TemplateBinding Foreground}"
-                                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </TextBox.Style>
-                    </TextBox>
+                             KeyDown="MessageInput_KeyDown"/>
                 </Border>
                 <Button Grid.Column="1" Click="Send_Click"
                         Style="{StaticResource BlackBtn}" Height="38" MinWidth="100"
-                        VerticalAlignment="Center" Content="Отправить"/>
+                        VerticalAlignment="Bottom" Content="Отправить"/>
             </Grid>
         </Border>
     </Grid>

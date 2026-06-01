@@ -236,7 +236,6 @@ public partial class TaskDetailOverlay : UserControl
         StagesPanel.Visibility = tag == "Stages" ? Visibility.Visible : Visibility.Collapsed;
         MaterialsPanel.Visibility = tag == "Materials" ? Visibility.Visible : Visibility.Collapsed;
         FilesPanel.Visibility = tag == "Files" ? Visibility.Visible : Visibility.Collapsed;
-        MessagesPanel.Visibility = tag == "Messages" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)
@@ -379,23 +378,6 @@ public partial class TaskDetailOverlay : UserControl
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
         _onClosed?.Invoke();
-    }
-
-    private async void SendMessage_Click(object sender, RoutedEventArgs e)
-    {
-        if (_vm is null || string.IsNullOrWhiteSpace(MessageInput.Text)) return;
-        await _vm.SendMessageAsync(MessageInput.Text);
-        MessageInput.Clear();
-    }
-
-    private async void MessageInput_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == System.Windows.Input.Key.Enter && _vm is not null && !string.IsNullOrWhiteSpace(MessageInput.Text))
-        {
-            await _vm.SendMessageAsync(MessageInput.Text);
-            MessageInput.Clear();
-            e.Handled = true;
-        }
     }
 
     private async void MarkStageForDeletion_Click(object sender, RoutedEventArgs e)

@@ -44,7 +44,7 @@ public partial class DiscussionPanelControl : UserControl
 
     private void MessageInput_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter)
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
         {
             Send_Click(sender, e);
             e.Handled = true;
