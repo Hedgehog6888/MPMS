@@ -88,6 +88,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private decimal _projectSummaryAdjustedServicesTotal;
     [ObservableProperty] private decimal _projectSummaryAdjustedMaterialsTotal;
     [ObservableProperty] private decimal _projectSummaryGrandTotal;
+    [ObservableProperty] private decimal _projectSummarySubtotal;
     [ObservableProperty] private int _projectSummaryStagesWithPricingCount;
 
     [ObservableProperty] private string _projectSummarySection = "Receipt";
@@ -125,6 +126,9 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
     public bool ProjectSummaryHasMaterialAdjustment =>
         ProjectSummaryMaterialsSubtotal != ProjectSummaryAdjustedMaterialsTotal;
+
+    public bool ProjectSummaryHasAdjustment =>
+        ProjectSummarySubtotal != ProjectSummaryGrandTotal;
 
     public bool ProjectSummaryFilteredHasServiceAdjustment =>
         ProjectSummaryFilteredServicesSubtotal != ProjectSummaryFilteredAdjustedServicesTotal;
@@ -617,6 +621,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ProjectSummaryAdjustedServicesTotal = result.AdjustedServicesTotal;
         ProjectSummaryAdjustedMaterialsTotal = result.AdjustedMaterialsTotal;
         ProjectSummaryGrandTotal = result.AdjustedServicesTotal + result.AdjustedMaterialsTotal;
+        ProjectSummarySubtotal = result.ServicesSubtotal + result.MaterialsSubtotal;
         ProjectSummaryStagesWithPricingCount = result.StagesWithPricingCount;
 
         var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
@@ -640,6 +645,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ProjectSummaryAdjustedServicesTotal = 0;
         ProjectSummaryAdjustedMaterialsTotal = 0;
         ProjectSummaryGrandTotal = 0;
+        ProjectSummarySubtotal = 0;
         ProjectSummaryStagesWithPricingCount = 0;
         _summaryTasks = [];
         _summaryStages = [];
@@ -853,6 +859,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         OnPropertyChanged(nameof(ProjectSummaryProgressMaximum));
         OnPropertyChanged(nameof(ProjectSummaryHasServiceAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryHasMaterialAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryHasAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryFilteredHasServiceAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryFilteredHasMaterialAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryFilteredProgressMaximum));

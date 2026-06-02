@@ -130,13 +130,27 @@
                         Command="{Binding GoBackCommand}" VerticalAlignment="Center"/>
                 <Border Grid.Column="1" Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="8" Padding="6,4" HorizontalAlignment="Left" Margin="6,0,0,0">
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton Content="Общая информация" Tag="Main" GroupName="StageEditTabs" IsChecked="True" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Виды работ" Tag="Services" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Материалы" Tag="Materials" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Оборудование" Tag="Equipment" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Файлы" Tag="Files" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Обсуждение" Tag="Discussion" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"/>
-                        <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs" Style="{StaticResource TabButton}" Click="StageTab_Click"
+                        <RadioButton Content="Общая информация" Tag="Main" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Main}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Виды работ" Tag="Services" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Services}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Материалы" Tag="Materials" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Materials}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Оборудование" Tag="Equipment" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Equipment}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Файлы" Tag="Files" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Files}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Обсуждение" Tag="Discussion" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Discussion}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"/>
+                        <RadioButton Content="Сводка" Tag="Summary" GroupName="StageEditTabs"
+                                     IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBool}, ConverterParameter=Summary}"
+                                     Style="{StaticResource TabButton}" Click="StageTab_Click"
                                      Visibility="{Binding ShowSummaryTab, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </Border>
