@@ -74,6 +74,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private int _projectProgressPercent;
     [ObservableProperty] private IList<DonutSegment> _taskStatsSegments = [];
     [ObservableProperty] private IList<DonutSegment> _stageStatsSegments = [];
+    [ObservableProperty] private IList<DonutSegment> _budgetByStageStatusSegments = [];
+    [ObservableProperty] private IList<DonutSegment> _workTypeDistributionSegments = [];
     [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredPlannedStages = [];
     [ObservableProperty] private ObservableCollection<StageItem> _filteredInProgressStages = [];
@@ -606,6 +608,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             .Where(m => stageIds.Contains(m.StageId))
             .ToListAsync();
 
+        // Load work type templates to get category mapping
+        var workTypeTemplateIds = workTypes.Select(w => w.WorkTypeTemplateId).Distinct().ToList();
+        var workTypeTemplates = await db.WorkTypeTemplates
+            .Where(t => workTypeTemplateIds.Contains(t.Id))
+            .Select(t => new { t.Id, t.CategoryName })
+            .ToListAsync();
+        var categoryByTemplateId = workTypeTemplates.ToDictionary(t => t.Id, t => t.CategoryName);
+
         _summaryTasks = tasks.ToList();
         _summaryStages = stages.Where(s => !s.EffectiveMarkedForDeletion).ToList();
         _summaryWorkTypes = workTypes;
@@ -623,6 +633,81 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ProjectSummaryGrandTotal = result.AdjustedServicesTotal + result.AdjustedMaterialsTotal;
         ProjectSummarySubtotal = result.ServicesSubtotal + result.MaterialsSubtotal;
         ProjectSummaryStagesWithPricingCount = result.StagesWithPricingCount;
+
+        // Calculate budget by stage status
+        var activeStages = _summaryStages.Where(s => !s.EffectiveMarkedForDeletion).ToList();
+        var workTypesByStage = _summaryWorkTypes.GroupBy(w => w.StageId).ToDictionary(g => g.Key, g => g.ToList());
+        var materialsByStage = _summaryMaterials.GroupBy(m => m.StageId).ToDictionary(g => g.Key, g => g.ToList());
+
+        decimal completedBudget = 0;
+        decimal inProgressBudget = 0;
+        decimal plannedBudget = 0;
+
+        foreach (var stage in activeStages)
+        {
+            var svcs = workTypesByStage.GetValueOrDefault(stage.Id) ?? [];
+            var mats = materialsByStage.GetValueOrDefault(stage.Id) ?? [];
+            var stageServicesSubtotal = svcs.Sum(w => w.Quantity * w.PricePerUnit);
+            var stageMaterialsSubtotal = mats.Sum(m => m.Quantity * m.PricePerUnit);
+            var serviceK = 1m + stage.ServicesAdjustmentPercent / 100m;
+            var materialK = 1m + stage.MaterialsAdjustmentPercent / 100m;
+            var stageBudget = stageServicesSubtotal * serviceK + stageMaterialsSubtotal * materialK;
+
+            if (stage.Status == StageStatus.Completed)
+                completedBudget += stageBudget;
+            else if (stage.Status == StageStatus.InProgress)
+                inProgressBudget += stageBudget;
+            else if (stage.Status == StageStatus.Planned)
+                plannedBudget += stageBudget;
+        }
+
+        BudgetByStageStatusSegments = new List<DonutSegment>
+        {
+            new() { Label = "Завершено", Value = (double)completedBudget, Color = Color.FromRgb(0x10, 0xB9, 0x81) },
+            new() { Label = "В работе", Value = (double)inProgressBudget, Color = Color.FromRgb(0x3B, 0x82, 0xF6) },
+            new() { Label = "Запланировано", Value = (double)plannedBudget, Color = Color.FromRgb(0x94, 0xA3, 0xB8) },
+        };
+
+        // Calculate work type distribution by CategoryName
+        var workTypeAgg = new Dictionary<string, decimal>();
+        foreach (var wt in _summaryWorkTypes)
+        {
+            var lineTotal = wt.Quantity * wt.PricePerUnit;
+            var stage = _summaryStages.FirstOrDefault(s => s.Id == wt.StageId);
+            if (stage is null) continue;
+            var serviceK = 1m + stage.ServicesAdjustmentPercent / 100m;
+            var adjustedTotal = lineTotal * serviceK;
+            var categoryName = categoryByTemplateId.GetValueOrDefault(wt.WorkTypeTemplateId, "Без категории");
+            if (!workTypeAgg.ContainsKey(categoryName))
+                workTypeAgg[categoryName] = 0m;
+            workTypeAgg[categoryName] += adjustedTotal;
+        }
+
+        var colors = new[]
+        {
+            Color.FromRgb(0x3B, 0x82, 0xF6),  // Blue
+            Color.FromRgb(0x10, 0xB9, 0x81),  // Green
+            Color.FromRgb(0xF5, 0x9E, 0x0B),  // Amber
+            Color.FromRgb(0x8B, 0x5C, 0xF6),  // Purple
+            Color.FromRgb(0xEC, 0x48, 0x99),  // Pink
+            Color.FromRgb(0x06, 0xB6, 0xD4),  // Cyan
+            Color.FromRgb(0xF9, 0x71, 0x6C),  // Red
+            Color.FromRgb(0x84, 0xCC, 0x16),  // Lime
+        };
+
+        var totalWorkTypeBudget = workTypeAgg.Values.Sum();
+        var workTypeSegments = workTypeAgg
+            .OrderByDescending(p => p.Value)
+            .Select((p, i) => new DonutSegment
+            {
+                Label = p.Key,
+                Value = (double)p.Value,
+                Color = colors[i % colors.Length],
+                Percentage = totalWorkTypeBudget > 0 ? (double)(p.Value / totalWorkTypeBudget * 100m) : 0
+            })
+            .ToList();
+
+        WorkTypeDistributionSegments = workTypeSegments;
 
         var taskOpts = new List<TaskFilterOption> { new(null, "Все задачи") };
         taskOpts.AddRange(_summaryTasks
@@ -647,6 +732,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         ProjectSummaryGrandTotal = 0;
         ProjectSummarySubtotal = 0;
         ProjectSummaryStagesWithPricingCount = 0;
+        BudgetByStageStatusSegments = [];
+        WorkTypeDistributionSegments = [];
         _summaryTasks = [];
         _summaryStages = [];
         _summaryWorkTypes = [];

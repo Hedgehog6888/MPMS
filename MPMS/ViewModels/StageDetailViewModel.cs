@@ -708,61 +708,61 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
             .Where(s => s.StageId == stageId)
             .OrderBy(s => s.WorkTypeName)
             .ToListAsync();
-        foreach (var s in svcs)
-        {
-            var basePrice = s.BasePricePerUnit > 0m ? s.BasePricePerUnit : s.PricePerUnit;
-            var line = new StageWorkTypeLineVm(s.WorkTypeTemplateId, s.WorkTypeName, s.Unit, basePrice)
+            foreach (var s in svcs)
             {
-                Quantity = s.Quantity,
-                PricePerUnit = s.PricePerUnit,
-                LineAdjustmentPercent = s.LineAdjustmentPercent
-            };
-            SelectedServices.Add(line);
-        }
-        var mats = await db.StageMaterials
-            .Where(m => m.StageId == stageId)
-            .OrderBy(m => m.MaterialName)
-            .ToListAsync();
-        foreach (var m in mats)
-        {
-            var basePrice = m.BasePricePerUnit > 0m ? m.BasePricePerUnit : m.PricePerUnit;
-            var line = new StageMaterialLineVm(m.MaterialId, m.MaterialName, m.Unit, basePrice)
+                var basePrice = s.BasePricePerUnit > 0m ? s.BasePricePerUnit : s.PricePerUnit;
+                var line = new StageWorkTypeLineVm(s.WorkTypeTemplateId, s.WorkTypeName, s.Unit, basePrice)
+                {
+                    Quantity = s.Quantity,
+                    PricePerUnit = s.PricePerUnit,
+                    LineAdjustmentPercent = s.LineAdjustmentPercent
+                };
+                SelectedServices.Add(line);
+            }
+            var mats = await db.StageMaterials
+                .Where(m => m.StageId == stageId)
+                .OrderBy(m => m.MaterialName)
+                .ToListAsync();
+            foreach (var m in mats)
             {
-                Quantity = m.Quantity,
-                PricePerUnit = m.PricePerUnit,
-                LineAdjustmentPercent = m.LineAdjustmentPercent
-            };
-            MaterialLines.Add(line);
-        }
-        var matIds = mats.Select(m => m.MaterialId).Distinct().ToList();
-        var stocks = await db.Materials
-            .Where(x => matIds.Contains(x.Id))
-            .Select(x => new { x.Id, x.Quantity })
-            .ToDictionaryAsync(x => x.Id, x => Math.Max(0m, x.Quantity));
-        foreach (var line in MaterialLines)
-        {
-            if (stocks.TryGetValue(line.MaterialId, out var stock))
-                line.StockAvailable = stock + line.Quantity;
-        }
-        var stageEquipments = await db.StageEquipments
-            .Where(x => x.StageId == stageId)
-            .OrderBy(x => x.EquipmentName)
-            .ToListAsync();
-        foreach (var se in stageEquipments)
-        {
-            var line = new StageEquipmentLineVm
+                var basePrice = m.BasePricePerUnit > 0m ? m.BasePricePerUnit : m.PricePerUnit;
+                var line = new StageMaterialLineVm(m.MaterialId, m.MaterialName, m.Unit, basePrice)
+                {
+                    Quantity = m.Quantity,
+                    PricePerUnit = m.PricePerUnit,
+                    LineAdjustmentPercent = m.LineAdjustmentPercent
+                };
+                MaterialLines.Add(line);
+            }
+            var matIds = mats.Select(m => m.MaterialId).Distinct().ToList();
+            var stocks = await db.Materials
+                .Where(x => matIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.Quantity })
+                .ToDictionaryAsync(x => x.Id, x => Math.Max(0m, x.Quantity));
+            foreach (var line in MaterialLines)
             {
-                EquipmentId = se.EquipmentId,
-                EquipmentName = se.EquipmentName,
-                InventoryNumber = se.InventoryNumber,
-                Quantity = 1
-            };
-            EquipmentLines.Add(line);
-        }
-        ApplyServiceFilters();
-        ApplyMaterialFilters();
-        ApplyEquipmentFilters();
-        RecalculateTotals();
+                if (stocks.TryGetValue(line.MaterialId, out var stock))
+                    line.StockAvailable = stock + line.Quantity;
+            }
+            var stageEquipments = await db.StageEquipments
+                .Where(x => x.StageId == stageId)
+                .OrderBy(x => x.EquipmentName)
+                .ToListAsync();
+            foreach (var se in stageEquipments)
+            {
+                var line = new StageEquipmentLineVm
+                {
+                    EquipmentId = se.EquipmentId,
+                    EquipmentName = se.EquipmentName,
+                    InventoryNumber = se.InventoryNumber,
+                    Quantity = 1
+                };
+                EquipmentLines.Add(line);
+            }
+            ApplyServiceFilters();
+            ApplyMaterialFilters();
+            ApplyEquipmentFilters();
+            RecalculateTotals();
         }
         finally
         {
@@ -1128,22 +1128,22 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var stage = await db.TaskStages.FindAsync(_editStage.Id);
         if (stage is null) return;
-        
+
         // Release equipment when stage is completed
         var eqIds = await db.StageEquipments
             .Where(x => x.StageId == stage.Id)
             .Select(x => x.EquipmentId)
             .Distinct()
             .ToListAsync();
-        
+
         var task = await db.Tasks.FindAsync(stage.TaskId);
         var projectId = task?.ProjectId;
-        
+
         foreach (var eqId in eqIds)
         {
             var eq = await db.Equipments.FindAsync(eqId);
             if (eq is null || eq.IsWrittenOff) continue;
-            
+
             // Check if equipment is still used by other active stages in the same task
             var stillUsed = await db.StageEquipments
                 .Where(x => x.EquipmentId == eqId && x.StageId != stage.Id)
@@ -1160,14 +1160,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
                                && !x.IsArchived);
             if (stillUsed) continue;
             if (eq.CheckedOutTaskId != stage.TaskId) continue;
-            
+
             var prevStatus = eq.Status;
             eq.Status = "Available";
             eq.CheckedOutTaskId = null;
             eq.CheckedOutProjectId = null;
             eq.UpdatedAt = DateTime.UtcNow;
             eq.IsSynced = false;
-            
+
             db.EquipmentHistoryEntries.Add(new LocalEquipmentHistoryEntry
             {
                 Id = Guid.NewGuid(),
@@ -1183,7 +1183,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
                 Comment = $"Возвращено с этапа: {stage.Name}"
             });
         }
-        
+
         stage.Status = StageStatus.Completed;
         stage.IsSynced = false;
         await db.SaveChangesAsync();

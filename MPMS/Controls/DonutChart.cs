@@ -73,7 +73,8 @@ public class DonutChart : Canvas
             if (sweepAngle >= 360) sweepAngle = 359.99;
 
             var geometry = CreateDonutSlice(center, outerRadius, innerRadius, startAngle, sweepAngle);
-            dc.DrawGeometry(new SolidColorBrush(seg.Color), null, geometry);
+            var brush = new SolidColorBrush(seg.Color);
+            dc.DrawGeometry(brush, new Pen(brush, 0.5), geometry);
 
             startAngle += sweepAngle;
         }
@@ -112,6 +113,7 @@ public class DonutSegment
     public string Label { get; set; } = "";
     public double Value { get; set; }
     public Color Color { get; set; } = Colors.Gray;
+    public double Percentage { get; set; }
     public string ColorHex
     {
         get => $"#{Color.R:X2}{Color.G:X2}{Color.B:X2}";

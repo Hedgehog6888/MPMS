@@ -236,7 +236,7 @@ public static class ActivityFilterService
             return $"Загружено {count} {filesForm}";
         }
 
-        if ((entityType == "File" || entityType == "Image" || entityType == "Document") && 
+        if ((entityType == "File" || entityType == "Image" || entityType == "Document") &&
             (actionType == ActivityActionKind.Deleted || actionType == ActivityActionKind.PermanentlyDeleted))
         {
             var inProject = first.ActionText.Contains("в проект");

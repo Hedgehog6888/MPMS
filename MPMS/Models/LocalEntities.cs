@@ -702,10 +702,12 @@ public class LocalActivityLog
     [NotMapped] public string ActivityTooltipEntityLabel => ActivityDetailsService.GetEntityDisplay(EntityType);
     [NotMapped] public IReadOnlyList<string> ActivityTooltipDetailLines => ActivityDetailsService.GetTooltipDetailLines(this);
 
-    [NotMapped] public bool IsAutomaticActivity =>
+    [NotMapped]
+    public bool IsAutomaticActivity =>
         string.Equals(ActorRole, "System", StringComparison.OrdinalIgnoreCase);
 
-    [NotMapped] public string ActivityActorDisplayName =>
+    [NotMapped]
+    public string ActivityActorDisplayName =>
         IsAutomaticActivity ? "Автоматическое действие" : UserName;
 
     public const string AutomaticActivityIconPath = "/icons/auto_action_bot.svg";

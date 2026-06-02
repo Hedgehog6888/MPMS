@@ -1698,3 +1698,26 @@ public class PluralStageConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+public class BreakpointToDoubleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double width = value is double d ? d : 0;
+        double breakpoint = 900, small = 220, large = 320;
+        if (parameter is string p)
+        {
+            var parts = p.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length >= 3)
+            {
+                double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out breakpoint);
+                double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out small);
+                double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out large);
+            }
+        }
+        return width <= breakpoint ? small : large;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

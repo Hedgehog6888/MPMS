@@ -387,7 +387,7 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         await LogActivityAsync(db, $"Проект «{project.Name}» закрыт", "Project", project.Id, ActivityActionKind.Updated);
 
         // Инвалидируем ClosedProjectsViewModel и FilesPageViewModel для обновления UI
-        
+
         await LoadAsync();
     }
 

@@ -69,11 +69,11 @@ public partial class ProjectDetailPage : UserControl
         CreateTaskBtn.Visibility = Visibility.Collapsed; // shown only on Tasks tab for editors
         CreateStageBtn.Visibility = Visibility.Collapsed; // shown only on Stages tab for editors
         AddFileBtn.Visibility = (FilesPanel.Visibility == Visibility.Visible && _canEdit) ? Visibility.Visible : Visibility.Collapsed;
-        
+
         // Set DataContext for the new panels
         ProjectManagementPanel.DataContext = DataContext;
         QuickActionsPanel.DataContext = DataContext;
-        
+
         _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton, System.Windows.Threading.DispatcherPriority.Loaded);
         _ = Dispatcher.InvokeAsync(SyncStageViewToggleIcons, System.Windows.Threading.DispatcherPriority.Loaded);
     }
@@ -184,7 +184,7 @@ public partial class ProjectDetailPage : UserControl
             {
                 if (vm != null)
                 {
-                                        await vm.LoadAsync();
+                    await vm.LoadAsync();
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });

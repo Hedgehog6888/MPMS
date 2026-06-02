@@ -43,12 +43,12 @@ public partial class FilesPage : UserControl
     public void ShowToast(string message)
     {
         if (_toastActive) return;
-        
+
         var toast = FindName("Toast") as Border;
         var toastText = FindName("ToastText") as TextBlock;
-        
+
         if (toast == null || toastText == null) return;
-        
+
         _toastActive = true;
         toastText.Text = message;
         toast.Visibility = Visibility.Visible;

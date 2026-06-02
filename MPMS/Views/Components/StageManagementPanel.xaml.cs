@@ -81,7 +81,7 @@ public partial class StageManagementPanel : UserControl
             if (owner is null || !ConfirmDeleteDialog.ShowMarkForDeletion(owner, "этап", vm.StageName))
                 return;
         }
-        
+
         await vm.MarkStageForDeletionCommand.ExecuteAsync(null);
         UpdateButtons();
     }

@@ -386,7 +386,7 @@ public partial class CreateStageOverlay : UserControl
 
         Guid taskId;
         LocalTask? task = _task;
-        
+
         if (task is not null)
         {
             taskId = task.Id;
