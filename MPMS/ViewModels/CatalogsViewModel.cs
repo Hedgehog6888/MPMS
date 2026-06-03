@@ -264,7 +264,7 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
         {
             MainWindow.Instance?.HideDrawer();
             EditWorkType(wt);
-        });
+        }, _dbFactory);
         MainWindow.Instance?.ShowDrawer(overlay, 480);
     }
 
@@ -280,6 +280,8 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
             var entity = await db.WorkTypeTemplates.FindAsync(updatedWorkType.Id);
             if (entity != null)
             {
+                var oldPrice = entity.BasePrice;
+
                 entity.Name = updatedWorkType.Name;
                 entity.CategoryId = updatedWorkType.CategoryId;
                 entity.CategoryName = updatedWorkType.CategoryName;
@@ -289,6 +291,22 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
                 entity.Description = updatedWorkType.Description;
                 entity.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync();
+
+                // Record price history if price changed
+                if (entity.BasePrice != oldPrice)
+                {
+                    var history = new LocalWorkTypePriceHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        WorkTypeId = entity.Id,
+                        OldPrice = oldPrice,
+                        NewPrice = entity.BasePrice,
+                        ChangedAt = DateTime.UtcNow
+                    };
+                    db.WorkTypePriceHistories.Add(history);
+                    await db.SaveChangesAsync();
+                }
+
                 await PropagateWorkTypeTemplateChangeAsync(entity.Id, entity);
                 await LoadWorkTypesAsync();
             }

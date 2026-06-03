@@ -79,7 +79,7 @@ public partial class WorkTypeFormOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e)
+    private async void Save_Click(object sender, RoutedEventArgs e)
     {
         ErrorPanel.Visibility = Visibility.Collapsed;
 

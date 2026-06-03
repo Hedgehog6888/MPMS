@@ -280,6 +280,15 @@ public class LocalWorkTypeTemplate : LocalEntity
     public DateTime UpdatedAt { get; set; }
 }
 
+public class LocalWorkTypePriceHistory
+{
+    public Guid Id { get; set; }
+    public Guid WorkTypeId { get; set; }
+    public decimal OldPrice { get; set; }
+    public decimal NewPrice { get; set; }
+    public DateTime ChangedAt { get; set; }
+}
+
 public class LocalEquipmentCategory
 {
     public Guid Id { get; set; }

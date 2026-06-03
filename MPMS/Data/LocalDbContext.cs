@@ -31,6 +31,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalTaskStage> TaskStages => Set<LocalTaskStage>();
     public DbSet<LocalWorkTypeCategory> WorkTypeCategories => Set<LocalWorkTypeCategory>();
     public DbSet<LocalWorkTypeTemplate> WorkTypeTemplates => Set<LocalWorkTypeTemplate>();
+    public DbSet<LocalWorkTypePriceHistory> WorkTypePriceHistories => Set<LocalWorkTypePriceHistory>();
     public DbSet<LocalMaterialCategory> MaterialCategories => Set<LocalMaterialCategory>();
     public DbSet<LocalEquipmentCategory> EquipmentCategories => Set<LocalEquipmentCategory>();
     public DbSet<LocalMaterial> Materials => Set<LocalMaterial>();
@@ -106,6 +107,10 @@ public class LocalDbContext : DbContext
             .Property(e => e.MaterialsAdjustmentPercent).HasPrecision(18, 2);
         modelBuilder.Entity<LocalWorkTypeTemplate>()
             .Property(e => e.BasePrice).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalWorkTypePriceHistory>()
+            .Property(e => e.OldPrice).HasPrecision(18, 2);
+        modelBuilder.Entity<LocalWorkTypePriceHistory>()
+            .Property(e => e.NewPrice).HasPrecision(18, 2);
     }
 }
 

@@ -43,6 +43,7 @@ public static class LocalSchemaMigrator
         ApplyMaterialsInventorySchema(conn);
         ApplyWarehouseSchema(conn);
         ApplyWorkTypesSchema(conn);
+        ApplyWorkTypePriceHistorySchema(conn);
         FixWorkTypeTemplateCategoryIds(conn);
 
         TryAlterTable(conn, "ALTER TABLE \"Files\" ADD COLUMN \"FileData\" BLOB NULL;");
@@ -463,6 +464,19 @@ public static class LocalSchemaMigrator
             );
             """);
 
+    }
+
+    private static void ApplyWorkTypePriceHistorySchema(SqliteConnection conn)
+    {
+        Execute(conn, """
+            CREATE TABLE IF NOT EXISTS "WorkTypePriceHistories" (
+                "Id"         TEXT NOT NULL CONSTRAINT "PK_WorkTypePriceHistories" PRIMARY KEY,
+                "WorkTypeId" TEXT NOT NULL,
+                "OldPrice"   TEXT NOT NULL DEFAULT '0',
+                "NewPrice"   TEXT NOT NULL DEFAULT '0',
+                "ChangedAt"  TEXT NOT NULL DEFAULT '0001-01-01 00:00:00'
+            );
+            """);
     }
 
     /// <summary>

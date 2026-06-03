@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Microsoft.EntityFrameworkCore;
+using MPMS.Data;
 using MPMS.Models;
 
 namespace MPMS.Views.Overlays;
@@ -9,16 +11,18 @@ public partial class WorkTypeDetailsOverlay : UserControl
 {
     private LocalWorkTypeTemplate? _workType;
     private Action<LocalWorkTypeTemplate>? _onEdit;
+    private IDbContextFactory<LocalDbContext>? _dbFactory;
 
     public WorkTypeDetailsOverlay()
     {
         InitializeComponent();
     }
 
-    public void ShowWorkType(LocalWorkTypeTemplate workType, Action<LocalWorkTypeTemplate> onEdit)
+    public async void ShowWorkType(LocalWorkTypeTemplate workType, Action<LocalWorkTypeTemplate> onEdit, IDbContextFactory<LocalDbContext>? dbFactory = null)
     {
         _workType = workType;
         _onEdit = onEdit;
+        _dbFactory = dbFactory;
 
         TitleText.Text = workType.Name;
         CategoryText.Text = workType.CategoryName;
@@ -28,6 +32,24 @@ public partial class WorkTypeDetailsOverlay : UserControl
 
         CreatedText.Text = $"Создан: {workType.CreatedAt:dd.MM.yyyy HH:mm}";
         UpdatedText.Text = $"Обновлён: {workType.UpdatedAt:dd.MM.yyyy HH:mm}";
+
+        // Load price history
+        if (_dbFactory != null)
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            var history = await db.WorkTypePriceHistories
+                .Where(h => h.WorkTypeId == workType.Id)
+                .OrderByDescending(h => h.ChangedAt)
+                .ToListAsync();
+
+            PriceHistoryList.ItemsSource = history;
+            NoHistoryText.Visibility = history.Any() ? Visibility.Collapsed : Visibility.Visible;
+        }
+        else
+        {
+            PriceHistoryList.ItemsSource = null;
+            NoHistoryText.Visibility = Visibility.Visible;
+        }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

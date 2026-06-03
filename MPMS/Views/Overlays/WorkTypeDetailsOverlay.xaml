@@ -93,10 +93,53 @@
                 <TextBlock Text="СИСТЕМНАЯ ИНФОРМАЦИЯ" Style="{StaticResource SectionHeader}"/>
 
                 <!-- Даты -->
-                <Border Background="#F4F5F7" CornerRadius="8" Padding="12">
+                <Border Background="#F4F5F7" CornerRadius="8" Padding="12" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock x:Name="CreatedText" FontSize="12" Foreground="#64748B"/>
                         <TextBlock x:Name="UpdatedText" FontSize="12" Foreground="#64748B" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Секция истории цен -->
+                <Border x:Name="PriceHistoryPanel"
+                        Background="#F4F5F7" CornerRadius="8" Padding="12"
+                        Visibility="Visible">
+                    <StackPanel>
+                        <!-- Заголовок с названиями колонок -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ИСТОРИЯ ЦЕН" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#8993A4"/>
+                            <TextBlock Grid.Column="1" FontSize="11" Foreground="#94A3B8" Margin="8,0,30,0" Text="Старая"/>
+                            <TextBlock Grid.Column="2" FontSize="11" Foreground="#94A3B8" Margin="8,0,0,0" Text="Новая"/>
+                        </Grid>
+                        <ItemsControl x:Name="PriceHistoryList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" FontSize="12" Foreground="#64748B"
+                                                   Text="{Binding ChangedAt, StringFormat=dd.MM.yyyy HH:mm}"/>
+                                        <TextBlock Grid.Column="1" FontSize="12" Foreground="#EF4444"
+                                                   Margin="8,0,8,0"
+                                                   Text="{Binding OldPrice, StringFormat={}{0:N2} ₽}"/>
+                                        <TextBlock Grid.Column="2" FontSize="12" Foreground="#10B981"
+                                                   Margin="8,0,0,0"
+                                                   Text="{Binding NewPrice, StringFormat={}{0:N2} ₽}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoHistoryText" FontSize="12" Foreground="#94A3B8"
+                                   Text="История изменений цены отсутствует" Visibility="Collapsed"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

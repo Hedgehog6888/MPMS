@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<TaskStage> TaskStages => Set<TaskStage>();
     public DbSet<WorkTypeCategory> WorkTypeCategories => Set<WorkTypeCategory>();
     public DbSet<WorkTypeTemplate> WorkTypeTemplates => Set<WorkTypeTemplate>();
+    public DbSet<WorkTypePriceHistory> WorkTypePriceHistories => Set<WorkTypePriceHistory>();
     public DbSet<MaterialCategory> MaterialCategories => Set<MaterialCategory>();
     public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
     public DbSet<Material> Materials => Set<Material>();
@@ -178,6 +179,20 @@ public class ApplicationDbContext : DbContext
                   .WithMany(c => c.WorkTypes)
                   .HasForeignKey(e => e.CategoryId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<WorkTypePriceHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            entity.Property(e => e.OldPrice).HasPrecision(18, 2);
+            entity.Property(e => e.NewPrice).HasPrecision(18, 2);
+            entity.Property(e => e.ChangedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.WorkType)
+                  .WithMany()
+                  .HasForeignKey(e => e.WorkTypeId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MaterialCategory>(entity =>
