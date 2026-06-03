@@ -124,22 +124,33 @@ public partial class WorkTypeFormOverlay : UserControl
         ErrorPanel.Visibility = Visibility.Visible;
     }
 
-    private void AddCategory_Click(object sender, RoutedEventArgs e)
+    private async void AddCategory_Click(object sender, RoutedEventArgs e)
     {
         if (_dbFactory is null || MainWindow.Instance is null) return;
 
-        // Get current categories to refresh after creation
-        var currentCategories = CategoryCombo.ItemsSource as List<LocalWorkTypeCategory> ?? new List<LocalWorkTypeCategory>();
         var currentSelection = CategoryCombo.SelectedItem as LocalWorkTypeCategory;
 
         var overlay = new WorkTypeCategoryFormOverlay(_dbFactory);
         overlay.SetupForCreate(newCategory =>
         {
-            // Add new category to list and select it
-            currentCategories.Add(newCategory);
-            currentCategories = currentCategories.OrderBy(c => c.SortOrder).ThenBy(c => c.Name).ToList();
-            CategoryCombo.ItemsSource = currentCategories;
-            CategoryCombo.SelectedItem = newCategory;
+            // Reload categories from database to get the saved category with proper Id and SortOrder
+            _ = Task.Run(async () =>
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var categories = await db.WorkTypeCategories
+                    .AsNoTracking()
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.SortOrder)
+                    .ThenBy(c => c.Name)
+                    .ToListAsync();
+
+                // Update UI on the main thread
+                Dispatcher.Invoke(() =>
+                {
+                    CategoryCombo.ItemsSource = categories;
+                    CategoryCombo.SelectedItem = categories.FirstOrDefault(c => c.Id == newCategory.Id);
+                });
+            });
         });
 
         MainWindow.Instance.ShowStackedModal(overlay, 420);

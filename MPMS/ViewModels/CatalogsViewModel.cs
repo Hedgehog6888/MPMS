@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MPMS.Data;
@@ -7,13 +11,13 @@ using MPMS.Services;
 using MPMS.Views;
 using MPMS.Views.Overlays;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.ObjectModel;
 
 namespace MPMS.ViewModels;
 
 public partial class CatalogsViewModel : ViewModelBase, ILoadable
 {
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
+    private readonly ISyncService _sync;
     private readonly PageUiStateBinder _ui;
 
     // Search texts
@@ -37,9 +41,10 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
 
     public List<string> WorkTypeCategoryFilterOptions => new() { "Все категории" };
 
-    public CatalogsViewModel(IDbContextFactory<LocalDbContext> dbFactory, IPageUiStateStore uiState)
+    public CatalogsViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IPageUiStateStore uiState)
     {
         _dbFactory = dbFactory;
+        _sync = sync;
         _ui = new PageUiStateBinder(uiState, PageUiKeys.Catalogs);
     }
 
@@ -89,12 +94,18 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
             .ThenBy(c => c.Name)
             .ToListAsync();
 
-        // Подсчет количества видов работ для каждой категории
-        var counts = await db.WorkTypeTemplates
+        // Подсчет количества видов работ для каждой категории.
+        // Некоторые старые записи могли иметь пустой/NULL CategoryId, что приводит к дубликатам ключей при ToDictionaryAsync.
+        // Сначала забираем в память и группируем сами, отфильтровав Guid.Empty.
+        var categoryIds = await db.WorkTypeTemplates
             .AsNoTracking()
-            .GroupBy(w => w.CategoryId)
-            .Select(g => new { CategoryId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
+            .Select(w => w.CategoryId)
+            .ToListAsync();
+
+        var counts = categoryIds
+            .Where(id => id != Guid.Empty)
+            .GroupBy(id => id)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         foreach (var item in items)
         {
@@ -272,6 +283,7 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
                 entity.Description = updatedWorkType.Description;
                 entity.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync();
+                await PropagateWorkTypeTemplateChangeAsync(entity.Id, entity);
                 await LoadWorkTypesAsync();
             }
         }, _dbFactory);
@@ -293,6 +305,7 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
         {
             db.WorkTypeTemplates.Remove(entity);
             await db.SaveChangesAsync();
+            await PropagateWorkTypeTemplateChangeAsync(entity.Id, null);
             await LoadWorkTypesAsync();
         }
     }
@@ -465,6 +478,89 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
             db.MaterialCategories.Remove(entity);
             await db.SaveChangesAsync();
             await LoadMaterialCategoriesAsync();
+        }
+    }
+
+    private async Task PropagateWorkTypeTemplateChangeAsync(Guid templateId, LocalWorkTypeTemplate? updatedTemplate)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var affected = await (from sw in db.StageWorkTypes
+                              join st in db.TaskStages on sw.StageId equals st.Id
+                              join t in db.Tasks on st.TaskId equals t.Id
+                              join p in db.Projects on t.ProjectId equals p.Id
+                              where sw.WorkTypeTemplateId == templateId
+                                    && st.Status != StageStatus.Completed
+                                    && !st.IsArchived
+                                    && !p.IsClosed
+                              select new { sw, st })
+            .ToListAsync();
+
+        if (affected.Count == 0) return;
+
+        var stageIds = new HashSet<Guid>();
+
+        foreach (var row in affected)
+        {
+            if (updatedTemplate is null)
+            {
+                db.StageWorkTypes.Remove(row.sw);
+            }
+            else
+            {
+                var hadPriceOverride = Math.Abs(row.sw.PricePerUnit - row.sw.BasePricePerUnit) > 0.005m;
+                row.sw.WorkTypeName = updatedTemplate.Name;
+                row.sw.WorkTypeDescription = updatedTemplate.Description;
+                row.sw.Unit = updatedTemplate.Unit;
+                row.sw.BasePricePerUnit = updatedTemplate.BasePrice;
+                if (!hadPriceOverride)
+                    row.sw.PricePerUnit = updatedTemplate.BasePrice;
+                row.sw.IsSynced = false;
+                row.sw.LastModifiedLocally = DateTime.UtcNow;
+            }
+
+            stageIds.Add(row.st.Id);
+            row.st.IsSynced = false;
+            row.st.UpdatedAt = DateTime.UtcNow;
+            row.st.LastModifiedLocally = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+
+        foreach (var stageId in stageIds)
+        {
+            var stage = await db.TaskStages.FindAsync(stageId);
+            if (stage is null) continue;
+
+            var workTypes = await db.StageWorkTypes
+                .Where(x => x.StageId == stageId)
+                .ToListAsync();
+
+            var items = workTypes
+                .Select(w => new StageWorkTypeItemRequest(
+                    w.WorkTypeTemplateId,
+                    w.Quantity,
+                    w.PricePerUnit,
+                    w.WorkTypeName,
+                    w.Unit,
+                    w.BasePricePerUnit,
+                    w.LineAdjustmentPercent))
+                .ToList();
+
+            var req = new UpdateStageRequest(
+                stage.Name,
+                stage.Description,
+                stage.AssignedUserId,
+                stage.Status,
+                stage.DueDate,
+                stage.IsMarkedForDeletion,
+                stage.IsArchived,
+                stage.WorkTypeTemplateId,
+                stage.WorkQuantity,
+                stage.WorkPricePerUnit,
+                items);
+
+            await _sync.QueueOperationAsync("Stage", stageId, SyncOperation.Update, req);
         }
     }
 }

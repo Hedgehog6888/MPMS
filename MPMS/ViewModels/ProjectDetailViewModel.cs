@@ -693,6 +693,14 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             Color.FromRgb(0x06, 0xB6, 0xD4),  // Cyan
             Color.FromRgb(0xF9, 0x71, 0x6C),  // Red
             Color.FromRgb(0x84, 0xCC, 0x16),  // Lime
+            Color.FromRgb(0x63, 0x66, 0xF1),  // Indigo
+            Color.FromRgb(0x14, 0xB8, 0xA6),  // Teal
+            Color.FromRgb(0xF4, 0x3F, 0x5E),  // Rose
+            Color.FromRgb(0x0D, 0x94, 0x72),  // Emerald
+            Color.FromRgb(0xD9, 0x77, 0x06),  // Orange
+            Color.FromRgb(0x7C, 0x3A, 0xED),  // Violet
+            Color.FromRgb(0xDB, 0x27, 0x77),  // Magenta
+            Color.FromRgb(0x08, 0x91, 0xF2),  // Sky
         };
 
         var totalWorkTypeBudget = workTypeAgg.Values.Sum();

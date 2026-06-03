@@ -8,6 +8,7 @@ namespace MPMS.Data;
 /// </summary>
 public static class LocalSchemaMigrator
 {
+
     public static void Apply(string connectionString)
     {
         using var conn = new SqliteConnection(connectionString);
@@ -75,8 +76,6 @@ public static class LocalSchemaMigrator
                 """);
         }
         catch (SqliteException) { /* ignore */ }
-
-        SeedDefaultWarehouseCategories(conn);
 
         Execute(conn, """
             CREATE TABLE IF NOT EXISTS "MaterialStockMovements" (
@@ -464,8 +463,6 @@ public static class LocalSchemaMigrator
             );
             """);
 
-        SeedDefaultWorkTypeCategories(conn);
-        SeedDefaultWorkTypeTemplates(conn);
     }
 
     /// <summary>
@@ -495,199 +492,6 @@ public static class LocalSchemaMigrator
         try { Execute(conn, sql); }
         catch (SqliteException) { }
     }
-
-    /// <summary>Примерные категории для пустой БД (по одному разу на таблицу).</summary>
-    private static void SeedDefaultWarehouseCategories(SqliteConnection conn)
-    {
-        if (IsCategoryTableEmpty(conn, "MaterialCategories"))
-        {
-            foreach (var name in DefaultMaterialCategoryNames)
-                InsertCategoryRow(conn, "MaterialCategories", Guid.NewGuid(), name);
-        }
-
-        if (IsCategoryTableEmpty(conn, "EquipmentCategories"))
-        {
-            foreach (var name in DefaultEquipmentCategoryNames)
-                InsertCategoryRow(conn, "EquipmentCategories", Guid.NewGuid(), name);
-        }
-    }
-
-    private static readonly string[] DefaultMaterialCategoryNames =
-    [
-        "Крепёж и метизы",
-        "Электрика и кабель",
-        "Сантехника",
-        "Отделочные материалы",
-        "ЛКМ и герметики",
-        "Расходники для инструмента",
-        "Пиломатериалы",
-        "Цемент и сухие смеси",
-        "Изоляция и утеплители",
-        "Хозяйственные товары"
-    ];
-
-    private static readonly string[] DefaultEquipmentCategoryNames =
-    [
-        "Электроинструмент",
-        "Бензоинструмент",
-        "Измерительные приборы",
-        "Опалубка и леса",
-        "Компрессоры и генераторы",
-        "Садовая техника",
-        "Сварочное оборудование",
-        "Подъёмное оборудование",
-        "Малая механизация",
-        "Прочее оборудование"
-    ];
-
-    private static bool IsCategoryTableEmpty(SqliteConnection conn, string table)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM \"{table}\"";
-        var scalar = cmd.ExecuteScalar();
-        return scalar is long l ? l == 0 : Convert.ToInt64(scalar, System.Globalization.CultureInfo.InvariantCulture) == 0;
-    }
-
-    private static void InsertCategoryRow(SqliteConnection conn, string table, Guid id, string name)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"""
-            INSERT INTO "{table}" ("Id", "Name") VALUES (@id, @name)
-            """;
-        cmd.Parameters.AddWithValue("@id", id.ToString());
-        cmd.Parameters.AddWithValue("@name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    private static void SeedDefaultWorkTypeCategories(SqliteConnection conn)
-    {
-        if (!IsCategoryTableEmpty(conn, "WorkTypeCategories"))
-            return;
-
-        for (var i = 0; i < DefaultWorkTypeCategoryNames.Length; i++)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = """
-                INSERT INTO "WorkTypeCategories" ("Id", "Name", "SortOrder", "IsActive")
-                VALUES (@id, @name, @sort, 1)
-                """;
-            cmd.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
-            cmd.Parameters.AddWithValue("@name", DefaultWorkTypeCategoryNames[i]);
-            cmd.Parameters.AddWithValue("@sort", i + 1);
-            cmd.ExecuteNonQuery();
-        }
-    }
-
-    private static void SeedDefaultWorkTypeTemplates(SqliteConnection conn)
-    {
-        using var countCmd = conn.CreateCommand();
-        countCmd.CommandText = "SELECT COUNT(*) FROM \"WorkTypeTemplates\"";
-        var count = Convert.ToInt32(countCmd.ExecuteScalar());
-        if (count > 0) return;
-
-        var categories = new List<(string Id, string Name)>();
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = "SELECT \"Id\", \"Name\" FROM \"WorkTypeCategories\" ORDER BY \"SortOrder\", \"Name\"";
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-                categories.Add((reader.GetString(0), reader.GetString(1)));
-        }
-        if (categories.Count == 0) return;
-
-        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        for (var i = 0; i < 100; i++)
-        {
-            var category = categories[i % categories.Count];
-            using var insert = conn.CreateCommand();
-            insert.CommandText = """
-                INSERT INTO "WorkTypeTemplates"
-                ("Id","Name","Description","Unit","Article","BasePrice","CategoryId","CategoryName","IsActive","CreatedAt","UpdatedAt","IsSynced","LastModifiedLocally")
-                VALUES
-                (@id,@name,@description,@unit,@article,@price,@categoryId,@categoryName,1,@createdAt,@updatedAt,1,@lastModified)
-                """;
-            insert.Parameters.AddWithValue("@id", Guid.NewGuid().ToString());
-            insert.Parameters.AddWithValue("@name", $"{DefaultWorkTypeTemplateNames[i % DefaultWorkTypeTemplateNames.Length]} #{i + 1:000}");
-            insert.Parameters.AddWithValue("@description", "Шаблонная услуга для формирования этапов и расчета сметы.");
-            insert.Parameters.AddWithValue("@unit", i % 3 == 0 ? "м" : i % 3 == 1 ? "м2" : "шт");
-            insert.Parameters.AddWithValue("@article", $"SRV-{i + 1:0000}");
-            insert.Parameters.AddWithValue("@price", (120 + (i * 17 % 980)).ToString(System.Globalization.CultureInfo.InvariantCulture));
-            insert.Parameters.AddWithValue("@categoryId", category.Id);
-            insert.Parameters.AddWithValue("@categoryName", category.Name);
-            insert.Parameters.AddWithValue("@createdAt", now);
-            insert.Parameters.AddWithValue("@updatedAt", now);
-            insert.Parameters.AddWithValue("@lastModified", now);
-            insert.ExecuteNonQuery();
-        }
-    }
-
-    private static readonly string[] DefaultWorkTypeCategoryNames =
-    [
-        "Электромонтаж",
-        "Слаботочные системы",
-        "Сантехника",
-        "Отопление",
-        "Вентиляция",
-        "Кондиционирование",
-        "Отделочные работы",
-        "Малярные работы",
-        "Штукатурные работы",
-        "Напольные покрытия",
-        "Плиточные работы",
-        "Гипсокартон",
-        "Фасадные работы",
-        "Кровельные работы",
-        "Бетонные работы",
-        "Кладочные работы",
-        "Монтаж дверей",
-        "Монтаж окон",
-        "Демонтажные работы",
-        "Пуско-наладка"
-    ];
-
-    private static readonly string[] DefaultWorkTypeTemplateNames =
-    [
-        "Прокладка кабеля ВВГ-Пнг(А)-LS 3х1.5",
-        "Прокладка кабеля ВВГ-Пнг(А)-LS 3х2.5",
-        "Монтаж распределительной коробки",
-        "Установка автоматического выключателя",
-        "Монтаж розетки внутренней",
-        "Монтаж выключателя одноклавишного",
-        "Монтаж светильника потолочного",
-        "Прокладка гофры ПВХ",
-        "Штробление стен под кабель",
-        "Заделка штробы",
-        "Прокладка витой пары UTP cat.6",
-        "Установка слаботочного щита",
-        "Обжим и тестирование линии",
-        "Монтаж трубы ППР",
-        "Монтаж трубы металлопластик",
-        "Установка смесителя",
-        "Установка унитаза",
-        "Монтаж радиатора отопления",
-        "Опрессовка системы отопления",
-        "Монтаж воздуховода",
-        "Установка решетки вентиляции",
-        "Монтаж внутреннего блока сплит-системы",
-        "Монтаж наружного блока сплит-системы",
-        "Шпаклевка стен под покраску",
-        "Грунтование поверхности",
-        "Покраска стен в 2 слоя",
-        "Штукатурка стен по маякам",
-        "Укладка ламината",
-        "Укладка керамогранита",
-        "Затирка плиточных швов",
-        "Монтаж каркаса ГКЛ",
-        "Обшивка стен ГКЛ",
-        "Монтаж фасадного утеплителя",
-        "Монтаж кровельной мембраны",
-        "Армирование монолитной плиты",
-        "Заливка бетонной стяжки",
-        "Кладка перегородок из газоблока",
-        "Монтаж межкомнатной двери",
-        "Монтаж ПВХ окна",
-        "Демонтаж перегородки"
-    ];
 
     private static void Execute(SqliteConnection conn, string sql)
     {

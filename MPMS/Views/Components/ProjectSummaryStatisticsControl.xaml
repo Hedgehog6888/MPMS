@@ -229,8 +229,8 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <Border Width="10" Height="10" CornerRadius="5" Background="#10B981" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <StackPanel>
-                                    <TextBlock Text="Завершено" FontSize="11" Foreground="#111111"/>
-                                    <TextBlock FontSize="10" Foreground="#64748B">
+                                    <TextBlock Text="Завершено" FontSize="13" Foreground="#111111"/>
+                                    <TextBlock FontSize="12" Foreground="#64748B">
                                         <Run Text="{Binding BudgetByStageStatusSegments[0].Value, StringFormat='{}{0:N0} ₽'}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -239,8 +239,8 @@
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                 <Border Width="10" Height="10" CornerRadius="5" Background="#3B82F6" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <StackPanel>
-                                    <TextBlock Text="В работе" FontSize="11" Foreground="#111111"/>
-                                    <TextBlock FontSize="10" Foreground="#64748B">
+                                    <TextBlock Text="В работе" FontSize="13" Foreground="#111111"/>
+                                    <TextBlock FontSize="12" Foreground="#64748B">
                                         <Run Text="{Binding BudgetByStageStatusSegments[1].Value, StringFormat='{}{0:N0} ₽'}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -249,8 +249,8 @@
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="10" Height="10" CornerRadius="5" Background="#94A3B8" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <StackPanel>
-                                    <TextBlock Text="Запланировано" FontSize="11" Foreground="#111111"/>
-                                    <TextBlock FontSize="10" Foreground="#64748B">
+                                    <TextBlock Text="Запланировано" FontSize="13" Foreground="#111111"/>
+                                    <TextBlock FontSize="12" Foreground="#64748B">
                                         <Run Text="{Binding BudgetByStageStatusSegments[2].Value, StringFormat='{}{0:N0} ₽'}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -292,8 +292,8 @@
                                             <Border Width="10" Height="10" CornerRadius="5"
                                                     Background="{Binding ColorHex}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding Label}" FontSize="11" Foreground="#111111"/>
-                                                <TextBlock FontSize="10" Foreground="#64748B">
+                                                <TextBlock Text="{Binding Label}" FontSize="13" Foreground="#111111"/>
+                                                <TextBlock FontSize="12" Foreground="#64748B">
                                                     <Run Text="{Binding Value, StringFormat='{}{0:N0} ₽'}"/>
                                                     <Run Text=" • "/>
                                                     <Run Text="{Binding Percentage, StringFormat='{}{0:N1}%'}"/>

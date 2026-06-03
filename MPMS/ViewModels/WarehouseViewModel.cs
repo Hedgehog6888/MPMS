@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -649,6 +652,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         var mSync = await db.Materials.FindAsync(id);
         if (mSync is not null)
             await _sync.QueueOperationAsync("Material", id, SyncOperation.Update, SyncPayloads.Material(mSync));
+        await PropagateMaterialChangesAsync(id, m);
         await LoadAsync();
     }
 
@@ -701,6 +705,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
                 id,
                 ActivityActionKind.Updated);
         }
+        await PropagateEquipmentChangesAsync(id, e);
         await LoadAsync();
     }
 
@@ -909,6 +914,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             "Material",
             materialId,
             ActivityActionKind.Deleted);
+        await PropagateMaterialChangesAsync(materialId, null);
         await LoadAsync();
     }
 
@@ -933,6 +939,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             "Equipment",
             equipmentId,
             ActivityActionKind.Deleted);
+        await PropagateEquipmentChangesAsync(equipmentId, null);
         await LoadAsync();
     }
 
@@ -1042,6 +1049,115 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
             equipmentId,
             ActivityActionKind.Restored);
         await LoadAsync();
+    }
+
+    private async Task PropagateMaterialChangesAsync(Guid materialId, LocalMaterial? updated)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var affected = await (from sm in db.StageMaterials
+                              join st in db.TaskStages on sm.StageId equals st.Id
+                              join t in db.Tasks on st.TaskId equals t.Id
+                              join p in db.Projects on t.ProjectId equals p.Id
+                              where sm.MaterialId == materialId
+                                    && st.Status != StageStatus.Completed
+                                    && !st.IsArchived
+                                    && !p.IsClosed
+                              select new { sm, st })
+            .ToListAsync();
+
+        if (affected.Count == 0) return;
+
+        foreach (var row in affected)
+        {
+            if (updated is null || updated.IsArchived)
+            {
+                db.StageMaterials.Remove(row.sm);
+            }
+            else
+            {
+                var hadPriceOverride = Math.Abs(row.sm.PricePerUnit - row.sm.BasePricePerUnit) > 0.005m;
+                row.sm.MaterialName = updated.Name;
+                row.sm.Unit = updated.Unit;
+                row.sm.BasePricePerUnit = updated.Cost ?? 0m;
+                if (!hadPriceOverride)
+                    row.sm.PricePerUnit = updated.Cost ?? 0m;
+                row.sm.IsSynced = false;
+                row.sm.LastModifiedLocally = DateTime.UtcNow;
+            }
+
+            row.st.IsSynced = false;
+            row.st.UpdatedAt = DateTime.UtcNow;
+            row.st.LastModifiedLocally = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private async Task PropagateEquipmentChangesAsync(Guid equipmentId, LocalEquipment? updated)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+
+        var affected = await (from se in db.StageEquipments
+                              join st in db.TaskStages on se.StageId equals st.Id
+                              join t in db.Tasks on st.TaskId equals t.Id
+                              join p in db.Projects on t.ProjectId equals p.Id
+                              where se.EquipmentId == equipmentId
+                                    && st.Status != StageStatus.Completed
+                                    && !st.IsArchived
+                                    && !p.IsClosed
+                              select new { se, st, t, p })
+            .ToListAsync();
+
+        if (affected.Count == 0) return;
+
+        var toRelease = new List<(Guid EquipmentId, Guid StageId, Guid TaskId, Guid? ProjectId)>();
+
+        foreach (var row in affected)
+        {
+            if (updated is null || updated.IsArchived)
+            {
+                db.StageEquipments.Remove(row.se);
+                toRelease.Add((row.se.EquipmentId, row.st.Id, row.t.Id, row.p.Id));
+            }
+            else
+            {
+                row.se.EquipmentName = updated.Name;
+                row.se.InventoryNumber = updated.InventoryNumber;
+                row.se.IsSynced = false;
+                row.se.LastModifiedLocally = DateTime.UtcNow;
+            }
+
+            row.st.IsSynced = false;
+            row.st.UpdatedAt = DateTime.UtcNow;
+            row.st.LastModifiedLocally = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+
+        foreach (var entry in toRelease)
+        {
+            var equipment = await db.Equipments.FindAsync(entry.EquipmentId);
+            if (equipment is null) continue;
+
+            var stillUsed = await (from se in db.StageEquipments
+                                   join st in db.TaskStages on se.StageId equals st.Id
+                                   where se.EquipmentId == entry.EquipmentId
+                                         && st.Status != StageStatus.Completed
+                                         && !st.IsArchived
+                                   select st.TaskId)
+                .AnyAsync();
+
+            if (stillUsed) continue;
+
+            equipment.Status = "Available";
+            equipment.CheckedOutTaskId = null;
+            equipment.CheckedOutProjectId = null;
+            equipment.UpdatedAt = DateTime.UtcNow;
+            equipment.IsSynced = false;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     public async Task SaveNewMaterialCategoryAsync(string name)
