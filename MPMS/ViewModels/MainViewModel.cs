@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Services;
 using MPMS.Infrastructure;
+using MPMS.Views.Overlays;
 namespace MPMS.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
@@ -67,6 +69,29 @@ public partial class MainViewModel : ViewModelBase
         string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+
+    public bool CanCreateProject =>
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
+
+    public bool CanCreateTask =>
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+
+    public bool CanCreateStage =>
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(_auth.UserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
 
     public MainViewModel(IAuthService auth, IApiService api, ISyncService sync, IServiceProvider sp, SidebarFooterViewModel sidebarFooter)
     {
@@ -325,6 +350,9 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(UserInitials));
         OnPropertyChanged(nameof(IsProjectsVisible));
         OnPropertyChanged(nameof(IsAdminPanelVisible));
+        OnPropertyChanged(nameof(CanCreateProject));
+        OnPropertyChanged(nameof(CanCreateTask));
+        OnPropertyChanged(nameof(CanCreateStage));
         _ = RefreshAvatarAsync();
     }
 
@@ -348,6 +376,51 @@ public partial class MainViewModel : ViewModelBase
             UserAvatarData = user?.AvatarData;
         }
         catch { UserAvatarPath = null; UserAvatarData = null; }
+    }
+
+    [RelayCommand]
+    private void NavigateToCreateProject()
+    {
+        Navigate("Projects");
+        // Открываем оверлей после загрузки страницы
+        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+        {
+            var projectsVm = _sp.GetRequiredService<ProjectsViewModel>();
+            var overlay = new CreateProjectOverlay();
+            overlay.SetCreateMode(projectsVm);
+            MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    [RelayCommand]
+    private void NavigateToCreateTask()
+    {
+        Navigate("Tasks");
+        // Открываем оверлей после загрузки страницы
+        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+        {
+            var tasksVm = _sp.GetRequiredService<TasksViewModel>();
+            var overlay = new CreateTaskOverlay();
+            overlay.SetCreateMode(tasksVm,
+                onSaved: async () => { await tasksVm.LoadAsync(); });
+            MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    [RelayCommand]
+    private void NavigateToCreateStage()
+    {
+        Navigate("Stages");
+        // Открываем оверлей после загрузки страницы
+        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+        {
+            var stagesVm = _sp.GetRequiredService<StagesViewModel>();
+            var overlay = new CreateStageOverlay();
+            overlay.SetCreateMode(
+                onSaved: async () => { await stagesVm.LoadAsync(); },
+                onAfterSave: () => MainWindow.Instance?.HideDrawer());
+            MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     [RelayCommand]

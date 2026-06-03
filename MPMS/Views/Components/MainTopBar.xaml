@@ -435,14 +435,16 @@
             <!-- Справа: Создать + иконки -->
             <StackPanel Grid.Column="2" Orientation="Horizontal"
                         VerticalAlignment="Center">
-                <!-- Кнопка без действия (создание — со страниц «Проекты» / «Задачи» и т.д.) -->
-                <Button Style="{StaticResource TopCreateButton}"
-                        Margin="0,0,12,0">
+                <!-- Кнопка создания -->
+                <Button x:Name="CreateButton" Style="{StaticResource TopCreateButton}"
+                        Margin="0,0,12,0"
+                        Height="38" Padding="18,0"
+                        Click="CreateButton_Click">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets"
-                                   FontSize="14" Foreground="White"
-                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Image Source="{svgc:SvgImage Source=/icons/plus.svg, AppName=MPMS}"
+                               Width="14" Height="14" Margin="0,0,6,0"/>
                         <TextBlock Text="Создать" Foreground="White"
+                                   FontSize="13" FontWeight="SemiBold"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
@@ -492,6 +494,148 @@
                         </Grid>
                     </Button>
                 </Border>
+
+                <Popup x:Name="CreatePopup"
+                       PlacementTarget="{Binding ElementName=CreateButton}"
+                       Placement="Bottom"
+                       AllowsTransparency="True"
+                       StaysOpen="False"
+                       Width="220">
+                    <Border Background="White" CornerRadius="10"
+                            BorderBrush="#DFE1E6" BorderThickness="1"
+                            Margin="0,4,0,0">
+                        <StackPanel>
+                            <!-- Заголовок -->
+                            <Border CornerRadius="10,10,0,0" Padding="16,12"
+                                    Background="#F8F9FA">
+                                <TextBlock Text="Создать" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="#000000"/>
+                            </Border>
+
+                            <!-- Опции создания -->
+                            <StackPanel Margin="8,0">
+                                <!-- Создать проект -->
+                                <Button x:Name="CreateProjectOption"
+                                        Click="CreateProjectOption_Click"
+                                        Padding="12,10"
+                                        HorizontalAlignment="Stretch"
+                                        Visibility="{Binding CanCreateProject, Converter={StaticResource BoolToVis}}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bg" Background="Transparent"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Width="32" Height="32" CornerRadius="6"
+                                                            Background="#F4F5F7" Margin="0,0,12,0"
+                                                            VerticalAlignment="Center">
+                                                        <Image Source="{svgc:SvgImage Source=/icons/project.svg, AppName=MPMS}"
+                                                               Width="16" Height="16"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Opacity="0.7"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Проект" FontSize="13"
+                                                                   Foreground="#000000" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="Новый проект" FontSize="11"
+                                                                   Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- Создать задачу -->
+                                <Button x:Name="CreateTaskOption"
+                                        Click="CreateTaskOption_Click"
+                                        Padding="12,10"
+                                        HorizontalAlignment="Stretch"
+                                        Visibility="{Binding CanCreateTask, Converter={StaticResource BoolToVis}}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bg" Background="Transparent"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Width="32" Height="32" CornerRadius="6"
+                                                            Background="#F4F5F7" Margin="0,0,12,0"
+                                                            VerticalAlignment="Center">
+                                                        <Image Source="{svgc:SvgImage Source=/icons/tasks.svg, AppName=MPMS}"
+                                                               Width="16" Height="16"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Opacity="0.7"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Задачу" FontSize="13"
+                                                                   Foreground="#000000" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="Новую задачу" FontSize="11"
+                                                                   Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- Создать этап -->
+                                <Button x:Name="CreateStageOption"
+                                        Click="CreateStageOption_Click"
+                                        Padding="12,10"
+                                        HorizontalAlignment="Stretch"
+                                        Visibility="{Binding CanCreateStage, Converter={StaticResource BoolToVis}}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bg" Background="Transparent"
+                                                    CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Width="32" Height="32" CornerRadius="6"
+                                                            Background="#F4F5F7" Margin="0,0,12,0"
+                                                            VerticalAlignment="Center">
+                                                        <Image Source="{svgc:SvgImage Source=/icons/stages.svg, AppName=MPMS}"
+                                                               Width="16" Height="16"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Opacity="0.7"/>
+                                                    </Border>
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="Этап" FontSize="13"
+                                                                   Foreground="#000000" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="Новый этап" FontSize="11"
+                                                                   Foreground="#6B778C" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bg" Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- Нет прав -->
+                                <TextBlock x:Name="NoCreateOptionsText"
+                                           Text="Нет прав на создание"
+                                           FontSize="12" Foreground="#6B778C"
+                                           HorizontalAlignment="Center"
+                                           Padding="12,16"
+                                           Visibility="Collapsed"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Popup>
 
                 <Popup x:Name="SyncPopup"
                        PlacementTarget="{Binding ElementName=SyncStatusBorder}"

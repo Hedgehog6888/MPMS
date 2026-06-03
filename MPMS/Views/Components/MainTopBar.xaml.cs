@@ -73,6 +73,37 @@ namespace MPMS.Views.Components
             SyncPopup.IsOpen = !SyncPopup.IsOpen;
         }
 
+        private void CreateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                bool hasAnyCreatePermission = vm.CanCreateProject || vm.CanCreateTask || vm.CanCreateStage;
+                NoCreateOptionsText.Visibility = hasAnyCreatePermission ? Visibility.Collapsed : Visibility.Visible;
+            }
+            CreatePopup.IsOpen = !CreatePopup.IsOpen;
+        }
+
+        private void CreateProjectOption_Click(object sender, RoutedEventArgs e)
+        {
+            CreatePopup.IsOpen = false;
+            if (DataContext is MainViewModel vm)
+                vm.NavigateToCreateProjectCommand.Execute(null);
+        }
+
+        private void CreateTaskOption_Click(object sender, RoutedEventArgs e)
+        {
+            CreatePopup.IsOpen = false;
+            if (DataContext is MainViewModel vm)
+                vm.NavigateToCreateTaskCommand.Execute(null);
+        }
+
+        private void CreateStageOption_Click(object sender, RoutedEventArgs e)
+        {
+            CreatePopup.IsOpen = false;
+            if (DataContext is MainViewModel vm)
+                vm.NavigateToCreateStageCommand.Execute(null);
+        }
+
         private void SyncNow_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is MainViewModel vm)
