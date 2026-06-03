@@ -25,6 +25,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     private LocalTask? _task;
     private LocalTaskStage? _editStage;
     private Action? _goBack;
+    public Action? GoBackAction => _goBack;
     public LocalTaskStage? EditStage => _editStage;
     public LocalTask? EditTask => _task;
     private Func<Task>? _onSavedAsync;

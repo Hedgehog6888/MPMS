@@ -22,7 +22,14 @@ public partial class StageManagementPanel : UserControl
         if (DataContext is not StageDetailViewModel vm || !vm.CanEditStageDetails || vm.EditStage is null || vm.EditTask is null) return;
         var stage = vm.EditStage;
         var task = vm.EditTask;
-        var goBack = vm.GoBackCommand;
+
+        var currentGoBack = vm.GoBackAction;
+        if (currentGoBack == null)
+        {
+            var main = App.Services.GetRequiredService<MainViewModel>();
+            currentGoBack = () => main.GoBackCommand.Execute(null);
+        }
+
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(stage, task,
             onSaved: async () =>
@@ -33,8 +40,7 @@ public partial class StageManagementPanel : UserControl
                 var freshTask = await db.Tasks.FindAsync(task.Id);
                 if (freshStage is not null && freshTask is not null)
                 {
-                    vm.SetEditMode(freshStage, freshTask,
-                        goBack: () => goBack.Execute(null));
+                    vm.SetEditMode(freshStage, freshTask, goBack: currentGoBack);
                     await vm.ReloadAllAsync();
                 }
                 UpdateButtons();

@@ -97,6 +97,13 @@ public partial class StageDetailPage
     {
         if (DataContext is not StageDetailViewModel vm) return;
 
+        var currentGoBack = vm.GoBackAction;
+        if (currentGoBack == null)
+        {
+            var main = App.Services.GetRequiredService<MainViewModel>();
+            currentGoBack = () => main.GoBackCommand.Execute(null);
+        }
+
         var overlay = new CreateStageOverlay();
         overlay.SetEditMode(
             stage,
@@ -110,8 +117,7 @@ public partial class StageDetailPage
 
                 if (freshStage is not null && freshTask is not null)
                 {
-                    vm.SetEditMode(freshStage, freshTask,
-                        goBack: () => vm.GoBackCommand.Execute(null));
+                    vm.SetEditMode(freshStage, freshTask, goBack: currentGoBack);
                     await vm.ReloadAllAsync();
                 }
             },
