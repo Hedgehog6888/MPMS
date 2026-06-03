@@ -41,4 +41,18 @@ public partial class StageSummaryControl : UserControl
             ToolTipService.SetToolTip(textBlock, null);
         }
     }
+
+    private void ServiceHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not StageDetailViewModel vm) return;
+        if (sender is not Button { Tag: string column }) return;
+        vm.SortServices(column);
+    }
+
+    private void MaterialHeader_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not StageDetailViewModel vm) return;
+        if (sender is not Button { Tag: string column }) return;
+        vm.SortMaterials(column);
+    }
 }

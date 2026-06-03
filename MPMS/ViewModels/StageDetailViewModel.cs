@@ -106,6 +106,10 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     [ObservableProperty] private decimal _materialAdjustmentPercent;
     [ObservableProperty] private ObservableCollection<ReceiptRowVm> _serviceReceiptRows = [];
     [ObservableProperty] private ObservableCollection<ReceiptRowVm> _materialReceiptRows = [];
+    [ObservableProperty] private string _serviceSortColumn = "";
+    [ObservableProperty] private int _serviceSortDirection = 0; // 0 = default, 1 = asc, 2 = desc
+    [ObservableProperty] private string _materialSortColumn = "";
+    [ObservableProperty] private int _materialSortDirection = 0; // 0 = default, 1 = asc, 2 = desc
     public decimal AdjustedServicesTotal => SummaryServicesTotal * (1m + ServiceAdjustmentPercent / 100m);
     public decimal AdjustedMaterialsTotal => SummaryMaterialsTotal * (1m + MaterialAdjustmentPercent / 100m);
     public decimal AdjustedGrandTotal => AdjustedServicesTotal + AdjustedMaterialsTotal;
@@ -319,6 +323,76 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
                 m,
                 MaterialAdjustmentPercent,
                 materialK)));
+    }
+
+    public void SortServices(string column)
+    {
+        if (ServiceSortColumn == column)
+        {
+            ServiceSortDirection = (ServiceSortDirection + 1) % 3;
+            if (ServiceSortDirection == 0)
+                ServiceSortColumn = "";
+        }
+        else
+        {
+            ServiceSortColumn = column;
+            ServiceSortDirection = 1;
+        }
+        ApplyServiceSorting();
+    }
+
+    public void SortMaterials(string column)
+    {
+        if (MaterialSortColumn == column)
+        {
+            MaterialSortDirection = (MaterialSortDirection + 1) % 3;
+            if (MaterialSortDirection == 0)
+                MaterialSortColumn = "";
+        }
+        else
+        {
+            MaterialSortColumn = column;
+            MaterialSortDirection = 1;
+        }
+        ApplyMaterialSorting();
+    }
+
+    private void ApplyServiceSorting()
+    {
+        if (ServiceSortDirection == 0)
+        {
+            BuildReceiptRows();
+            return;
+        }
+
+        var sorted = SortReceiptRows(ServiceReceiptRows, ServiceSortColumn, ServiceSortDirection);
+        ServiceReceiptRows = new ObservableCollection<ReceiptRowVm>(sorted);
+    }
+
+    private void ApplyMaterialSorting()
+    {
+        if (MaterialSortDirection == 0)
+        {
+            BuildReceiptRows();
+            return;
+        }
+
+        var sorted = SortReceiptRows(MaterialReceiptRows, MaterialSortColumn, MaterialSortDirection);
+        MaterialReceiptRows = new ObservableCollection<ReceiptRowVm>(sorted);
+    }
+
+    private IEnumerable<ReceiptRowVm> SortReceiptRows(IEnumerable<ReceiptRowVm> rows, string column, int direction)
+    {
+        var sorted = column switch
+        {
+            "Name" => direction == 1 ? rows.OrderBy(r => r.Name) : rows.OrderByDescending(r => r.Name),
+            "Quantity" => direction == 1 ? rows.OrderBy(r => r.Quantity) : rows.OrderByDescending(r => r.Quantity),
+            "Price" => direction == 1 ? rows.OrderBy(r => r.EffectiveUnitPrice) : rows.OrderByDescending(r => r.EffectiveUnitPrice),
+            "Adjustment" => direction == 1 ? rows.OrderBy(r => r.GlobalAdjustmentPercent) : rows.OrderByDescending(r => r.GlobalAdjustmentPercent),
+            "Total" => direction == 1 ? rows.OrderBy(r => r.AdjustedTotal) : rows.OrderByDescending(r => r.AdjustedTotal),
+            _ => rows
+        };
+        return sorted;
     }
 
     public void SetCreateForTask(LocalTask task, Action goBack, Func<Task>? onSavedAsync = null)

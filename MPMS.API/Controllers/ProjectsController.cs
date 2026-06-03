@@ -98,23 +98,61 @@ public class ProjectsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProjectResponse>> Update(Guid id, [FromBody] UpdateProjectRequest request)
     {
-        var project = await _db.Projects.FindAsync(id);
+        var project = await _db.Projects
+            .Include(p => p.Manager)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (project is null) return NotFound();
 
         var managerExists = await _db.Users.AnyAsync(u => u.Id == request.ManagerId);
         if (!managerExists)
             return BadRequest(new { message = "Менеджер не найден" });
 
+        var managerName = await _db.Users
+            .Where(u => u.Id == request.ManagerId)
+            .Select(u => u.Name)
+            .FirstOrDefaultAsync() ?? project.Manager?.Name;
+
+        var changes = new List<string>();
+        if (project.Name != request.Name)
+            changes.Add($"Название: {project.Name} → {request.Name}");
+        if (project.Description != request.Description)
+            changes.Add($"Описание: {project.Description ?? "—"} → {request.Description ?? "—"}");
+        if (project.Client != request.Client)
+            changes.Add($"Клиент: {project.Client ?? "—"} → {request.Client ?? "—"}");
+        if (project.Address != request.Address)
+            changes.Add($"Адрес: {project.Address ?? "—"} → {request.Address ?? "—"}");
+        if (project.StartDate != request.StartDate)
+            changes.Add($"Дата начала: {FormatDate(project.StartDate)} → {FormatDate(request.StartDate)}");
+        if (project.EndDate != request.EndDate)
+            changes.Add($"Дата окончания: {FormatDate(project.EndDate)} → {FormatDate(request.EndDate)}");
+        if (project.Manager?.Name != managerName)
+            changes.Add($"Руководитель: {project.Manager?.Name ?? "—"} → {managerName ?? "—"}");
+        if (project.IsMarkedForDeletion != request.IsMarkedForDeletion)
+            changes.Add($"Статус удаления: {FormatBool(project.IsMarkedForDeletion)} → {FormatBool(request.IsMarkedForDeletion)}");
+        if (project.IsArchived != request.IsArchived)
+            changes.Add($"Архив: {FormatBool(project.IsArchived)} → {FormatBool(request.IsArchived)}");
+        if (project.IsClosed != request.IsClosed)
+            changes.Add($"Закрыт: {FormatBool(project.IsClosed)} → {FormatBool(request.IsClosed)}");
+        if (project.ClosureReason != request.ClosureReason)
+            changes.Add($"Причина закрытия: {project.ClosureReason ?? "—"} → {request.ClosureReason ?? "—"}");
+
         _mapper.Map(request, project);
         project.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
 
+        var actionText = changes.Count > 0
+            ? $"Проект «{project.Name}»: {string.Join("; ", changes)}"
+            : $"Обновлён проект: {project.Name}";
+
         await _log.LogAsync(CurrentUserId(), ActivityActionType.Updated,
-            ActivityEntityType.Project, project.Id, $"Обновлён проект: {project.Name}");
+            ActivityEntityType.Project, project.Id, actionText);
 
         return Ok(await GetById(id));
     }
+
+    private static string? FormatDate(DateOnly? value) => value?.ToString("dd.MM.yyyy");
+    private static string FormatBool(bool value) => value ? "Да" : "Нет";
 
     /// <summary>Удалить проект вместе со связанными данными.</summary>
     [HttpDelete("{id:guid}")]

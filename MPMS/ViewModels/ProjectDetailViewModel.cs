@@ -110,6 +110,10 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private decimal _projectSummaryFilteredAdjustedServicesTotal;
     [ObservableProperty] private decimal _projectSummaryFilteredAdjustedMaterialsTotal;
     [ObservableProperty] private decimal _projectSummaryFilteredGrandTotal;
+    [ObservableProperty] private string _projectSummaryServiceSortColumn = "";
+    [ObservableProperty] private int _projectSummaryServiceSortDirection = 0; // 0 = default, 1 = asc, 2 = desc
+    [ObservableProperty] private string _projectSummaryMaterialSortColumn = "";
+    [ObservableProperty] private int _projectSummaryMaterialSortDirection = 0; // 0 = default, 1 = asc, 2 = desc
 
     private List<LocalTask> _summaryTasks = [];
     private List<LocalTaskStage> _summaryStages = [];
@@ -117,8 +121,11 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private List<LocalStageMaterial> _summaryMaterials = [];
 
     public bool ShowProjectSummaryTab =>
-        !string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(_auth.UserRole, "Работник", StringComparison.OrdinalIgnoreCase);
+        string.Equals(_auth.UserRole, "Administrator", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "Admin", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "Project Manager", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "ProjectManager", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "Manager", StringComparison.OrdinalIgnoreCase);
 
     public decimal ProjectSummaryServiceAdjustmentPercent =>
         ProjectSummaryServicesSubtotal == 0 ? 0m :
@@ -843,6 +850,114 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     private void ToggleProjectSummaryReceiptMaterialsGrouping()
     {
         ProjectSummaryReceiptMaterialsGroupByStage = !ProjectSummaryReceiptMaterialsGroupByStage;
+    }
+
+    public void SortProjectSummaryServices(string column)
+    {
+        if (ProjectSummaryServiceSortColumn == column)
+        {
+            ProjectSummaryServiceSortDirection = (ProjectSummaryServiceSortDirection + 1) % 3;
+            if (ProjectSummaryServiceSortDirection == 0)
+                ProjectSummaryServiceSortColumn = "";
+        }
+        else
+        {
+            ProjectSummaryServiceSortColumn = column;
+            ProjectSummaryServiceSortDirection = 1;
+        }
+        ApplyServiceSorting();
+    }
+
+    public void SortProjectSummaryMaterials(string column)
+    {
+        if (ProjectSummaryMaterialSortColumn == column)
+        {
+            ProjectSummaryMaterialSortDirection = (ProjectSummaryMaterialSortDirection + 1) % 3;
+            if (ProjectSummaryMaterialSortDirection == 0)
+                ProjectSummaryMaterialSortColumn = "";
+        }
+        else
+        {
+            ProjectSummaryMaterialSortColumn = column;
+            ProjectSummaryMaterialSortDirection = 1;
+        }
+        ApplyMaterialSorting();
+    }
+
+    private void ApplyServiceSorting()
+    {
+        if (ProjectSummaryServiceSortDirection == 0)
+        {
+            var receipt = ProjectPricingSummaryBuilder.BuildReceiptRows(
+                _summaryStages,
+                _summaryWorkTypes,
+                _summaryMaterials,
+                ProjectSummaryReceiptTaskFilter,
+                ProjectSummaryReceiptStageFilter,
+                ProjectSummaryReceiptServicesGroupByStage,
+                ProjectSummaryReceiptMaterialsGroupByStage);
+
+            ProjectSummaryFilteredServiceSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(receipt.ServiceSections);
+            return;
+        }
+
+        var sortedSections = ProjectSummaryFilteredServiceSections
+            .Select(section => new ProjectSummaryReceiptStageSectionVm
+            {
+                StageId = section.StageId,
+                StageName = section.StageName,
+                ShowStageHeader = section.ShowStageHeader,
+                ShowStageDivider = section.ShowStageDivider,
+                ServiceRows = SortReceiptRows(section.ServiceRows, ProjectSummaryServiceSortColumn, ProjectSummaryServiceSortDirection).ToList()
+            })
+            .ToList();
+
+        ProjectSummaryFilteredServiceSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(sortedSections);
+    }
+
+    private void ApplyMaterialSorting()
+    {
+        if (ProjectSummaryMaterialSortDirection == 0)
+        {
+            var receipt = ProjectPricingSummaryBuilder.BuildReceiptRows(
+                _summaryStages,
+                _summaryWorkTypes,
+                _summaryMaterials,
+                ProjectSummaryReceiptTaskFilter,
+                ProjectSummaryReceiptStageFilter,
+                ProjectSummaryReceiptServicesGroupByStage,
+                ProjectSummaryReceiptMaterialsGroupByStage);
+
+            ProjectSummaryFilteredMaterialSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(receipt.MaterialSections);
+            return;
+        }
+
+        var sortedSections = ProjectSummaryFilteredMaterialSections
+            .Select(section => new ProjectSummaryReceiptStageSectionVm
+            {
+                StageId = section.StageId,
+                StageName = section.StageName,
+                ShowStageHeader = section.ShowStageHeader,
+                ShowStageDivider = section.ShowStageDivider,
+                MaterialRows = SortReceiptRows(section.MaterialRows, ProjectSummaryMaterialSortColumn, ProjectSummaryMaterialSortDirection).ToList()
+            })
+            .ToList();
+
+        ProjectSummaryFilteredMaterialSections = new ObservableCollection<ProjectSummaryReceiptStageSectionVm>(sortedSections);
+    }
+
+    private IEnumerable<ReceiptRowVm> SortReceiptRows(IEnumerable<ReceiptRowVm> rows, string column, int direction)
+    {
+        var sorted = column switch
+        {
+            "Name" => direction == 1 ? rows.OrderBy(r => r.Name) : rows.OrderByDescending(r => r.Name),
+            "Quantity" => direction == 1 ? rows.OrderBy(r => r.Quantity) : rows.OrderByDescending(r => r.Quantity),
+            "Price" => direction == 1 ? rows.OrderBy(r => r.EffectiveUnitPrice) : rows.OrderByDescending(r => r.EffectiveUnitPrice),
+            "Adjustment" => direction == 1 ? rows.OrderBy(r => r.GlobalAdjustmentPercent) : rows.OrderByDescending(r => r.GlobalAdjustmentPercent),
+            "Total" => direction == 1 ? rows.OrderBy(r => r.AdjustedTotal) : rows.OrderByDescending(r => r.AdjustedTotal),
+            _ => rows
+        };
+        return sorted;
     }
 
     public async void OpenProjectSummaryReceiptLinePricing(ReceiptRowVm row)

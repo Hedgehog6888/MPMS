@@ -321,7 +321,16 @@ public class TaskStagesController : ControllerBase
                 return BadRequest(new { message = "Пользователь не найден" });
         }
 
-        var existing = await _db.StageAssignees.Where(x => x.StageId == id).ToListAsync();
+        var existing = await _db.StageAssignees
+            .Include(x => x.User)
+            .Where(x => x.StageId == id)
+            .ToListAsync();
+        var existingById = existing.ToDictionary(x => x.UserId, x => x.User?.Name);
+        var newById = items.ToDictionary(x => x.UserId, x => (string?)null);
+
+        var addedIds = newById.Where(kvp => !existingById.ContainsKey(kvp.Key)).Select(kvp => kvp.Key).ToList();
+        var removed = existingById.Where(kvp => !newById.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
         _db.StageAssignees.RemoveRange(existing);
 
         foreach (var a in items)
@@ -337,6 +346,24 @@ public class TaskStagesController : ControllerBase
         stage.AssignedUserId = items.Count > 0 ? items[0].UserId : null;
         stage.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        if (addedIds.Count > 0 || removed.Count > 0)
+        {
+            var parts = new List<string>();
+            if (addedIds.Count > 0)
+            {
+                var addedNames = await _db.Users
+                    .Where(u => addedIds.Contains(u.Id))
+                    .Select(u => u.Name)
+                    .ToListAsync();
+                parts.Add($"Добавлены исполнители: {string.Join(", ", addedNames)}");
+            }
+            if (removed.Count > 0)
+                parts.Add($"Исключены исполнители: {string.Join(", ", removed)}");
+            await _log.LogAsync(CurrentUserId(), ActivityActionType.Updated, ActivityEntityType.TaskStage, stage.Id,
+                $"Этап «{stage.Name}»: {string.Join("; ", parts)}");
+        }
+
         return NoContent();
     }
 

@@ -246,6 +246,7 @@ public partial class QuickTeamMembersOverlay : UserControl
         var existing = await db.ProjectMembers
             .Where(m => m.ProjectId == _projectId.Value)
             .ToListAsync();
+        var existingById = existing.ToDictionary(x => x.UserId, x => x.UserName);
         var removedIds = existing
             .Where(m => !newMemberIds.Contains(m.UserId))
             .Select(m => m.UserId)
@@ -283,22 +284,36 @@ public partial class QuickTeamMembersOverlay : UserControl
         }
 
         var project = await db.Projects.FindAsync(_projectId.Value);
-        var totalMembers = _selectedForemanIds.Count + _selectedWorkerIds.Count;
-        if (totalMembers > 0 && project != null)
+        if (project != null)
         {
-            var memberNames = new List<string>();
-            foreach (var foremanId in _selectedForemanIds)
+            var addedIds = newMemberIds.Where(id => !existingById.ContainsKey(id)).ToList();
+            var removedNames = removedIds.Select(id => existingById.GetValueOrDefault(id, "неизвестный")).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+            if (addedIds.Count > 0 || removedNames.Count > 0)
             {
-                var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
-                if (foreman != null) memberNames.Add(foreman.Name);
+                var parts = new List<string>();
+                if (addedIds.Count > 0)
+                {
+                    var addedNames = new List<string>();
+                    foreach (var foremanId in _selectedForemanIds.Where(id => addedIds.Contains(id)))
+                    {
+                        var foreman = _foremanUsers.FirstOrDefault(u => u.Id == foremanId);
+                        if (foreman != null) addedNames.Add(foreman.Name);
+                    }
+                    foreach (var workerId in _selectedWorkerIds.Where(id => addedIds.Contains(id)))
+                    {
+                        var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
+                        if (worker != null) addedNames.Add(worker.Name);
+                    }
+                    if (addedNames.Count > 0)
+                        parts.Add($"Добавлены участники: {string.Join(", ", addedNames)}");
+                }
+                if (removedNames.Count > 0)
+                    parts.Add($"Исключены участники: {string.Join(", ", removedNames)}");
+
+                if (parts.Count > 0)
+                    await LogActivityAsync(db, $"Проект «{project.Name}»: {string.Join("; ", parts)}", "Project", _projectId.Value, ActivityActionKind.Updated);
             }
-            foreach (var workerId in _selectedWorkerIds)
-            {
-                var worker = _workerUsers.FirstOrDefault(u => u.Id == workerId);
-                if (worker != null) memberNames.Add(worker.Name);
-            }
-            var namesText = string.Join(", ", memberNames);
-            await LogActivityAsync(db, $"В проект «{project.Name}» добавлены участники: {namesText}", "Project", _projectId.Value, ActivityActionKind.MemberAdded);
         }
 
         if (removedIds.Count > 0)

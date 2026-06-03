@@ -410,7 +410,7 @@ public partial class CreateTaskOverlay : UserControl
                     string.IsNullOrWhiteSpace(DescriptionBox.Text) ? null : DescriptionBox.Text.Trim(),
                     primaryAssigneeId, priority, dueDate, status,
                     _editTask.IsMarkedForDeletion, _editTask.IsArchived);
-                await taskDetailVm.EditTaskAsync(_editTask.Id, req);
+                await taskDetailVm.EditTaskAsync(_editTask.Id, req, skipAssigneeLogging: true);
                 if (_onSaved is not null) await _onSaved();
                 taskId = _editTask.Id;
             }
@@ -438,6 +438,12 @@ public partial class CreateTaskOverlay : UserControl
         await using var db = await dbFactory.CreateDbContextAsync();
 
         var existing = await db.TaskAssignees.Where(a => a.TaskId == taskId).ToListAsync();
+        var existingById = existing.ToDictionary(x => x.UserId, x => x.UserName);
+        var newById = _selectedAssigneeIds.ToDictionary(uid => uid, uid => _allAssigneeItems.FirstOrDefault(i => i.UserId == uid)?.Name ?? "неизвестный");
+
+        var added = newById.Where(kvp => !existingById.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).ToList();
+        var removed = existingById.Where(kvp => !newById.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
         db.TaskAssignees.RemoveRange(existing);
 
         foreach (var uid in _selectedAssigneeIds)
@@ -458,6 +464,33 @@ public partial class CreateTaskOverlay : UserControl
         var rows = await db.TaskAssignees.Where(a => a.TaskId == taskId).ToListAsync();
         await sync.QueueOperationAsync("TaskAssignees", taskId, SyncOperation.Update,
             new ReplaceTaskAssigneesRequest(rows.Select(a => new AssigneeSyncItemDto(a.Id, a.UserId)).ToList()));
+
+        if (added.Count > 0 || removed.Count > 0)
+        {
+            var parts = new List<string>();
+            if (added.Count > 0)
+                parts.Add($"Добавлены исполнители: {string.Join(", ", added)}");
+            if (removed.Count > 0)
+                parts.Add($"Исключены исполнители: {string.Join(", ", removed)}");
+
+            var auth = App.Services.GetRequiredService<IAuthService>();
+            var userName = auth.UserName ?? "Система";
+            var userId = auth.UserId;
+            var userRole = auth.UserRole;
+
+            db.ActivityLogs.Add(new LocalActivityLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                ActorRole = userRole,
+                ActionType = ActivityActionKind.Updated,
+                ActionText = $"Задача: {string.Join("; ", parts)}",
+                EntityType = "Task",
+                EntityId = taskId,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
     }
 
     private void PriorityLow_Click(object sender, RoutedEventArgs e)

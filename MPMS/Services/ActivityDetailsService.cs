@@ -235,12 +235,13 @@ public static class ActivityDetailsService
         return BuildDetails("Проект", before.Name, changes);
     }
 
-    public static string? BuildTaskUpdateDetails(LocalTask before, UpdateTaskRequest next, string? assignedName, bool includeStatus)
+    public static string? BuildTaskUpdateDetails(LocalTask before, UpdateTaskRequest next, string? assignedName, bool includeStatus, bool skipAssignee = false)
     {
         var changes = new List<string>();
         AddChange(changes, "Название", before.Name, next.Name);
         AddChange(changes, "Описание", before.Description, next.Description);
-        AddChange(changes, "Исполнитель", before.AssignedUserName, assignedName);
+        if (!skipAssignee)
+            AddChange(changes, "Исполнитель", before.AssignedUserName, assignedName);
         AddChange(changes, "Приоритет", FormatPriority(before.Priority), FormatPriority(next.Priority));
         AddChange(changes, "Срок", FormatDate(before.DueDate), FormatDate(next.DueDate));
         if (includeStatus)

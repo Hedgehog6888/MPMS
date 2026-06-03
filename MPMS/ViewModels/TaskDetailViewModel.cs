@@ -278,7 +278,17 @@ public partial class TaskDetailViewModel : ViewModelBase
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
-        var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.WorkTypeItems is not null);
+
+        var hasOtherChanges = stage.Name != req.Name ||
+            stage.Description != req.Description ||
+            stage.Status != req.Status ||
+            stage.DueDate != req.DueDate ||
+            stage.WorkTypeTemplateId != req.WorkTypeTemplateId ||
+            stage.WorkQuantity != req.WorkQuantity ||
+            stage.WorkPricePerUnit != req.WorkPricePerUnit ||
+            stage.IsMarkedForDeletion != req.IsMarkedForDeletion ||
+            stage.IsArchived != req.IsArchived ||
+            req.WorkTypeItems is not null;
 
         stage.Name = req.Name;
         stage.Description = req.Description;
@@ -316,7 +326,13 @@ public partial class TaskDetailViewModel : ViewModelBase
             IsArchived = stage.IsArchived
         };
         await _sync.QueueOperationAsync("Stage", id, SyncOperation.Update, syncStageReq);
-        await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated, details);
+
+        if (hasOtherChanges)
+        {
+            var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.WorkTypeItems is not null);
+            await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated, details);
+        }
+
         await LoadAsync();
         await UpdateTaskProgressAsync();
     }
@@ -354,10 +370,12 @@ public partial class TaskDetailViewModel : ViewModelBase
     {
         var stage = await db.TaskStages.FindAsync(stageId);
         var existing = await db.StageWorkTypes.Where(x => x.StageId == stageId).ToListAsync();
-        var existingTemplateIds = existing.Select(x => x.WorkTypeTemplateId).ToHashSet();
+        var existingByTemplate = existing
+            .GroupBy(x => x.WorkTypeTemplateId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
         db.StageWorkTypes.RemoveRange(existing);
 
-        var newlyAddedNames = new List<string>();
+        var newlyAddedLabels = new List<string>();
         if (items is not null)
         {
             foreach (var item in items)
@@ -381,16 +399,24 @@ public partial class TaskDetailViewModel : ViewModelBase
                     IsSynced = false,
                     LastModifiedLocally = DateTime.UtcNow
                 });
-                if (!existingTemplateIds.Contains(item.WorkTypeTemplateId))
-                    newlyAddedNames.Add(workTypeName);
+
+                var newQty = item.Quantity;
+                var oldQty = existingByTemplate.GetValueOrDefault(item.WorkTypeTemplateId, 0m);
+                var delta = newQty - oldQty;
+                if (delta > 0m && !existingByTemplate.ContainsKey(item.WorkTypeTemplateId))
+                {
+                    var label = ActivityDetailsService.FormatAddedStageItemLabel(workTypeName, delta, tpl?.Unit ?? item.Unit);
+                    if (!string.IsNullOrWhiteSpace(label))
+                        newlyAddedLabels.Add(label);
+                }
             }
         }
-        if (newlyAddedNames.Count > 0)
+        if (newlyAddedLabels.Count > 0)
         {
-            var workTypeNames = string.Join(", ", newlyAddedNames);
+            var workTypeLabels = string.Join(", ", newlyAddedLabels);
             await LogActivityAsync(
                 db,
-                $"В этап «{stage?.Name}» добавлены виды работ: {workTypeNames}",
+                $"В этап «{stage?.Name}» добавлены виды работ: {workTypeLabels}",
                 "Stage",
                 stageId,
                 ActivityActionKind.WorkTypeAdded);
@@ -401,6 +427,12 @@ public partial class TaskDetailViewModel : ViewModelBase
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var existing = await db.StageAssignees.Where(a => a.StageId == stageId).ToListAsync();
+        var existingById = existing.ToDictionary(x => x.UserId, x => x.UserName);
+        var newById = assignees.ToDictionary(x => x.UserId, x => x.UserName);
+
+        var added = newById.Where(kvp => !existingById.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).ToList();
+        var removed = existingById.Where(kvp => !newById.ContainsKey(kvp.Key)).Select(kvp => kvp.Value).ToList();
+
         db.StageAssignees.RemoveRange(existing);
         foreach (var a in assignees)
         {
@@ -425,6 +457,16 @@ public partial class TaskDetailViewModel : ViewModelBase
         var rows = await db.StageAssignees.Where(x => x.StageId == stageId).ToListAsync();
         await _sync.QueueOperationAsync("StageAssignees", stageId, SyncOperation.Update,
             new ReplaceStageAssigneesRequest(rows.Select(r => new AssigneeSyncItemDto(r.Id, r.UserId)).ToList()));
+
+        if (stage is not null && (added.Count > 0 || removed.Count > 0))
+        {
+            var parts = new List<string>();
+            if (added.Count > 0)
+                parts.Add($"Добавлены исполнители: {string.Join(", ", added)}");
+            if (removed.Count > 0)
+                parts.Add($"Исключены исполнители: {string.Join(", ", removed)}");
+            await LogActivityAsync(db, $"Этап «{stage.Name}»: {string.Join("; ", parts)}", "Stage", stageId, ActivityActionKind.Updated);
+        }
     }
 
     public async Task ReplaceStageMaterialsAsync(Guid stageId, IReadOnlyList<LocalStageMaterial> materials)
@@ -687,7 +729,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         && !stage.IsArchived
         && stage.Status != StageStatus.Completed;
 
-    public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req)
+    public async Task EditTaskAsync(Guid taskId, UpdateTaskRequest req, bool skipAssigneeLogging = false)
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         var task = await db.Tasks.FindAsync(taskId);
@@ -704,7 +746,7 @@ public partial class TaskDetailViewModel : ViewModelBase
             ? await db.Users.Where(u => u.Id == req.AssignedUserId.Value)
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
-        var details = ActivityDetailsService.BuildTaskUpdateDetails(task, req, assignedName, includeStatus: false);
+        var details = ActivityDetailsService.BuildTaskUpdateDetails(task, req, assignedName, includeStatus: false, skipAssignee: skipAssigneeLogging);
         task.Name = req.Name;
         task.Description = req.Description;
         task.AssignedUserId = req.AssignedUserId;

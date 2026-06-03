@@ -39,7 +39,7 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
     [ObservableProperty] private ObservableCollection<LocalEquipmentCategory> _filteredEquipmentCategories = new();
     [ObservableProperty] private ObservableCollection<LocalMaterialCategory> _filteredMaterialCategories = new();
 
-    public List<string> WorkTypeCategoryFilterOptions => new() { "Все категории" };
+    [ObservableProperty] private ObservableCollection<string> _workTypeCategoryFilterOptions = new() { "Все категории" };
 
     public CatalogsViewModel(IDbContextFactory<LocalDbContext> dbFactory, ISyncService sync, IPageUiStateStore uiState)
     {
@@ -80,9 +80,12 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
 
         // Update category filter options
         var categories = WorkTypes.Select(w => w.CategoryName).Distinct().OrderBy(c => c).ToList();
-        var options = new List<string> { "Все категории" };
-        options.AddRange(categories);
-        OnPropertyChanged(nameof(WorkTypeCategoryFilterOptions));
+        var options = new ObservableCollection<string> { "Все категории" };
+        foreach (var category in categories)
+        {
+            options.Add(category);
+        }
+        WorkTypeCategoryFilterOptions = options;
     }
 
     private async Task LoadWorkTypeCategoriesAsync()

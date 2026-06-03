@@ -27,6 +27,35 @@
                 </MultiDataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="HeaderButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <DataTemplate x:Key="ReceiptRowTemplate" DataType="{x:Type vm:ReceiptRowVm}">
             <Border Style="{StaticResource ReceiptRow}"
                     Tag="{Binding}"
@@ -67,6 +96,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -83,7 +113,23 @@
                             Padding="10,4" Height="28" FontSize="11"
                             Visibility="{Binding ProjectSummaryReceiptShowGroupToggle, Converter={StaticResource BoolToVis}}"/>
                 </Grid>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
+                <Border Grid.Row="1" Background="#F8FAFC" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Наименование" Style="{StaticResource HeaderButton}" HorizontalContentAlignment="Left" Click="ServiceHeader_Click" Tag="Name"/>
+                        <Button Grid.Column="1" Content="Кол-во" Style="{StaticResource HeaderButton}" Click="ServiceHeader_Click" Tag="Quantity"/>
+                        <Button Grid.Column="2" Content="Цена" Style="{StaticResource HeaderButton}" Click="ServiceHeader_Click" Tag="Price"/>
+                        <Button Grid.Column="3" Content="Корр." Style="{StaticResource HeaderButton}" Click="ServiceHeader_Click" Tag="Adjustment"/>
+                        <Button Grid.Column="4" Content="Сумма" Style="{StaticResource HeaderButton}" Click="ServiceHeader_Click" Tag="Total"/>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
                     <ItemsControl ItemsSource="{Binding ProjectSummaryFilteredServiceSections}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ProjectSummaryReceiptStageSectionVm}">
@@ -100,7 +146,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                <StackPanel Grid.Row="3" Margin="0,8,0,0">
                     <Border Height="1" Background="#EBECF0" Margin="0,0,0,8"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -121,6 +167,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -138,7 +185,23 @@
                             Padding="10,4" Height="28" FontSize="11"
                             Visibility="{Binding ProjectSummaryReceiptShowGroupToggle, Converter={StaticResource BoolToVis}}"/>
                 </Grid>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
+                <Border Grid.Row="1" Background="#F8FAFC" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="130"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Наименование" Style="{StaticResource HeaderButton}" HorizontalContentAlignment="Left" Click="MaterialHeader_Click" Tag="Name"/>
+                        <Button Grid.Column="1" Content="Кол-во" Style="{StaticResource HeaderButton}" Click="MaterialHeader_Click" Tag="Quantity"/>
+                        <Button Grid.Column="2" Content="Цена" Style="{StaticResource HeaderButton}" Click="MaterialHeader_Click" Tag="Price"/>
+                        <Button Grid.Column="3" Content="Корр." Style="{StaticResource HeaderButton}" Click="MaterialHeader_Click" Tag="Adjustment"/>
+                        <Button Grid.Column="4" Content="Сумма" Style="{StaticResource HeaderButton}" Click="MaterialHeader_Click" Tag="Total"/>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
                     <ItemsControl ItemsSource="{Binding ProjectSummaryFilteredMaterialSections}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:ProjectSummaryReceiptStageSectionVm}">
@@ -155,7 +218,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-                <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                <StackPanel Grid.Row="3" Margin="0,8,0,0">
                     <Border Height="1" Background="#EBECF0" Margin="0,0,0,8"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -169,7 +232,7 @@
                                FontSize="10" Foreground="#94A3B8" Margin="0,4,0,0"
                                Visibility="{Binding ProjectSummaryFilteredHasMaterialAdjustment, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
-                <Border Grid.Row="3" Background="#F8F9FA" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                <Border Grid.Row="4" Background="#F8F9FA" CornerRadius="8" Padding="12" Margin="0,10,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
