@@ -17,6 +17,7 @@ namespace MPMS.Views.Pages;
 public partial class StageDetailPage
 {
     private ObservableCollection<LocalMessage> _stageMessages = new();
+
     public StageDetailPage()
     {
         InitializeComponent();
@@ -254,3 +255,4 @@ public partial class StageDetailPage
             dpc.ScrollToBottom();
     }
 }
+

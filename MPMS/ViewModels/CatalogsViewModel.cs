@@ -244,7 +244,10 @@ public partial class CatalogsViewModel : ViewModelBase, ILoadable
             db.WorkTypeTemplates.Add(newWorkType);
             await db.SaveChangesAsync();
             await LoadWorkTypesAsync();
-        }, _dbFactory);
+        }, _dbFactory, async newCategory =>
+        {
+            await LoadWorkTypeCategoriesAsync();
+        });
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.CenteredFormOverlayWidth);
     }
 

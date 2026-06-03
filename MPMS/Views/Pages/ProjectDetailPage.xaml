@@ -434,11 +434,18 @@
                             <ColumnDefinition Width="490"/>
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20"
+                        <Border Grid.Column="0" Background="White" CornerRadius="8"
                                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="Информация о проекте" FontSize="15" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Padding="20">
+                                    <StackPanel>
+                                        <TextBlock Text="Информация о проекте" FontSize="15" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
                                 <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
                                     <Image Source="{svgc:SvgImage Source=/icons/person.svg, AppName=MPMS}"
@@ -712,10 +719,82 @@
                                         </ControlTemplate>
                                     </ProgressBar.Template>
                                 </ProgressBar>
-                                <TextBlock Text="{Binding ProjectProgressPercent, StringFormat='{}{0}%'}"
-                                           FontSize="22" FontWeight="Bold"
-                                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </StackPanel>
+                                        <TextBlock Text="{Binding ProjectProgressPercent, StringFormat='{}{0}%'}"
+                                                   FontSize="22" FontWeight="Bold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Row="1"
+                                        Background="#F8FAFC"
+                                        CornerRadius="0,0,8,8"
+                                        Padding="16,14,16,16"
+                                        BorderBrush="#EBEEF2"
+                                        BorderThickness="0,1,0,0"
+                                        Visibility="{Binding ShowProjectSummaryTab, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel>
+                                        <StackPanel Margin="0,0,0,10">
+                                            <Grid Margin="0,0,0,3">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="8" Height="8" CornerRadius="4" Background="#3B82F6"
+                                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="1" Text="Виды работ" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding ProjectSummaryAdjustedServicesTotal, StringFormat='{}{0:N2} ₽'}"
+                                                           FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="#111111" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding ProjectSummaryServiceAdjustmentLabel}" FontSize="11"
+                                                       Foreground="{Binding ProjectSummaryServiceAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                                        </StackPanel>
+
+                                        <StackPanel Margin="0,0,0,12">
+                                            <Grid Margin="0,0,0,3">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="8" Height="8" CornerRadius="4" Background="#10B981"
+                                                        VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="1" Text="Материалы" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding ProjectSummaryAdjustedMaterialsTotal, StringFormat='{}{0:N2} ₽'}"
+                                                           FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="#111111" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding ProjectSummaryMaterialAdjustmentLabel}" FontSize="11"
+                                                       Foreground="{Binding ProjectSummaryMaterialAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+                                        </StackPanel>
+
+                                        <Border Background="White" CornerRadius="8" Padding="12,10"
+                                                BorderBrush="#DFE1E6" BorderThickness="1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Итого по проекту" FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding ProjectSummaryGrandTotal, StringFormat='{}{0:N2} ₽'}"
+                                                           FontSize="20" FontWeight="Bold"
+                                                           Foreground="#111111"
+                                                           VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </Border>
 
                         <StackPanel Grid.Column="2">

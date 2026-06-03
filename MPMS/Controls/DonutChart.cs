@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MPMS.Controls;
 
@@ -20,6 +22,15 @@ public class DonutChart : Canvas
             typeof(DonutChart), new FrameworkPropertyMetadata(0.55,
                 FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty HoveredSegmentIndexProperty =
+        DependencyProperty.Register(nameof(HoveredSegmentIndex), typeof(int),
+            typeof(DonutChart), new FrameworkPropertyMetadata(-1,
+                FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty IsAnySegmentHoveredProperty =
+        DependencyProperty.Register(nameof(IsAnySegmentHovered), typeof(bool),
+            typeof(DonutChart), new FrameworkPropertyMetadata(false));
+
     public IList<DonutSegment>? Segments
     {
         get => (IList<DonutSegment>?)GetValue(SegmentsProperty);
@@ -32,6 +43,18 @@ public class DonutChart : Canvas
         set => SetValue(InnerRadiusRatioProperty, value);
     }
 
+    public int HoveredSegmentIndex
+    {
+        get => (int)GetValue(HoveredSegmentIndexProperty);
+        set => SetValue(HoveredSegmentIndexProperty, value);
+    }
+
+    public bool IsAnySegmentHovered
+    {
+        get => (bool)GetValue(IsAnySegmentHoveredProperty);
+        set => SetValue(IsAnySegmentHoveredProperty, value);
+    }
+
     private static void OnSegmentsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         => (d as DonutChart)?.InvalidateVisual();
 
@@ -39,6 +62,80 @@ public class DonutChart : Canvas
     {
         base.OnRenderSizeChanged(sizeInfo);
         InvalidateVisual();
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        var pos = e.GetPosition(this);
+        int hoveredIndex = GetSegmentAtPosition(pos);
+        if (hoveredIndex != HoveredSegmentIndex)
+        {
+            HoveredSegmentIndex = hoveredIndex;
+            IsAnySegmentHovered = (hoveredIndex != -1);
+            UpdateSegmentHoverStates();
+        }
+    }
+
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (HoveredSegmentIndex != -1)
+        {
+            HoveredSegmentIndex = -1;
+            IsAnySegmentHovered = false;
+            UpdateSegmentHoverStates();
+        }
+    }
+
+    private int GetSegmentAtPosition(Point pos)
+    {
+        double w = ActualWidth;
+        double h = ActualHeight;
+        if (w <= 0 || h <= 0) return -1;
+
+        double outerRadius = Math.Min(w, h) / 2.0;
+        double innerRadius = outerRadius * InnerRadiusRatio;
+        var center = new Point(w / 2.0, h / 2.0);
+
+        var dx = pos.X - center.X;
+        var dy = pos.Y - center.Y;
+        double distance = Math.Sqrt(dx * dx + dy * dy);
+
+        if (distance < innerRadius || distance > outerRadius) return -1;
+
+        double angle = Math.Atan2(dy, dx) * 180.0 / Math.PI;
+        angle = (angle + 90 + 360) % 360;
+
+        var segs = Segments;
+        double total = segs?.Sum(s => s.Value) ?? 0;
+        if (segs is null || segs.Count == 0 || total <= 0) return -1;
+
+        double startAngle = 0.0;
+        for (int i = 0; i < segs.Count; i++)
+        {
+            if (segs[i].Value <= 0) continue;
+            double sweepAngle = 360.0 * segs[i].Value / total;
+            if (sweepAngle >= 360) sweepAngle = 359.99;
+
+            if (angle >= startAngle && angle < startAngle + sweepAngle)
+                return i;
+
+            startAngle += sweepAngle;
+        }
+
+        return -1;
+    }
+
+    private void UpdateSegmentHoverStates()
+    {
+        var segs = Segments;
+        if (segs is null) return;
+
+        for (int i = 0; i < segs.Count; i++)
+        {
+            segs[i].IsHovered = (i == HoveredSegmentIndex);
+        }
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -108,12 +205,13 @@ public class DonutChart : Canvas
     }
 }
 
-public class DonutSegment
+public partial class DonutSegment : ObservableObject
 {
     public string Label { get; set; } = "";
     public double Value { get; set; }
     public Color Color { get; set; } = Colors.Gray;
     public double Percentage { get; set; }
+    [ObservableProperty] private bool _isHovered;
     public string ColorHex
     {
         get => $"#{Color.R:X2}{Color.G:X2}{Color.B:X2}";

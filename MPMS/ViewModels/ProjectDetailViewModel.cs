@@ -120,6 +120,24 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         !string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(_auth.UserRole, "Работник", StringComparison.OrdinalIgnoreCase);
 
+    public decimal ProjectSummaryServiceAdjustmentPercent =>
+        ProjectSummaryServicesSubtotal == 0 ? 0m :
+        (ProjectSummaryAdjustedServicesTotal / ProjectSummaryServicesSubtotal - 1m) * 100m;
+
+    public decimal ProjectSummaryMaterialAdjustmentPercent =>
+        ProjectSummaryMaterialsSubtotal == 0 ? 0m :
+        (ProjectSummaryAdjustedMaterialsTotal / ProjectSummaryMaterialsSubtotal - 1m) * 100m;
+
+    public string ProjectSummaryServiceAdjustmentLabel =>
+        ProjectPricingSummaryBuilder.FormatAdjustmentLabel(ProjectSummaryServiceAdjustmentPercent);
+
+    public string ProjectSummaryMaterialAdjustmentLabel =>
+        ProjectPricingSummaryBuilder.FormatAdjustmentLabel(ProjectSummaryMaterialAdjustmentPercent);
+
+    public string ProjectSummaryServiceAdjustmentTone => AdjustmentTone(ProjectSummaryServiceAdjustmentPercent);
+
+    public string ProjectSummaryMaterialAdjustmentTone => AdjustmentTone(ProjectSummaryMaterialAdjustmentPercent);
+
     public decimal ProjectSummaryProgressMaximum =>
         Math.Max(1m, ProjectSummaryAdjustedServicesTotal + ProjectSummaryAdjustedMaterialsTotal);
 
@@ -955,11 +973,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         OnPropertyChanged(nameof(ProjectSummaryHasServiceAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryHasMaterialAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryHasAdjustment));
+        OnPropertyChanged(nameof(ProjectSummaryServiceAdjustmentLabel));
+        OnPropertyChanged(nameof(ProjectSummaryMaterialAdjustmentLabel));
+        OnPropertyChanged(nameof(ProjectSummaryServiceAdjustmentTone));
+        OnPropertyChanged(nameof(ProjectSummaryMaterialAdjustmentTone));
         OnPropertyChanged(nameof(ProjectSummaryFilteredHasServiceAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryFilteredHasMaterialAdjustment));
         OnPropertyChanged(nameof(ProjectSummaryFilteredProgressMaximum));
         OnPropertyChanged(nameof(ShowProjectSummaryTab));
     }
+
+    private static string AdjustmentTone(decimal percent) =>
+        percent > 0m ? "#059669"
+        : percent < 0m ? "#DC2626"
+        : "#94A3B8";
 
     private void ApplyTaskFilter()
     {

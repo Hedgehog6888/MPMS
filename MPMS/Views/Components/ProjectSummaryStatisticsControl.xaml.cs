@@ -14,5 +14,5 @@ public partial class ProjectSummaryStatisticsControl
     {
         InitializeComponent();
     }
-
 }
+

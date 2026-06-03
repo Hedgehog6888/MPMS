@@ -11,6 +11,7 @@ public partial class WorkTypeFormOverlay : UserControl
 {
     private LocalWorkTypeTemplate? _existingWorkType;
     private Action<LocalWorkTypeTemplate>? _onSave;
+    private Action<LocalWorkTypeCategory>? _onCategoryAdded;
     private string? _generatedArticle;
     private IDbContextFactory<LocalDbContext>? _dbFactory;
 
@@ -25,10 +26,11 @@ public partial class WorkTypeFormOverlay : UserControl
         NameInput.Focus();
     }
 
-    public async void SetupForCreate(List<LocalWorkTypeCategory> categories, Action<LocalWorkTypeTemplate> onSave, IDbContextFactory<LocalDbContext> dbFactory)
+    public async void SetupForCreate(List<LocalWorkTypeCategory> categories, Action<LocalWorkTypeTemplate> onSave, IDbContextFactory<LocalDbContext> dbFactory, Action<LocalWorkTypeCategory>? onCategoryAdded = null)
     {
         _existingWorkType = null;
         _onSave = onSave;
+        _onCategoryAdded = onCategoryAdded;
         _dbFactory = dbFactory;
         TitleText.Text = "Новый вид работ";
         SubtitleText.Text = "Заполните данные о виде работ";
@@ -124,7 +126,7 @@ public partial class WorkTypeFormOverlay : UserControl
         ErrorPanel.Visibility = Visibility.Visible;
     }
 
-    private async void AddCategory_Click(object sender, RoutedEventArgs e)
+    private void AddCategory_Click(object sender, RoutedEventArgs e)
     {
         if (_dbFactory is null || MainWindow.Instance is null) return;
 
@@ -133,6 +135,9 @@ public partial class WorkTypeFormOverlay : UserControl
         var overlay = new WorkTypeCategoryFormOverlay(_dbFactory);
         overlay.SetupForCreate(newCategory =>
         {
+            // Notify the parent that a category was added
+            _onCategoryAdded?.Invoke(newCategory);
+
             // Reload categories from database to get the saved category with proper Id and SortOrder
             _ = Task.Run(async () =>
             {
