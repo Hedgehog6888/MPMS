@@ -158,10 +158,10 @@
         </Border>
 
         <Grid Grid.Row="2">
-            <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Main}" Margin="24,8">
-                <Grid>
+            <ScrollViewer Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Main}" VerticalScrollBarVisibility="Auto">
+                <Grid Margin="24,8">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="16"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -171,17 +171,15 @@
                         <ColumnDefinition Width="490"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Grid.Row="0" Background="White" CornerRadius="8" Padding="0"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            VerticalAlignment="Stretch">
+                    <Border Grid.Column="0" Grid.Row="0" Background="White" CornerRadius="8"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
-                                          Padding="20,20,20,12">
+                            <Border Grid.Row="0" Padding="20">
                                 <StackPanel>
                                     <TextBlock Text="Информация об этапе" FontSize="15" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
@@ -297,9 +295,9 @@
                                         <TextBlock Text="Работники не назначены" FontSize="11"
                                                    Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic"
                                                    Visibility="{Binding WorkerMembers.Count, Converter={StaticResource IntToVisInv}}"/>
-                                    </StackPanel>
                                 </StackPanel>
-                            </ScrollViewer>
+                            </StackPanel>
+                        </Border>
 
                             <Border Grid.Row="1"
                                     Background="#F8FAFC"
@@ -307,70 +305,69 @@
                                     BorderThickness="0,1,0,0"
                                     CornerRadius="0,0,8,8"
                                     Padding="16,14,16,16"
-                                    VerticalAlignment="Bottom"
                                     Visibility="{Binding ShowSummaryTab, Converter={StaticResource BoolToVis}}">
-                                <StackPanel>
-                                    <StackPanel Margin="0,0,0,10">
-                                        <Grid Margin="0,0,0,3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="8" Height="8" CornerRadius="4" Background="#3B82F6"
-                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock Grid.Column="1" Text="Виды работ" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding AdjustedServicesTotal, StringFormat='{}{0:N2} ₽'}"
-                                                       FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="#111111" VerticalAlignment="Center"/>
-                                        </Grid>
-                                        <TextBlock Text="{Binding ServiceAdjustmentLabel}" FontSize="11"
-                                                   Foreground="{Binding ServiceAdjustmentTone, Converter={StaticResource HexToBrush}}"
-                                                   Margin="16,0,0,0"/>
-                                    </StackPanel>
+                                        <StackPanel>
+                                            <StackPanel Margin="0,0,0,10">
+                                                <Grid Margin="0,0,0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="8" Height="8" CornerRadius="4" Background="#3B82F6"
+                                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <TextBlock Grid.Column="1" Text="Виды работ" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding AdjustedServicesTotal, StringFormat='{}{0:N2} ₽'}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="#111111" VerticalAlignment="Center"/>
+                                                </Grid>
+                                                <TextBlock Text="{Binding ServiceAdjustmentLabel}" FontSize="11"
+                                                           Foreground="{Binding ServiceAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                           Margin="16,0,0,0"/>
+                                            </StackPanel>
 
-                                    <StackPanel Margin="0,0,0,12">
-                                        <Grid Margin="0,0,0,3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="8" Height="8" CornerRadius="4" Background="#10B981"
-                                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <TextBlock Grid.Column="1" Text="Материалы" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding AdjustedMaterialsTotal, StringFormat='{}{0:N2} ₽'}"
-                                                       FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="#111111" VerticalAlignment="Center"/>
-                                        </Grid>
-                                        <TextBlock Text="{Binding MaterialAdjustmentLabel}" FontSize="11"
-                                                   Foreground="{Binding MaterialAdjustmentTone, Converter={StaticResource HexToBrush}}"
-                                                   Margin="16,0,0,0"/>
-                                    </StackPanel>
+                                            <StackPanel Margin="0,0,0,12">
+                                                <Grid Margin="0,0,0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="8" Height="8" CornerRadius="4" Background="#10B981"
+                                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                    <TextBlock Grid.Column="1" Text="Материалы" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding AdjustedMaterialsTotal, StringFormat='{}{0:N2} ₽'}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="#111111" VerticalAlignment="Center"/>
+                                                </Grid>
+                                                <TextBlock Text="{Binding MaterialAdjustmentLabel}" FontSize="11"
+                                                           Foreground="{Binding MaterialAdjustmentTone, Converter={StaticResource HexToBrush}}"
+                                                           Margin="16,0,0,0"/>
+                                            </StackPanel>
 
-                                    <Border Background="White" CornerRadius="8" Padding="12,10"
-                                            BorderBrush="#DFE1E6" BorderThickness="1">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="Итого по этапу" FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding AdjustedGrandTotal, StringFormat='{}{0:N2} ₽'}"
-                                                       FontSize="20" FontWeight="Bold"
-                                                       Foreground="#111111"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
+                                            <Border Background="White" CornerRadius="8" Padding="12,10"
+                                                    BorderBrush="#DFE1E6" BorderThickness="1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Итого по этапу" FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding AdjustedGrandTotal, StringFormat='{}{0:N2} ₽'}"
+                                                               FontSize="20" FontWeight="Bold"
+                                                               Foreground="#111111"
+                                                               VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
                                     </Border>
-                                </StackPanel>
-                            </Border>
                         </Grid>
                     </Border>
 
@@ -513,7 +510,7 @@
                         </Border>
                     </Grid>
                 </Grid>
-            </Grid>
+            </ScrollViewer>
 
             <Grid Visibility="{Binding ActiveTab, Converter={StaticResource EqualityToVis}, ConverterParameter=Services}" Margin="24,8,24,16">
                 <components:StageWorkTypesControl/>

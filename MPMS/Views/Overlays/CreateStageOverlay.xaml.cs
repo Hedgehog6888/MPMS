@@ -363,7 +363,6 @@ public partial class CreateStageOverlay : UserControl
 
         if ((atTop && scrollingUp) || (atBottom && scrollingDown))
         {
-            MainScrollViewer.ScrollToVerticalOffset(MainScrollViewer.VerticalOffset - e.Delta);
             e.Handled = true;
         }
     }
@@ -373,7 +372,7 @@ public partial class CreateStageOverlay : UserControl
         if (_onAfterSave is not null)
             _onAfterSave();
         else
-            MainWindow.Instance?.HideDrawer();
+            MainWindow.Instance?.HideOverlayLayer();
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)

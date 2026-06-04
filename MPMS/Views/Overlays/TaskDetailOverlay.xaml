@@ -6,10 +6,10 @@
 
     <UserControl.Resources>
         <ControlTemplate x:Key="SlimProgressBar" TargetType="ProgressBar">
-            <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                <Border x:Name="PART_Track" CornerRadius="4">
+            <Border Background="{TemplateBinding Background}" CornerRadius="2">
+                <Border x:Name="PART_Track" CornerRadius="2">
                     <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
-                            HorizontalAlignment="Left" CornerRadius="4"/>
+                            HorizontalAlignment="Left" CornerRadius="2"/>
                 </Border>
             </Border>
         </ControlTemplate>
@@ -123,7 +123,7 @@
                             <Border Width="6" Height="6" CornerRadius="3"
                                     Background="White" Opacity="0.8"
                                     Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock FontSize="11" FontWeight="Bold" Foreground="White">
+                            <TextBlock FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Text" Value="{Binding Task.Status, Converter={StaticResource TaskStatusToString}}"/>
@@ -144,6 +144,13 @@
                         <TextBlock Text="{Binding Task.Priority, Converter={StaticResource PriorityToString}}"
                                    FontSize="11" FontWeight="SemiBold"
                                    Foreground="{Binding Task.Priority, Converter={StaticResource PriorityToBrush}}"/>
+                    </Border>
+
+                    <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
+                            Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
+                            Visibility="{Binding Task.IsOverdue, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Просрочена" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="#DC2626" VerticalAlignment="Center"/>
                     </Border>
                 </StackPanel>
 
@@ -167,19 +174,27 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20,16,20,16">
 
-            <StackPanel Grid.Row="0" Margin="20,16,20,12">
-
-                <TextBlock Text="{Binding Task.Name}"
-                           FontSize="20" FontWeight="Bold"
-                           Foreground="#000000"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Task.Name}"
+                               FontSize="20" FontWeight="Bold"
+                               Foreground="#000000"
+                               TextWrapping="Wrap"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="12,0,0,0">
+                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="#000000"
+                                   Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=long}"
+                                   TextAlignment="Right"/>
+                        <TextBlock FontSize="12" Foreground="#6B778C"
+                                   Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=dayname}"
+                                   TextAlignment="Right"/>
+                    </StackPanel>
+                </Grid>
 
                 <TextBlock Text="{Binding Task.Description}"
                            FontSize="13" Foreground="#6B778C"
@@ -227,29 +242,28 @@
                                VerticalAlignment="Center"/>
                 </Grid>
                 <ProgressBar Value="{Binding Task.ProgressPercent, Mode=OneWay}"
-                             Maximum="100" Height="8" Margin="0,0,0,16"
+                             Maximum="100" Height="10" Margin="0,0,0,8"
                              Background="#EEF0F3"
                              Foreground="{Binding Task.ProgressPercent, Converter={StaticResource ProgressPercentToBrush}}"
                              Template="{StaticResource SlimProgressBar}"/>
 
                 <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
-                <Grid Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0">
+                <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="ИСПОЛНИТЕЛИ" FontSize="10" FontWeight="SemiBold"
                                    Foreground="#8993A4" Margin="0,0,0,8"/>
 
                         <StackPanel x:Name="ForemenSection" Margin="0,0,0,8" Visibility="Collapsed">
                             <TextBlock Text="Прорабы" FontSize="11" FontWeight="SemiBold" Foreground="#166534" Margin="0,0,0,6"/>
                             <ItemsControl x:Name="ForemenDisplay">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid>
+                                        <Grid Margin="0,0,12,8">
                                             <Button Style="{StaticResource PeekRowButton}"
                                                     Visibility="{Binding IsUserPeekInteractive, Converter={StaticResource BoolToVis}}"
                                                     Click="AssigneePeek_Click">
@@ -306,9 +320,14 @@
                         <StackPanel x:Name="WorkersSection" Visibility="Collapsed">
                             <TextBlock Text="Работники" FontSize="11" FontWeight="SemiBold" Foreground="#92400E" Margin="0,0,0,6"/>
                             <ItemsControl x:Name="WorkersDisplay">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid>
+                                        <Grid Margin="0,0,12,8">
                                             <Button Style="{StaticResource PeekRowButton}"
                                                     Visibility="{Binding IsUserPeekInteractive, Converter={StaticResource BoolToVis}}"
                                                     Click="AssigneePeek_Click">
@@ -373,61 +392,14 @@
                         <TextBlock x:Name="NoAssigneesText"
                                    Text="Не назначено" FontSize="12"
                                    Foreground="#97A0AF" Visibility="Collapsed"/>
-                    </StackPanel>
+                </StackPanel>
 
-                    <StackPanel Grid.Column="1">
-                        <TextBlock Text="СРОК ВЫПОЛНЕНИЯ" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="#8993A4" Margin="0,0,0,8"/>
-                        <TextBlock FontSize="15" FontWeight="Bold" Foreground="#000000"
-                                   Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=long}"
-                                   Margin="0,0,0,2"/>
-                        <TextBlock FontSize="12" Foreground="#6B778C"
-                                   Text="{Binding Task.DueDate, Converter={StaticResource DateOnlyToString}, ConverterParameter=dayname}"/>
+                <Border Background="#DFE1E6" Height="1" Margin="0,0,0,16"/>
 
-                        <Border x:Name="OverdueBadge" CornerRadius="4" Padding="6,3"
-                                Background="#FEF2F2" BorderBrush="#FCA5A5" BorderThickness="1"
-                                HorizontalAlignment="Left" Margin="0,4,0,0"
-                                Visibility="{Binding Task.IsOverdue, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Просрочена" FontSize="10" FontWeight="SemiBold"
-                                       Foreground="#DC2626"/>
-                        </Border>
-                    </StackPanel>
-                </Grid>
+                <TextBlock Text="ЭТАПЫ" FontSize="10" FontWeight="SemiBold"
+                           Foreground="#8993A4" Margin="0,0,0,8"/>
 
-                <Border Background="#DFE1E6" Height="1" Margin="0,0,0,0"/>
-
-                <Border Margin="0,4,0,8">
-                    <Border Background="#F4F5F7" CornerRadius="10" Padding="3"
-                            HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton x:Name="StagesTab" Tag="Stages" IsChecked="True"
-                                         Style="{StaticResource TabButton}" Click="InnerTab_Click">
-                                <TextBlock Text="{Binding StagesTabLabel}" VerticalAlignment="Center"/>
-                            </RadioButton>
-                            <RadioButton x:Name="MaterialsTab" Tag="Materials"
-                                         Style="{StaticResource TabButton}" Click="InnerTab_Click">
-                                <TextBlock Text="Материалы" VerticalAlignment="Center"/>
-                            </RadioButton>
-                            <RadioButton x:Name="FilesTab" Tag="Files"
-                                         Style="{StaticResource TabButton}" Click="InnerTab_Click">
-                                <TextBlock Text="Файлы" VerticalAlignment="Center"/>
-                            </RadioButton>
-                        </StackPanel>
-                    </Border>
-                </Border>
-
-            </StackPanel>
-
-            <Grid Grid.Row="1" Margin="20,0,20,16" MinHeight="200">
-                <Grid x:Name="StagesPanel" Margin="0,0,0,0" MinHeight="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding Stages}">
+                <ItemsControl ItemsSource="{Binding Stages}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border CornerRadius="6" Margin="0,0,0,4"
@@ -438,10 +410,10 @@
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="White"/>
                                                     <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                    <Setter Property="Visibility" Value="Visible"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding EffectiveMarkedForDeletion}" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#EF4444"/>
-                                                            <Setter Property="Background" Value="#FEF2F2"/>
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter Property="BorderBrush" Value="#000000"/>
@@ -461,13 +433,6 @@
                                                 <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{StaticResource TextPrimaryBrush}"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding Description}" FontSize="11"
-                                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                                           Margin="0,2,0,4" TextWrapping="Wrap"
-                                                           Visibility="{Binding Description, Converter={StaticResource StringToVis}}"/>
-                                                <TextBlock Text="{Binding StageInheritedDeletionHint}" FontSize="10"
-                                                           Foreground="#B71C1C" Margin="0,2,0,0" TextWrapping="Wrap"
-                                                           Visibility="{Binding StageInheritedDeletionHint, Converter={StaticResource StringToVis}}"/>
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
@@ -630,115 +595,19 @@
                                 <TextBlock Text="Разбейте задачу на этапы для лучшего отслеживания" FontSize="12"
                                            Foreground="#97A0AF" HorizontalAlignment="Center"/>
                             </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
 
-                    <Button x:Name="AddStageBtn" Grid.Row="1" Click="AddStage_Click"
-                            Margin="0,10,0,0" Height="36" FontSize="13"
-                            Style="{StaticResource OutlineBtn}"
-                            HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{svgc:SvgImage Source=/icons/plus_black.svg, AppName=MPMS}"
-                                   Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Добавить этап" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                </Grid>
-
-                <Grid x:Name="MaterialsPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding AllMaterials}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
-                                                Padding="14,12"
-                                                BorderBrush="#DFE1E6" BorderThickness="1">
-                                            <Grid>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
-                                                    <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding MaterialName}"
-                                                                   FontSize="13" FontWeight="SemiBold"
-                                                                   Foreground="#000000"/>
-                                                        <TextBlock Text="{Binding StageName, StringFormat='Этап: {0}'}"
-                                                                   FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                                <TextBlock HorizontalAlignment="Right"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="14" FontWeight="SemiBold"
-                                                           Foreground="#000000">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0} {1}">
-                                                            <Binding Path="Quantity"/>
-                                                            <Binding Path="Unit"/>
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
-                                        Visibility="{Binding HasNoMaterials, Converter={StaticResource BoolToVis}}">
-                                <Image Source="{svgc:SvgImage Source=/icons/material.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
-                                <TextBlock Text="Материалы ещё не добавлены" FontSize="13"
-                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-
-                <Grid x:Name="FilesPanel" Visibility="Collapsed" Margin="0,0,0,0" MinHeight="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding Files}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="White" CornerRadius="8" Margin="0,0,0,6"
-                                                Padding="14,12"
-                                                BorderBrush="#DFE1E6" BorderThickness="1">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Image Source="{svgc:SvgImage Source=/icons/file.svg, AppName=MPMS}" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" Opacity="0.7"/>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding FileName}" FontSize="13"
-                                                               FontWeight="SemiBold" Foreground="#000000"/>
-                                                    <TextBlock Text="{Binding FileType}" FontSize="11"
-                                                               Foreground="#6B778C" Margin="0,2,0,0"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <StackPanel HorizontalAlignment="Center" Margin="0,24,0,8"
-                                        Visibility="{Binding HasNoFiles, Converter={StaticResource BoolToVis}}">
-                                <Image Source="{svgc:SvgImage Source=/icons/files.svg, AppName=MPMS}" Width="36" Height="36" HorizontalAlignment="Center" Opacity="0.3"/>
-                                <TextBlock Text="Файлы ещё не загружены" FontSize="13"
-                                           Foreground="#6B778C" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-                    <Button Grid.Row="1" Click="UploadFiles_Click" Margin="0,10,0,0" Height="36" FontSize="13"
-                            Style="{StaticResource OutlineBtn}"
-                            HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{svgc:SvgImage Source=/icons/upload.svg, AppName=MPMS}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Загрузить файлы" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                </Grid>
-
-            </Grid>
-        </Grid>
+                            <Button x:Name="AddStageBtn" Click="AddStage_Click"
+                                    Margin="0,10,0,0" Height="36" FontSize="13"
+                                    Style="{StaticResource OutlineBtn}"
+                                    HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Source="{svgc:SvgImage Source=/icons/plus_black.svg, AppName=MPMS}"
+                                           Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Добавить этап" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                </StackPanel>
+            </ScrollViewer>
 
         <Border Grid.Row="2" Padding="20,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
@@ -746,18 +615,9 @@
             <Grid>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                     <Button x:Name="MarkDeletionBtn" Click="MarkTaskForDeletion_Click"
-                            Style="{StaticResource DangerBtn}" Margin="0,0,8,0">
+                            Style="{StaticResource DangerBtn}">
                         <TextBlock x:Name="MarkDeletionBtnText" Text="Пометить к удалению"
                                    Foreground="#EF4444" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </Button>
-                    <Button Content="Закрыть" Click="Close_Click"
-                            Style="{StaticResource OutlineBtn}" Margin="0,0,8,0"/>
-                    <Button x:Name="ChangeStatusBtn" Click="ChangeStatus_Click"
-                            Style="{StaticResource OutlineBtn}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="⟳  " FontSize="13"/>
-                            <TextBlock Text="Изменить статус"/>
-                        </StackPanel>
                     </Button>
                 </StackPanel>
                 <Button x:Name="EditTaskBtn" HorizontalAlignment="Right"

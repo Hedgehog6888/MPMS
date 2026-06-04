@@ -47,7 +47,7 @@ public partial class StageDetailOverlay : UserControl
 
         _ = EnsureStageDeletionFlagsFromDbAsync();
         _ = LoadAssigneesAsync();
-        _ = LoadMaterialsAsync();
+        _ = LoadWorkTypesAsync();
     }
 
     private async System.Threading.Tasks.Task EnsureStageDeletionFlagsFromDbAsync()
@@ -81,34 +81,6 @@ public partial class StageDetailOverlay : UserControl
         StatusBadge.Background = brush ?? Brushes.Gray;
         StatusText.Text = StageStatusToStringConverter.Instance.Convert(status, typeof(string), null!, CultureInfo.InvariantCulture) as string ?? "—";
 
-        var neutral = new SolidColorBrush(Color.FromRgb(0xDF, 0xE1, 0xE6));
-        var neutralBg = new SolidColorBrush(Colors.White);
-        var neutralFg = new SolidColorBrush(Color.FromRgb(0x6B, 0x77, 0x8C));
-
-        BtnPlanned.BorderBrush = status == StageStatus.Planned
-            ? new SolidColorBrush(Colors.Black) : neutral;
-        BtnPlanned.Background = status == StageStatus.Planned
-            ? new SolidColorBrush(Color.FromRgb(0xF4, 0xF5, 0xF7)) : neutralBg;
-        BtnPlanned.Foreground = status == StageStatus.Planned
-            ? new SolidColorBrush(Colors.Black) : neutralFg;
-        BtnPlanned.FontWeight = status == StageStatus.Planned ? FontWeights.SemiBold : FontWeights.Normal;
-
-        BtnInProgress.BorderBrush = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF)) : neutral;
-        BtnInProgress.Background = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0xEB, 0xF2, 0xFF)) : neutralBg;
-        BtnInProgress.Foreground = status == StageStatus.InProgress
-            ? new SolidColorBrush(Color.FromRgb(0x1B, 0x6E, 0xC2)) : neutralFg;
-        BtnInProgress.FontWeight = status == StageStatus.InProgress ? FontWeights.SemiBold : FontWeights.Normal;
-
-        BtnCompleted.BorderBrush = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutral;
-        BtnCompleted.Background = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0xE8, 0xF5, 0xE9)) : neutralBg;
-        BtnCompleted.Foreground = status == StageStatus.Completed
-            ? new SolidColorBrush(Color.FromRgb(0x00, 0x87, 0x5A)) : neutralFg;
-        BtnCompleted.FontWeight = status == StageStatus.Completed ? FontWeights.SemiBold : FontWeights.Normal;
-
         if (_stage != null && _stage.EffectiveMarkedForDeletion)
         {
             StatusBadge.Background = new SolidColorBrush(Color.FromRgb(0xDE, 0x35, 0x0B));
@@ -121,7 +93,7 @@ public partial class StageDetailOverlay : UserControl
         if (!stage.DueDate.HasValue)
         {
             StageDueDatePanel.Visibility = Visibility.Collapsed;
-            StageOverdueBadge.Visibility = Visibility.Collapsed;
+            HeaderOverdueBadge.Visibility = Visibility.Collapsed;
             return;
         }
 
@@ -130,7 +102,7 @@ public partial class StageDetailOverlay : UserControl
         StageDueDateLongText.Text = conv.Convert(d, typeof(string), "long", CultureInfo.CurrentCulture) as string ?? "—";
         StageDueDayNameText.Text = conv.Convert(d, typeof(string), "dayname", CultureInfo.CurrentCulture) as string ?? "";
         StageDueDatePanel.Visibility = Visibility.Visible;
-        StageOverdueBadge.Visibility = stage.IsOverdue ? Visibility.Visible : Visibility.Collapsed;
+        HeaderOverdueBadge.Visibility = stage.IsOverdue ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void ApplyDeletionUi()
@@ -146,10 +118,7 @@ public partial class StageDetailOverlay : UserControl
         MarkDeletionBtn.Visibility = (_stage.CanToggleStageDeletionMark && canMarkDeletion && !_isProjectClosed) ? Visibility.Visible : Visibility.Collapsed;
         MarkDeletionBtnText.Text = _stage.IsMarkedForDeletion ? "Снять пометку" : "Пометить к удалению";
         EditButton.Visibility = (eff || _stage.Status == StageStatus.Completed || _isProjectClosed) ? Visibility.Collapsed : Visibility.Visible;
-        var isCompletedLocked = _stage.Status == StageStatus.Completed;
-        BtnPlanned.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
-        BtnInProgress.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
-        BtnCompleted.IsEnabled = !eff && !isCompletedLocked && !_isProjectClosed;
+        ChangeStatusBtn.Visibility = (eff || _stage.Status == StageStatus.Completed || _isProjectClosed) ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private async System.Threading.Tasks.Task LoadAssigneesAsync()
@@ -174,19 +143,19 @@ public partial class StageDetailOverlay : UserControl
             });
         }
 
+        var roleMap = new Dictionary<Guid, string?>();
+        var subRoleMap = new Dictionary<Guid, string?>();
+        var addSpecMap = new Dictionary<Guid, string?>();
         var userIds = assignees.Select(a => a.UserId).Distinct().ToList();
-        var roleByUser = new Dictionary<Guid, string?>();
-        var subRoleByUser = new Dictionary<Guid, string?>();
-        var addSpecByUser = new Dictionary<Guid, string?>();
         if (userIds.Count > 0)
         {
-            var userRows = await db.Users.Where(u => userIds.Contains(u.Id))
+            var users = await db.Users.Where(u => userIds.Contains(u.Id))
                 .Select(u => new { u.Id, u.AvatarData, u.AvatarPath, u.RoleName, u.SubRole, u.AdditionalSubRoles })
                 .ToListAsync();
-            var avDict = userRows.ToDictionary(u => u.Id);
-            roleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.RoleName);
-            subRoleByUser = userRows.ToDictionary(u => u.Id, u => (string?)u.SubRole);
-            addSpecByUser = userRows.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
+            var avDict = users.ToDictionary(u => u.Id);
+            roleMap = users.ToDictionary(u => u.Id, u => (string?)u.RoleName);
+            subRoleMap = users.ToDictionary(u => u.Id, u => (string?)u.SubRole);
+            addSpecMap = users.ToDictionary(u => u.Id, u => u.AdditionalSubRoles);
             foreach (var a in assignees)
             {
                 if (avDict.TryGetValue(a.UserId, out var av))
@@ -196,17 +165,15 @@ public partial class StageDetailOverlay : UserControl
                 }
             }
         }
-
         var displayItems = assignees
             .Select(a =>
             {
-                roleByUser.TryGetValue(a.UserId, out var role);
-                subRoleByUser.TryGetValue(a.UserId, out var subRole);
-                addSpecByUser.TryGetValue(a.UserId, out var addSpec);
+                var role = roleMap.TryGetValue(a.UserId, out var userRole) ? userRole : null;
+                var subRole = subRoleMap.TryGetValue(a.UserId, out var sr) ? sr : null;
+                var addSpec = addSpecMap.TryGetValue(a.UserId, out var aj) ? aj : null;
                 var peek = UserPeekAccess.CanInteractPeekRow(auth, db, role);
                 return new AssigneeDisplayItem(a.UserId, a.UserName, role, a.AvatarData, a.AvatarPath, subRole, addSpec, peek);
             })
-            .Where(item => item.RoleDisplay is "Worker" or "Работник")
             .ToList();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
@@ -225,27 +192,27 @@ public partial class StageDetailOverlay : UserControl
         });
     }
 
-    private async System.Threading.Tasks.Task LoadMaterialsAsync()
+    private async System.Threading.Tasks.Task LoadWorkTypesAsync()
     {
         if (_stage is null) return;
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
-        var mats = await db.StageMaterials
-            .Where(sm => sm.StageId == _stage.Id)
+        var workTypes = await db.StageWorkTypes
+            .Where(sw => sw.StageId == _stage.Id)
             .ToListAsync();
 
         await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            if (mats.Count == 0)
+            if (workTypes.Count == 0)
             {
-                MaterialsList.Visibility = Visibility.Collapsed;
-                NoMaterialsState.Visibility = Visibility.Visible;
+                WorkTypesList.Visibility = Visibility.Collapsed;
+                NoWorkTypesState.Visibility = Visibility.Visible;
             }
             else
             {
-                MaterialsList.ItemsSource = mats;
-                MaterialsList.Visibility = Visibility.Visible;
-                NoMaterialsState.Visibility = Visibility.Collapsed;
+                WorkTypesList.ItemsSource = workTypes;
+                WorkTypesList.Visibility = Visibility.Visible;
+                NoWorkTypesState.Visibility = Visibility.Collapsed;
             }
         });
     }
@@ -281,34 +248,52 @@ public partial class StageDetailOverlay : UserControl
         MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
-    private async void SetStatusPlanned_Click(object sender, RoutedEventArgs e)
-        => await ChangeStatusAsync(StageStatus.Planned);
-
-    private async void SetStatusInProgress_Click(object sender, RoutedEventArgs e)
-        => await ChangeStatusAsync(StageStatus.InProgress);
-
-    private async void SetStatusCompleted_Click(object sender, RoutedEventArgs e)
-        => await ChangeStatusAsync(StageStatus.Completed);
-
-    private async System.Threading.Tasks.Task ChangeStatusAsync(StageStatus newStatus)
+    private async void ChangeStatus_Click(object sender, RoutedEventArgs e)
     {
         if (_stage is null || _stage.EffectiveMarkedForDeletion) return;
-        if (_stage.Status == StageStatus.Completed && newStatus != StageStatus.Completed) return;
+        if (_stage.Status == StageStatus.Completed) return;
         if (_task is null) return;
+
+        var owner = Window.GetWindow(this);
+        if (owner is null) return;
+
+        // Determine next status
+        StageStatus nextStatus = _stage.Status switch
+        {
+            StageStatus.Planned => StageStatus.InProgress,
+            StageStatus.InProgress => StageStatus.Completed,
+            _ => StageStatus.Planned
+        };
+
+        var currentStatus = StageStatusToStringConverter.Instance.Convert(_stage.Status, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var newStatus = StageStatusToStringConverter.Instance.Convert(nextStatus, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var currentBrush = StageStatusToBrushConverter.Instance.Convert(_stage.Status, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+        var newBrush = StageStatusToBrushConverter.Instance.Convert(nextStatus, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+
+        var currentColor = currentBrush?.Color.A == 255 
+            ? $"#{currentBrush.Color.R:X2}{currentBrush.Color.G:X2}{currentBrush.Color.B:X2}" 
+            : "#F4F5F7";
+        var newColor = newBrush?.Color.A == 255 
+            ? $"#{newBrush.Color.R:X2}{newBrush.Color.G:X2}{newBrush.Color.B:X2}" 
+            : "#F4F5F7";
+
+        if (!MPMS.Views.StageStatusChangeDialog.Show(owner, _stage.Name, currentStatus, newStatus, currentColor, newColor, "#FFFFFF", "#FFFFFF"))
+            return;
+
         var vm = App.Services.GetRequiredService<TaskDetailViewModel>();
         vm.SetTask(_task);
         var req = new UpdateStageRequest(
             _stage.Name,
             _stage.Description,
             _stage.AssignedUserId,
-            newStatus,
+            nextStatus,
             _stage.DueDate,
             _stage.IsMarkedForDeletion,
             _stage.IsArchived);
         await vm.SaveUpdatedStageAsync(_stage.Id, req);
 
-        _stage.Status = newStatus;
-        ApplyStatus(newStatus);
+        _stage.Status = nextStatus;
+        ApplyStatus(nextStatus);
         _onClosed?.Invoke();
     }
 
@@ -467,6 +452,24 @@ public partial class StageDetailOverlay : UserControl
 
         MainWindow.Instance?.ShowDrawer(taskPanel, stageOverlay, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
         await System.Threading.Tasks.Task.CompletedTask;
+    }
+
+    private void OpenDetailPage_Click(object sender, RoutedEventArgs e)
+    {
+        if (_stage is null || _task is null) return;
+        MainWindow.Instance?.HideDrawer();
+        var main = App.Services.GetRequiredService<MainViewModel>();
+        var stageDetailVm = App.Services.GetRequiredService<StageDetailViewModel>();
+        stageDetailVm.SetEditMode(
+            _stage,
+            _task,
+            goBack: () => main.Navigate("Tasks"),
+            onSavedAsync: async () =>
+            {
+                _onClosed?.Invoke();
+                await System.Threading.Tasks.Task.CompletedTask;
+            });
+        main.NavigateToStageEditor(stageDetailVm);
     }
 }
 

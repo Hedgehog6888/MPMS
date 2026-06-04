@@ -18,13 +18,11 @@ public partial class TaskSummaryPanel : UserControl
 {
     private int _avatarLoadVersion;
     private int _metricsLoadVersion;
-    private int _currentProgressPercent;
     private Guid _peekProjectId;
 
     public TaskSummaryPanel()
     {
         InitializeComponent();
-        ProgressTrack.SizeChanged += (_, _) => UpdateProgressWidth(_currentProgressPercent);
     }
 
     public void SetTask(LocalTask? task)
@@ -76,20 +74,12 @@ public partial class TaskSummaryPanel : UserControl
 
         // Прогресс
         var pct = Math.Clamp(task.ProgressPercent, 0, 100);
-        _currentProgressPercent = pct;
-        ProgressText.Text = $"{_currentProgressPercent}%";
+        ProgressText.Text = $"{pct}%";
         CompletedStagesText.Text = task.CompletedStages.ToString();
         TotalStagesText.Text = task.TotalStages.ToString();
-        UpdateProgressWidth(_currentProgressPercent);
-
-        // Цвет заполнения прогресса по проценту
-        ProgressFill.Background = _currentProgressPercent >= 100
-            ? new SolidColorBrush(Color.FromRgb(0x16, 0xA3, 0x4A))
-            : _currentProgressPercent >= 60
-                ? new SolidColorBrush(Color.FromRgb(0x00, 0x82, 0xFF))
-                : _currentProgressPercent >= 30
-                    ? new SolidColorBrush(Color.FromRgb(0xF9, 0x73, 0x16))
-                    : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+        ProgressBar.Value = pct;
+        ProgressBar.Foreground = ProgressPercentToBrushConverter.Instance.Convert(
+            pct, typeof(Brush), null!, CultureInfo.InvariantCulture) as SolidColorBrush;
 
         // Для панели сводки считаем 100% завершение этапов как завершённую задачу,
         // даже если сущность задачи в текущем потоке UI ещё не обновила поле Status.
@@ -223,12 +213,5 @@ public partial class TaskSummaryPanel : UserControl
     {
         if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskAssignee ta) return;
         MainWindow.Instance?.OpenUserPeekFromDrawer(ta.UserId, _peekProjectId);
-    }
-
-    private void UpdateProgressWidth(int pct)
-    {
-        var available = ProgressTrack.ActualWidth;
-        if (available <= 0) available = 220;
-        ProgressFill.Width = Math.Max(0, available * pct / 100.0);
     }
 }

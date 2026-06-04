@@ -332,7 +332,6 @@ public partial class CreateTaskOverlay : UserControl
 
         if ((atTop && scrollingUp) || (atBottom && scrollingDown))
         {
-            MainScrollViewer.ScrollToVerticalOffset(MainScrollViewer.VerticalOffset - e.Delta);
             e.Handled = true;
         }
     }

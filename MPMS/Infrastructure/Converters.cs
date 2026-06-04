@@ -13,6 +13,24 @@ using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.Infrastructure;
 
+/// <summary>Multiplies quantity and price per unit to get total.</summary>
+public class QuantityPriceMultiplierConverter : IMultiValueConverter
+{
+    public static readonly QuantityPriceMultiplierConverter Instance = new();
+
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length >= 2 && values[0] is decimal quantity && values[1] is decimal price)
+        {
+            return quantity * price;
+        }
+        return 0m;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>
 /// Конвертер видимости. Instance для bool→Visible/Collapsed.
 /// NotEmpty для string→Visible/Collapsed (скрыто когда пусто).

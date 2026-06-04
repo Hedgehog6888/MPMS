@@ -59,7 +59,7 @@ public partial class TaskDetailViewModel : ViewModelBase
         Task.ProjectIsMarkedForDeletion = projectEntity?.IsMarkedForDeletion ?? false;
 
         var stages = await db.TaskStages
-            .Where(s => s.TaskId == Task.Id)
+            .Where(s => s.TaskId == Task.Id && !s.IsArchived)
             .OrderBy(s => s.CreatedAt)
             .ToListAsync();
 

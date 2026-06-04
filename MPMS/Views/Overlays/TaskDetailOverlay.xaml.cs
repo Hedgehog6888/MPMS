@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS;
 using MPMS.Data;
+using MPMS.Infrastructure;
 using MPMS.Models;
 using MPMS.Services;
 using MPMS.ViewModels;
@@ -104,8 +106,6 @@ public partial class TaskDetailOverlay : UserControl
             EditTaskBtn.Visibility = Visibility.Collapsed;
         }
         ApplyDeletionFooter();
-        // Статус задачи вычисляется автоматически из этапов — ручное изменение скрыто
-        ChangeStatusBtn.Visibility = Visibility.Collapsed;
     }
 
     private void ApplyRoleRestrictions()
@@ -124,7 +124,6 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (_vm is null) return;
         await _vm.LoadAsync();
-        UpdateStagesTabLabel();
         UpdateEmptyStates();
         await LoadAssigneesAsync();
         ApplyRoleRestrictions();
@@ -198,20 +197,10 @@ public partial class TaskDetailOverlay : UserControl
         });
     }
 
-    private void UpdateStagesTabLabel()
-    {
-        if (_vm is null) return;
-        StagesTab.Content = _vm.Stages.Count > 0
-            ? $"Этапы ({_vm.Stages.Count})"
-            : "Этапы";
-    }
-
     private void UpdateEmptyStates()
     {
         if (_vm is null) return;
         _vm.HasNoStages = _vm.Stages.Count == 0;
-        _vm.HasNoMaterials = _vm.AllMaterials.Count == 0;
-        _vm.HasNoFiles = _vm.Files.Count == 0;
     }
 
     private void AssigneePeek_Click(object sender, RoutedEventArgs e)
@@ -225,16 +214,6 @@ public partial class TaskDetailOverlay : UserControl
     {
         _onClosed?.Invoke();
         MainWindow.Instance?.HideDrawer();
-    }
-
-    private void InnerTab_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not RadioButton rb) return;
-        string tag = rb.Tag as string ?? "";
-
-        StagesPanel.Visibility = tag == "Stages" ? Visibility.Visible : Visibility.Collapsed;
-        MaterialsPanel.Visibility = tag == "Materials" ? Visibility.Visible : Visibility.Collapsed;
-        FilesPanel.Visibility = tag == "Files" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void MarkTaskForDeletion_Click(object sender, RoutedEventArgs e)
@@ -260,8 +239,7 @@ public partial class TaskDetailOverlay : UserControl
             onSaved: async () =>
             {
                 await _vm.LoadAsync();
-                UpdateStagesTabLabel();
-                UpdateEmptyStates();
+                        UpdateEmptyStates();
                 _onClosed?.Invoke();
             },
             onAfterSave: () => _ = ReopenTaskDetailDualAsync());
@@ -308,54 +286,20 @@ public partial class TaskDetailOverlay : UserControl
         MainWindow.Instance?.ShowDrawer(leftPanel, detailDual, MainWindow.TaskOrStageDetailWithLeftTotalWidth);
     }
 
-    private void ChangeStatus_Click(object sender, RoutedEventArgs e)
-    {
-        if (_vm?.Task is null) return;
-
-        var menuStyle = Application.Current.FindResource("StatusMenu") as Style;
-        var itemStyle = Application.Current.FindResource("StatusMenuItem") as Style;
-        var menu = new ContextMenu { Style = menuStyle };
-
-        void AddItem(string label, TaskStatus status)
-        {
-            var item = new MenuItem { Header = label, Style = itemStyle };
-            item.Click += async (s, _) =>
-            {
-                await _vm.ChangeTaskStatusAsync(status);
-                // Уведомить страницу проекта о необходимости обновления и закрыть drawer
-                _onClosed?.Invoke();
-                MainWindow.Instance?.HideDrawer();
-            };
-            menu.Items.Add(item);
-        }
-
-        AddItem("Запланирована", TaskStatus.Planned);
-        AddItem("Выполняется", TaskStatus.InProgress);
-        AddItem("Приостановлена", TaskStatus.Paused);
-        AddItem("Завершена", TaskStatus.Completed);
-
-        menu.PlacementTarget = sender as UIElement;
-        menu.IsOpen = true;
-    }
-
     private void AddStage_Click(object sender, RoutedEventArgs e)
     {
         if (_vm?.Task is null) return;
-        MainWindow.Instance?.HideDrawer();
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
-        var task = _vm.Task;
-        stageEditor.SetCreateForTask(
-            task,
-            goBack: () => main.Navigate("Tasks"),
-            onSavedAsync: async () =>
+        var overlay = new CreateStageOverlay();
+        overlay.SetCreateMode(
+            fixedTaskId: _vm.Task.Id,
+            onSaved: async () =>
             {
                 await _vm.LoadAsync();
-                UpdateStagesTabLabel();
                 UpdateEmptyStates();
                 _onClosed?.Invoke();
             });
-        main.NavigateToStageEditor(stageEditor);
+
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void UploadFiles_Click(object sender, RoutedEventArgs e)
@@ -368,6 +312,25 @@ public partial class TaskDetailOverlay : UserControl
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
         if (stage.Status == Models.StageStatus.Completed) return;
+
+        var owner = Window.GetWindow(this);
+        if (owner is null) return;
+
+        var currentStatus = StageStatusToStringConverter.Instance.Convert(stage.Status, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var newStatus = StageStatusToStringConverter.Instance.Convert(Models.StageStatus.InProgress, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var currentBrush = StageStatusToBrushConverter.Instance.Convert(stage.Status, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+        var newBrush = StageStatusToBrushConverter.Instance.Convert(Models.StageStatus.InProgress, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+
+        var currentColor = currentBrush?.Color.A == 255 
+            ? $"#{currentBrush.Color.R:X2}{currentBrush.Color.G:X2}{currentBrush.Color.B:X2}" 
+            : "#F4F5F7";
+        var newColor = newBrush?.Color.A == 255 
+            ? $"#{newBrush.Color.R:X2}{newBrush.Color.G:X2}{newBrush.Color.B:X2}" 
+            : "#F4F5F7";
+
+        if (!MPMS.Views.StageStatusChangeDialog.Show(owner, stage.Name, currentStatus, newStatus, currentColor, newColor, "#FFFFFF", "#FFFFFF"))
+            return;
+
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.InProgress));
         _onClosed?.Invoke();
     }
@@ -375,6 +338,25 @@ public partial class TaskDetailOverlay : UserControl
     private async void CompleteStage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || _vm is null || stage.IsMarkedForDeletion) return;
+
+        var owner = Window.GetWindow(this);
+        if (owner is null) return;
+
+        var currentStatus = StageStatusToStringConverter.Instance.Convert(stage.Status, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var newStatus = StageStatusToStringConverter.Instance.Convert(Models.StageStatus.Completed, typeof(string), null!, System.Globalization.CultureInfo.InvariantCulture) as string ?? "";
+        var currentBrush = StageStatusToBrushConverter.Instance.Convert(stage.Status, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+        var newBrush = StageStatusToBrushConverter.Instance.Convert(Models.StageStatus.Completed, typeof(Brush), null!, System.Globalization.CultureInfo.InvariantCulture) as SolidColorBrush;
+
+        var currentColor = currentBrush?.Color.A == 255 
+            ? $"#{currentBrush.Color.R:X2}{currentBrush.Color.G:X2}{currentBrush.Color.B:X2}" 
+            : "#F4F5F7";
+        var newColor = newBrush?.Color.A == 255 
+            ? $"#{newBrush.Color.R:X2}{newBrush.Color.G:X2}{newBrush.Color.B:X2}" 
+            : "#F4F5F7";
+
+        if (!MPMS.Views.StageStatusChangeDialog.Show(owner, stage.Name, currentStatus, newStatus, currentColor, newColor, "#FFFFFF", "#FFFFFF"))
+            return;
+
         await _vm.ChangeStageStatusCommand.ExecuteAsync((stage, Models.StageStatus.Completed));
         _onClosed?.Invoke();
     }
@@ -418,8 +400,7 @@ public partial class TaskDetailOverlay : UserControl
             onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();
-                UpdateStagesTabLabel();
-                UpdateEmptyStates();
+                        UpdateEmptyStates();
                 _onClosed?.Invoke();
             });
         main.NavigateToStageEditor(stageEditor);
@@ -441,8 +422,7 @@ public partial class TaskDetailOverlay : UserControl
             onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();
-                UpdateStagesTabLabel();
-                UpdateEmptyStates();
+                        UpdateEmptyStates();
                 _onClosed?.Invoke();
             });
         main.NavigateToStageEditor(stageEditor);

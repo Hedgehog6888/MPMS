@@ -84,8 +84,7 @@
             </Grid>
         </Border>
 
-        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid Margin="24,8,24,8">
+        <Grid Grid.Row="1" Margin="24,8,24,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -331,7 +330,6 @@
 
                 </StackPanel>
             </Grid>
-        </ScrollViewer>
 
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
