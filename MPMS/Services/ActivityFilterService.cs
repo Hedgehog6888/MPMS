@@ -28,6 +28,15 @@ public static class ActivityFilterService
         public HashSet<Guid> RelatedMessageIds { get; set; } = new();
     }
 
+    private class ManagerFilterData
+    {
+        public HashSet<Guid> ProjectIds { get; set; } = new();
+        public HashSet<Guid> TaskIds { get; set; } = new();
+        public HashSet<Guid> StageIds { get; set; } = new();
+        public HashSet<Guid> RelatedFileIds { get; set; } = new();
+        public HashSet<Guid> RelatedMessageIds { get; set; } = new();
+    }
+
     public static async Task<List<LocalActivityLog>> GetFilteredActivitiesAsync(
         LocalDbContext db, IAuthService auth, int take = 100, int skipGrouped = 0, bool excludeAuthEvents = true, CancellationToken ct = default)
     {
@@ -38,10 +47,10 @@ public static class ActivityFilterService
         if (excludeAuthEvents)
             query = query.Where(a => a.ActionType == null || !AdminOnlyEventKinds.Contains(a.ActionType));
 
-        HashSet<Guid>? managerVisibleIds = null;
+        ManagerFilterData? managerFilterData = null;
         if (IsManagerRole(userRole) && currentUserId.HasValue)
         {
-            managerVisibleIds = await GetManagerVisibleUserIdsAsync(db, currentUserId.Value, ct);
+            managerFilterData = await GetManagerFilterDataAsync(db, currentUserId.Value, ct);
             ct.ThrowIfCancellationRequested();
         }
 
@@ -78,7 +87,7 @@ public static class ActivityFilterService
             foreach (var a in batch)
             {
                 if (IsAdminRole(userRole) ||
-                    PassesRoleFilter(a, userRole, currentUserId, managerVisibleIds, foremanVisibleIds, workerFilterData))
+                    PassesRoleFilter(a, userRole, currentUserId, managerFilterData, foremanVisibleIds, workerFilterData))
                     rawBuffer.Add(a);
             }
 
@@ -566,21 +575,45 @@ public static class ActivityFilterService
         LocalActivityLog a,
         string userRole,
         Guid? currentUserId,
-        HashSet<Guid>? managerVisibleIds,
+        ManagerFilterData? managerFilterData,
         HashSet<Guid>? foremanVisibleIds,
         WorkerFilterData? workerFilterData)
     {
         if (IsManagerRole(userRole))
         {
-            if (!currentUserId.HasValue || managerVisibleIds is null)
+            if (!currentUserId.HasValue || managerFilterData is null)
                 return true;
-            return a.UserId.HasValue && managerVisibleIds.Contains(a.UserId.Value);
+
+            // Менеджер видит свои действия
+            if (a.UserId == currentUserId.Value)
+                return true;
+
+            // Менеджер НЕ видит действия админа и других менеджеров
+            if (IsAdminRole(a.ActorRole) || IsManagerRole(a.ActorRole))
+                return false;
+
+            // Менеджер видит действия, связанные с его проектами
+            return IsActivityRelatedToManagerProjects(a, managerFilterData);
         }
 
         if (IsForemanRole(userRole))
         {
             if (!currentUserId.HasValue || foremanVisibleIds is null)
                 return true;
+
+            // Прораб видит свои действия
+            if (a.UserId == currentUserId.Value)
+                return true;
+
+            // Прораб видит действия менеджера
+            if (IsManagerRole(a.ActorRole))
+                return true;
+
+            // Прораб НЕ видит действия админа и других прорабов
+            if (IsAdminRole(a.ActorRole) || IsForemanRole(a.ActorRole))
+                return false;
+
+            // Прораб видит действия участников своих проектов
             return a.UserId.HasValue && foremanVisibleIds.Contains(a.UserId.Value);
         }
 
@@ -589,14 +622,17 @@ public static class ActivityFilterService
             if (!currentUserId.HasValue || workerFilterData is null)
                 return true;
 
+            // Работник видит свои действия
             if (a.UserId == currentUserId.Value)
                 return true;
 
-            if (a.UserId.HasValue && workerFilterData.CollaboratorIds.Contains(a.UserId.Value))
+            // Работник видит действия прораба в своих задачах
+            if (IsForemanRole(a.ActorRole) && a.UserId.HasValue && workerFilterData.CollaboratorIds.Contains(a.UserId.Value))
             {
                 return IsActivityRelatedToWorkerTasks(a, workerFilterData);
             }
 
+            // Работник НЕ видит действия админа, менеджера, других прорабов и других работников
             return false;
         }
 
@@ -624,6 +660,30 @@ public static class ActivityFilterService
         if (entityType == "Message" && workerData.RelatedMessageIds.Contains(entityId))
             return true;
 
+
+        return false;
+    }
+
+    private static bool IsActivityRelatedToManagerProjects(LocalActivityLog a, ManagerFilterData managerData)
+    {
+        var entityType = a.EntityType;
+        var entityId = a.EntityId;
+
+        if (entityType == "Project" && managerData.ProjectIds.Contains(entityId))
+            return true;
+
+        if (entityType == "Task" && managerData.TaskIds.Contains(entityId))
+            return true;
+
+        if (entityType == "Stage" && managerData.StageIds.Contains(entityId))
+            return true;
+
+        if ((entityType == "File" || entityType == "Image" || entityType == "Document")
+            && managerData.RelatedFileIds.Contains(entityId))
+            return true;
+
+        if (entityType == "Message" && managerData.RelatedMessageIds.Contains(entityId))
+            return true;
 
         return false;
     }
@@ -732,9 +792,9 @@ public static class ActivityFilterService
         return visible;
     }
 
-    private static async Task<HashSet<Guid>> GetManagerVisibleUserIdsAsync(LocalDbContext db, Guid managerUserId, CancellationToken ct)
+    private static async Task<ManagerFilterData> GetManagerFilterDataAsync(LocalDbContext db, Guid managerUserId, CancellationToken ct)
     {
-        var visible = new HashSet<Guid> { managerUserId };
+        var data = new ManagerFilterData();
 
         var managerProjectIds = await db.Projects
             .Where(p => p.ManagerId == managerUserId)
@@ -743,53 +803,54 @@ public static class ActivityFilterService
         ct.ThrowIfCancellationRequested();
 
         if (managerProjectIds.Count == 0)
-            return visible;
+            return data;
 
-        var memberIds = await db.ProjectMembers
-            .Where(m => managerProjectIds.Contains(m.ProjectId))
-            .Select(m => m.UserId)
-            .ToListAsync(ct);
-        ct.ThrowIfCancellationRequested();
-        foreach (var id in memberIds) visible.Add(id);
+        data.ProjectIds = managerProjectIds.ToHashSet();
 
         var taskIds = await db.Tasks
             .Where(t => managerProjectIds.Contains(t.ProjectId))
             .Select(t => t.Id)
             .ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
+        data.TaskIds = taskIds.ToHashSet();
 
-        if (taskIds.Count > 0)
-        {
-            var taskAssigneeIds = await db.TaskAssignees
-                .Where(ta => taskIds.Contains(ta.TaskId))
-                .Select(ta => ta.UserId)
-                .ToListAsync(ct);
-            foreach (var id in taskAssigneeIds) visible.Add(id);
-
-            var stageIds = await db.TaskStages
-                .Where(s => taskIds.Contains(s.TaskId))
-                .Select(s => s.Id)
-                .ToListAsync(ct);
-            ct.ThrowIfCancellationRequested();
-            if (stageIds.Count > 0)
-            {
-                var stageAssigneeIds = await db.StageAssignees
-                    .Where(sa => stageIds.Contains(sa.StageId))
-                    .Select(sa => sa.UserId)
-                    .ToListAsync(ct);
-                foreach (var id in stageAssigneeIds) visible.Add(id);
-            }
-        }
-
-        var adminMemberIds = await db.ProjectMembers
-            .Join(db.Users, pm => pm.UserId, u => u.Id, (pm, u) => new { pm.ProjectId, pm.UserId, u.RoleName })
-            .Where(x => managerProjectIds.Contains(x.ProjectId) && IsAdminRole(x.RoleName))
-            .Select(x => x.UserId)
+        var stageIds = await db.TaskStages
+            .Where(s => taskIds.Contains(s.TaskId))
+            .Select(s => s.Id)
             .ToListAsync(ct);
         ct.ThrowIfCancellationRequested();
-        foreach (var id in adminMemberIds) visible.Add(id);
+        data.StageIds = stageIds.ToHashSet();
 
-        return visible;
+        // Файлы, связанные с проектами менеджера
+        var projectFileIds = await db.Files
+            .Where(f => f.ProjectId.HasValue && managerProjectIds.Contains(f.ProjectId.Value))
+            .Select(f => f.Id)
+            .ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
+
+        var taskFileIds = await db.Files
+            .Where(f => f.TaskId.HasValue && taskIds.Contains(f.TaskId.Value))
+            .Select(f => f.Id)
+            .ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
+
+        var stageFileIds = await db.Files
+            .Where(f => f.StageId.HasValue && stageIds.Contains(f.StageId.Value))
+            .Select(f => f.Id)
+            .ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
+
+        data.RelatedFileIds = projectFileIds.Concat(taskFileIds).Concat(stageFileIds).ToHashSet();
+
+        // Сообщения, связанные с проектами менеджера
+        var messageIds = await db.Messages
+            .Where(m => m.ProjectId.HasValue && managerProjectIds.Contains(m.ProjectId.Value))
+            .Select(m => m.Id)
+            .ToListAsync(ct);
+        ct.ThrowIfCancellationRequested();
+        data.RelatedMessageIds = messageIds.ToHashSet();
+
+        return data;
     }
 
     private static async Task<WorkerFilterData> GetWorkerFilterDataAsync(

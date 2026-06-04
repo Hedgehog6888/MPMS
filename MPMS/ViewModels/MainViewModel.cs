@@ -349,11 +349,18 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(UserRoleDisplay));
         OnPropertyChanged(nameof(UserInitials));
         OnPropertyChanged(nameof(IsProjectsVisible));
+        OnPropertyChanged(nameof(IsCatalogsVisible));
         OnPropertyChanged(nameof(IsAdminPanelVisible));
         OnPropertyChanged(nameof(CanCreateProject));
         OnPropertyChanged(nameof(CanCreateTask));
         OnPropertyChanged(nameof(CanCreateStage));
         _ = RefreshAvatarAsync();
+
+        // Обновляем роль в FilesControlViewModel если текущая страница - Files
+        if (CurrentPage == "Files" && CurrentPageViewModel is FilesPageViewModel filesPageVm)
+        {
+            filesPageVm.FilesControlVM.RefreshUserInfo();
+        }
     }
 
     /// <summary>Вызывает RefreshUserInfo и затем навигацию на Home (для инициализации).</summary>

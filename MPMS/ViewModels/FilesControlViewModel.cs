@@ -125,6 +125,23 @@ public partial class FilesControlViewModel : ViewModelBase
         }
     }
 
+    public void RefreshUserInfo()
+    {
+        var wasWorker = IsWorkerRole;
+        IsWorkerRole = _auth.UserRole == "Worker" || _auth.UserRole == "Работник";
+        
+        // Если роль изменилась с работника на не-работника, переключаемся на вкладку Документы
+        if (wasWorker && !IsWorkerRole)
+        {
+            CurrentTab = "Documents";
+        }
+        // Если роль изменилась с не-работника на работника, переключаемся на вкладку Изображения
+        else if (!wasWorker && IsWorkerRole)
+        {
+            CurrentTab = "Images";
+        }
+    }
+
     private PageUiStateBinder Ui => new(_uiState, ResolveUiPageKey());
 
     private string ResolveUiPageKey()
