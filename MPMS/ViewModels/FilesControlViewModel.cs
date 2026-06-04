@@ -275,6 +275,14 @@ public partial class FilesControlViewModel : ViewModelBase
 
                 var stageMap = new Dictionary<Guid, Guid>();
                 await EnrichFilesAsync(db, files, stageMap, project);
+
+                // Загружаем превью изображений ДО возврата результата, чтобы карточки появились с фото
+                var imageIds = files.Where(f => IsImage(f.FileName)).Select(f => f.Id).ToList();
+                if (imageIds.Count > 0)
+                {
+                    await LoadImagePreviewsSyncAsync(db, files, imageIds);
+                }
+
                 return new FilesQueryResult(files, stageMap, project);
             });
 
@@ -295,8 +303,6 @@ public partial class FilesControlViewModel : ViewModelBase
             OnPropertyChanged(nameof(ImagesCount));
             OnPropertyChanged(nameof(DocumentsCount));
 
-            // Фоновая дозагрузка превью только для изображений (без блокировки UI).
-            _ = LoadImagePreviewsAsync(_cachedImagesFiles.Select(f => f.Id).ToList());
             _ = _sidebarFooter.RefreshStatsAsync();
         }
         finally
@@ -579,6 +585,36 @@ public partial class FilesControlViewModel : ViewModelBase
                     });
                 }
             });
+        }
+        catch
+        {
+            // Превью не критичны для работы — глотаем ошибки.
+        }
+    }
+
+    private async Task LoadImagePreviewsSyncAsync(LocalDbContext db, List<LocalFile> files, List<Guid> imageIds)
+    {
+        if (imageIds.Count == 0) return;
+        try
+        {
+            const int batchSize = 12;
+            for (int i = 0; i < imageIds.Count; i += batchSize)
+            {
+                var batch = imageIds.Skip(i).Take(batchSize).ToList();
+                var data = await db.Files.AsNoTracking()
+                    .Where(f => batch.Contains(f.Id))
+                    .Select(f => new { f.Id, f.FileData })
+                    .ToListAsync();
+
+                // Декодируем миниатюры и сразу заполняем в списке файлов
+                foreach (var d in data.Where(d => d.FileData is { Length: > 0 }))
+                {
+                    var target = files.FirstOrDefault(x => x.Id == d.Id);
+                    if (target == null) continue;
+                    target.FileData = d.FileData;
+                    target.Thumbnail = MPMS.Services.AvatarHelper.BytesToBitmapImage(d.FileData, 480);
+                }
+            }
         }
         catch
         {

@@ -195,7 +195,7 @@ public partial class WarehouseViewModel : ViewModelBase, ILoadable
         _ = LoadAsync();
     }
 
-    partial void OnActiveTabChanging(string oldValue, string newValue)
+    partial void OnActiveTabChanging(string? oldValue, string newValue)
     {
         if (!string.IsNullOrEmpty(oldValue))
             SaveTabUi(oldValue);
