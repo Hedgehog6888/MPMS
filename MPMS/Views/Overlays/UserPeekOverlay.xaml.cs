@@ -84,6 +84,7 @@ public partial class UserPeekOverlay : UserControl
         }
 
         _targetUserRole = user.RoleName;
+        bool isManager = UserPeekAccess.IsManager(_targetUserRole);
 
         var displayName = !string.IsNullOrWhiteSpace(user.Name)
             ? user.Name
@@ -91,190 +92,212 @@ public partial class UserPeekOverlay : UserControl
         if (string.IsNullOrWhiteSpace(displayName))
             displayName = user.Username;
 
-        var targetProjectIds = await GetTargetUserProjectIdsAsync(db, _userId);
-        var scope = _accessibleProjectIds.Intersect(targetProjectIds).ToHashSet();
-
-        var projectsInScopeRaw = await db.Projects.AsNoTracking()
-            .Where(p => scope.Contains(p.Id) && !p.IsArchived && !p.IsClosed)
-            .Select(p => new { p.Id, p.Name, p.Status, p.IsMarkedForDeletion, p.EndDate, p.StartDate, p.UpdatedAt })
-            .ToListAsync();
-
-        var projectsInScope = projectsInScopeRaw
-            .OrderBy(p => p.IsMarkedForDeletion ? 1 : 0)
-            .ThenBy(p => GetProjectStatusOrder(p.Status))
-            .ThenBy(p => p.EndDate ?? DateOnly.MaxValue)
-            .ThenBy(p => p.StartDate ?? DateOnly.MaxValue)
-            .ThenByDescending(p => p.UpdatedAt)
-            .ThenBy(p => p.Name)
-            .ToList();
-
-        var projById = projectsInScope.ToDictionary(x => x.Id);
-
-        var projectRows = projectsInScope
-            .Select(p => new UserPeekProjectRowVm { ProjectId = p.Id, Name = p.Name, Status = p.Status })
-            .ToList();
-
-        var taskEntitiesRaw = await db.Tasks.AsNoTracking()
-            .Where(t => scope.Contains(t.ProjectId) && !t.IsArchived
-                && (t.AssignedUserId == _userId
-                    || db.TaskAssignees.Any(ta => ta.TaskId == t.Id && ta.UserId == _userId)))
-            .ToListAsync();
-
-        var taskEntities = taskEntitiesRaw
-            .OrderBy(t =>
-                t.IsMarkedForDeletion || (projById.TryGetValue(t.ProjectId, out var tp) && tp.IsMarkedForDeletion)
-                    ? 1 : 0)
-            .ThenBy(t => GetTaskStatusOrder(t.Status))
-            .ThenBy(t => t.DueDate ?? DateOnly.MaxValue)
-            .ThenByDescending(t => t.UpdatedAt)
-            .ThenBy(t => t.ProjectName)
-            .ThenBy(t => t.Name)
-            .ToList();
-
-        var taskRows = taskEntities.Select(t =>
-        {
-            var projMarked = projById.TryGetValue(t.ProjectId, out var pr) && pr.IsMarkedForDeletion;
-            return new UserPeekTaskRowVm
-            {
-                TaskId = t.Id,
-                ProjectId = t.ProjectId,
-                Name = t.Name,
-                ProjectName = t.ProjectName,
-                Status = t.Status,
-                EffectiveTaskMarkedForDeletion = t.IsMarkedForDeletion || projMarked,
-                IsOverdue = t.IsOverdue,
-                DueDateLine = FormatDueDateLine(t.DueDate),
-            };
-        }).ToList();
-
-        bool isForeman = UserPeekAccess.IsForeman(_targetUserRole);
+        List<UserPeekProjectRowVm> projectRows;
+        List<UserPeekTaskRowVm> taskRows = [];
         List<UserPeekStageRowVm> stageRows = [];
+        List<UserPeekImageRowVm> imageRows = [];
 
-        if (!isForeman)
+        if (isManager)
         {
-            var stageEntitiesRaw = await (
-                from s in db.TaskStages.AsNoTracking()
-                join t in db.Tasks.AsNoTracking() on s.TaskId equals t.Id
-                where scope.Contains(t.ProjectId) && !t.IsArchived && !s.IsArchived
-                      && (s.AssignedUserId == _userId
-                          || db.StageAssignees.Any(sa => sa.StageId == s.Id && sa.UserId == _userId))
-                select new { Stage = s, Task = t }).ToListAsync();
+            var projects = await db.Projects.AsNoTracking()
+                .Where(p => p.ManagerId == _userId && !p.IsArchived && !p.IsClosed && !p.IsMarkedForDeletion)
+                .Select(p => new { p.Id, p.Name, p.Status, p.EndDate, p.StartDate, p.UpdatedAt })
+                .ToListAsync();
 
-            var stageEntities = stageEntitiesRaw
-                .OrderBy(x =>
-                    x.Stage.IsMarkedForDeletion || x.Task.IsMarkedForDeletion
-                    || (projById.TryGetValue(x.Task.ProjectId, out var sp) && sp.IsMarkedForDeletion)
-                        ? 1 : 0)
-                .ThenBy(x => GetStageStatusOrder(x.Stage.Status))
-                .ThenBy(x => x.Stage.DueDate ?? DateOnly.MaxValue)
-                .ThenByDescending(x => x.Stage.UpdatedAt)
-                .ThenBy(x => x.Task.ProjectName)
-                .ThenBy(x => x.Task.Name)
-                .ThenBy(x => x.Stage.Name)
+            projectRows = projects
+                .OrderBy(p => GetProjectStatusOrder(p.Status))
+                .ThenBy(p => p.EndDate ?? DateOnly.MaxValue)
+                .ThenBy(p => p.StartDate ?? DateOnly.MaxValue)
+                .ThenByDescending(p => p.UpdatedAt)
+                .ThenBy(p => p.Name)
+                .Select(p => new UserPeekProjectRowVm { ProjectId = p.Id, Name = p.Name, Status = p.Status })
+                .ToList();
+        }
+        else
+        {
+            var targetProjectIds = await GetTargetUserProjectIdsAsync(db, _userId);
+            var scope = _accessibleProjectIds.Intersect(targetProjectIds).ToHashSet();
+
+            var projectsInScopeRaw = await db.Projects.AsNoTracking()
+                .Where(p => scope.Contains(p.Id) && !p.IsArchived && !p.IsClosed)
+                .Select(p => new { p.Id, p.Name, p.Status, p.IsMarkedForDeletion, p.EndDate, p.StartDate, p.UpdatedAt })
+                .ToListAsync();
+
+            var projectsInScope = projectsInScopeRaw
+                .OrderBy(p => p.IsMarkedForDeletion ? 1 : 0)
+                .ThenBy(p => GetProjectStatusOrder(p.Status))
+                .ThenBy(p => p.EndDate ?? DateOnly.MaxValue)
+                .ThenBy(p => p.StartDate ?? DateOnly.MaxValue)
+                .ThenByDescending(p => p.UpdatedAt)
+                .ThenBy(p => p.Name)
                 .ToList();
 
-            foreach (var x in stageEntities)
+            var projById = projectsInScope.ToDictionary(x => x.Id);
+
+            projectRows = projectsInScope
+                .Select(p => new UserPeekProjectRowVm { ProjectId = p.Id, Name = p.Name, Status = p.Status })
+                .ToList();
+
+            var taskEntitiesRaw = await db.Tasks.AsNoTracking()
+                .Where(t => scope.Contains(t.ProjectId) && !t.IsArchived
+                    && (t.AssignedUserId == _userId
+                        || db.TaskAssignees.Any(ta => ta.TaskId == t.Id && ta.UserId == _userId)))
+                .ToListAsync();
+
+            var taskEntities = taskEntitiesRaw
+                .OrderBy(t =>
+                    t.IsMarkedForDeletion || (projById.TryGetValue(t.ProjectId, out var tp) && tp.IsMarkedForDeletion)
+                        ? 1 : 0)
+                .ThenBy(t => GetTaskStatusOrder(t.Status))
+                .ThenBy(t => t.DueDate ?? DateOnly.MaxValue)
+                .ThenByDescending(t => t.UpdatedAt)
+                .ThenBy(t => t.ProjectName)
+                .ThenBy(t => t.Name)
+                .ToList();
+
+            taskRows = taskEntities.Select(t =>
             {
-                if (!projById.TryGetValue(x.Task.ProjectId, out var pr)) continue;
-                stageRows.Add(new UserPeekStageRowVm
+                var projMarked = projById.TryGetValue(t.ProjectId, out var pr) && pr.IsMarkedForDeletion;
+                return new UserPeekTaskRowVm
                 {
-                    StageId = x.Stage.Id,
-                    TaskId = x.Task.Id,
-                    ProjectId = x.Task.ProjectId,
-                    StageName = x.Stage.Name,
-                    TaskSubtitle = "Задача: " + x.Task.Name,
-                    ProjectName = x.Task.ProjectName,
-                    Status = x.Stage.Status,
-                    EffectiveMarkedForDeletion = x.Stage.IsMarkedForDeletion || x.Task.IsMarkedForDeletion || pr.IsMarkedForDeletion,
-                    IsOverdue = x.Stage.IsOverdue,
-                    DueDateLine = FormatDueDateLine(x.Stage.DueDate),
-                });
-            }
-        }
+                    TaskId = t.Id,
+                    ProjectId = t.ProjectId,
+                    Name = t.Name,
+                    ProjectName = t.ProjectName,
+                    Status = t.Status,
+                    EffectiveTaskMarkedForDeletion = t.IsMarkedForDeletion || projMarked,
+                    IsOverdue = t.IsOverdue,
+                    DueDateLine = FormatDueDateLine(t.DueDate),
+                };
+            }).ToList();
 
-        // Изображения пользователя
-        var imageFilesRaw = await db.Files.AsNoTracking()
-            .Where(f => f.UploadedById == _userId)
-            .ToListAsync();
+            bool isForeman = UserPeekAccess.IsForeman(_targetUserRole);
 
-        var imageFileEntities = imageFilesRaw.Where(f => IsImage(f.FileName)).ToList();
-
-        var taskIdsForImages = imageFileEntities.Where(f => f.TaskId.HasValue).Select(f => f.TaskId!.Value).ToHashSet();
-        var stageIdsForImages = imageFileEntities.Where(f => f.StageId.HasValue).Select(f => f.StageId!.Value).ToHashSet();
-        var projIdsForImages = imageFileEntities.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value).ToHashSet();
-
-        var tasksDictForImages = await db.Tasks.AsNoTracking()
-            .Where(t => taskIdsForImages.Contains(t.Id))
-            .ToDictionaryAsync(t => t.Id);
-
-        var stagesDictForImages = await db.TaskStages.AsNoTracking()
-            .Where(s => stageIdsForImages.Contains(s.Id))
-            .ToDictionaryAsync(s => s.Id);
-
-        var projsDictForImages = await db.Projects.AsNoTracking()
-            .Where(p => projIdsForImages.Contains(p.Id))
-            .ToDictionaryAsync(p => p.Id);
-
-        var imageRows = new List<UserPeekImageRowVm>();
-        foreach (var f in imageFileEntities)
-        {
-            bool ok = false;
-            string? ctxName = null;
-
-            if (f.StageId.HasValue && stagesDictForImages.TryGetValue(f.StageId.Value, out var stg))
+            if (!isForeman)
             {
-                if (tasksDictForImages.TryGetValue(stg.TaskId, out var stTask)
-                    && !stg.IsArchived && !stg.IsMarkedForDeletion
-                    && !stTask.IsArchived && !stTask.IsMarkedForDeletion
-                    && scope.Contains(stTask.ProjectId)
-                    && projById.TryGetValue(stTask.ProjectId, out var stPrj)
-                    && !stPrj.IsMarkedForDeletion)
+                var stageEntitiesRaw = await (
+                    from s in db.TaskStages.AsNoTracking()
+                    join t in db.Tasks.AsNoTracking() on s.TaskId equals t.Id
+                    where scope.Contains(t.ProjectId) && !t.IsArchived && !s.IsArchived
+                          && (s.AssignedUserId == _userId
+                              || db.StageAssignees.Any(sa => sa.StageId == s.Id && sa.UserId == _userId))
+                    select new { Stage = s, Task = t }).ToListAsync();
+
+                var stageEntities = stageEntitiesRaw
+                    .OrderBy(x =>
+                        x.Stage.IsMarkedForDeletion || x.Task.IsMarkedForDeletion
+                        || (projById.TryGetValue(x.Task.ProjectId, out var sp) && sp.IsMarkedForDeletion)
+                            ? 1 : 0)
+                    .ThenBy(x => GetStageStatusOrder(x.Stage.Status))
+                    .ThenBy(x => x.Stage.DueDate ?? DateOnly.MaxValue)
+                    .ThenByDescending(x => x.Stage.UpdatedAt)
+                    .ThenBy(x => x.Task.ProjectName)
+                    .ThenBy(x => x.Task.Name)
+                    .ThenBy(x => x.Stage.Name)
+                    .ToList();
+
+                foreach (var x in stageEntities)
                 {
-                    ok = true;
-                    ctxName = stPrj.Name;
+                    if (!projById.TryGetValue(x.Task.ProjectId, out var pr)) continue;
+                    stageRows.Add(new UserPeekStageRowVm
+                    {
+                        StageId = x.Stage.Id,
+                        TaskId = x.Task.Id,
+                        ProjectId = x.Task.ProjectId,
+                        StageName = x.Stage.Name,
+                        TaskSubtitle = "Задача: " + x.Task.Name,
+                        ProjectName = x.Task.ProjectName,
+                        Status = x.Stage.Status,
+                        EffectiveMarkedForDeletion = x.Stage.IsMarkedForDeletion || x.Task.IsMarkedForDeletion || pr.IsMarkedForDeletion,
+                        IsOverdue = x.Stage.IsOverdue,
+                        DueDateLine = FormatDueDateLine(x.Stage.DueDate),
+                    });
                 }
             }
-            else if (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var tsk))
-            {
-                if (!tsk.IsArchived && !tsk.IsMarkedForDeletion
-                    && scope.Contains(tsk.ProjectId)
-                    && projById.TryGetValue(tsk.ProjectId, out var tPrj)
-                    && !tPrj.IsMarkedForDeletion)
-                {
-                    ok = true;
-                    ctxName = tPrj.Name;
-                }
-            }
-            else if (f.ProjectId.HasValue && projsDictForImages.TryGetValue(f.ProjectId.Value, out var prj))
-            {
-                if (scope.Contains(prj.Id) && !prj.IsArchived && !prj.IsClosed && !prj.IsMarkedForDeletion)
-                {
-                    ok = true;
-                    ctxName = prj.Name;
-                }
-            }
 
-            if (ok)
+            var imageFilesRaw = await db.Files.AsNoTracking()
+                .Where(f => f.UploadedById == _userId)
+                .ToListAsync();
+
+            var imageFileEntities = imageFilesRaw.Where(f => IsImage(f.FileName)).ToList();
+
+            var taskIdsForImages = imageFileEntities.Where(f => f.TaskId.HasValue).Select(f => f.TaskId!.Value).ToHashSet();
+            var stageIdsForImages = imageFileEntities.Where(f => f.StageId.HasValue).Select(f => f.StageId!.Value).ToHashSet();
+            var projIdsForImages = imageFileEntities.Where(f => f.ProjectId.HasValue).Select(f => f.ProjectId!.Value).ToHashSet();
+
+            var tasksDictForImages = await db.Tasks.AsNoTracking()
+                .Where(t => taskIdsForImages.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id);
+
+            var stagesDictForImages = await db.TaskStages.AsNoTracking()
+                .Where(s => stageIdsForImages.Contains(s.Id))
+                .ToDictionaryAsync(s => s.Id);
+
+            var projsDictForImages = await db.Projects.AsNoTracking()
+                .Where(p => projIdsForImages.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id);
+
+            foreach (var f in imageFileEntities)
             {
-                imageRows.Add(new UserPeekImageRowVm
+                bool ok = false;
+                string? ctxName = null;
+
+                if (f.StageId.HasValue && stagesDictForImages.TryGetValue(f.StageId.Value, out var stg))
                 {
-                    FileId = f.Id,
-                    FileName = f.FileName,
-                    FileData = f.FileData,
-                    FilePath = f.FilePath,
-                    FileSize = f.FileSize,
-                    Description = f.Description,
-                    ProjectId = f.ProjectId ?? (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var t) ? t.ProjectId : Guid.Empty),
-                    ProjectName = ctxName,
-                    UploadedByName = f.UploadedByName,
-                    UploadedById = f.UploadedById,
-                    CreatedAt = f.OriginalCreatedAt ?? f.CreatedAt,
-                });
+                    if (tasksDictForImages.TryGetValue(stg.TaskId, out var stTask)
+                        && !stg.IsArchived && !stg.IsMarkedForDeletion
+                        && !stTask.IsArchived && !stTask.IsMarkedForDeletion
+                        && scope.Contains(stTask.ProjectId)
+                        && projById.TryGetValue(stTask.ProjectId, out var stPrj)
+                        && !stPrj.IsMarkedForDeletion)
+                    {
+                        ok = true;
+                        ctxName = stPrj.Name;
+                    }
+                }
+                else if (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var tsk))
+                {
+                    if (!tsk.IsArchived && !tsk.IsMarkedForDeletion
+                        && scope.Contains(tsk.ProjectId)
+                        && projById.TryGetValue(tsk.ProjectId, out var tPrj)
+                        && !tPrj.IsMarkedForDeletion)
+                    {
+                        ok = true;
+                        ctxName = tPrj.Name;
+                    }
+                }
+                else if (f.ProjectId.HasValue && projsDictForImages.TryGetValue(f.ProjectId.Value, out var prj))
+                {
+                    if (scope.Contains(prj.Id) && !prj.IsArchived && !prj.IsClosed && !prj.IsMarkedForDeletion)
+                    {
+                        ok = true;
+                        ctxName = prj.Name;
+                    }
+                }
+
+                if (ok)
+                {
+                    imageRows.Add(new UserPeekImageRowVm
+                    {
+                        FileId = f.Id,
+                        FileName = f.FileName,
+                        FileData = f.FileData,
+                        FilePath = f.FilePath,
+                        FileSize = f.FileSize,
+                        Description = f.Description,
+                        ProjectId = f.ProjectId ?? (f.TaskId.HasValue && tasksDictForImages.TryGetValue(f.TaskId.Value, out var t) ? t.ProjectId : Guid.Empty),
+                        ProjectName = ctxName,
+                        UploadedByName = f.UploadedByName,
+                        UploadedById = f.UploadedById,
+                        CreatedAt = f.OriginalCreatedAt ?? f.CreatedAt,
+                    });
+                }
             }
         }
 
         var bmp = AvatarHelper.GetImageSource(user.AvatarData, user.AvatarPath, displayName);
         var roleBadgeColor = GetRoleBadgeColor(user.RoleName);
+        var roleBadgeForegroundColor = GetRoleBadgeForegroundColor(user.RoleName);
         var joinedStr = user.CreatedAt != default
             ? $"В системе с {user.CreatedAt:dd.MM.yyyy}"
             : null;
@@ -286,6 +309,8 @@ public partial class UserPeekOverlay : UserControl
 
             // Шапка: роль-бейдж
             HubRoleBadge.Background = new SolidColorBrush(roleBadgeColor);
+            HubRoleBadge.BorderBrush = new SolidColorBrush(roleBadgeForegroundColor);
+            HubRoleBadgeText.Foreground = new SolidColorBrush(roleBadgeForegroundColor);
             HubRoleBadgeText.Text = user.RoleDisplayName;
 
             // Аватар
@@ -356,11 +381,20 @@ public partial class UserPeekOverlay : UserControl
                 JoinedText.Visibility = Visibility.Collapsed;
 
             // Вкладки с счётчиками
-            TabProjectsLabel.Text = $"Проекты ({projectRows.Count})";
-            TabTasksLabel.Text = $"Задачи ({taskRows.Count})";
-            TabStagesLabel.Text = $"Этапы ({stageRows.Count})";
-            TabImagesLabel.Text = $"Изображения ({imageRows.Count})";
-            TabStages.Visibility = isForeman ? Visibility.Collapsed : Visibility.Visible;
+            if (isManager)
+            {
+                TabsPanel.Visibility = Visibility.Collapsed;
+                HubContextChipText.Text = "Проекты менеджера";
+            }
+            else
+            {
+                TabsPanel.Visibility = Visibility.Visible;
+                TabProjectsLabel.Text = $"Проекты ({projectRows.Count})";
+                TabTasksLabel.Text = $"Задачи ({taskRows.Count})";
+                TabStagesLabel.Text = $"Этапы ({stageRows.Count})";
+                TabImagesLabel.Text = $"Изображения ({imageRows.Count})";
+                TabStages.Visibility = UserPeekAccess.IsForeman(_targetUserRole) ? Visibility.Collapsed : Visibility.Visible;
+            }
 
             // Данные списков
             ProjectsList.ItemsSource = projectRows;
@@ -865,11 +899,20 @@ public partial class UserPeekOverlay : UserControl
 
     private static Color GetRoleBadgeColor(string? roleName) => roleName switch
     {
-        "Administrator" or "Admin" => Color.FromRgb(0xC0, 0x39, 0x2B),
-        "Project Manager" or "ProjectManager" or "Manager" => Color.FromRgb(0x1B, 0x6E, 0xC2),
-        "Foreman" => Color.FromRgb(0x27, 0xAE, 0x60),
-        "Worker" => Color.FromRgb(0xEA, 0x58, 0x0C),
-        _ => Color.FromRgb(0x6B, 0x77, 0x8C),
+        "Administrator" or "Admin" => Color.FromRgb(0xFE, 0xE2, 0xE2),
+        "Project Manager" or "ProjectManager" or "Manager" => Color.FromRgb(0xDB, 0xE8, 0xFE),
+        "Foreman" => Color.FromRgb(0xD1, 0xFA, 0xE5),
+        "Worker" => Color.FromRgb(0xED, 0xE9, 0xFE),
+        _ => Color.FromRgb(0xF1, 0xF3, 0xF5),
+    };
+
+    private static Color GetRoleBadgeForegroundColor(string? roleName) => roleName switch
+    {
+        "Administrator" or "Admin" => Color.FromRgb(0x99, 0x1B, 0x1B),
+        "Project Manager" or "ProjectManager" or "Manager" => Color.FromRgb(0x1D, 0x4E, 0xD8),
+        "Foreman" => Color.FromRgb(0x16, 0x65, 0x34),
+        "Worker" => Color.FromRgb(0x6D, 0x28, 0xD9),
+        _ => Color.FromRgb(0x4B, 0x55, 0x63),
     };
 
     /// <summary>Фон шапки по статусу задачи (как в сводке задачи слева).</summary>
@@ -978,13 +1021,19 @@ public partial class UserPeekOverlay : UserControl
     private static async System.Threading.Tasks.Task<HashSet<Guid>> GetTargetUserProjectIdsAsync(
         LocalDbContext db, Guid targetUserId)
     {
+        var openProjectIds = await db.Projects.AsNoTracking()
+            .Where(p => !p.IsArchived && !p.IsClosed)
+            .Select(p => p.Id)
+            .ToListAsync();
+        var openSet = openProjectIds.ToHashSet();
+
         var fromMembers = await db.ProjectMembers.AsNoTracking()
-            .Where(m => m.UserId == targetUserId)
+            .Where(m => m.UserId == targetUserId && openSet.Contains(m.ProjectId))
             .Select(m => m.ProjectId)
             .ToListAsync();
 
         var fromTasks = await db.Tasks.AsNoTracking()
-            .Where(t => !t.IsArchived
+            .Where(t => !t.IsArchived && openSet.Contains(t.ProjectId)
                 && (t.AssignedUserId == targetUserId
                     || db.TaskAssignees.Any(ta => ta.TaskId == t.Id && ta.UserId == targetUserId)))
             .Select(t => t.ProjectId)
@@ -993,7 +1042,7 @@ public partial class UserPeekOverlay : UserControl
         var fromStages = await (
             from s in db.TaskStages.AsNoTracking()
             join t in db.Tasks.AsNoTracking() on s.TaskId equals t.Id
-            where !s.IsArchived && !t.IsArchived
+            where !s.IsArchived && !t.IsArchived && openSet.Contains(t.ProjectId)
                   && (s.AssignedUserId == targetUserId
                       || db.StageAssignees.Any(sa => sa.StageId == s.Id && sa.UserId == targetUserId))
             select t.ProjectId).ToListAsync();

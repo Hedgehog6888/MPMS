@@ -254,8 +254,7 @@ public partial class StageDetailOverlay : UserControl
     {
         if (_task is null) return;
         if (sender is not FrameworkElement fe || fe.DataContext is not AssigneeDisplayItem item) return;
-        MainWindow.Instance?.HideAllOverlays();
-        MainWindow.Instance?.TryOpenUserPeek(item.UserId, _task.ProjectId);
+        MainWindow.Instance?.OpenUserPeekFromDrawer(item.UserId, _task.ProjectId);
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

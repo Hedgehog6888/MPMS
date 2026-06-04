@@ -34,7 +34,10 @@ public partial class ProjectDetailPage : UserControl
         this.Loaded += (_, __) =>
         {
             if (ProjectDiscussionControl != null)
+            {
                 ProjectDiscussionControl.SendRequested += OnProjectDiscussionSendRequested;
+                ProjectDiscussionControl.UserPeekRequested += OnUserPeekRequested;
+            }
         };
     }
 
@@ -116,6 +119,12 @@ public partial class ProjectDetailPage : UserControl
         if (VM?.Project is null) return;
         if (sender is not FrameworkElement fe || fe.DataContext is not LocalProjectMember m) return;
         MainWindow.Instance?.TryOpenUserPeek(m.UserId, VM.Project.Id);
+    }
+
+    private void ProjectManagerPeek_Click(object sender, RoutedEventArgs e)
+    {
+        if (VM?.Project is null) return;
+        MainWindow.Instance?.TryOpenUserPeek(VM.Project.ManagerId, VM.Project.Id);
     }
 
     private void Tab_Click(object sender, RoutedEventArgs e)
@@ -534,6 +543,12 @@ public partial class ProjectDetailPage : UserControl
         if (string.IsNullOrWhiteSpace(text)) return;
         await VM.SendMessageAsync(text);
         _ = Dispatcher.InvokeAsync(() => ProjectDiscussionControl.ScrollToBottom(), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    private void OnUserPeekRequested(object? sender, Guid userId)
+    {
+        if (VM?.Project is null) return;
+        MainWindow.Instance?.TryOpenUserPeek(userId, VM.Project.Id);
     }
 
     private static readonly SolidColorBrush SearchFocusBrush = new(Colors.Black);

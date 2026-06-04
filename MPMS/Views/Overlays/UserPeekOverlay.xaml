@@ -119,16 +119,13 @@
                         </Button.Template>
                     </Button>
 
-                    <Border x:Name="HubRoleBadge" CornerRadius="6" Padding="10,5" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="6" Height="6" CornerRadius="3" Background="White"
-                                    Opacity="0.8" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="HubRoleBadgeText" FontSize="11" FontWeight="Bold" Foreground="White"/>
-                        </StackPanel>
+                    <Border x:Name="HubRoleBadge" CornerRadius="4" Padding="6,2" Margin="0,0,8,0"
+                            BorderThickness="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="HubRoleBadgeText" FontSize="11" FontWeight="SemiBold"/>
                     </Border>
 
                     <Border x:Name="HubContextChip" CornerRadius="6" Padding="8,4" Background="#F4F5F7">
-                        <TextBlock Text="Карточка участника" FontSize="11"
+                        <TextBlock x:Name="HubContextChipText" Text="Карточка участника" FontSize="11"
                                    FontWeight="SemiBold" Foreground="#8993A4"/>
                     </Border>
                 </StackPanel>
@@ -189,7 +186,7 @@
                 </Grid>
             </Border>
 
-            <Border Background="#F4F5F7" Padding="20,4,20,6">
+            <Border x:Name="TabsPanel" Background="#F4F5F7" Padding="20,4,20,6">
                 <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
                         CornerRadius="8" Padding="6,4" HorizontalAlignment="Left">
                     <StackPanel Orientation="Horizontal">

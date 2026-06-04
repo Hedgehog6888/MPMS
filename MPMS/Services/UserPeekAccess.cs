@@ -3,7 +3,7 @@ using MPMS.Data;
 
 namespace MPMS.Services;
 
-/// <summary>Правила карточки участника: админ/менеджер — любой; прораб — только работники; работник — не открывает.</summary>
+/// <summary>Правила карточки участника: админ — любой; менеджер — все кроме админов; прораб — только работники; работник — не открывает.</summary>
 public static class UserPeekAccess
 {
     public static string? ResolveViewerRole(IAuthService auth, LocalDbContext db)
@@ -44,14 +44,16 @@ public static class UserPeekAccess
 
     public static bool IsTargetWorkerRole(string? roleName) => IsWorker(roleName);
 
-    /// <summary>Кликабельная строка исполнителя: работнику никогда; прорабу — только если назначенный работник.</summary>
+    /// <summary>Кликабельная строка исполнителя: работнику никогда; менеджеру — все кроме админов; прорабу — только если назначенный работник.</summary>
     public static bool CanInteractPeekRow(IAuthService auth, LocalDbContext db, string? assigneeRoleName)
     {
         var vr = ResolveViewerRole(auth, db);
         if (IsWorker(vr))
             return false;
-        if (IsAdministrator(vr) || IsManager(vr))
+        if (IsAdministrator(vr))
             return true;
+        if (IsManager(vr))
+            return !IsAdministrator(assigneeRoleName);
         if (IsForeman(vr))
             return IsTargetWorkerRole(assigneeRoleName);
         return false;
@@ -60,11 +62,23 @@ public static class UserPeekAccess
     /// <summary>Можно ли открыть оверлей для указанного пользователя.</summary>
     public static bool CanViewerPeekTargetUser(IAuthService auth, LocalDbContext db, Guid targetUserId)
     {
+        var viewerId = auth.UserId;
+        if (viewerId == targetUserId)
+            return false;
+
         var vr = ResolveViewerRole(auth, db);
         if (IsWorker(vr))
             return false;
-        if (IsAdministrator(vr) || IsManager(vr))
+        if (IsAdministrator(vr))
             return true;
+        if (IsManager(vr))
+        {
+            var tr = db.Users.AsNoTracking()
+                .Where(u => u.Id == targetUserId)
+                .Select(u => u.RoleName)
+                .FirstOrDefault();
+            return !IsAdministrator(tr);
+        }
         if (IsForeman(vr))
         {
             var tr = db.Users.AsNoTracking()
@@ -123,7 +137,7 @@ public static class UserPeekAccess
         if (IsAdministrator(vr))
         {
             return (await db.Projects.AsNoTracking()
-                .Where(p => !p.IsArchived)
+                .Where(p => !p.IsArchived && !p.IsClosed)
                 .Select(p => p.Id)
                 .ToListAsync(ct)).ToHashSet();
         }
@@ -131,7 +145,7 @@ public static class UserPeekAccess
         if (IsManager(vr))
         {
             return (await db.Projects.AsNoTracking()
-                .Where(p => !p.IsArchived && p.ManagerId == viewerId)
+                .Where(p => !p.IsArchived && !p.IsClosed && p.ManagerId == viewerId)
                 .Select(p => p.Id)
                 .ToListAsync(ct)).ToHashSet();
         }
@@ -140,14 +154,21 @@ public static class UserPeekAccess
         {
             return (await db.ProjectMembers.AsNoTracking()
                 .Where(m => m.UserId == viewerId)
-                .Select(m => m.ProjectId)
+                .Join(db.Projects.AsNoTracking().Where(p => !p.IsArchived && !p.IsClosed),
+                    m => m.ProjectId, p => p.Id, (m, p) => m.ProjectId)
                 .ToListAsync(ct)).ToHashSet();
         }
 
         if (IsWorker(vr))
         {
+            var openProjectIds = await db.Projects.AsNoTracking()
+                .Where(p => !p.IsArchived && !p.IsClosed)
+                .Select(p => p.Id)
+                .ToListAsync(ct);
+            var openSet = openProjectIds.ToHashSet();
+
             var fromTasks = await db.Tasks.AsNoTracking()
-                .Where(t => !t.IsArchived
+                .Where(t => !t.IsArchived && openSet.Contains(t.ProjectId)
                     && (t.AssignedUserId == viewerId
                         || db.TaskAssignees.Any(ta => ta.TaskId == t.Id && ta.UserId == viewerId)))
                 .Select(t => t.ProjectId)
@@ -157,7 +178,7 @@ public static class UserPeekAccess
             var fromStages = await (
                 from s in db.TaskStages.AsNoTracking()
                 join t in db.Tasks.AsNoTracking() on s.TaskId equals t.Id
-                where !s.IsArchived && !t.IsArchived
+                where !s.IsArchived && !t.IsArchived && openSet.Contains(t.ProjectId)
                       && (s.AssignedUserId == viewerId
                           || db.StageAssignees.Any(sa => sa.StageId == s.Id && sa.UserId == viewerId))
                 select t.ProjectId).Distinct().ToListAsync(ct);

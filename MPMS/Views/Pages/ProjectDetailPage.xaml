@@ -497,25 +497,29 @@
                                     <StackPanel>
                                         <TextBlock Text="Ответственный менеджер" FontSize="11"
                                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Style="{StaticResource AvatarCircle48}"
-                                                    Background="{Binding Project.ManagerInitials, Converter={StaticResource InitialsToBrush}}"
-                                                    Margin="0,0,12,0">
-                                                <Grid>
-                                                    <Image Style="{StaticResource AvatarImage}"
-                                                           Source="{Binding Project.ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
-                                                           Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
-                                                    <TextBlock Text="{Binding Project.ManagerInitials}"
-                                                               Foreground="White" FontSize="14" FontWeight="Bold"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
-                                                </Grid>
-                                            </Border>
-                                            <TextBlock Text="{Binding Project.ManagerName}"
-                                                       FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
+                                        <Button Style="{StaticResource PeekRowButton}" Margin="0"
+                                                Click="ProjectManagerPeek_Click"
+                                                HorizontalAlignment="Left">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource AvatarCircle48}"
+                                                        Background="{Binding Project.ManagerInitials, Converter={StaticResource InitialsToBrush}}"
+                                                        Margin="0,0,12,0">
+                                                    <Grid>
+                                                        <Image Style="{StaticResource AvatarImage}"
+                                                               Source="{Binding Project.ManagerAvatarData, Converter={StaticResource AvatarBytesToImage}}"
+                                                               Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVis}}"/>
+                                                        <TextBlock Text="{Binding Project.ManagerInitials}"
+                                                                   Foreground="White" FontSize="14" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="{Binding Project.ManagerAvatarData, Converter={StaticResource NullToVisInv}}"/>
+                                                    </Grid>
+                                                </Border>
+                                                <TextBlock Text="{Binding Project.ManagerName}"
+                                                           FontSize="14" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
 

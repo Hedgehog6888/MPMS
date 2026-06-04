@@ -40,6 +40,10 @@ public partial class MainWindow : Window
     private UIElement? _modalBaseContent = null;
     private double _modalBaseWidth = 0;
 
+    private UIElement? _savedDrawerContent = null;
+    private double _savedDrawerWidth = 0;
+    private bool _hasSavedDrawer = false;
+
     private System.Windows.Threading.DispatcherTimer? _saveSettingsTimer;
 
     public MainWindow(MainViewModel viewModel)
@@ -331,6 +335,45 @@ public partial class MainWindow : Window
             ShowCenteredOverlay(overlay, 480);
     }
 
+    /// <summary>Проекты менеджера: только для администратора.</summary>
+    public void TryOpenManagerPeek(Guid managerId)
+    {
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        if (!UserPeekAccess.IsAdministrator(auth.UserRole))
+            return;
+
+        TryOpenUserPeek(managerId, Guid.Empty);
+    }
+
+    /// <summary>Открыть оверлей пользователя из бокового drawer с сохранением для восстановления.</summary>
+    public void OpenUserPeekFromDrawer(Guid userId, Guid projectId)
+    {
+        if (_overlayMode != OverlayPresentationMode.Drawer)
+        {
+            TryOpenUserPeek(userId, projectId);
+            return;
+        }
+
+        var savedContent = (UIElement?)DrawerContentPresenter.Content;
+        var savedWidth = DrawerPanel.Width;
+
+        HideAllOverlays();
+
+        TryOpenUserPeek(userId, projectId);
+
+        if (_overlayMode == OverlayPresentationMode.None)
+        {
+            if (savedContent is not null)
+                ShowDrawer(savedContent, savedWidth);
+        }
+        else
+        {
+            _savedDrawerContent = savedContent;
+            _savedDrawerWidth = savedWidth;
+            _hasSavedDrawer = true;
+        }
+    }
+
     public void ShowDrawer(UIElement? leftContent, UIElement rightContent, double totalWidth = 1000)
     {
         DrawerContentPresenter.Content = null;
@@ -377,6 +420,21 @@ public partial class MainWindow : Window
             ModalOverlayPanel.Visibility = Visibility.Collapsed;
             OverlayLayer.Visibility = Visibility.Collapsed;
             _overlayMode = OverlayPresentationMode.None;
+
+            if (_hasSavedDrawer)
+            {
+                _hasSavedDrawer = false;
+                var savedContent = _savedDrawerContent;
+                var savedWidth = _savedDrawerWidth;
+                _savedDrawerContent = null;
+                if (savedContent is not null)
+                {
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        ShowDrawer(savedContent, savedWidth);
+                    }));
+                }
+            }
         }
 
         if (_overlayMode == OverlayPresentationMode.Modal)
@@ -414,6 +472,8 @@ public partial class MainWindow : Window
     /// <summary>Принудительно закрывает все оверлеи (drawer + stacked modal) без анимации.</summary>
     public void HideAllOverlays()
     {
+        _hasSavedDrawer = false;
+        _savedDrawerContent = null;
         _drawerModalStack.Clear();
         DrawerContentPresenter.Content = null;
         ModalOverlayContentPresenter.Content = null;

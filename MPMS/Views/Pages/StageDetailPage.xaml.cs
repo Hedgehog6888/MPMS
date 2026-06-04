@@ -68,6 +68,8 @@ public partial class StageDetailPage
             {
                 dpc.SendRequested -= OnStageDiscussionSendRequested;
                 dpc.SendRequested += OnStageDiscussionSendRequested;
+                dpc.UserPeekRequested -= OnUserPeekRequested;
+                dpc.UserPeekRequested += OnUserPeekRequested;
                 dpc.ItemsSource = _stageMessages;
             }
         };
@@ -259,6 +261,13 @@ public partial class StageDetailPage
         _stageMessages.Add(msg);
         if (sender is MPMS.Views.Components.DiscussionPanelControl dpc)
             dpc.ScrollToBottom();
+    }
+
+    private void OnUserPeekRequested(object? sender, Guid userId)
+    {
+        if (DataContext is not StageDetailViewModel vm) return;
+        var projectId = vm.EditTask?.ProjectId ?? Guid.Empty;
+        MainWindow.Instance?.TryOpenUserPeek(userId, projectId);
     }
 }
 

@@ -24,7 +24,9 @@
 
                                 <Border Grid.Column="0" Style="{StaticResource AvatarCircle36}"
                                         Margin="0,0,12,0" VerticalAlignment="Top"
-                                        Background="{Binding UserColor, Converter={StaticResource HexToBrush}}">
+                                        Background="{Binding UserColor, Converter={StaticResource HexToBrush}}"
+                                        Cursor="Hand"
+                                        MouseLeftButtonDown="UserAvatar_Click">
                                     <Grid>
                                         <Image Style="{StaticResource AvatarImage}"
                                                Source="{Binding AvatarData, Converter={StaticResource AvatarBytesToImage}}"
@@ -44,7 +46,9 @@
                                         <TextBlock Text="{Binding UserName}"
                                                    FontSize="13" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextPrimaryBrush}"
-                                                   VerticalAlignment="Center"/>
+                                                   VerticalAlignment="Center"
+                                                   Cursor="Hand"
+                                                   MouseLeftButtonDown="UserName_Click"/>
                                         <Border CornerRadius="4" Padding="6,2" Margin="8,0,0,0"
                                                 BorderThickness="1"
                                                 VerticalAlignment="Center"

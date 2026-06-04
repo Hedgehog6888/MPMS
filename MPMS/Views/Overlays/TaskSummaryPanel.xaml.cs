@@ -222,8 +222,7 @@ public partial class TaskSummaryPanel : UserControl
     private void AssigneePeek_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.DataContext is not LocalTaskAssignee ta) return;
-        MainWindow.Instance?.HideAllOverlays();
-        MainWindow.Instance?.TryOpenUserPeek(ta.UserId, _peekProjectId);
+        MainWindow.Instance?.OpenUserPeekFromDrawer(ta.UserId, _peekProjectId);
     }
 
     private void UpdateProgressWidth(int pct)

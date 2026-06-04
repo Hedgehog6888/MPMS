@@ -31,6 +31,7 @@ public partial class DiscussionPanelControl : UserControl
     }
 
     public event EventHandler<string>? SendRequested;
+    public event EventHandler<Guid>? UserPeekRequested;
 
     private void Send_Click(object sender, RoutedEventArgs e)
     {
@@ -49,6 +50,20 @@ public partial class DiscussionPanelControl : UserControl
             Send_Click(sender, e);
             e.Handled = true;
         }
+    }
+
+    private void UserAvatar_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not MPMS.Models.LocalMessage msg) return;
+        e.Handled = true;
+        UserPeekRequested?.Invoke(this, msg.UserId);
+    }
+
+    private void UserName_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not MPMS.Models.LocalMessage msg) return;
+        e.Handled = true;
+        UserPeekRequested?.Invoke(this, msg.UserId);
     }
 
     public void ScrollToBottom()
