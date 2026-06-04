@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
@@ -109,6 +110,7 @@ public partial class ProjectDetailPage : UserControl
 
         CreateTaskBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
+        CreateReportBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible ? Visibility.Visible : Visibility.Collapsed);
         AddFileBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
@@ -162,6 +164,7 @@ public partial class ProjectDetailPage : UserControl
         bool closed = VM?.Project is { } p && (p.IsClosed || p.Status == ProjectStatus.Closed);
         CreateTaskBtn.Visibility = (tab == "Tasks" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
         CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        CreateReportBtn.Visibility = (tab == "Files" && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
         AddFileBtn.Visibility = (tab == "Files" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")
@@ -517,6 +520,21 @@ public partial class ProjectDetailPage : UserControl
     private void AddFile_Click(object sender, RoutedEventArgs e)
     {
         VM?.FilesControlVM.UploadFileCommand.Execute(null);
+    }
+
+    private void CreateReport_Click(object sender, RoutedEventArgs e)
+    {
+        ReportPopup.IsOpen = true;
+    }
+
+    private void KS2Report_Click(object sender, RoutedEventArgs e)
+    {
+        // TODO: Генерация отчёта КС-2
+    }
+
+    private void ProjectReport_Click(object sender, RoutedEventArgs e)
+    {
+        // TODO: Генерация отчёта по проекту
     }
 
     private void AddProjectStage_Click(object sender, RoutedEventArgs e)

@@ -1,0 +1,321 @@
+<UserControl x:Class="MPMS.Views.Overlays.ReportSelectionOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White"
+             Width="600" Height="640">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="24,18"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock x:Name="TitleLabel" Text="Параметры отчёта"
+                               FontSize="20" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock x:Name="SubtitleLabel" Text="Выберите данные для включения в отчёт"
+                               FontSize="12" Foreground="#6B778C" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="32" Height="32">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="16">
+                                <TextBlock Text="✕" FontSize="14" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="1" Margin="24,12,24,8">
+            <StackPanel x:Name="DataTypesPanel">
+                <TextBlock Text="Типы данных" FontSize="13" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,0,0,12"/>
+
+                    <CheckBox x:Name="IncludeMaterials" IsChecked="True" Margin="0,0,0,10">
+                        <CheckBox.Template>
+                            <ControlTemplate TargetType="CheckBox">
+                                <Border Background="Transparent" Padding="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="CheckBorder" Width="20" Height="20"
+                                                Background="White" BorderBrush="#DFE1E6"
+                                                BorderThickness="1" CornerRadius="4"
+                                                Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <Path x:Name="CheckMark" Data="M 4 10 L 8 14 L 16 4"
+                                                  Stroke="#111111" StrokeThickness="2"
+                                                  StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                                  Visibility="Collapsed"/>
+                                        </Border>
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                        <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                        <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </CheckBox.Template>
+                        <TextBlock Text="Материалы" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                    </CheckBox>
+
+                    <CheckBox x:Name="IncludeEquipment" IsChecked="True" Margin="0,0,0,10">
+                        <CheckBox.Template>
+                            <ControlTemplate TargetType="CheckBox">
+                                <Border Background="Transparent" Padding="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="CheckBorder" Width="20" Height="20"
+                                                Background="White" BorderBrush="#DFE1E6"
+                                                BorderThickness="1" CornerRadius="4"
+                                                Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <Path x:Name="CheckMark" Data="M 4 10 L 8 14 L 16 4"
+                                                  Stroke="#111111" StrokeThickness="2"
+                                                  StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                                  Visibility="Collapsed"/>
+                                        </Border>
+                                        <ContentPresenter VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                        <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                        <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </CheckBox.Template>
+                        <TextBlock Text="Оборудование" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                    </CheckBox>
+                </StackPanel>
+
+                <TextBlock Text="Категории" FontSize="13" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,20,0,12"/>
+
+                <RadioButton x:Name="AllCategories" IsChecked="True" GroupName="CategoryGroup" Margin="0,0,0,10">
+                    <RadioButton.Template>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border Background="Transparent" Padding="0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border x:Name="RadioBorder" Width="20" Height="20"
+                                            Background="White" BorderBrush="#DFE1E6"
+                                            BorderThickness="1" CornerRadius="10"
+                                            Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Ellipse x:Name="RadioDot" Width="8" Height="8"
+                                                 Fill="#111111" Visibility="Collapsed"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ContentPresenter VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="RadioDot" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </RadioButton.Template>
+                    <TextBlock Text="Все категории" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                </RadioButton>
+
+                <RadioButton x:Name="SpecificCategories" GroupName="CategoryGroup" Margin="0,0,0,10">
+                    <RadioButton.Template>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border Background="Transparent" Padding="0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border x:Name="RadioBorder" Width="20" Height="20"
+                                            Background="White" BorderBrush="#DFE1E6"
+                                            BorderThickness="1" CornerRadius="10"
+                                            Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Ellipse x:Name="RadioDot" Width="8" Height="8"
+                                                 Fill="#111111" Visibility="Collapsed"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ContentPresenter VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="RadioDot" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </RadioButton.Template>
+                    <TextBlock Text="Выбрать категории" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                </RadioButton>
+        </StackPanel>
+
+        <Border x:Name="CategorySelectionPanel" Grid.Row="2" Margin="24,0,24,8" Background="#F8FAFC"
+                BorderBrush="#E2E8F0" BorderThickness="1"
+                CornerRadius="8" Padding="12" IsEnabled="False">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer.Style>
+                    <Style TargetType="ScrollViewer">
+                        <Setter Property="MaxHeight" Value="400"/>
+                    </Style>
+                </ScrollViewer.Style>
+                <StackPanel>
+                    <TextBlock Text="Выберите категории:" FontSize="12"
+                               Foreground="#6B778C" Margin="0,0,0,8"/>
+
+                    <StackPanel x:Name="MaterialCategoriesSection" Visibility="Collapsed">
+                        <TextBlock Text="Материалы" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="MaterialCategoryCheckboxes">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="0,0,0,6">
+                                        <CheckBox.Template>
+                                            <ControlTemplate TargetType="CheckBox">
+                                                <Border Background="Transparent" Padding="0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border x:Name="CheckBorder" Width="18" Height="18"
+                                                                Background="White" BorderBrush="#DFE1E6"
+                                                                BorderThickness="1" CornerRadius="4"
+                                                                Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <Path x:Name="CheckMark" Data="M 3 9 L 7 13 L 15 3"
+                                                                  Stroke="#111111" StrokeThickness="2"
+                                                                  StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                                                  Visibility="Collapsed"/>
+                                                        </Border>
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                                        <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                                        <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </CheckBox.Template>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#000000" VerticalAlignment="Center"/>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <StackPanel x:Name="EquipmentCategoriesSection" Visibility="Collapsed" Margin="0,8,0,0">
+                        <TextBlock Text="Оборудование" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="EquipmentCategoryCheckboxes">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="0,0,0,6">
+                                        <CheckBox.Template>
+                                            <ControlTemplate TargetType="CheckBox">
+                                                <Border Background="Transparent" Padding="0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border x:Name="CheckBorder" Width="18" Height="18"
+                                                                Background="White" BorderBrush="#DFE1E6"
+                                                                BorderThickness="1" CornerRadius="4"
+                                                                Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <Path x:Name="CheckMark" Data="M 3 9 L 7 13 L 15 3"
+                                                                  Stroke="#111111" StrokeThickness="2"
+                                                                  StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                                                  Visibility="Collapsed"/>
+                                                        </Border>
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                                        <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                                        <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </CheckBox.Template>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#000000" VerticalAlignment="Center"/>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <StackPanel x:Name="WorkTypeCategoriesSection" Visibility="Collapsed">
+                        <TextBlock Text="Виды работ" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="WorkTypeCategoryCheckboxes">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="0,0,0,6">
+                                        <CheckBox.Template>
+                                            <ControlTemplate TargetType="CheckBox">
+                                                <Border Background="Transparent" Padding="0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border x:Name="CheckBorder" Width="18" Height="18"
+                                                                Background="White" BorderBrush="#DFE1E6"
+                                                                BorderThickness="1" CornerRadius="4"
+                                                                Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <Path x:Name="CheckMark" Data="M 3 9 L 7 13 L 15 3"
+                                                                  Stroke="#111111" StrokeThickness="2"
+                                                                  StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                                                  Visibility="Collapsed"/>
+                                                        </Border>
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                                        <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                                        <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </CheckBox.Template>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" Foreground="#000000" VerticalAlignment="Center"/>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Row="3" Padding="24,14"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button Content="Создать отчёт"
+                        HorizontalAlignment="Right"
+                        Click="GenerateReport_Click" Style="{StaticResource BlackBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

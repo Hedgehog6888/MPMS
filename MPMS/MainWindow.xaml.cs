@@ -79,7 +79,6 @@ public partial class MainWindow : Window
         LocationChanged += (s, e) => ScheduleSaveSettings();
         SizeChanged += (s, e) => ScheduleSaveSettings();
     }
-
     private void ScheduleSaveSettings()
     {
         _saveSettingsTimer?.Stop();
@@ -180,7 +179,6 @@ public partial class MainWindow : Window
         var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250));
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, fadeIn);
     }
-
     public void ShowCenteredOverlay(UIElement content, double width = 920)
     {
         _drawerModalStack.Clear();
@@ -283,7 +281,6 @@ public partial class MainWindow : Window
         };
         ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideIn);
     }
-
     private void HideStackedModalOnly()
     {
         if (_modalStack.Count == 0) return;
@@ -464,7 +461,6 @@ public partial class MainWindow : Window
         };
         drawerSlideOut.Completed += (_, _) => CompleteClose();
         DrawerPanel.BeginAnimation(FrameworkElement.MarginProperty, drawerSlideOut);
-
         var drawerFadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
         OverlayBackdrop.BeginAnimation(UIElement.OpacityProperty, drawerFadeOut);
     }
@@ -532,7 +528,6 @@ public partial class MainWindow : Window
         };
         ModalOverlayTransform.BeginAnimation(TranslateTransform.YProperty, slideOut);
     }
-
     private void ModalOverlayContentClip_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (ModalOverlayPanel.Visibility != Visibility.Visible)
@@ -575,7 +570,6 @@ public partial class MainWindow : Window
         };
         PhotoViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
-
     public void HideOverlayLayer() => OverlayLayer.Visibility = Visibility.Collapsed;
     public void ShowOverlayLayer() => OverlayLayer.Visibility = Visibility.Visible;
 
@@ -641,7 +635,6 @@ public partial class MainWindow : Window
         };
         DocumentViewerLayer.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
-
     public void HideDocumentViewerTemporarily()
     {
         if (DocumentViewerLayer.Visibility == Visibility.Visible)

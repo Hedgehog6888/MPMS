@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -169,6 +170,16 @@ public partial class StageDetailPage
     {
         if (DataContext is StageDetailViewModel vm && vm.CanUploadStageFiles)
             vm.FilesControlVM.UploadFileCommand.Execute(null);
+    }
+
+    private void CreateReport_Click(object sender, RoutedEventArgs e)
+    {
+        ReportPopup.IsOpen = true;
+    }
+
+    private void StageReport_Click(object sender, RoutedEventArgs e)
+    {
+        // TODO: Генерация отчёта по этапу
     }
 
     private void EditStage_Click(object sender, RoutedEventArgs e)

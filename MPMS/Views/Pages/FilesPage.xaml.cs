@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
+using MPMS.Views.Overlays;
 
 namespace MPMS.Views.Pages;
 
@@ -38,6 +40,25 @@ public partial class FilesPage : UserControl
         {
             vm.FilesControlVM.UploadFileCommand.Execute(null);
         }
+    }
+
+    private void CreateReport_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        ReportPopup.IsOpen = true;
+    }
+
+    private void MaterialStockReport_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        ReportPopup.IsOpen = false;
+        var overlay = new ReportSelectionOverlay("MaterialStock");
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 600);
+    }
+
+    private void WorkTypeReport_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        ReportPopup.IsOpen = false;
+        var overlay = new ReportSelectionOverlay("WorkType");
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 600);
     }
 
     public void ShowToast(string message)

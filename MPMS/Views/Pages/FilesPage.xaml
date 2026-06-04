@@ -52,6 +52,65 @@
                             </Style>
                         </Button.Style>
                     </Button>
+                    <Button x:Name="CreateReportBtn" Click="CreateReport_Click"
+                            Height="38" Padding="18,0" Margin="8,0,0,0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{svgc:SvgImage Source=/icons/file_black.svg, AppName=MPMS}"
+                                   Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Создать отчёт" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Popup x:Name="ReportPopup"
+                           PlacementTarget="{Binding ElementName=CreateReportBtn}"
+                           Placement="Bottom"
+                           AllowsTransparency="True"
+                           StaysOpen="False"
+                           Width="200">
+                        <Border Background="White" CornerRadius="8"
+                                BorderBrush="#DFE1E6" BorderThickness="1"
+                                Margin="0,4,0,0">
+                            <StackPanel Margin="4">
+                                <Border Background="Transparent" CornerRadius="6"
+                                        Padding="12,10" Cursor="Hand"
+                                        MouseLeftButtonDown="MaterialStockReport_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="По складу" FontSize="13" Foreground="#111111" Background="Transparent"/>
+                                </Border>
+                                <Border Background="Transparent" CornerRadius="6"
+                                        Padding="12,10" Cursor="Hand"
+                                        MouseLeftButtonDown="WorkTypeReport_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F4F5F7"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="По видам работы" FontSize="13" Foreground="#111111" Background="Transparent"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
                     <Button Click="UploadFile_Click" Height="38" Padding="18,0" Margin="8,0,0,0">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource BlackBtn}">
