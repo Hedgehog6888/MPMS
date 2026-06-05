@@ -48,7 +48,7 @@ public static class MpmsImagesPaths
 
     public static string GetImageFilePath(Guid fileId, string fileName)
     {
-        return Path.Combine(GetImagesDirectory(), $"{fileId}{Path.GetExtension(fileName)}");
+        return Path.Combine(GetImagesDirectory(), fileName);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public static class MpmsDocumentPaths
 
     public static string GetDocumentFilePath(Guid fileId, string fileName)
     {
-        return Path.Combine(GetDocumentsDirectory(), $"{fileId}{Path.GetExtension(fileName)}");
+        return Path.Combine(GetDocumentsDirectory(), fileName);
     }
 
     /// <summary>

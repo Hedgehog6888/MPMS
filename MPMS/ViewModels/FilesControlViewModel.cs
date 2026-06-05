@@ -905,13 +905,25 @@ public partial class FilesControlViewModel : ViewModelBase
                     continue;
                 }
 
+                // Определяем целевую папку и копируем файл
+                var fileId = Guid.NewGuid();
+                string targetPath;
+                if (IsImage(fileInfo.Name))
+                {
+                    targetPath = MpmsImagesPaths.EnsureImageCopy(fileId, filePath, fileInfo.Name);
+                }
+                else
+                {
+                    targetPath = MpmsDocumentPaths.EnsureDocumentCopy(fileId, filePath, fileInfo.Name);
+                }
+
                 var newFile = new LocalFile
                 {
-                    Id = Guid.NewGuid(),
+                    Id = fileId,
                     FileName = fileInfo.Name,
                     FileSize = fileInfo.Length,
                     FileType = fileInfo.Extension,
-                    FilePath = filePath,
+                    FilePath = targetPath,
                     FileData = fileData,
                     ProjectId = _projectId,
                     TaskId = _taskId,
@@ -1105,6 +1117,20 @@ public partial class FilesControlViewModel : ViewModelBase
         if (dbFile.IsSynced)
             await _sync.QueueOperationAsync("File", file.Id, SyncOperation.Delete, new { });
 
+        // Удаляем физический файл с диска
+        if (!string.IsNullOrEmpty(dbFile.FilePath) && File.Exists(dbFile.FilePath))
+        {
+            try
+            {
+                File.Delete(dbFile.FilePath);
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку, но не прерываем удаление из БД
+                System.Diagnostics.Debug.WriteLine($"Ошибка при удалении файла с диска: {ex.Message}");
+            }
+        }
+
         db.Files.Remove(dbFile);
         var entityType = GetFileEntityType(file.FileName);
         var entityLabel = entityType switch
@@ -1164,19 +1190,17 @@ public partial class FilesControlViewModel : ViewModelBase
 
         string filePath = string.Empty;
 
+        // Если файл существует на диске, копируем в MPMS/images и открываем копию
         if (!string.IsNullOrEmpty(file.FilePath) && File.Exists(file.FilePath))
         {
-            filePath = file.FilePath;
+            var mpmsPath = MpmsImagesPaths.EnsureImageCopy(file.Id, file.FilePath, file.FileName);
+            filePath = mpmsPath;
         }
-
+        // Иначе извлекаем из FileData в MPMS/images
         else if (file.FileData != null && file.FileData.Length > 0)
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
-            Directory.CreateDirectory(tempDir);
-            filePath = Path.Combine(tempDir, file.FileName);
-            await File.WriteAllBytesAsync(filePath, file.FileData);
+            filePath = await EnsureImageFileAsync(file);
         }
-
         else if (_api.IsOnline)
         {
             IsLoading = true;
@@ -1186,10 +1210,7 @@ public partial class FilesControlViewModel : ViewModelBase
                 if (data != null)
                 {
                     file.FileData = data;
-                    var tempDir = Path.Combine(Path.GetTempPath(), $"mpms_photo_{file.Id}");
-                    Directory.CreateDirectory(tempDir);
-                    filePath = Path.Combine(tempDir, file.FileName);
-                    await File.WriteAllBytesAsync(filePath, data);
+                    filePath = await EnsureImageFileAsync(file);
                 }
             }
             catch (Exception ex)
@@ -1392,6 +1413,22 @@ public partial class FilesControlViewModel : ViewModelBase
         return string.Empty;
     }
 
+    private async Task<string> EnsureImageFileAsync(LocalFile file)
+    {
+        var mpmsPath = MpmsImagesPaths.GetImageFilePath(file.Id, file.FileName);
+        if (File.Exists(mpmsPath))
+            return mpmsPath;
+
+        if (file.FileData != null && file.FileData.Length > 0)
+        {
+            Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
+            await File.WriteAllBytesAsync(mpmsPath, file.FileData);
+            return mpmsPath;
+        }
+
+        return string.Empty;
+    }
+
     private async Task SaveEditedDocumentAsync(Guid fileId, string savedPath, string savedFileName, string? savedDescription, string mpmsPath)
     {
         if (!File.Exists(savedPath)) return;
@@ -1408,7 +1445,13 @@ public partial class FilesControlViewModel : ViewModelBase
         dbFile.FileSize = fileInfo.Length;
         dbFile.FileData = fileData;
         dbFile.Description = savedDescription;
-        dbFile.FilePath = mpmsPath;
+
+        // Копируем отредактированный файл в папку MPMS/documents
+        var targetPath = MpmsDocumentPaths.GetDocumentFilePath(fileId, savedFileName);
+        Directory.CreateDirectory(MpmsDocumentPaths.GetDocumentsDirectory());
+        File.Copy(savedPath, targetPath, true);
+        dbFile.FilePath = targetPath;
+
         dbFile.IsSynced = false;
         dbFile.LastModifiedLocally = DateTime.UtcNow;
 
@@ -1432,7 +1475,13 @@ public partial class FilesControlViewModel : ViewModelBase
         dbFile.FileSize = fileInfo.Length;
         dbFile.FileData = fileData;
         dbFile.Description = savedDescription;
-        dbFile.FilePath = mpmsPath;
+
+        // Копируем отредактированный файл в папку MPMS/images
+        var targetPath = MpmsImagesPaths.GetImageFilePath(fileId, savedFileName);
+        Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
+        File.Copy(savedPath, targetPath, true);
+        dbFile.FilePath = targetPath;
+
         dbFile.IsSynced = false;
         dbFile.LastModifiedLocally = DateTime.UtcNow;
 

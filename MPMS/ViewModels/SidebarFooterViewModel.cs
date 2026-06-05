@@ -13,7 +13,9 @@ public enum SidebarFooterMode
     Uploading,
     UploadSummary,
     Deleting,
-    DeletionSummary
+    DeletionSummary,
+    GeneratingReport,
+    ReportSummary
 }
 
 public partial class SidebarFooterViewModel : ViewModelBase
@@ -38,12 +40,16 @@ public partial class SidebarFooterViewModel : ViewModelBase
     [ObservableProperty] private string _deleteSummaryTitle = string.Empty;
     [ObservableProperty] private bool _isSingleFileDelete;
     [ObservableProperty] private double _deleteProgressPercent;
+    [ObservableProperty] private string _reportGenerationTitle = string.Empty;
+    [ObservableProperty] private double _reportGenerationProgressPercent;
 
     public bool IsStatsMode => Mode == SidebarFooterMode.Stats;
     public bool IsUploadingMode => Mode == SidebarFooterMode.Uploading;
     public bool IsUploadSummaryMode => Mode == SidebarFooterMode.UploadSummary;
     public bool IsDeletingMode => Mode == SidebarFooterMode.Deleting;
     public bool IsDeletionSummaryMode => Mode == SidebarFooterMode.DeletionSummary;
+    public bool IsGeneratingReportMode => Mode == SidebarFooterMode.GeneratingReport;
+    public bool IsReportSummaryMode => Mode == SidebarFooterMode.ReportSummary;
 
     public string UploadProgressTitle =>
         IsSingleFileUpload
@@ -82,6 +88,8 @@ public partial class SidebarFooterViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsUploadSummaryMode));
         OnPropertyChanged(nameof(IsDeletingMode));
         OnPropertyChanged(nameof(IsDeletionSummaryMode));
+        OnPropertyChanged(nameof(IsGeneratingReportMode));
+        OnPropertyChanged(nameof(IsReportSummaryMode));
     }
 
     partial void OnUploadCompletedChanged(int value)
@@ -162,8 +170,8 @@ public partial class SidebarFooterViewModel : ViewModelBase
 
             var fileNames = await query.Select(f => f.FileName).ToListAsync();
             StatsImages = fileNames.Count(AvailableFilesQuery.IsImageFileName);
-            StatsDocuments = fileNames.Count - StatsImages;
-            StatsReports = 0;
+            StatsDocuments = fileNames.Count(f => !AvailableFilesQuery.IsImageFileName(f) && !IsReportFile(f));
+            StatsReports = fileNames.Count(IsReportFile);
         }
         catch
         {
@@ -324,5 +332,46 @@ public partial class SidebarFooterViewModel : ViewModelBase
         if (lastOne == 1) return form1;
         if (lastOne >= 2 && lastOne <= 4) return form2;
         return form5;
+    }
+
+    private static bool IsReportFile(string fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return false;
+        fileName = fileName.ToLower();
+        return fileName.Contains("отчёт") || fileName.Contains("отчет") || fileName.Contains("report");
+    }
+
+    public void BeginReportGeneration(string reportTitle)
+    {
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = null;
+        Mode = SidebarFooterMode.GeneratingReport;
+        ReportGenerationTitle = reportTitle;
+        ReportGenerationProgressPercent = 0;
+    }
+
+    public void UpdateReportGenerationProgress(double progress)
+    {
+        ReportGenerationProgressPercent = progress;
+    }
+
+    public void CompleteReportGeneration(string reportTitle)
+    {
+        Mode = SidebarFooterMode.ReportSummary;
+        ReportGenerationTitle = reportTitle;
+        ReportGenerationProgressPercent = 100;
+        _ = RefreshStatsAsync();
+
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+        _revertToStatsTimer.Tick += OnRevertToStatsTick;
+        _revertToStatsTimer.Start();
+    }
+
+    public void CancelReportGeneration()
+    {
+        _revertToStatsTimer?.Stop();
+        _revertToStatsTimer = null;
+        Mode = SidebarFooterMode.Stats;
     }
 }

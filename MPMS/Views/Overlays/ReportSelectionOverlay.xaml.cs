@@ -1,22 +1,49 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
+using MPMS.ViewModels;
 
 namespace MPMS.Views.Overlays;
+
+public class CategorySelectionItem : INotifyPropertyChanged
+{
+    private bool _isSelected;
+
+    public string Name { get; set; } = string.Empty;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            _isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
 
 public partial class ReportSelectionOverlay : UserControl
 {
     private readonly string _reportType;
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
+    private readonly WarehouseReportService _reportService;
+    private readonly SidebarFooterViewModel _sidebarFooter;
 
     public ReportSelectionOverlay(string reportType)
     {
         InitializeComponent();
         _reportType = reportType;
         _dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        _reportService = App.Services.GetRequiredService<WarehouseReportService>();
+        _sidebarFooter = App.Services.GetRequiredService<SidebarFooterViewModel>();
 
         TitleLabel.Text = reportType == "MaterialStock" ? "Отчёт по складу" : "Отчёт по видам работы";
         SubtitleLabel.Text = reportType == "MaterialStock"
@@ -69,17 +96,25 @@ public partial class ReportSelectionOverlay : UserControl
 
         if (_reportType == "MaterialStock")
         {
-            // Load material categories
-            var materialCategories = await db.MaterialCategories
-                .OrderBy(c => c.Name)
-                .Select(c => new { Name = c.Name })
+            // Load material categories that have materials
+            var materialCategories = await db.Materials
+                .Where(m => !m.IsArchived)
+                .Where(m => m.CategoryName != null)
+                .Select(m => m.CategoryName)
+                .Distinct()
+                .OrderBy(name => name)
+                .Select(name => new CategorySelectionItem { Name = name! })
                 .ToListAsync();
             MaterialCategoryCheckboxes.ItemsSource = materialCategories;
 
-            // Load equipment categories
-            var equipmentCategories = await db.EquipmentCategories
-                .OrderBy(c => c.Name)
-                .Select(c => new { Name = c.Name })
+            // Load equipment categories that have equipment
+            var equipmentCategories = await db.Equipments
+                .Where(e => !e.IsArchived)
+                .Where(e => e.CategoryName != null)
+                .Select(e => e.CategoryName)
+                .Distinct()
+                .OrderBy(name => name)
+                .Select(name => new CategorySelectionItem { Name = name! })
                 .ToListAsync();
             EquipmentCategoryCheckboxes.ItemsSource = equipmentCategories;
         }
@@ -90,7 +125,7 @@ public partial class ReportSelectionOverlay : UserControl
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.SortOrder)
                 .ThenBy(c => c.Name)
-                .Select(c => new { Name = c.Name })
+                .Select(c => new CategorySelectionItem { Name = c.Name })
                 .ToListAsync();
 
             WorkTypeCategoryCheckboxes.ItemsSource = workTypeCategories;
@@ -102,10 +137,59 @@ public partial class ReportSelectionOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
     }
 
-    private void GenerateReport_Click(object sender, RoutedEventArgs e)
+    private async void GenerateReport_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Generate report based on selections
-        // For now, just close the overlay
-        MainWindow.Instance?.HideDrawer();
+        if (_reportType == "MaterialStock")
+        {
+            var includeMaterials = IncludeMaterials.IsChecked == true;
+            var includeEquipment = IncludeEquipment.IsChecked == true;
+            var allCategories = AllCategories.IsChecked == true;
+
+            var selectedMaterialCategories = new ObservableCollection<string>();
+            var selectedEquipmentCategories = new ObservableCollection<string>();
+
+            if (!allCategories)
+            {
+                foreach (CategorySelectionItem item in MaterialCategoryCheckboxes.Items)
+                {
+                    if (item.IsSelected)
+                    {
+                        selectedMaterialCategories.Add(item.Name);
+                    }
+                }
+
+                foreach (CategorySelectionItem item in EquipmentCategoryCheckboxes.Items)
+                {
+                    if (item.IsSelected)
+                    {
+                        selectedEquipmentCategories.Add(item.Name);
+                    }
+                }
+            }
+
+            // Close overlay immediately and start async generation
+            MainWindow.Instance?.HideDrawer();
+
+            // Start report generation with progress tracking
+            _sidebarFooter.BeginReportGeneration("Генерация отчёта по складу...");
+            
+            try
+            {
+                await _reportService.GenerateWarehouseReportAsync(
+                    includeMaterials,
+                    includeEquipment,
+                    allCategories,
+                    selectedMaterialCategories,
+                    selectedEquipmentCategories);
+
+                _sidebarFooter.CompleteReportGeneration("Отчёт по складу создан");
+                MainWindow.Instance?.RefreshFilesPage();
+            }
+            catch (Exception ex)
+            {
+                _sidebarFooter.CancelReportGeneration();
+                // TODO: Show error to user
+            }
+        }
     }
 }

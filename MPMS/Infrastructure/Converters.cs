@@ -13,6 +13,27 @@ using TaskStatus = MPMS.Models.TaskStatus;
 
 namespace MPMS.Infrastructure;
 
+/// <summary>Checks if a file is a report based on filename and returns Visibility</summary>
+public class FileNameToReportVisibilityConverter : IValueConverter
+{
+    public static readonly FileNameToReportVisibilityConverter Instance = new();
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName)) return Visibility.Collapsed;
+            fileName = fileName.ToLower();
+            bool isReport = fileName.Contains("отчёт") || fileName.Contains("отчет") || fileName.Contains("report");
+            return isReport ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>Multiplies quantity and price per unit to get total.</summary>
 public class QuantityPriceMultiplierConverter : IMultiValueConverter
 {

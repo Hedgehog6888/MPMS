@@ -94,6 +94,12 @@ public partial class MainWindow : Window
         _saveSettingsTimer.Start();
     }
 
+    public async void RefreshFilesPage()
+    {
+        var filesVm = App.Services.GetRequiredService<FilesPageViewModel>();
+        await filesVm.FilesControlVM.LoadFilesAsync();
+    }
+
     private void LoadWindowSize()
     {
         const double defaultWidth = 1280;

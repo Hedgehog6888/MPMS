@@ -692,6 +692,85 @@
                     </controls:CircularProgressRing.CenterContent>
                 </controls:CircularProgressRing>
             </StackPanel>
+
+            <!-- Генерация отчёта -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGeneratingReportMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый: текст + линейный прогресс -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding ReportGenerationTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000"
+                               Margin="8,0,8,4" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <ProgressBar Value="{Binding ReportGenerationProgressPercent}" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="{StaticResource PrimaryBrush}"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий: круговой прогресс -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="{Binding ReportGenerationProgressPercent}"
+                    ProgressBrush="{StaticResource PrimaryBrush}"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <Image Width="16" Height="16"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/file.svg, AppName=MPMS}"/>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
+
+            <!-- Итог генерации отчёта -->
+            <StackPanel HorizontalAlignment="Stretch">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsReportSummaryMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <!-- Развёрнутый -->
+                <StackPanel Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding ReportGenerationTitle}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#000000" HorizontalAlignment="Center" Margin="8,0,8,4"
+                               TextAlignment="Center" TextWrapping="Wrap"/>
+                    <ProgressBar Value="100" Maximum="100" Height="8"
+                                 Margin="10,0,10,0"
+                                 HorizontalAlignment="Stretch"
+                                 Background="#E9ECEF" Foreground="{StaticResource SuccessBrush}"
+                                 Template="{StaticResource SidebarSlimProgressBar}"/>
+                </StackPanel>
+                <!-- Узкий -->
+                <controls:CircularProgressRing
+                    HorizontalAlignment="Center"
+                    RingSize="42"
+                    StrokeThickness="4"
+                    Value="100"
+                    ProgressBrush="{StaticResource SuccessBrush}"
+                    Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisInv}}">
+                    <controls:CircularProgressRing.CenterContent>
+                        <Image Width="18" Height="18"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Source="{svgc:SvgImage Source=/icons/check_black.svg, AppName=MPMS}"/>
+                    </controls:CircularProgressRing.CenterContent>
+                </controls:CircularProgressRing>
+            </StackPanel>
             </StackPanel>
         </Border>
 

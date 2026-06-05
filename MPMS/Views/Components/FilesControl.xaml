@@ -22,6 +22,7 @@
         <infrastructure:BoolToVisibilityConverter x:Key="BoolToVisInv" Invert="True" />
         <infrastructure:FileTypeToIsDocumentConverter x:Key="FileTypeToIsDocument" />
         <infrastructure:NullToVisibilityConverter x:Key="NullToVis" />
+        <infrastructure:FileNameToReportVisibilityConverter x:Key="FileNameToReportVisibility" />
 
         <!-- Стиль премиум всплывающей подсказки -->
         <Style x:Key="PremiumTooltip" TargetType="ToolTip">
@@ -472,7 +473,13 @@
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
                         <StackPanel>
                             <Border Style="{StaticResource FileTooltipHeaderSection}">
-                                <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Padding="4,1" CornerRadius="3" Background="#7C3AED"
+                                            Visibility="{Binding FileName, Converter={StaticResource FileNameToReportVisibility}}">
+                                        <TextBlock Text="Отчёт" FontSize="9" FontWeight="SemiBold" Foreground="White"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}" Margin="8,0,0,0"/>
+                                </StackPanel>
                             </Border>
                             <Border Style="{StaticResource TooltipContentSection}">
                                 <StackPanel>
@@ -531,8 +538,14 @@
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold" 
-                                   Foreground="#000000" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Padding="5,2" CornerRadius="4" Background="#7C3AED"
+                                    Visibility="{Binding FileName, Converter={StaticResource FileNameToReportVisibility}}">
+                                <TextBlock Text="Отчёт" FontSize="10" FontWeight="SemiBold" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold" 
+                                       Foreground="#000000" TextTrimming="CharacterEllipsis" Margin="6,0,0,0"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <TextBlock Text="{Binding UploadedByName}" FontSize="13" Foreground="#6B778C"/>
                             <TextBlock Text=" • " FontSize="13" Foreground="#6B778C"/>

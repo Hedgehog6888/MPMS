@@ -101,6 +101,11 @@ public partial class App : Application
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IUserSettingsService, UserSettingsService>();
         services.AddSingleton<IPageUiStateStore, PageUiStateStore>();
+        services.AddSingleton<WarehouseReportService>(sp => new WarehouseReportService(
+            sp.GetRequiredService<IDbContextFactory<LocalDbContext>>(),
+            sp.GetRequiredService<ISyncService>(),
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<SidebarFooterViewModel>()));
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);
