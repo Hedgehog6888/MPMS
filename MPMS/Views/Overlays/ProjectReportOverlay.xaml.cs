@@ -1,17 +1,24 @@
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using MPMS.Models;
+using MPMS.Services;
+using MPMS.ViewModels;
 
 namespace MPMS.Views.Overlays;
 
 public partial class ProjectReportOverlay : UserControl
 {
     private readonly LocalProject _project;
+    private readonly ProjectReportService _projectReportService;
+    private readonly SidebarFooterViewModel _sidebarFooter;
 
     public ProjectReportOverlay(LocalProject project)
     {
         InitializeComponent();
         _project = project;
+        _projectReportService = App.Services.GetRequiredService<ProjectReportService>();
+        _sidebarFooter = App.Services.GetRequiredService<SidebarFooterViewModel>();
 
         LoadProjectData();
     }
@@ -50,9 +57,21 @@ public partial class ProjectReportOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
     }
 
-    private void GenerateReport_Click(object sender, RoutedEventArgs e)
+    private async void GenerateReport_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Generate report
         MainWindow.Instance?.HideDrawer();
+
+        _sidebarFooter.BeginReportGeneration("Генерация отчёта по проекту...");
+        
+        try
+        {
+            await _projectReportService.GenerateProjectReportAsync(_project.Id);
+            _sidebarFooter.CompleteReportGeneration("Отчёт по проекту создан");
+            MainWindow.Instance?.RefreshFilesPage();
+        }
+        catch
+        {
+            _sidebarFooter.CancelReportGeneration();
+        }
     }
 }

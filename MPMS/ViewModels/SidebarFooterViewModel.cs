@@ -170,7 +170,7 @@ public partial class SidebarFooterViewModel : ViewModelBase
 
             var fileNames = await query.Select(f => f.FileName).ToListAsync();
             StatsImages = fileNames.Count(AvailableFilesQuery.IsImageFileName);
-            StatsDocuments = fileNames.Count(f => !AvailableFilesQuery.IsImageFileName(f) && !IsReportFile(f));
+            StatsDocuments = fileNames.Count(f => !AvailableFilesQuery.IsImageFileName(f));
             StatsReports = fileNames.Count(IsReportFile);
         }
         catch

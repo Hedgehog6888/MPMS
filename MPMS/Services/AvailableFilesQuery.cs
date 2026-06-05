@@ -23,9 +23,16 @@ public static class AvailableFilesQuery
                 .Select(p => p.Id)
                 .ToListAsync();
 
+            // Получаем все этапы незакрытых проектов
+            var adminStageIds = await db.TaskStages.AsNoTracking()
+                .Join(db.Tasks.AsNoTracking(), s => s.TaskId, t => t.Id, (s, t) => new { s.Id, t.ProjectId })
+                .Where(x => !closedProjectIds.Contains(x.ProjectId))
+                .Select(x => x.Id)
+                .ToListAsync();
+
             return query.Where(f =>
-                !f.StageId.HasValue &&
-                (!f.ProjectId.HasValue || !closedProjectIds.Contains(f.ProjectId.Value)));
+                (!f.ProjectId.HasValue || !closedProjectIds.Contains(f.ProjectId.Value)) &&
+                (!f.StageId.HasValue || adminStageIds.Contains(f.StageId.Value)));
         }
 
         if (userRole is "Worker" or "Работник")
@@ -44,10 +51,17 @@ public static class AvailableFilesQuery
             .Select(p => p.Id)
             .ToListAsync();
 
+        // Получаем все этапы проектов пользователя, которые не закрыты
+        var availableStageIds = await db.TaskStages.AsNoTracking()
+            .Join(db.Tasks.AsNoTracking(), s => s.TaskId, t => t.Id, (s, t) => new { s.Id, t.ProjectId })
+            .Where(x => userProjectIds.Contains(x.ProjectId) && !closedIds.Contains(x.ProjectId))
+            .Select(x => x.Id)
+            .ToListAsync();
+
         return query.Where(f =>
-            !f.StageId.HasValue &&
             (!f.ProjectId.HasValue ||
-             (userProjectIds.Contains(f.ProjectId.Value) && !closedIds.Contains(f.ProjectId.Value))));
+             (userProjectIds.Contains(f.ProjectId.Value) && !closedIds.Contains(f.ProjectId.Value))) &&
+            (!f.StageId.HasValue || availableStageIds.Contains(f.StageId.Value)));
     }
 
     private static readonly string[] ImageExtensions =

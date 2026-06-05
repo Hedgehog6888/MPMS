@@ -104,24 +104,12 @@
 
                 <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1"
                         CornerRadius="6" Padding="10" Margin="0,0,0,10">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Статус" FontSize="11" FontWeight="SemiBold"
-                                       Foreground="#6B778C" Margin="0,0,0,2"/>
-                            <TextBlock x:Name="StatusValue" Text="—"
-                                       FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                            <TextBlock Text="Прогресс" FontSize="11" FontWeight="SemiBold"
-                                       Foreground="#6B778C" Margin="0,0,0,2"/>
-                            <TextBlock x:Name="ProgressValue" Text="0%"
-                                       FontSize="13" FontWeight="SemiBold" Foreground="#2563EB"/>
-                        </StackPanel>
-                    </Grid>
+                    <StackPanel>
+                        <TextBlock Text="Статус" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,2"/>
+                        <TextBlock x:Name="StatusValue" Text="—"
+                                   FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                    </StackPanel>
                 </Border>
 
                 <TextBlock Text="Суммы" FontSize="12" FontWeight="SemiBold"

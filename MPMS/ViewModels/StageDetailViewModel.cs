@@ -207,9 +207,23 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         _sp = sp;
         FilesControlVM = sp.GetRequiredService<FilesControlViewModel>();
 
+        var stageReportService = sp.GetService<StageReportService>();
+        if (stageReportService != null)
+        {
+            stageReportService.ReportGenerated += OnReportGenerated;
+        }
+
         SelectedServices.CollectionChanged += OnTotalsCollectionChanged;
         MaterialLines.CollectionChanged += OnTotalsCollectionChanged;
         EquipmentLines.CollectionChanged += OnEquipmentCollectionChanged;
+    }
+
+    private void OnReportGenerated(LocalFile file)
+    {
+        if (_editStage != null && file.StageId == _editStage.Id)
+        {
+            _ = FilesControlVM.RefreshFilesAsync();
+        }
     }
 
     private void OnEquipmentCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -1480,7 +1494,16 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         else if (materialLine is not null)
             materialLine.ApplyStagePricing(percent, price, quantity);
 
-        return await SaveStageCatalogAsync();
+        var wasEditMode = IsCatalogEditMode;
+        IsCatalogEditMode = true;
+        try
+        {
+            return await SaveStageCatalogAsync();
+        }
+        finally
+        {
+            IsCatalogEditMode = wasEditMode;
+        }
     }
 
     [RelayCommand]

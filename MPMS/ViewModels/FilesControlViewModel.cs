@@ -417,8 +417,40 @@ public partial class FilesControlViewModel : ViewModelBase
         IQueryable<LocalFile> query = db.Files.AsNoTracking();
         LocalProject? project = null;
 
-        // Загружаем проект, если указан projectId
-        if (_projectId.HasValue)
+        // Приоритет: stageId > taskId > projectId
+        if (_stageId.HasValue)
+        {
+            // Фильтруем только файлы этого этапа
+            query = query.Where(f => f.StageId == _stageId.Value);
+            // Загружаем проект для отображения имени
+            var stage = await db.TaskStages.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == _stageId.Value);
+            if (stage != null)
+            {
+                var task = await db.Tasks.AsNoTracking().FirstOrDefaultAsync(t => t.Id == stage.TaskId);
+                if (task != null)
+                {
+                    project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == task.ProjectId);
+                }
+            }
+        }
+        else if (_taskId.HasValue)
+        {
+            // Фильтруем файлы задачи и файлы этапов задачи
+            var taskStageIds = await db.TaskStages.AsNoTracking()
+                .Where(s => s.TaskId == _taskId.Value)
+                .Select(s => s.Id)
+                .ToListAsync();
+            query = query.Where(f => f.TaskId == _taskId.Value ||
+                (f.StageId.HasValue && taskStageIds.Contains(f.StageId.Value)));
+            // Загружаем проект для отображения имени
+            var task = await db.Tasks.AsNoTracking().FirstOrDefaultAsync(t => t.Id == _taskId.Value);
+            if (task != null)
+            {
+                project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == task.ProjectId);
+            }
+        }
+        else if (_projectId.HasValue)
         {
             project = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == _projectId.Value);
 
@@ -435,10 +467,6 @@ public partial class FilesControlViewModel : ViewModelBase
             // Фильтруем файлы проекта и файлы этапов проекта
             query = query.Where(f => f.ProjectId == _projectId.Value ||
                 (f.StageId.HasValue && projectStageIds.Contains(f.StageId.Value)));
-        }
-        else if (_stageId.HasValue)
-        {
-            query = query.Where(f => f.StageId == _stageId.Value);
         }
         else
         {

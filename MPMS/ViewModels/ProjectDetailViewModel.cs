@@ -189,6 +189,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         _settings = settings;
         FilesControlVM = new FilesControlViewModel(dbFactory, auth, api, settings, sync, uiState, sidebarFooter);
         _stageViewMode = _settings.GetValue("StagesViewMode", "List");
+
+        var projectReportService = App.Services.GetService<ProjectReportService>();
+        if (projectReportService != null)
+        {
+            projectReportService.ReportGenerated += OnReportGenerated;
+        }
+    }
+
+    private void OnReportGenerated(LocalFile file)
+    {
+        if (Project != null && file.ProjectId == Project.Id)
+        {
+            _ = FilesControlVM.RefreshFilesAsync();
+        }
     }
 
     private bool CanMarkStageDeletion() =>

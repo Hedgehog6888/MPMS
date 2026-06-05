@@ -292,6 +292,11 @@
                             </Border>
                             <Border Style="{StaticResource TooltipContentSection}">
                                 <StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding FileName, Converter={StaticResource FileNameToReportVisibility}}">
+                                        <Border Padding="4,1" CornerRadius="3" Background="#7C3AED">
+                                            <TextBlock Text="Отчёт" FontSize="9" FontWeight="SemiBold" Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
                                         <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
                                         <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>
@@ -473,16 +478,15 @@
                     <ToolTip Style="{StaticResource PremiumTooltip}" MaxWidth="300">
                         <StackPanel>
                             <Border Style="{StaticResource FileTooltipHeaderSection}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Padding="4,1" CornerRadius="3" Background="#7C3AED"
-                                            Visibility="{Binding FileName, Converter={StaticResource FileNameToReportVisibility}}">
-                                        <TextBlock Text="Отчёт" FontSize="9" FontWeight="SemiBold" Foreground="White"/>
-                                    </Border>
-                                    <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}" Margin="8,0,0,0"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding FileName}" Style="{StaticResource FileTooltipHeader}"/>
                             </Border>
                             <Border Style="{StaticResource TooltipContentSection}">
                                 <StackPanel>
+                                    <StackPanel Style="{StaticResource TooltipInfoRow}" Visibility="{Binding FileName, Converter={StaticResource FileNameToReportVisibility}}">
+                                        <Border Padding="4,1" CornerRadius="3" Background="#7C3AED">
+                                            <TextBlock Text="Отчёт" FontSize="9" FontWeight="SemiBold" Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Style="{StaticResource TooltipInfoRow}">
                                         <TextBlock Text="Размер:" Style="{StaticResource TooltipLabel}"/>
                                         <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Style="{StaticResource TooltipValue}"/>

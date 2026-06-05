@@ -111,6 +111,16 @@ public partial class App : Application
             sp.GetRequiredService<ISyncService>(),
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<SidebarFooterViewModel>()));
+        services.AddSingleton<ProjectReportService>(sp => new ProjectReportService(
+            sp.GetRequiredService<IDbContextFactory<LocalDbContext>>(),
+            sp.GetRequiredService<ISyncService>(),
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<SidebarFooterViewModel>()));
+        services.AddSingleton<StageReportService>(sp => new StageReportService(
+            sp.GetRequiredService<IDbContextFactory<LocalDbContext>>(),
+            sp.GetRequiredService<ISyncService>(),
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<SidebarFooterViewModel>()));
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);

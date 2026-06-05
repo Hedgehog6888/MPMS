@@ -1,6 +1,11 @@
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
+using MPMS.ViewModels;
 
 namespace MPMS.Views.Overlays;
 
@@ -8,17 +13,21 @@ public partial class StageReportOverlay : UserControl
 {
     private readonly LocalTaskStage _stage;
     private readonly LocalTask _task;
+    private readonly StageReportService _stageReportService;
+    private readonly SidebarFooterViewModel _sidebarFooter;
 
     public StageReportOverlay(LocalTaskStage stage, LocalTask task)
     {
         InitializeComponent();
         _stage = stage;
         _task = task;
+        _stageReportService = App.Services.GetRequiredService<StageReportService>();
+        _sidebarFooter = App.Services.GetRequiredService<SidebarFooterViewModel>();
 
         LoadStageData();
     }
 
-    private void LoadStageData()
+    private async void LoadStageData()
     {
         StageNameValue.Text = _stage.Name;
         DescriptionValue.Text = _stage.Description ?? "—";
@@ -38,17 +47,30 @@ public partial class StageReportOverlay : UserControl
             _ => _stage.Status.ToString()
         };
 
-        ProgressValue.Text = _stage.Status == StageStatus.Completed ? "100%" : "0%";
+        // Load work types and materials from database to calculate correct totals
+        var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
 
-        var basePrice = _stage.WorkPricePerUnit;
-        var adjustedPrice = basePrice * (1 + _stage.ServicesAdjustmentPercent / 100);
-        var workTotal = _stage.WorkQuantity * adjustedPrice;
-        WorkTotalValue.Text = $"{workTotal:F2} ₽";
+        var stageWorkTypes = await db.StageWorkTypes
+            .Where(swt => swt.StageId == _stage.Id)
+            .ToListAsync();
 
-        var materialsTotal = 0m;
+        var stageMaterials = await db.StageMaterials
+            .Where(sm => sm.StageId == _stage.Id)
+            .ToListAsync();
+
+        // Calculate work types total with stage adjustment
+        var serviceK = 1m + _stage.ServicesAdjustmentPercent / 100m;
+        var workTypesTotal = stageWorkTypes.Sum(swt => swt.Quantity * swt.PricePerUnit) * serviceK;
+
+        // Calculate materials total with stage adjustment
+        var materialK = 1m + _stage.MaterialsAdjustmentPercent / 100m;
+        var materialsTotal = stageMaterials.Sum(sm => sm.Quantity * sm.PricePerUnit) * materialK;
+
+        var totalSum = workTypesTotal + materialsTotal;
+
+        WorkTotalValue.Text = $"{workTypesTotal:F2} ₽";
         MaterialsTotalValue.Text = $"{materialsTotal:F2} ₽";
-
-        var totalSum = workTotal + materialsTotal;
         TotalSumValue.Text = $"{totalSum:F2} ₽";
     }
 
@@ -57,9 +79,22 @@ public partial class StageReportOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
     }
 
-    private void GenerateReport_Click(object sender, RoutedEventArgs e)
+    private async void GenerateReport_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Generate report
         MainWindow.Instance?.HideDrawer();
+
+        _sidebarFooter.BeginReportGeneration("Генерация отчёта по этапу...");
+
+        try
+        {
+            await _stageReportService.GenerateStageReportAsync(_stage.Id);
+            _sidebarFooter.CompleteReportGeneration("Отчёт по этапу создан");
+            await Task.Delay(100); // Small delay to ensure DB transaction completes
+            MainWindow.Instance?.RefreshFilesPage();
+        }
+        catch
+        {
+            _sidebarFooter.CancelReportGeneration();
+        }
     }
 }
