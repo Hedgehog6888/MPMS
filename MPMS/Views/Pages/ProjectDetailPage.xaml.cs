@@ -534,7 +534,10 @@ public partial class ProjectDetailPage : UserControl
 
     private void ProjectReport_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Генерация отчёта по проекту
+        ReportPopup.IsOpen = false;
+        if (VM?.Project is null) return;
+        var overlay = new ProjectReportOverlay(VM.Project);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 460);
     }
 
     private void AddProjectStage_Click(object sender, RoutedEventArgs e)

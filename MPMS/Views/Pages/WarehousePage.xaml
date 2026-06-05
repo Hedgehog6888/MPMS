@@ -187,6 +187,7 @@
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="100"/>
                                             <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
@@ -221,7 +222,24 @@
                                                        Foreground="#0F172A"/>
                                         </StackPanel>
 
-                                        <Border Grid.Column="4" VerticalAlignment="Center" Margin="8,0">
+                                        <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                                            <TextBlock Text="Цена" FontSize="11"
+                                                       Foreground="#64748B"/>
+                                            <TextBlock FontSize="13" Foreground="#0F172A">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding Cost, StringFormat='{}{0:N2} ₽'}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Cost}" Value="{x:Null}">
+                                                                <Setter Property="Text" Value="—"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <Border Grid.Column="5" VerticalAlignment="Center" Margin="8,0">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#ECFDF5"/>
@@ -257,7 +275,7 @@
                                             </TextBlock>
                                         </Border>
 
-                                        <TextBlock Grid.Column="5" Text="›" FontSize="18"
+                                        <TextBlock Grid.Column="6" Text="›" FontSize="18"
                                                    Foreground="#64748B"
                                                    VerticalAlignment="Center" Margin="4,0,0,0"/>
                                     </Grid>
@@ -329,7 +347,7 @@
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="140"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
@@ -349,7 +367,7 @@
                                                        Foreground="#0F172A"/>
                                         </StackPanel>
 
-                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0" MaxWidth="120">
+                                        <Border Grid.Column="2" VerticalAlignment="Center" Margin="8,0" HorizontalAlignment="Right">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#ECFDF5"/>

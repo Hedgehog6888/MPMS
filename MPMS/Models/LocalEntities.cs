@@ -240,6 +240,13 @@ public class LocalTaskStage : LocalEntity
     public bool IsArchived { get; set; } = false;
 
     [NotMapped] public string TaskName { get; set; } = string.Empty;
+    [NotMapped] public string ProjectName { get; set; } = string.Empty;
+    [NotMapped] public string? ProjectClient { get; set; }
+    [NotMapped] public string? ProjectAddress { get; set; }
+    [NotMapped] public DateOnly? ProjectStartDate { get; set; }
+    [NotMapped] public DateOnly? ProjectEndDate { get; set; }
+    [NotMapped] public DateOnly? StageStartDate { get; set; }
+    [NotMapped] public DateOnly? StageEndDate { get; set; }
 
     [NotMapped]
     public bool IsOverdue => DueDate.HasValue

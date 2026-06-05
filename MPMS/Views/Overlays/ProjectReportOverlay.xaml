@@ -1,0 +1,156 @@
+<UserControl x:Class="MPMS.Views.Overlays.ProjectReportOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White"
+             Width="460" Height="Auto">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="18,12"
+                BorderBrush="#E8E9EC" BorderThickness="0,0,0,1" Background="White">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Отчёт по проекту"
+                               FontSize="17" FontWeight="Bold" Foreground="#000000"/>
+                    <TextBlock x:Name="SubtitleLabel" Text="Основная информация о проекте"
+                               FontSize="11" Foreground="#6B778C" Margin="0,2,0,0"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="Cancel_Click" Width="28" Height="28">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bg" Background="#F4F5F7" CornerRadius="14">
+                                <TextBlock Text="✕" FontSize="13" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Foreground="#6B778C"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bg" Property="Background" Value="#E8E9EC"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18,12,18,8">
+            <StackPanel>
+                <TextBlock x:Name="ProjectNameLabel" Text="Название проекта"
+                           FontSize="14" FontWeight="SemiBold" Foreground="#000000" Margin="0,0,0,2"/>
+                <TextBlock x:Name="ProjectNameValue" Text="—"
+                           FontSize="13" Foreground="#6B778C" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Описание" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,0,0,2"/>
+                <TextBlock x:Name="DescriptionValue" Text="—"
+                           FontSize="12" Foreground="#6B778C" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,0,0,10">
+                    <TextBlock.ToolTip>
+                        <ToolTip x:Name="DescriptionTooltip" Content="—"/>
+                    </TextBlock.ToolTip>
+                </TextBlock>
+
+                <TextBlock Text="Клиент" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,0,0,2"/>
+                <TextBlock x:Name="ClientValue" Text="—"
+                           FontSize="12" Foreground="#6B778C" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Адрес" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,0,0,2"/>
+                <TextBlock x:Name="AddressValue" Text="—"
+                           FontSize="12" Foreground="#6B778C" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Начало" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,2"/>
+                        <TextBlock x:Name="StartDateValue" Text="—"
+                                   FontSize="12" Foreground="#6B778C"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="Окончание" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,2"/>
+                        <TextBlock x:Name="EndDateValue" Text="—"
+                           FontSize="12" Foreground="#6B778C"/>
+                    </StackPanel>
+                </Grid>
+
+                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1"
+                        CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Статус" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#6B778C" Margin="0,0,0,2"/>
+                            <TextBlock x:Name="StatusValue" Text="—"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#000000"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <TextBlock Text="Прогресс" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#6B778C" Margin="0,0,0,2"/>
+                            <TextBlock x:Name="ProgressValue" Text="0%"
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#2563EB"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <TextBlock Text="Статистика" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#000000" Margin="0,0,0,5"/>
+                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1"
+                        CornerRadius="6" Padding="8" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock x:Name="TotalTasksValue" Text="0"
+                                       FontSize="15" FontWeight="Bold" Foreground="#000000"/>
+                            <TextBlock Text="Задач" FontSize="10" Foreground="#6B778C"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                            <TextBlock x:Name="CompletedTasksValue" Text="0"
+                                       FontSize="15" FontWeight="Bold" Foreground="#10B981"/>
+                            <TextBlock Text="Выполнено" FontSize="10" Foreground="#6B778C"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                            <TextBlock x:Name="TotalStagesValue" Text="0"
+                                       FontSize="15" FontWeight="Bold" Foreground="#000000"/>
+                            <TextBlock Text="Этапов" FontSize="10" Foreground="#6B778C"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" HorizontalAlignment="Right">
+                            <TextBlock x:Name="CompletedStagesValue" Text="0"
+                                       FontSize="15" FontWeight="Bold" Foreground="#10B981"/>
+                            <TextBlock Text="Выполнено" FontSize="10" Foreground="#6B778C"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="18,10"
+                BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"
+                Background="White">
+            <Grid>
+                <Button Content="Отмена" HorizontalAlignment="Left"
+                        Click="Cancel_Click" Style="{StaticResource OutlineBtn}"/>
+                <Button Content="Создать отчёт"
+                        HorizontalAlignment="Right"
+                        Click="GenerateReport_Click" Style="{StaticResource BlackBtn}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

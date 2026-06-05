@@ -179,7 +179,11 @@ public partial class StageDetailPage
 
     private void StageReport_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Генерация отчёта по этапу
+        ReportPopup.IsOpen = false;
+        if (DataContext is not StageDetailViewModel vm) return;
+        if (vm.EditStage is null || vm.EditTask is null) return;
+        var overlay = new StageReportOverlay(vm.EditStage, vm.EditTask);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, 460);
     }
 
     private void EditStage_Click(object sender, RoutedEventArgs e)

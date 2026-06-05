@@ -471,6 +471,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         CanMarkStageForDeletion = !IsWorker();
         _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
+        _ = LoadProjectDataAsync(task.ProjectId, stage);
         FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
@@ -501,6 +502,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         CanMarkStageForDeletion = !IsWorker();
         _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
+        _ = LoadProjectDataAsync(task.ProjectId, stage);
         FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
@@ -555,6 +557,22 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         await using var db = await _dbFactory.CreateDbContextAsync();
         var p = await db.Projects.FindAsync(projectId);
         ProjectNameReadOnly = p?.Name ?? "—";
+    }
+
+    private async Task LoadProjectDataAsync(Guid projectId, LocalTaskStage stage)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var p = await db.Projects.FindAsync(projectId);
+        if (p is not null)
+        {
+            stage.ProjectName = p.Name;
+            stage.ProjectClient = p.Client;
+            stage.ProjectAddress = p.Address;
+            stage.ProjectStartDate = p.StartDate;
+            stage.ProjectEndDate = p.EndDate;
+        }
+        stage.StageStartDate = DateOnly.FromDateTime(stage.CreatedAt);
+        stage.StageEndDate = stage.DueDate;
     }
 
 
