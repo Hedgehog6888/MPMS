@@ -149,7 +149,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     public bool IsStageCompleted => StageStatus == StageStatus.Completed;
 
     public bool IsStageCatalogEditable =>
-        !IsStageMarkedForDeletion
+        !IsStageMarkedForDeletion && !IsProjectClosed
         && (IsStagePlanned
             || (IsStageInProgress && IsCatalogEditMode)
             || (IsStageCompleted && IsManagerOrAdmin() && IsCatalogEditMode));
@@ -164,7 +164,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     public bool CanUploadStageFiles => !IsStageMarkedForDeletion && !IsStageCompleted;
 
     public bool CanEditStageSummary =>
-        !IsStageMarkedForDeletion && (!IsStageCompleted || IsManagerOrAdmin());
+        !IsStageMarkedForDeletion && !IsProjectClosed && (!IsStageCompleted || IsManagerOrAdmin());
 
     public bool CanChangeStageStatus =>
         !IsStageMarkedForDeletion && !IsStageCompleted;
@@ -172,6 +172,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     public bool ShowSummaryTab => !IsWorker();
 
     public bool ShowStageUploadButton => ActiveTab == "Files" && CanUploadStageFiles;
+
+    public bool ShowStageReportButton => ActiveTab == "Files" && !IsStageMarkedForDeletion;
 
     public bool CanEditServicesCatalog =>
         IsStageCompleted ? IsManagerOrAdmin() : IsManagerOrForeman();
@@ -184,6 +186,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     public bool ShowCatalogEditButton =>
         (IsStageInProgress || (IsStageCompleted && IsManagerOrAdmin()))
         && !IsStageMarkedForDeletion
+        && !IsProjectClosed
         && ActiveTab switch
         {
             "Services" => CanEditServicesCatalog,
@@ -570,6 +573,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
             stage.ProjectAddress = p.Address;
             stage.ProjectStartDate = p.StartDate;
             stage.ProjectEndDate = p.EndDate;
+            IsProjectClosed = p.IsClosed || p.Status == ProjectStatus.Closed;
         }
         stage.StageStartDate = DateOnly.FromDateTime(stage.CreatedAt);
         stage.StageEndDate = stage.DueDate;
@@ -602,6 +606,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         else
             RefreshCatalogModeProperties();
         OnPropertyChanged(nameof(ShowStageUploadButton));
+        OnPropertyChanged(nameof(ShowStageReportButton));
     }
 
     partial void OnStageStatusChanged(StageStatus value)
@@ -634,6 +639,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         OnPropertyChanged(nameof(CanEditStageSummary));
         OnPropertyChanged(nameof(CanChangeStageStatus));
         OnPropertyChanged(nameof(ShowStageUploadButton));
+        OnPropertyChanged(nameof(ShowStageReportButton));
         OnPropertyChanged(nameof(CanEditServicesCatalog));
         OnPropertyChanged(nameof(CanEditMaterialsCatalog));
         OnPropertyChanged(nameof(CanEditEquipmentCatalog));
@@ -641,11 +647,19 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         OnPropertyChanged(nameof(CatalogEditButtonText));
     }
 
+    partial void OnIsProjectClosedChanged(bool value)
+    {
+        if (value && IsCatalogEditMode)
+            IsCatalogEditMode = false;
+        RefreshCatalogModeProperties();
+    }
+
     [RelayCommand]
     private async Task ToggleCatalogEditModeAsync()
     {
         if (IsStageMarkedForDeletion) return;
         if (IsStageCompleted && !IsManagerOrAdmin()) return;
+        if (IsProjectClosed) return;
         if (IsCatalogEditMode)
             await ExitCatalogEditModeAsync(saveChanges: true);
         else

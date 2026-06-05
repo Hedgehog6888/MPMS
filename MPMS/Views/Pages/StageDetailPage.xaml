@@ -97,7 +97,7 @@
                     <Button x:Name="CreateReportBtn"
                             Click="CreateReport_Click"
                             Height="38" Padding="18,0" FontSize="13" Margin="8,0,0,0"
-                            Visibility="{Binding ShowStageUploadButton, Converter={StaticResource BoolToVis}}">
+                            Visibility="{Binding ShowStageReportButton, Converter={StaticResource BoolToVis}}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bg" Background="White" BorderBrush="#DFE1E6" BorderThickness="1" CornerRadius="6"

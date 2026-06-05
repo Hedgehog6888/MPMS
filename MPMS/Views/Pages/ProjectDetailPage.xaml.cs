@@ -110,7 +110,7 @@ public partial class ProjectDetailPage : UserControl
 
         CreateTaskBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (TasksPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
         CreateStageBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (StagesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
-        CreateReportBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible ? Visibility.Visible : Visibility.Collapsed);
+        CreateReportBtn.Visibility = marked ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible ? Visibility.Visible : Visibility.Collapsed);
         AddFileBtn.Visibility = (marked || closed) ? Visibility.Collapsed : (FilesPanel.Visibility == Visibility.Visible && _canEdit ? Visibility.Visible : Visibility.Collapsed);
     }
 
@@ -164,7 +164,7 @@ public partial class ProjectDetailPage : UserControl
         bool closed = VM?.Project is { } p && (p.IsClosed || p.Status == ProjectStatus.Closed);
         CreateTaskBtn.Visibility = (tab == "Tasks" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
         CreateStageBtn.Visibility = (tab == "Stages" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
-        CreateReportBtn.Visibility = (tab == "Files" && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
+        CreateReportBtn.Visibility = (tab == "Files" && !marked) ? Visibility.Visible : Visibility.Collapsed;
         AddFileBtn.Visibility = (tab == "Files" && _canEdit && !marked && !closed) ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "Discussion")

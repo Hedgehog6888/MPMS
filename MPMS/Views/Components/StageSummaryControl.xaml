@@ -106,9 +106,6 @@
                 <DataTrigger Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
                     <Setter Property="Cursor" Value="Hand"/>
                 </DataTrigger>
-                <DataTrigger Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="False">
-                    <Setter Property="Opacity" Value="0.72"/>
-                </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding DataContext.CanEditStageSummary, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"/>

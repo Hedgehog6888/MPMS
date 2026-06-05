@@ -106,6 +106,11 @@ public partial class App : Application
             sp.GetRequiredService<ISyncService>(),
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<SidebarFooterViewModel>()));
+        services.AddSingleton<PriceListService>(sp => new PriceListService(
+            sp.GetRequiredService<IDbContextFactory<LocalDbContext>>(),
+            sp.GetRequiredService<ISyncService>(),
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<SidebarFooterViewModel>()));
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);

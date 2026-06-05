@@ -89,6 +89,7 @@ public partial class StageDetailPage
         if (e.PropertyName is nameof(StageDetailViewModel.IsStageMarkedForDeletion)
             or nameof(StageDetailViewModel.StageStatus)
             or nameof(StageDetailViewModel.ShowStageUploadButton)
+            or nameof(StageDetailViewModel.ShowStageReportButton)
             or nameof(StageDetailViewModel.CanChangeStageStatus)
             or nameof(StageDetailViewModel.CanMarkStageForDeletion)
             or nameof(StageDetailViewModel.CanEditStageSummary)

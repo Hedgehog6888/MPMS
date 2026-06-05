@@ -256,7 +256,7 @@ public class WarehouseReportService
         sheet.Column(6).Width = 12; // Количество
         sheet.Column(7).Width = 15; // Цена
         sheet.Column(8).Width = 15; // Сумма
-        sheet.Column(9).Width = 40; // Описание
+        sheet.Column(9).AutoFit(); // Описание - автоширина
 
         // Title
         var titleRange = sheet.Cells["A1:I1"];
@@ -299,6 +299,9 @@ public class WarehouseReportService
             cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
             cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
         }
+
+        // Enable auto-filter for Excel sorting/filtering
+        sheet.Cells[5, 1, 5, headers.Length].AutoFilter = true;
 
         // Data rows
         int row = 6;
@@ -349,6 +352,9 @@ public class WarehouseReportService
             rowNum++;
         }
 
+        // AutoFit description column after data is filled
+        sheet.Column(9).AutoFit();
+
         // Total row
         sheet.Cells[row, 1].Value = "Итого:";
         sheet.Cells[row, 1].Style.Font.Bold = true;
@@ -378,10 +384,10 @@ public class WarehouseReportService
         sheet.Column(2).Width = 20; // Категория
         sheet.Column(3).Width = 30; // Наименование
         sheet.Column(4).Width = 15; // Инв. номер
-        sheet.Column(5).Width = 15; // Статус
+        sheet.Column(5).Width = 18; // Статус
         sheet.Column(6).Width = 15; // Состояние
         sheet.Column(7).Width = 25; // Проект
-        sheet.Column(8).Width = 40; // Описание
+        sheet.Column(8).AutoFit(); // Описание - автоширина
 
         // Title
         var titleRange = sheet.Cells["A1:H1"];
@@ -424,6 +430,9 @@ public class WarehouseReportService
             cell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
             cell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
         }
+
+        // Enable auto-filter for Excel sorting/filtering
+        sheet.Cells[5, 1, 5, headers.Length].AutoFilter = true;
 
         // Data rows
         int row = 6;
@@ -489,6 +498,9 @@ public class WarehouseReportService
             row++;
             rowNum++;
         }
+
+        // AutoFit description column after data is filled
+        sheet.Column(8).AutoFit();
 
         // Summary info
         row += 2;

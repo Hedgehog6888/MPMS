@@ -106,7 +106,7 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <TextBlock Text="По видам работы" FontSize="13" Foreground="#111111" Background="Transparent"/>
+                                    <TextBlock Text="Прайс лист" FontSize="13" Foreground="#111111" Background="Transparent"/>
                                 </Border>
                             </StackPanel>
                         </Border>

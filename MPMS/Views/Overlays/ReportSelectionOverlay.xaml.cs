@@ -34,7 +34,8 @@ public partial class ReportSelectionOverlay : UserControl
 {
     private readonly string _reportType;
     private readonly IDbContextFactory<LocalDbContext> _dbFactory;
-    private readonly WarehouseReportService _reportService;
+    private readonly WarehouseReportService _warehouseReportService;
+    private readonly PriceListService _priceListService;
     private readonly SidebarFooterViewModel _sidebarFooter;
 
     public ReportSelectionOverlay(string reportType)
@@ -42,13 +43,14 @@ public partial class ReportSelectionOverlay : UserControl
         InitializeComponent();
         _reportType = reportType;
         _dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
-        _reportService = App.Services.GetRequiredService<WarehouseReportService>();
+        _warehouseReportService = App.Services.GetRequiredService<WarehouseReportService>();
+        _priceListService = App.Services.GetRequiredService<PriceListService>();
         _sidebarFooter = App.Services.GetRequiredService<SidebarFooterViewModel>();
 
-        TitleLabel.Text = reportType == "MaterialStock" ? "Отчёт по складу" : "Отчёт по видам работы";
+        TitleLabel.Text = reportType == "MaterialStock" ? "Отчёт по складу" : "Прайс лист";
         SubtitleLabel.Text = reportType == "MaterialStock"
             ? "Выберите данные для включения в отчёт по складу"
-            : "Выберите данные для включения в отчёт по видам работы";
+            : "Выберите данные для включения в прайс лист";
 
         // Hide data types section for work type report
         if (reportType == "WorkType")
@@ -120,12 +122,13 @@ public partial class ReportSelectionOverlay : UserControl
         }
         else if (_reportType == "WorkType")
         {
-            // Load work type categories
-            var workTypeCategories = await db.WorkTypeCategories
-                .Where(c => c.IsActive)
-                .OrderBy(c => c.SortOrder)
-                .ThenBy(c => c.Name)
-                .Select(c => new CategorySelectionItem { Name = c.Name })
+            // Load work type categories that have active work types
+            var workTypeCategories = await db.WorkTypeTemplates
+                .Where(w => w.IsActive)
+                .Select(w => w.CategoryName)
+                .Distinct()
+                .OrderBy(name => name)
+                .Select(name => new CategorySelectionItem { Name = name! })
                 .ToListAsync();
 
             WorkTypeCategoryCheckboxes.ItemsSource = workTypeCategories;
@@ -175,7 +178,7 @@ public partial class ReportSelectionOverlay : UserControl
             
             try
             {
-                await _reportService.GenerateWarehouseReportAsync(
+                await _warehouseReportService.GenerateWarehouseReportAsync(
                     includeMaterials,
                     includeEquipment,
                     allCategories,
@@ -183,6 +186,43 @@ public partial class ReportSelectionOverlay : UserControl
                     selectedEquipmentCategories);
 
                 _sidebarFooter.CompleteReportGeneration("Отчёт по складу создан");
+                MainWindow.Instance?.RefreshFilesPage();
+            }
+            catch (Exception ex)
+            {
+                _sidebarFooter.CancelReportGeneration();
+                // TODO: Show error to user
+            }
+        }
+        else if (_reportType == "WorkType")
+        {
+            var allCategories = AllCategories.IsChecked == true;
+            var selectedCategories = new ObservableCollection<string>();
+
+            if (!allCategories)
+            {
+                foreach (CategorySelectionItem item in WorkTypeCategoryCheckboxes.Items)
+                {
+                    if (item.IsSelected)
+                    {
+                        selectedCategories.Add(item.Name);
+                    }
+                }
+            }
+
+            // Close overlay immediately and start async generation
+            MainWindow.Instance?.HideDrawer();
+
+            // Start price list generation with progress tracking
+            _sidebarFooter.BeginReportGeneration("Генерация прайс листа...");
+            
+            try
+            {
+                await _priceListService.GeneratePriceListAsync(
+                    allCategories,
+                    selectedCategories);
+
+                _sidebarFooter.CompleteReportGeneration("Прайс лист создан");
                 MainWindow.Instance?.RefreshFilesPage();
             }
             catch (Exception ex)

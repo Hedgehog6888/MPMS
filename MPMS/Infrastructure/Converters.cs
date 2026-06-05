@@ -24,7 +24,7 @@ public class FileNameToReportVisibilityConverter : IValueConverter
         {
             if (string.IsNullOrWhiteSpace(fileName)) return Visibility.Collapsed;
             fileName = fileName.ToLower();
-            bool isReport = fileName.Contains("отчёт") || fileName.Contains("отчет") || fileName.Contains("report");
+            bool isReport = fileName.Contains("отчёт") || fileName.Contains("отчет") || fileName.Contains("report") || fileName.Contains("прайс лист");
             return isReport ? Visibility.Visible : Visibility.Collapsed;
         }
         return Visibility.Collapsed;

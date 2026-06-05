@@ -237,6 +237,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
     public bool CanEditProjectSummaryReceiptRow(ReceiptRowVm row)
     {
         if (!row.IsEditable || !row.StageId.HasValue) return false;
+        if (Project is not null && (Project.IsClosed || Project.Status == ProjectStatus.Closed)) return false;
         var stage = _summaryStages.FirstOrDefault(s => s.Id == row.StageId.Value);
         if (stage is null || stage.EffectiveMarkedForDeletion) return false;
         if (stage.Status == StageStatus.Completed) return IsProjectSummaryManagerOrAdmin();
