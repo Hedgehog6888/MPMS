@@ -160,9 +160,14 @@
                             <Style TargetType="Button" BasedOn="{StaticResource OutlineBtn}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True">
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding FilesControlVM.IsSelectionMode}" Value="True"/>
+                                            <Condition Binding="{Binding FilesControlVM.IsWorkerRole}" Value="False"/>
+                                            <Condition Binding="{Binding FilesControlVM.IsForemanRole}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>

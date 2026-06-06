@@ -35,8 +35,44 @@ public static class AvailableFilesQuery
                 (!f.StageId.HasValue || adminStageIds.Contains(f.StageId.Value)));
         }
 
-        if (userRole is "Worker" or "Работник")
-            return query.Where(_ => false);
+        if (userRole is "Worker" or "Работник" && userId.HasValue)
+        {
+            var workerTaskIds = await db.Tasks.AsNoTracking()
+                .Where(t => t.AssignedUserId == userId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var assigneeTaskIds = await db.TaskAssignees.AsNoTracking()
+                .Where(ta => ta.UserId == userId.Value)
+                .Select(ta => ta.TaskId)
+                .ToListAsync();
+            var allTaskIds = workerTaskIds.Concat(assigneeTaskIds).Distinct().ToHashSet();
+
+            var workerStageIds = await db.TaskStages.AsNoTracking()
+                .Where(s => s.AssignedUserId == userId.Value)
+                .Select(s => s.Id)
+                .ToListAsync();
+            var assigneeStageIds = await db.StageAssignees.AsNoTracking()
+                .Where(sa => sa.UserId == userId.Value)
+                .Select(sa => sa.StageId)
+                .ToListAsync();
+            var allStageIds = workerStageIds.Concat(assigneeStageIds).Distinct().ToHashSet();
+
+            if (allTaskIds.Count > 0)
+            {
+                var taskStageIds = await db.TaskStages.AsNoTracking()
+                    .Where(s => allTaskIds.Contains(s.TaskId))
+                    .Select(s => s.Id)
+                    .ToListAsync();
+                foreach (var id in taskStageIds) allStageIds.Add(id);
+            }
+
+            if (allTaskIds.Count == 0 && allStageIds.Count == 0)
+                return query.Where(_ => false);
+
+            return query.Where(f =>
+                (f.TaskId.HasValue && allTaskIds.Contains(f.TaskId.Value)) ||
+                (f.StageId.HasValue && allStageIds.Contains(f.StageId.Value)));
+        }
 
         if (userId is null)
             return query.Where(_ => false);

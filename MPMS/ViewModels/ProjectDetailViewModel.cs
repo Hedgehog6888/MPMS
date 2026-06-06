@@ -195,6 +195,12 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         {
             projectReportService.ReportGenerated += OnReportGenerated;
         }
+
+        var ks2ReportService = App.Services.GetService<KS2ReportService>();
+        if (ks2ReportService != null)
+        {
+            ks2ReportService.ReportGenerated += OnReportGenerated;
+        }
     }
 
     private void OnReportGenerated(LocalFile file)

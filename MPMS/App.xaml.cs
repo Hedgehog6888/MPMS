@@ -121,6 +121,11 @@ public partial class App : Application
             sp.GetRequiredService<ISyncService>(),
             sp.GetRequiredService<IAuthService>(),
             sp.GetRequiredService<SidebarFooterViewModel>()));
+        services.AddSingleton<KS2ReportService>(sp => new KS2ReportService(
+            sp.GetRequiredService<IDbContextFactory<LocalDbContext>>(),
+            sp.GetRequiredService<ISyncService>(),
+            sp.GetRequiredService<IAuthService>(),
+            sp.GetRequiredService<SidebarFooterViewModel>()));
 
         var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         services.AddSingleton(jsonOptions);

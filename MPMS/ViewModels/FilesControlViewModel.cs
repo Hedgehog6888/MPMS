@@ -38,6 +38,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [ObservableProperty] private bool _isDraggingOver;
     [ObservableProperty] private bool _isSelectionMode;
     [ObservableProperty] private bool _isWorkerRole;
+    [ObservableProperty] private bool _isForemanRole;
     [ObservableProperty] private LocalProject? _project;
 
     // Фильтры по проектам (отдельные для каждой вкладки)
@@ -118,6 +119,7 @@ public partial class FilesControlViewModel : ViewModelBase
         _imagesViewMode = _settings.GetValue("FilesImagesViewMode", "Grid");
         _documentsViewMode = _settings.GetValue("FilesDocumentsViewMode", "List");
         _isWorkerRole = auth.UserRole == "Worker" || auth.UserRole == "Работник";
+        _isForemanRole = auth.UserRole == "Foreman" || auth.UserRole == "Прораб";
         // Для работников скрываем вкладку документов
         if (_isWorkerRole)
         {
@@ -129,6 +131,7 @@ public partial class FilesControlViewModel : ViewModelBase
     {
         var wasWorker = IsWorkerRole;
         IsWorkerRole = _auth.UserRole == "Worker" || _auth.UserRole == "Работник";
+        IsForemanRole = _auth.UserRole == "Foreman" || _auth.UserRole == "Прораб";
         
         // Если роль изменилась с работника на не-работника, переключаемся на вкладку Документы
         if (wasWorker && !IsWorkerRole)
@@ -775,6 +778,7 @@ public partial class FilesControlViewModel : ViewModelBase
     [RelayCommand]
     private async Task SelectionDeleteAsync()
     {
+        if (IsWorkerRole || IsForemanRole) return;
         var selectedFiles = AllFiles.Where(f => f.IsSelected).ToList();
         if (selectedFiles.Count == 0)
         {
@@ -1119,6 +1123,7 @@ public partial class FilesControlViewModel : ViewModelBase
     private async Task DeleteFileAsync(LocalFile file)
     {
         if (file == null) return;
+        if (IsWorkerRole || IsForemanRole) return;
 
         var owner = Application.Current.MainWindow;
         if (!MPMS.Views.ConfirmDeleteDialog.Show(owner, "Файл", file.FileName))
@@ -1506,8 +1511,11 @@ public partial class FilesControlViewModel : ViewModelBase
 
         // Копируем отредактированный файл в папку MPMS/images
         var targetPath = MpmsImagesPaths.GetImageFilePath(fileId, savedFileName);
-        Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
-        File.Copy(savedPath, targetPath, true);
+        if (!string.Equals(savedPath, targetPath, StringComparison.OrdinalIgnoreCase))
+        {
+            Directory.CreateDirectory(MpmsImagesPaths.GetImagesDirectory());
+            File.Copy(savedPath, targetPath, true);
+        }
         dbFile.FilePath = targetPath;
 
         dbFile.IsSynced = false;

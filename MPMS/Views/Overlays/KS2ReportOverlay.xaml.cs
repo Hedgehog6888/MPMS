@@ -4,17 +4,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MPMS.Data;
 using MPMS.Models;
+using MPMS.Services;
+using MPMS.ViewModels;
 
 namespace MPMS.Views.Overlays;
 
 public partial class KS2ReportOverlay : UserControl
 {
     private readonly LocalProject _project;
+    private readonly KS2ReportService _ks2ReportService;
+    private readonly SidebarFooterViewModel _sidebarFooter;
 
     public KS2ReportOverlay(LocalProject project)
     {
         InitializeComponent();
         _project = project;
+        _ks2ReportService = App.Services.GetRequiredService<KS2ReportService>();
+        _sidebarFooter = App.Services.GetRequiredService<SidebarFooterViewModel>();
 
         LoadProjectData();
     }
@@ -79,9 +85,23 @@ public partial class KS2ReportOverlay : UserControl
         MainWindow.Instance?.HideDrawer();
     }
 
-    private void GenerateReport_Click(object sender, RoutedEventArgs e)
+    private async void GenerateReport_Click(object sender, RoutedEventArgs e)
     {
         MainWindow.Instance?.HideDrawer();
-        // TODO: Генерация отчёта КС-2
+
+        _sidebarFooter.BeginReportGeneration("Генерация отчёта КС-2...");
+
+        try
+        {
+            await _ks2ReportService.GenerateKS2ReportAsync(_project.Id);
+            _sidebarFooter.CompleteReportGeneration("Отчёт КС-2 создан");
+            MainWindow.Instance?.RefreshFilesPage();
+        }
+        catch (Exception ex)
+        {
+            _sidebarFooter.CancelReportGeneration();
+            MessageBox.Show($"Ошибка при генерации отчёта: {ex.Message}", "Ошибка", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }
