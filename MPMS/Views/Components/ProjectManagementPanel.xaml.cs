@@ -10,13 +10,24 @@ namespace MPMS.Views.Components;
 
 public partial class ProjectManagementPanel : UserControl
 {
+    private readonly IAuthService _auth;
+
     public ProjectManagementPanel()
     {
         InitializeComponent();
+        _auth = App.Services.GetRequiredService<IAuthService>();
     }
+
+    private bool IsWorker() =>
+        string.Equals(_auth.UserRole, "Worker", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_auth.UserRole, "Работник", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsForeman() =>
+        _auth.UserRole is "Foreman" or "Прораб";
 
     private void EditProject_Click(object sender, RoutedEventArgs e)
     {
+        if (IsWorker() || IsForeman()) return;
         if (DataContext is not ProjectDetailViewModel vm || vm.Project is null) return;
         var projVm = App.Services.GetRequiredService<ProjectsViewModel>();
         var overlay = new CreateProjectOverlay();
@@ -44,6 +55,7 @@ public partial class ProjectManagementPanel : UserControl
 
     private async void CloseProject_Click(object sender, RoutedEventArgs e)
     {
+        if (IsWorker() || IsForeman()) return;
         if (DataContext is not ProjectDetailViewModel vm || vm.Project is null) return;
         var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
         if (owner is null) return;
@@ -61,15 +73,18 @@ public partial class ProjectManagementPanel : UserControl
         if (DataContext is not ProjectDetailViewModel vm || vm.Project is null) return;
         bool marked = vm.Project.IsMarkedForDeletion;
         bool closed = vm.Project.IsClosed || vm.Project.Status == ProjectStatus.Closed;
+        bool isWorkerOrForeman = IsWorker() || IsForeman();
 
         MarkProjectBtn.ApplyTemplate();
         if (MarkProjectBtn.Template?.FindName("MarkBtnText", MarkProjectBtn) is System.Windows.Controls.TextBlock tb)
             tb.Text = marked ? "Снять пометку удаления" : "Пометить к удалению";
 
-        EditProjectBtn.IsEnabled = !marked && !closed;
-        EditProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
+        EditProjectBtn.IsEnabled = !marked && !closed && !isWorkerOrForeman;
+        EditProjectBtn.Opacity = (marked || closed || isWorkerOrForeman) ? 0.5 : 1.0;
         MarkProjectBtn.Visibility = closed ? Visibility.Collapsed : Visibility.Visible;
-        CloseProjectBtn.IsEnabled = !marked && !closed;
-        CloseProjectBtn.Opacity = (marked || closed) ? 0.5 : 1.0;
+        MarkProjectBtn.IsEnabled = !isWorkerOrForeman;
+        MarkProjectBtn.Opacity = isWorkerOrForeman ? 0.5 : 1.0;
+        CloseProjectBtn.IsEnabled = !marked && !closed && !isWorkerOrForeman;
+        CloseProjectBtn.Opacity = (marked || closed || isWorkerOrForeman) ? 0.5 : 1.0;
     }
 }

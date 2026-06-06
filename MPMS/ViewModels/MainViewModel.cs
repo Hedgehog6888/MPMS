@@ -188,7 +188,7 @@ public partial class MainViewModel : ViewModelBase
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Catalogs" => _sp.GetRequiredService<CatalogsViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null,
+            "Settings" => _sp.GetRequiredService<SettingsViewModel>(),
             _ => null
         };
 
@@ -252,7 +252,7 @@ public partial class MainViewModel : ViewModelBase
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
-            "Settings" => null,
+            "Settings" => _sp.GetRequiredService<SettingsViewModel>(),
             _ => null
         };
 

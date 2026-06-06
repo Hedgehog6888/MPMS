@@ -60,8 +60,7 @@
             </Grid>
         </Border>
 
-        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <Grid Margin="24,8,24,8">
+        <Grid Grid.Row="1" Margin="24,8,24,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -91,31 +90,25 @@
                              VerticalScrollBarVisibility="Auto"/>
                 </Border>
 
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="12"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Заказчик *" Style="{StaticResource FormLabel}"/>
-                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                                CornerRadius="8" Padding="12,10" Height="42">
-                            <TextBox x:Name="ClientBox" BorderThickness="0" Background="Transparent"
-                                     Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
-                                     Padding="0"/>
-                        </Border>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="Адрес объекта" Style="{StaticResource FormLabel}"/>
-                        <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                                CornerRadius="8" Padding="12,10" Height="42">
-                            <TextBox x:Name="AddressBox" BorderThickness="0" Background="Transparent"
-                                     Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
-                                     Padding="0"/>
-                        </Border>
-                    </StackPanel>
-                </Grid>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Заказчик *" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Height="42">
+                        <TextBox x:Name="ClientBox" BorderThickness="0" Background="Transparent"
+                                 Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
+                                 Padding="0"/>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Адрес объекта" Style="{StaticResource FormLabel}"/>
+                    <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Height="42">
+                        <TextBox x:Name="AddressBox" BorderThickness="0" Background="Transparent"
+                                 Foreground="#000000" FontSize="13" VerticalContentAlignment="Center"
+                                 Padding="0"/>
+                    </Border>
+                </StackPanel>
 
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
@@ -215,7 +208,7 @@
                     <TextBlock Text="Прораб" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
                     <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="8" MaxHeight="200">
+                            CornerRadius="8" MaxHeight="110">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                             <StackPanel>
@@ -363,7 +356,6 @@
 
                 </StackPanel>
             </Grid>
-        </ScrollViewer>
 
         <Border Grid.Row="2" Padding="24,14"
                 BorderBrush="#E8E9EC" BorderThickness="0,1,0,0"

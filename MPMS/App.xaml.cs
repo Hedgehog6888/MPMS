@@ -151,6 +151,7 @@ public partial class App : Application
         services.AddTransient<CatalogsViewModel>();
         services.AddTransient<CalendarViewModel>();
         services.AddTransient<TimelineViewModel>();
+        services.AddTransient<SettingsViewModel>();
         services.AddSingleton<FilesPageViewModel>();
         services.AddTransient<LoginWindow>();
         services.AddTransient<LoginViewModel>();

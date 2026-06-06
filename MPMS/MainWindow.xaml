@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:MPMS.Infrastructure"
         xmlns:comp="clr-namespace:MPMS.Views.Components"
+        xmlns:pages="clr-namespace:MPMS.Views.Pages"
         xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
         Title="MPMS — Montage Project Management System"
         Height="768" Width="1280"

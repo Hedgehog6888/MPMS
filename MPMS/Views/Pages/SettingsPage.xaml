@@ -1,0 +1,352 @@
+<UserControl x:Class="MPMS.Views.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+             Background="{StaticResource BackgroundBrush}">
+
+    <UserControl.Resources>
+        <Style x:Key="SettingsCheckBox" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border Background="Transparent" Padding="0">
+                            <StackPanel Orientation="Horizontal">
+                                <Border x:Name="CheckBorder" Width="20" Height="20"
+                                        Background="White" BorderBrush="#DFE1E6"
+                                        BorderThickness="1" CornerRadius="4"
+                                        Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <Path x:Name="CheckMark" Data="M 4 10 L 8 14 L 16 4"
+                                          Stroke="#111111" StrokeThickness="2"
+                                          StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                          Visibility="Collapsed"/>
+                                </Border>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckBorder" Property="Background" Value="#111111"/>
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#111111"/>
+                                <Setter TargetName="CheckMark" Property="Stroke" Value="White"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="28,24,28,24" MaxWidth="1100">
+            <StackPanel>
+                <!-- Header -->
+                <Border Background="Transparent" Padding="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="Настройки" FontSize="24" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Управление параметрами приложения"
+                                   FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Notifications Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Уведомления" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding SoundNotificationsEnabled}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Звуковые уведомления" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding PopupNotificationsEnabled}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Всплывающие уведомления" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding FileDownloadSoundEnabled}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Звук при завершении загрузки файлов" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding SyncErrorSoundEnabled}"
+                                  Margin="0,0,0,0">
+                            <TextBlock Text="Звук при ошибках синхронизации" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Files Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Файлы" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Column="0" Grid.Row="0"
+                                       Text="Папка загрузок по умолчанию" 
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#6B778C" Margin="0,0,0,4"/>
+                            <Border Grid.Column="0" Grid.Row="1"
+                                    Background="#F8F9FA" BorderBrush="#DFE1E6"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Padding="12,10">
+                                <TextBlock Text="{Binding DefaultDownloadFolder}" 
+                                           FontSize="13" Foreground="#000000"/>
+                            </Border>
+                            <Button Grid.Column="1" Grid.Row="1" Content="Обзор" 
+                                    Command="{Binding BrowseDownloadFolderCommand}"
+                                    Margin="8,0,0,0" Padding="16,0"
+                                    VerticalAlignment="Stretch"
+                                    Style="{StaticResource OutlineBtn}"/>
+                        </Grid>
+                        
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding AutoOpenDocuments}"
+                                  Margin="0,0,0,0">
+                            <TextBlock Text="Автооткрытие документов после загрузки" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Reports Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Отчёты" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <TextBlock Text="Настройки для KS2 отчётов" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <Border Background="#F8F9FA" BorderBrush="#DFE1E6"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="0,0,0,12">
+                            <TextBlock Text="Настройки KS2" FontSize="13" 
+                                       Foreground="#000000"/>
+                        </Border>
+                        
+                        <TextBlock Text="Язык отчётов" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <ComboBox SelectedIndex="{Binding ReportLanguageIndex}"
+                                  Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,12">
+                            <ComboBoxItem Content="Русский"/>
+                            <ComboBoxItem Content="English"/>
+                        </ComboBox>
+                        
+                        <TextBlock Text="Водяной знак на отчётах" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <Grid Margin="0,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                                    Background="#F8F9FA" BorderBrush="#DFE1E6"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Padding="12,10">
+                                <TextBlock Text="{Binding WatermarkText}" 
+                                           FontSize="13" Foreground="#000000"/>
+                            </Border>
+                            <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Content="Загрузить картинку" 
+                                    Command="{Binding BrowseWatermarkImageCommand}"
+                                    Margin="8,0,0,0" Padding="16,0"
+                                    VerticalAlignment="Stretch"
+                                    Style="{StaticResource OutlineBtn}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Sync Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Синхронизация" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <TextBlock Text="URL API сервера" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <Border Background="#F8F9FA" BorderBrush="#DFE1E6"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding ApiServerUrl}" 
+                                       FontSize="13" Foreground="#000000"/>
+                        </Border>
+                        
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding AutoSyncOnStart}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Автосинхронизация при старте" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        
+                        <TextBlock Text="Интервал фоновой синхронизации" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <ComboBox SelectedIndex="{Binding SyncIntervalIndex}"
+                                  Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,12">
+                            <ComboBoxItem Content="5 минут"/>
+                            <ComboBoxItem Content="10 минут"/>
+                            <ComboBoxItem Content="30 минут"/>
+                            <ComboBoxItem Content="60 минут"/>
+                        </ComboBox>
+                        
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding ShowSyncDetails}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Показывать детали синхронизации" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding AutoReconnect}"
+                                  Margin="0,0,0,0">
+                            <TextBlock Text="Автоподключение при потере соединения" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Logging Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Логирование" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <TextBlock Text="Уровень логирования" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <ComboBox SelectedIndex="{Binding LogLevelIndex}"
+                                  Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,12">
+                            <ComboBoxItem Content="Только ошибки"/>
+                            <ComboBoxItem Content="Ошибки и предупреждения"/>
+                            <ComboBoxItem Content="Все (инфо)"/>
+                        </ComboBox>
+                        
+                        <Grid Margin="0,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Column="0" Grid.Row="0"
+                                       Text="Папка логов" 
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="#6B778C" Margin="0,0,0,4"/>
+                            <Border Grid.Column="0" Grid.Row="1"
+                                    Background="#F8F9FA" BorderBrush="#DFE1E6"
+                                    BorderThickness="1" CornerRadius="8"
+                                    Padding="12,10">
+                                <TextBlock Text="{Binding LogFolder}" 
+                                           FontSize="13" Foreground="#000000"/>
+                            </Border>
+                            <Button Grid.Column="1" Grid.Row="1" Content="Обзор" 
+                                    Command="{Binding BrowseLogFolderCommand}"
+                                    Margin="8,0,0,0" Padding="16,0"
+                                    VerticalAlignment="Stretch"
+                                    Style="{StaticResource OutlineBtn}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Date/Time Format Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Формат даты и времени" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <TextBlock Text="Формат даты" 
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#6B778C" Margin="0,0,0,4"/>
+                        <ComboBox SelectedIndex="{Binding DateFormatIndex}"
+                                  Style="{StaticResource FormCombo}"
+                                  Margin="0,0,0,0">
+                            <ComboBoxItem Content="ДД.ММ.ГГГГ (31.12.2025)"/>
+                            <ComboBoxItem Content="ММ/ДД/ГГГГ (12/31/2025)"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Additional Section -->
+                <Border Background="White" CornerRadius="12"
+                        BorderBrush="#E8E9EC" BorderThickness="1"
+                        Padding="24" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Дополнительно" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#000000" Margin="0,0,0,16"/>
+                        
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding EnergySavingMode}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Режим энергосбережения" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding MinimizeToTray}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Минимизировать в трей при закрытии" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding RunOnStartup}"
+                                  Margin="0,0,0,12">
+                            <TextBlock Text="Запуск при старте Windows" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        <CheckBox Style="{StaticResource SettingsCheckBox}"
+                                  IsChecked="{Binding ShowInTaskbar}"
+                                  Margin="0,0,0,16">
+                            <TextBlock Text="Показывать в панели задач при минимизации" FontSize="13" Foreground="#000000" VerticalAlignment="Center"/>
+                        </CheckBox>
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Экспорт настроек" 
+                                    Command="{Binding ExportSettingsCommand}"
+                                    Height="38" Padding="18,0"
+                                    Style="{StaticResource OutlineBtn}"/>
+                            <Button Content="Импорт настроек" 
+                                    Command="{Binding ImportSettingsCommand}"
+                                    Height="38" Padding="18,0" Margin="8,0,0,0"
+                                    Style="{StaticResource OutlineBtn}"/>
+                            <Button Content="Очистка кэша" 
+                                    Height="38" Padding="18,0" Margin="8,0,0,0"
+                                    Style="{StaticResource OutlineBtn}"/>
+                            <Button Content="Сброс настроек" 
+                                    Height="38" Padding="18,0" Margin="8,0,0,0"
+                                    Style="{StaticResource OutlineBtn}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

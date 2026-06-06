@@ -132,12 +132,14 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
 
     public bool IsStageInProgress => StageStatus == StageStatus.InProgress;
 
-    public bool CanEditStageDetails => !IsStageMarkedForDeletion && IsStagePlanned;
+    public bool CanEditStageDetails => !IsStageMarkedForDeletion && IsStagePlanned && !IsWorker();
 
     public string? EditStageDisabledTooltip
     {
         get
         {
+            if (IsWorker())
+                return "Только прораб, менеджер или администратор могут редактировать этапы";
             if (IsStageMarkedForDeletion)
                 return "Сначала снимите пометку удаления";
             if (!IsStagePlanned)
