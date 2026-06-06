@@ -42,16 +42,30 @@ public class FileSyncer : IEntitySyncer
                     local.StageId = f.StageId;
                     local.CreatedAt = f.CreatedAt;
                     local.OriginalCreatedAt = f.OriginalCreatedAt;
+                    
+                    // Download file content if not present locally
+                    if (local.FileData == null || local.FileData.Length == 0)
+                    {
+                        var content = await _api.DownloadFileAsync(f.Id);
+                        if (content != null && content.Length > 0)
+                        {
+                            local.FileData = content;
+                        }
+                    }
                 }
             }
             else
             {
+                // Download file content for new files
+                var content = await _api.DownloadFileAsync(f.Id);
+                
                 db.Files.Add(new LocalFile
                 {
                     Id = f.Id,
                     FileName = f.FileName,
                     FileType = f.FileType,
                     FileSize = f.FileSize,
+                    FileData = content,
                     UploadedById = f.UploadedById,
                     UploadedByName = f.UploadedByName,
                     ProjectId = f.ProjectId,

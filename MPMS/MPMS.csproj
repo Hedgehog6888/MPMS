@@ -9,6 +9,7 @@
     <RootNamespace>MPMS</RootNamespace>
     <AssemblyName>MPMS</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ApplicationIcon>icons\app_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
