@@ -226,7 +226,7 @@ public partial class TaskDetailOverlay : UserControl
                 return;
         }
         await _vm.MarkTaskForDeletionCommand.ExecuteAsync(null);
-        ApplyRoleRestrictions();
+        await LoadDataAsync();
         _onClosed?.Invoke();
     }
 
@@ -371,6 +371,7 @@ public partial class TaskDetailOverlay : UserControl
                 return;
         }
         await _vm.MarkStageForDeletionCommand.ExecuteAsync(stage);
+        await LoadDataAsync();
         _onClosed?.Invoke();
     }
 

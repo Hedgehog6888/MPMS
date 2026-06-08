@@ -29,10 +29,10 @@ public static class ProgressCalculator
     private static double NormalizeTaskStatusWeight(TaskStatus status) =>
         Math.Clamp(GetTaskWeight(status), 0, 1);
 
-    /// <summary>Этап не входит в прогресс задачи (архив / пометка этапа). Пометка задачи не обнуляет этапы — % на плашке сохраняется; помеченные задачи не попадают в статистику проекта в ApplyProjectMetrics.</summary>
+    /// <summary>Этап не входит в прогресс задачи (архив). Пометка не влияет на прогресс.</summary>
     private static bool StageExcludedFromTaskProgress(LocalTaskStage s)
     {
-        if (s.IsArchived || s.IsMarkedForDeletion) return true;
+        if (s.IsArchived) return true;
         return false;
     }
 
@@ -60,7 +60,7 @@ public static class ProgressCalculator
     public static void ApplyProjectMetrics(LocalProject project, IReadOnlyCollection<LocalTask> tasks, IReadOnlyCollection<LocalTaskStage> stages)
     {
         var activeTasks = tasks
-            .Where(t => !t.IsArchived && !t.IsMarkedForDeletion)
+            .Where(t => !t.IsArchived)
             .ToList();
         var taskIds = activeTasks.Select(t => t.Id).ToHashSet();
         var activeStages = stages
@@ -121,9 +121,6 @@ public static class ProgressCalculator
 
     public static int GetProjectProgressPercent(LocalProject project)
     {
-        if (project.IsMarkedForDeletion)
-            return 0;
-
         if (project.TotalTasks <= 0)
             return 0;
 

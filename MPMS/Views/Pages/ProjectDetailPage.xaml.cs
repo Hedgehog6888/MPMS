@@ -509,7 +509,7 @@ public partial class ProjectDetailPage : UserControl
             if (vm != null)
                 _ = Dispatcher.InvokeAsync(async () =>
                 {
-                    await vm.LoadAsync();
+                    await vm.LoadAsync(recalcProjectStatus: false);
                     UpdateMarkProjectButton();
                 });
         }, TaskDetailOverlay.TaskDetailDrawerMode.TaskOnly);

@@ -140,9 +140,12 @@ public partial class CalendarViewModel : ViewModelBase, ILoadable
                 }
                 else if (isForeman)
                 {
-                    var pids = await db.ProjectMembers
-                        .Where(m => m.UserId == userId.Value).Select(m => m.ProjectId).ToListAsync();
-                    taskQuery = taskQuery.Where(t => pids.Contains(t.ProjectId));
+                    var direct = await db.Tasks.Where(t => t.AssignedUserId == userId.Value)
+                        .Select(t => t.Id).ToListAsync();
+                    var via = await db.TaskAssignees.Where(a => a.UserId == userId.Value)
+                        .Select(a => a.TaskId).ToListAsync();
+                    var ids = direct.Concat(via).Distinct().ToList();
+                    taskQuery = taskQuery.Where(t => ids.Contains(t.Id));
                 }
                 else if (isWorker)
                 {

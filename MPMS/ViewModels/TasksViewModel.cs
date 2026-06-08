@@ -117,11 +117,8 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 projectQuery = projectQuery.Where(p => p.ManagerId == userId.Value);
             else if (isForeman)
             {
-                var foremanProjectIds = await db.ProjectMembers
-                    .Where(m => m.UserId == userId.Value)
-                    .Select(m => m.ProjectId)
-                    .ToListAsync();
-                projectQuery = projectQuery.Where(p => foremanProjectIds.Contains(p.Id));
+                var foremanVisibleProjectIds = await GetWorkerVisibleProjectIdsAsync(db, userId.Value);
+                projectQuery = projectQuery.Where(p => foremanVisibleProjectIds.Contains(p.Id));
             }
             else if (isWorker)
             {
@@ -155,11 +152,16 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
                 query = query.Where(t => db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
             else if (isForeman)
             {
-                var foremanProjectIds = await db.ProjectMembers
-                    .Where(m => m.UserId == userId.Value)
-                    .Select(m => m.ProjectId)
+                var foremanTaskIds = await db.Tasks
+                    .Where(t => t.AssignedUserId == userId.Value)
+                    .Select(t => t.Id)
                     .ToListAsync();
-                query = query.Where(t => foremanProjectIds.Contains(t.ProjectId));
+                var foremanTaskIdsFromAssignees = await db.TaskAssignees
+                    .Where(ta => ta.UserId == userId.Value)
+                    .Select(ta => ta.TaskId)
+                    .ToListAsync();
+                var allForemanTaskIds = foremanTaskIds.Concat(foremanTaskIdsFromAssignees).Distinct().ToList();
+                query = query.Where(t => allForemanTaskIds.Contains(t.Id));
             }
             else if (isWorker)
             {
@@ -357,7 +359,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
         var project = await db.Projects.FindAsync(projectId);
         if (project is null) return null;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = await db.TaskStages.Where(s => taskIds.Contains(s.TaskId) && !s.IsArchived).ToListAsync();
 
@@ -439,7 +441,7 @@ public partial class TasksViewModel : ViewModelBase, ILoadable
 
         var oldStatus = project.Status;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
             ? new List<LocalTaskStage>()

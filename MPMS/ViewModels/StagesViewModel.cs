@@ -131,11 +131,16 @@ public partial class StagesViewModel : ViewModelBase, ILoadable
                     tasksQuery = tasksQuery.Where(t => db.Projects.Any(p => p.Id == t.ProjectId && p.ManagerId == userId.Value));
                 else if (isForeman)
                 {
-                    var foremanProjectIds = await db.ProjectMembers
-                        .Where(m => m.UserId == userId.Value)
-                        .Select(m => m.ProjectId)
+                    var foremanTaskIds = await db.Tasks
+                        .Where(t => t.AssignedUserId == userId.Value)
+                        .Select(t => t.Id)
                         .ToListAsync();
-                    tasksQuery = tasksQuery.Where(t => foremanProjectIds.Contains(t.ProjectId));
+                    var foremanTaskIdsFromAssignees = await db.TaskAssignees
+                        .Where(ta => ta.UserId == userId.Value)
+                        .Select(ta => ta.TaskId)
+                        .ToListAsync();
+                    var allForemanTaskIds = foremanTaskIds.Concat(foremanTaskIdsFromAssignees).Distinct().ToList();
+                    tasksQuery = tasksQuery.Where(t => allForemanTaskIds.Contains(t.Id));
                 }
                 else if (isWorker)
                 {

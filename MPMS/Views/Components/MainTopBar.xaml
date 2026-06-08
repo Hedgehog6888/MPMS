@@ -925,6 +925,7 @@
                                 <Border x:Name="TopBarAvatarBorder"
                                         Width="36" Height="36"
                                         CornerRadius="18"
+                                        BorderThickness="0"
                                         Visibility="Collapsed"
                                         SnapsToDevicePixels="True"
                                         UseLayoutRounding="True">

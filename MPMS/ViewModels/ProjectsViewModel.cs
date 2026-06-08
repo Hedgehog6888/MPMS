@@ -438,6 +438,23 @@ public partial class ProjectsViewModel : ViewModelBase, ILoadable
         if (existing is not null)
         {
             existing.IsMarkedForDeletion = entity.IsMarkedForDeletion;
+
+            // Пересчитываем метрики прогресса для проекта и его задач
+            var projTasks = tasks.Where(t => !t.IsArchived).ToList();
+            var projStages = stages.Where(s => !s.IsArchived).ToList();
+            foreach (var t in projTasks)
+            {
+                t.ProjectIsMarkedForDeletion = entity.IsMarkedForDeletion;
+                var taskStages = projStages.Where(s => s.TaskId == t.Id).ToList();
+                foreach (var s in taskStages)
+                {
+                    s.TaskIsMarkedForDeletion = t.IsMarkedForDeletion;
+                    s.ProjectIsMarkedForDeletion = entity.IsMarkedForDeletion;
+                }
+                ProgressCalculator.ApplyTaskMetrics(t, taskStages);
+            }
+            ProgressCalculator.ApplyProjectMetrics(existing, projTasks, projStages);
+
             ApplyFilter();
         }
     }

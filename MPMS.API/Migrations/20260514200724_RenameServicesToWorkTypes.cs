@@ -44,12 +44,6 @@ namespace MPMS.API.Migrations
                 table: "TaskStages",
                 newName: "IX_TaskStages_WorkTypeTemplateId");
 
-            migrationBuilder.AddColumn<string>(
-                name: "DetailsText",
-                table: "SyncedActivityLogs",
-                type: "nvarchar(max)",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "WorkTypeCategories",
                 columns: table => new
@@ -191,10 +185,6 @@ WHERE (s.[WorkTypeTemplateId] IS NOT NULL AND w.[Id] IS NULL)
 
             migrationBuilder.DropTable(
                 name: "WorkTypeCategories");
-
-            migrationBuilder.DropColumn(
-                name: "DetailsText",
-                table: "SyncedActivityLogs");
 
             migrationBuilder.RenameColumn(
                 name: "WorkTypeTemplateId",

@@ -836,12 +836,11 @@ public partial class TaskDetailViewModel : ViewModelBase
         }
 
         await db.SaveChangesAsync();
+        Task.IsMarkedForDeletion = entity.IsMarkedForDeletion;
         await _sync.QueueOperationAsync("Task", Task.Id, SyncOperation.Update, SyncPayloads.Task(entity));
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: задача «{Task.Name}»", "Task", Task.Id, actionType);
-
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -868,13 +867,12 @@ public partial class TaskDetailViewModel : ViewModelBase
             .ToListAsync();
         await SetStageEquipmentStateAsync(db, entity, eqIds, reserve: ShouldReserveStageEquipment(entity), task?.ProjectId);
         await db.SaveChangesAsync();
+        stage.IsMarkedForDeletion = entity.IsMarkedForDeletion;
         await _sync.QueueOperationAsync("Stage", stage.Id, SyncOperation.Update, SyncPayloads.Stage(entity));
 
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id, actionType);
-        await UpdateTaskProgressAsync();
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -948,7 +946,7 @@ public partial class TaskDetailViewModel : ViewModelBase
 
         var oldStatus = project.Status;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsMarkedForDeletion).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == projectId && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
             ? new List<LocalTaskStage>()

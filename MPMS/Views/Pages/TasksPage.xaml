@@ -207,7 +207,7 @@
                                         <ItemsControl ItemsSource="{Binding Tasks}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                        <Border CornerRadius="8" Margin="0,0,0,6"
+                                        <Border x:Name="TaskCardBorder" CornerRadius="8" Margin="0,0,0,6"
                                                 Padding="15,10" BorderThickness="1.5"
                                                 Cursor="Hand" MouseLeftButtonDown="Task_Click">
                                             <Border.Style>
@@ -417,14 +417,17 @@
                                                                     </Style>
                                                                 </Image.Style>
                                                             </Image>
-                                                            <Image Source="{svgc:SvgImage Source=/icons/restore.svg, AppName=MPMS}"
-                                                                   Width="14" Height="14" VerticalAlignment="Center">
+                                                            <Image Width="14" Height="14" VerticalAlignment="Center">
                                                                 <Image.Style>
                                                                     <Style TargetType="Image">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete.svg, AppName=MPMS}"/>
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
                                                                                 <Setter Property="Visibility" Value="Visible"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding ElementName=TaskCardBorder, Path=IsMouseOver}" Value="True">
+                                                                                <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/removeMarkDelete_black.svg, AppName=MPMS}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
@@ -439,14 +442,27 @@
                                                             <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                                                 <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="True">
+                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="False">
                                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Button.Style>
-                                                        <Image Source="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"
-                                                               Width="14" Height="14" VerticalAlignment="Center"/>
+                                                        <Image Width="14" Height="14" VerticalAlignment="Center">
+                                                            <Image.Style>
+                                                                <Style TargetType="Image">
+                                                                    <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding EffectiveTaskMarkedForDeletion}" Value="True">
+                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash_red.svg, AppName=MPMS}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding ElementName=TaskCardBorder, Path=IsMouseOver}" Value="True">
+                                                                            <Setter Property="Source" Value="{svgc:SvgImage Source=/icons/trash.svg, AppName=MPMS}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
                                                     </Button>
                                                 </StackPanel>
                                             </Grid>

@@ -330,7 +330,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         BackCommand = goBackAction is null ? null : new RelayCommand(() => goBackAction());
     }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(bool recalcProjectStatus = true)
     {
         if (Project is null) return;
 
@@ -425,7 +425,20 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         if (!isClosedProject)
             tasksQuery = tasksQuery.Where(t => !t.IsArchived);
 
-        if (userId.HasValue && isWorker)
+        if (userId.HasValue && isForeman)
+        {
+            var foremanTaskIds = await db.Tasks
+                .Where(t => t.ProjectId == Project.Id && t.AssignedUserId == userId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var foremanTaskIdsFromAssignees = await db.TaskAssignees
+                .Where(ta => ta.UserId == userId.Value)
+                .Join(db.Tasks.Where(t => t.ProjectId == Project.Id), ta => ta.TaskId, t => t.Id, (_, t) => t.Id)
+                .ToListAsync();
+            var allForemanTaskIds = foremanTaskIds.Concat(foremanTaskIdsFromAssignees).Distinct().ToList();
+            tasksQuery = tasksQuery.Where(t => allForemanTaskIds.Contains(t.Id));
+        }
+        else if (userId.HasValue && isWorker)
         {
             var workerTaskIds = await db.Tasks
                 .Where(t => t.ProjectId == Project.Id && t.AssignedUserId == userId.Value)
@@ -475,7 +488,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
             ProgressCalculator.ApplyTaskMetrics(task, taskStages);
         }
 
-        if (!isClosedProject)
+        if (!isClosedProject && recalcProjectStatus)
         {
             await RecalcAndSaveTaskStatusesAsync(db, tasks);
             await RecalcProjectStatusAsync(db);
@@ -502,7 +515,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         Tasks = new ObservableCollection<LocalTask>(tasks);
         ApplyTaskFilter();
 
-        if (Project is not null)
+        if (Project is not null && recalcProjectStatus)
             ProgressCalculator.ApplyProjectMetrics(Project, tasks, stages);
 
         TotalTasks = Project?.TotalTasks ?? 0;
@@ -634,6 +647,8 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         }
         Messages = new ObservableCollection<LocalMessage>(messages);
     }
+
+    async Task ILoadable.LoadAsync() => await LoadAsync(recalcProjectStatus: true);
 
     private async Task LoadProjectPricingSummaryAsync(
         LocalDbContext db,
@@ -1332,7 +1347,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var action = entity.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: этап «{stage.Name}»", "Stage", stage.Id, actionType);
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -1528,7 +1542,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var action = entity.IsMarkedForDeletion ? "Помечена для удаления" : "Снята пометка удаления";
         var actionType = entity.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: задача «{task.Name}»", "Task", task.Id, actionType);
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -1574,7 +1587,6 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
         var action = project.IsMarkedForDeletion ? "Помечен для удаления" : "Снята пометка удаления";
         var actionType = project.IsMarkedForDeletion ? ActivityActionKind.MarkedForDeletion : ActivityActionKind.UnmarkedForDeletion;
         await LogActivityAsync(db, $"{action}: проект «{project.Name}»", "Project", project.Id, actionType);
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -1706,7 +1718,7 @@ public partial class ProjectDetailViewModel : ViewModelBase, ILoadable
 
         var oldStatus = project.Status;
 
-        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsMarkedForDeletion && !t.IsArchived).ToListAsync();
+        var tasks = await db.Tasks.Where(t => t.ProjectId == project.Id && !t.IsArchived).ToListAsync();
         var taskIds = tasks.Select(t => t.Id).ToList();
         var stages = taskIds.Count == 0
             ? new List<LocalTaskStage>()

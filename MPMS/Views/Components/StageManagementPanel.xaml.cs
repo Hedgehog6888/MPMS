@@ -80,7 +80,7 @@ public partial class StageManagementPanel : UserControl
     private async void MarkStage_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not StageDetailViewModel vm) return;
-        if (!vm.CanMarkStageForDeletion) return;
+        if (!vm.CanToggleStageDeletionMark) return;
         if (!vm.IsStageMarkedForDeletion)
         {
             var owner = Window.GetWindow(this) ?? Application.Current.MainWindow;
@@ -114,9 +114,17 @@ public partial class StageManagementPanel : UserControl
                 editTip.Content = editTooltip ?? string.Empty;
         }
 
-        bool canMark = vm.CanMarkStageForDeletion;
-        MarkStageBtn.IsEnabled = canMark;
-        MarkStageBtn.Opacity = canMark ? 1.0 : 0.5;
+        bool canToggle = vm.CanToggleStageDeletionMark;
+        MarkStageBtn.IsEnabled = canToggle;
+        MarkStageBtn.Opacity = canToggle ? 1.0 : 0.5;
+        ToolTipService.SetIsEnabled(MarkStageBtn, !canToggle && marked);
+        if (MarkStageBtn.ToolTip is ToolTip markTip)
+        {
+            if (markTip.Content is System.Windows.Controls.TextBlock markTipText)
+                markTipText.Text = vm.EditStage?.StageInheritedDeletionHint ?? string.Empty;
+            else
+                markTip.Content = vm.EditStage?.StageInheritedDeletionHint ?? string.Empty;
+        }
 
         bool canChangeStatus = vm.CanChangeStageStatus;
         ChangeStatusBtn.IsEnabled = canChangeStatus;

@@ -55,6 +55,7 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     [ObservableProperty] private bool _canCompleteStage;
     [ObservableProperty] private bool _canMarkStageForDeletion;
     [ObservableProperty] private bool _isStageMarkedForDeletion;
+    [ObservableProperty] private bool _canToggleStageDeletionMark;
     [ObservableProperty] private string _activeTab = "Main";
     [ObservableProperty] private bool _isCatalogEditMode;
     [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
@@ -478,19 +479,21 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         Description = stage.Description ?? "";
         DueDate = stage.DueDate?.ToDateTime(TimeOnly.MinValue);
         StageStatus = stage.Status;
-        IsStageMarkedForDeletion = stage.IsMarkedForDeletion;
+        IsStageMarkedForDeletion = stage.EffectiveMarkedForDeletion;
         IsOverdue = stage.IsOverdue;
         ShowProjectTaskPickers = false;
         ShowProjectNameRow = true;
         ShowProjectPickerList = true;
         IsViewMode = true;
         ShowStatusManagement = !IsWorker();
-        CanStartStage = stage.Status == StageStatus.Planned && !stage.IsMarkedForDeletion;
-        CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.IsMarkedForDeletion;
+        CanStartStage = stage.Status == StageStatus.Planned && !stage.EffectiveMarkedForDeletion;
+        CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.EffectiveMarkedForDeletion;
         CanMarkStageForDeletion = !IsWorker();
+        CanToggleStageDeletionMark = stage.CanToggleStageDeletionMark && !IsWorker();
         _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
         _ = LoadProjectDataAsync(task.ProjectId, stage);
+        _ = EnsureStageDeletionFlagsFromDbAsync();
         FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
@@ -509,19 +512,21 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         Description = stage.Description ?? "";
         DueDate = stage.DueDate?.ToDateTime(TimeOnly.MinValue);
         StageStatus = stage.Status;
-        IsStageMarkedForDeletion = stage.IsMarkedForDeletion;
+        IsStageMarkedForDeletion = stage.EffectiveMarkedForDeletion;
         IsOverdue = stage.IsOverdue;
         ShowProjectTaskPickers = false;
         ShowProjectNameRow = true;
         ShowProjectPickerList = true;
         IsViewMode = true;
         ShowStatusManagement = !IsWorker();
-        CanStartStage = stage.Status == StageStatus.Planned && !stage.IsMarkedForDeletion;
-        CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.IsMarkedForDeletion;
+        CanStartStage = stage.Status == StageStatus.Planned && !stage.EffectiveMarkedForDeletion;
+        CanCompleteStage = stage.Status == StageStatus.InProgress && !stage.EffectiveMarkedForDeletion;
         CanMarkStageForDeletion = !IsWorker();
+        CanToggleStageDeletionMark = stage.CanToggleStageDeletionMark && !IsWorker();
         _ = LoadAssigneesForDisplayAsync(task.Id, stage.Id);
         _ = LoadExistingServicesAndMaterialsAsync(stage.Id);
         _ = LoadProjectDataAsync(task.ProjectId, stage);
+        _ = EnsureStageDeletionFlagsFromDbAsync();
         FilesControlVM.Initialize(task.ProjectId, task.Id, stage.Id);
     }
 
@@ -593,6 +598,28 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         }
         stage.StageStartDate = DateOnly.FromDateTime(stage.CreatedAt);
         stage.StageEndDate = stage.DueDate;
+    }
+
+    private async Task EnsureStageDeletionFlagsFromDbAsync()
+    {
+        if (_editStage is null || _task is null) return;
+        var stageRef = _editStage;
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var proj = await db.Projects.FindAsync(_task.ProjectId);
+        var taskEnt = await db.Tasks.FindAsync(_task.Id);
+
+        if (taskEnt != null)
+        {
+            _task.IsMarkedForDeletion = taskEnt.IsMarkedForDeletion;
+            _task.ProjectIsMarkedForDeletion = proj?.IsMarkedForDeletion ?? false;
+        }
+        _editStage.TaskIsMarkedForDeletion = _task.IsMarkedForDeletion;
+        _editStage.ProjectIsMarkedForDeletion = _task.ProjectIsMarkedForDeletion;
+        IsStageMarkedForDeletion = _editStage.EffectiveMarkedForDeletion;
+        CanToggleStageDeletionMark = _editStage.CanToggleStageDeletionMark && !IsWorker();
+        CanStartStage = _editStage.Status == StageStatus.Planned && !IsStageMarkedForDeletion;
+        CanCompleteStage = _editStage.Status == StageStatus.InProgress && !IsStageMarkedForDeletion;
+        RefreshCatalogModeProperties();
     }
 
 
@@ -1326,10 +1353,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         stage.IsMarkedForDeletion = !stage.IsMarkedForDeletion;
         stage.IsSynced = false;
         await db.SaveChangesAsync();
-        IsStageMarkedForDeletion = stage.IsMarkedForDeletion;
-        CanStartStage = !IsStageMarkedForDeletion && StageStatus == StageStatus.Planned;
-        CanCompleteStage = !IsStageMarkedForDeletion && StageStatus == StageStatus.InProgress;
-        RefreshCatalogModeProperties();
+        _editStage.IsMarkedForDeletion = stage.IsMarkedForDeletion;
+        await EnsureStageDeletionFlagsFromDbAsync();
     }
 
 
