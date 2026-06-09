@@ -138,10 +138,44 @@ public partial class CreateStageOverlay : UserControl
     {
         var dbFactory = App.Services.GetRequiredService<IDbContextFactory<LocalDbContext>>();
         await using var db = await dbFactory.CreateDbContextAsync();
-        var tasks = await db.Tasks
-            .Where(t => t.ProjectId == projectId && !t.IsArchived && !t.IsMarkedForDeletion)
-            .OrderBy(t => t.Name)
-            .ToListAsync();
+        var auth = App.Services.GetRequiredService<IAuthService>();
+        var currentUserRole = auth.UserRole ?? "";
+        var currentUserId = auth.UserId;
+
+        var tasksQuery = db.Tasks
+            .Where(t => t.ProjectId == projectId && !t.IsArchived && !t.IsMarkedForDeletion);
+
+        bool isForeman = string.Equals(currentUserRole, "Foreman", StringComparison.OrdinalIgnoreCase);
+        bool isWorker = string.Equals(currentUserRole, "Worker", StringComparison.OrdinalIgnoreCase);
+
+        if (isForeman && currentUserId.HasValue)
+        {
+            var foremanTaskIds = await db.Tasks
+                .Where(t => t.AssignedUserId == currentUserId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var foremanTaskIdsFromAssignees = await db.TaskAssignees
+                .Where(ta => ta.UserId == currentUserId.Value)
+                .Select(ta => ta.TaskId)
+                .ToListAsync();
+            var allForemanTaskIds = foremanTaskIds.Concat(foremanTaskIdsFromAssignees).Distinct().ToList();
+            tasksQuery = tasksQuery.Where(t => allForemanTaskIds.Contains(t.Id));
+        }
+        else if (isWorker && currentUserId.HasValue)
+        {
+            var workerTaskIds = await db.Tasks
+                .Where(t => t.AssignedUserId == currentUserId.Value)
+                .Select(t => t.Id)
+                .ToListAsync();
+            var workerTaskIdsFromAssignees = await db.TaskAssignees
+                .Where(ta => ta.UserId == currentUserId.Value)
+                .Select(ta => ta.TaskId)
+                .ToListAsync();
+            var allWorkerTaskIds = workerTaskIds.Concat(workerTaskIdsFromAssignees).Distinct().ToList();
+            tasksQuery = tasksQuery.Where(t => allWorkerTaskIds.Contains(t.Id));
+        }
+
+        var tasks = await tasksQuery.OrderBy(t => t.Name).ToListAsync();
         TaskCombo.ItemsSource = tasks;
         if (tasks.Count > 0)
         {
