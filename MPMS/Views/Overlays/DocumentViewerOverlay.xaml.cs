@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
 using Syncfusion.XlsIO;
@@ -633,6 +635,8 @@ public partial class DocumentViewerOverlay : UserControl
         int columnCount = Math.Max(usedRange.LastColumn, 11);
         var table = new DataTable();
         var formulas = new string[rowCount, columnCount];
+        var cellBorders = new ExcelCellBorder[rowCount, columnCount];
+        var secondaryMergedCells = BuildSecondaryMergedCellsSet(worksheet);
 
         for (int column = 1; column <= columnCount; column++)
         {
@@ -645,13 +649,52 @@ public partial class DocumentViewerOverlay : UserControl
             for (int column = 1; column <= columnCount; column++)
             {
                 var range = worksheet.Range[row, column];
+                cellBorders[row - 1, column - 1] = ReadCellBorder(range);
+
+                if (secondaryMergedCells.Contains((row, column)))
+                {
+                    dataRow[column - 1] = string.Empty;
+                    formulas[row - 1, column - 1] = string.Empty;
+                    continue;
+                }
+
                 dataRow[column - 1] = range.DisplayText;
                 formulas[row - 1, column - 1] = string.IsNullOrWhiteSpace(range.Formula) ? range.DisplayText : range.Formula;
             }
             table.Rows.Add(dataRow);
         }
 
-        return new ExcelSheetView(worksheet.Name, table, formulas, worksheet.Index);
+        return new ExcelSheetView(worksheet.Name, table, formulas, worksheet.Index, cellBorders);
+    }
+
+    /// <summary>
+    /// Возвращает координаты ячеек объединённого диапазона, кроме верхней левой (в ней хранится значение).
+    /// </summary>
+    private static HashSet<(int Row, int Column)> BuildSecondaryMergedCellsSet(IWorksheet worksheet)
+    {
+        var secondaryCells = new HashSet<(int Row, int Column)>();
+        var mergedRanges = worksheet.MergedCells;
+        if (mergedRanges == null || mergedRanges.Length == 0)
+            return secondaryCells;
+
+        foreach (var mergedRange in mergedRanges)
+        {
+            int startRow = mergedRange.Row;
+            int startColumn = mergedRange.Column;
+            int endRow = mergedRange.LastRow;
+            int endColumn = mergedRange.LastColumn;
+
+            for (int row = startRow; row <= endRow; row++)
+            {
+                for (int column = startColumn; column <= endColumn; column++)
+                {
+                    if (row != startRow || column != startColumn)
+                        secondaryCells.Add((row, column));
+                }
+            }
+        }
+
+        return secondaryCells;
     }
 
     private void ShowExcelSheet(ExcelSheetView sheet)
@@ -734,6 +777,198 @@ public partial class DocumentViewerOverlay : UserControl
     private void ExcelGrid_LoadingRow(object? sender, DataGridRowEventArgs e)
     {
         e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+        e.Row.Loaded -= ExcelGridRow_Loaded;
+        e.Row.Loaded += ExcelGridRow_Loaded;
+
+        if (e.Row.IsLoaded)
+            ApplyExcelRowBorders(e.Row);
+    }
+
+    private void ExcelGridRow_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not DataGridRow row)
+            return;
+
+        row.Loaded -= ExcelGridRow_Loaded;
+        ApplyExcelRowBorders(row);
+    }
+
+    private void ApplyExcelRowBorders(DataGridRow row)
+    {
+        if (_currentExcelSheet?.CellBorders == null)
+            return;
+
+        int rowIndex = row.GetIndex();
+        if (rowIndex < 0 || rowIndex >= _currentExcelSheet.CellBorders.GetLength(0))
+            return;
+
+        var presenter = FindVisualChild<DataGridCellsPresenter>(row);
+        if (presenter == null)
+            return;
+
+        if (presenter.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
+        {
+            void OnStatusChanged(object? _, EventArgs __)
+            {
+                if (presenter.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
+                    return;
+
+                presenter.ItemContainerGenerator.StatusChanged -= OnStatusChanged;
+                ApplyExcelRowBorders(row);
+            }
+
+            presenter.ItemContainerGenerator.StatusChanged += OnStatusChanged;
+            return;
+        }
+
+        for (int columnIndex = 0; columnIndex < ExcelGrid.Columns.Count; columnIndex++)
+        {
+            if (presenter.ItemContainerGenerator.ContainerFromIndex(columnIndex) is not DataGridCell cell)
+                continue;
+
+            if (columnIndex < _currentExcelSheet.CellBorders.GetLength(1))
+                ApplyExcelCellBorder(cell, _currentExcelSheet.CellBorders[rowIndex, columnIndex]);
+        }
+    }
+
+    private static void ApplyExcelCellBorder(DataGridCell cell, ExcelCellBorder border)
+    {
+        cell.ApplyTemplate();
+
+        if (cell.Template.FindName("BorderTop", cell) is Rectangle top)
+        {
+            top.Height = border.Top;
+            top.Fill = border.TopBrush;
+            top.Visibility = border.Top > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (cell.Template.FindName("BorderLeft", cell) is Rectangle left)
+        {
+            left.Width = border.Left;
+            left.Fill = border.LeftBrush;
+            left.Visibility = border.Left > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (cell.Template.FindName("BorderRight", cell) is Rectangle right)
+        {
+            right.Width = border.Right;
+            right.Fill = border.RightBrush;
+            right.Visibility = border.Right > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (cell.Template.FindName("BorderBottom", cell) is Rectangle bottom)
+        {
+            bottom.Height = border.Bottom;
+            bottom.Fill = border.BottomBrush;
+            bottom.Visibility = border.Bottom > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private static ExcelCellBorder ReadCellBorder(IRange range)
+    {
+        var borders = range.Borders;
+        var top = borders[ExcelBordersIndex.EdgeTop];
+        var left = borders[ExcelBordersIndex.EdgeLeft];
+        var right = borders[ExcelBordersIndex.EdgeRight];
+        var bottom = borders[ExcelBordersIndex.EdgeBottom];
+
+        return new ExcelCellBorder(
+            GetExcelSideWidth(left),
+            GetExcelSideWidth(top),
+            GetExcelSideWidth(right),
+            GetExcelSideWidth(bottom),
+            GetSideBrush(left),
+            GetSideBrush(top),
+            GetSideBrush(right),
+            GetSideBrush(bottom));
+    }
+
+    private static double GetExcelSideWidth(IBorder border)
+    {
+        return border.LineStyle == ExcelLineStyle.None
+            ? DefaultExcelGridBorderWidth
+            : MapExcelLineWidth(border.LineStyle);
+    }
+
+    private static Brush GetSideBrush(IBorder border)
+    {
+        return border.LineStyle == ExcelLineStyle.None
+            ? DefaultExcelGridBrush
+            : GetExcelBorderBrush(border);
+    }
+
+    private static double MapExcelLineWidth(ExcelLineStyle style) => style switch
+    {
+        ExcelLineStyle.Hair => 0.5,
+        ExcelLineStyle.Thin => 1,
+        ExcelLineStyle.Medium => 2,
+        ExcelLineStyle.Thick => 3,
+        ExcelLineStyle.Double => 3,
+        ExcelLineStyle.Dashed => 1,
+        ExcelLineStyle.Dotted => 1,
+        ExcelLineStyle.Medium_dashed => 2,
+        ExcelLineStyle.Dash_dot => 1,
+        ExcelLineStyle.Medium_dash_dot => 2,
+        ExcelLineStyle.Dash_dot_dot => 1,
+        ExcelLineStyle.Medium_dash_dot_dot => 2,
+        ExcelLineStyle.Slanted_dash_dot => 1,
+        _ => 1
+    };
+
+    private static Brush GetExcelBorderBrush(IBorder border)
+    {
+        try
+        {
+            var color = border.ColorRGB;
+            return GetCachedBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
+        }
+        catch
+        {
+            return ExcelCustomBorderBrush;
+        }
+    }
+
+    private static SolidColorBrush GetCachedBrush(Color color)
+    {
+        lock (BrushCache)
+        {
+            if (!BrushCache.TryGetValue(color, out var brush))
+            {
+                brush = new SolidColorBrush(color);
+                brush.Freeze();
+                BrushCache[color] = brush;
+            }
+
+            return brush;
+        }
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match)
+                return match;
+
+            var nested = FindVisualChild<T>(child);
+            if (nested != null)
+                return nested;
+        }
+
+        return null;
+    }
+
+    private static readonly double DefaultExcelGridBorderWidth = 1;
+    private static readonly SolidColorBrush DefaultExcelGridBrush = CreateFrozenBrush(Color.FromRgb(0xB7, 0xB7, 0xB7));
+    private static readonly SolidColorBrush ExcelCustomBorderBrush = CreateFrozenBrush(Colors.Black);
+    private static readonly Dictionary<Color, SolidColorBrush> BrushCache = new();
+
+    private static SolidColorBrush CreateFrozenBrush(Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
     }
 
     private void ExcelGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
@@ -882,5 +1117,15 @@ public partial class DocumentViewerOverlay : UserControl
         }
     }
 
-    private sealed record ExcelSheetView(string Name, DataTable? Table, string[,]? Formulas, int WorksheetIndex);
+    private sealed record ExcelSheetView(string Name, DataTable? Table, string[,]? Formulas, int WorksheetIndex, ExcelCellBorder[,]? CellBorders = null);
+
+    private sealed record ExcelCellBorder(
+        double Left,
+        double Top,
+        double Right,
+        double Bottom,
+        Brush LeftBrush,
+        Brush TopBrush,
+        Brush RightBrush,
+        Brush BottomBrush);
 }

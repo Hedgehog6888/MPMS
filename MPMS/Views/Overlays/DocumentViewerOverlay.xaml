@@ -156,16 +156,16 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
-                        <Border x:Name="CellBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="Transparent"
-                                BorderThickness="1">
+                        <Grid x:Name="CellRoot" Background="{TemplateBinding Background}">
                             <ContentPresenter VerticalAlignment="Center"/>
-                        </Border>
+                            <Rectangle x:Name="BorderTop" VerticalAlignment="Top" Height="1" IsHitTestVisible="False"/>
+                            <Rectangle x:Name="BorderLeft" HorizontalAlignment="Left" Width="1" IsHitTestVisible="False"/>
+                            <Rectangle x:Name="BorderRight" HorizontalAlignment="Right" Width="1" IsHitTestVisible="False"/>
+                            <Rectangle x:Name="BorderBottom" VerticalAlignment="Bottom" Height="1" IsHitTestVisible="False"/>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="CellBorder" Property="Background" Value="#F4F5F7"/>
-                                <Setter TargetName="CellBorder" Property="BorderBrush" Value="#111111"/>
+                                <Setter TargetName="CellRoot" Property="Background" Value="#F4F5F7"/>
                                 <Setter Property="Foreground" Value="#111111"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -300,7 +300,7 @@
                           Grid.Row="1"
                           AutoGenerateColumns="False"
                           HeadersVisibility="All"
-                          GridLinesVisibility="All"
+                          GridLinesVisibility="None"
                           SelectionUnit="Cell"
                           SelectionMode="Extended"
                           IsReadOnly="True"
