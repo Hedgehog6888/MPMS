@@ -35,7 +35,13 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private string? _userAvatarPath;
     [ObservableProperty] private byte[]? _userAvatarData;
 
-    private readonly System.Collections.Generic.Stack<string> _navigationHistory = new();
+    private sealed record NavigationState(
+        string Page,
+        Guid? ProjectId = null,
+        Guid? StageId = null,
+        Guid? TaskId = null);
+
+    private readonly System.Collections.Generic.Stack<NavigationState> _navigationHistory = new();
 
     public bool CanGoBack => _navigationHistory.Count > 0;
 
@@ -210,35 +216,57 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    private void PushNavigationHistory(string page)
+    private NavigationState CaptureCurrentState() => CurrentPage switch
     {
-        if (CurrentPage != page && !string.IsNullOrEmpty(CurrentPage))
-        {
-            _navigationHistory.Push(CurrentPage);
-            OnPropertyChanged(nameof(CanGoBack));
-        }
+        "ProjectDetail" when CurrentPageViewModel is ProjectDetailViewModel { Project: { } project }
+            => new NavigationState("ProjectDetail", ProjectId: project.Id),
+        "StageDetail" when CurrentPageViewModel is StageDetailViewModel { EditStage: { } stage, EditTask: { } task }
+            => new NavigationState("StageDetail", ProjectId: task.ProjectId, StageId: stage.Id, TaskId: task.Id),
+        _ => new NavigationState(CurrentPage)
+    };
+
+    private void PushCurrentToHistory()
+    {
+        if (string.IsNullOrEmpty(CurrentPage)) return;
+        _navigationHistory.Push(CaptureCurrentState());
+        OnPropertyChanged(nameof(CanGoBack));
     }
 
     [RelayCommand]
     private void GoBack()
     {
-        if (_navigationHistory.Count > 0)
-        {
-            var previousPage = _navigationHistory.Pop();
-            OnPropertyChanged(nameof(CanGoBack));
-            NavigateInternal(previousPage, addToHistory: false);
-        }
+        if (_navigationHistory.Count == 0) return;
+        var state = _navigationHistory.Pop();
+        OnPropertyChanged(nameof(CanGoBack));
+        _ = RestoreNavigationStateAsync(state);
     }
 
-    private void NavigateInternal(string page, bool addToHistory)
+    private async Task RestoreNavigationStateAsync(NavigationState state)
     {
-        if (addToHistory)
-            PushNavigationHistory(page);
-
         if (CurrentPageViewModel is INavigable navigable)
-            _ = navigable.OnNavigatingFromAsync();
+            await navigable.OnNavigatingFromAsync();
 
-        CurrentPage = page;
+        CurrentPage = state.Page;
+
+        switch (state.Page)
+        {
+            case "ProjectDetail" when state.ProjectId is Guid projectId:
+                await RestoreProjectDetailAsync(projectId);
+                break;
+            case "StageDetail" when state.StageId is Guid stageId && state.TaskId is Guid taskId:
+                await RestoreStageDetailAsync(stageId, taskId);
+                break;
+            default:
+                RestoreStandardPage(state.Page);
+                break;
+        }
+
+        ApplyPageViewerVisibility(state.Page);
+        _ = RefreshSyncCountsAsync();
+    }
+
+    private void RestoreStandardPage(string page)
+    {
         ViewModelBase? vm = page switch
         {
             "Home" => _sp.GetRequiredService<HomeViewModel>(),
@@ -251,6 +279,7 @@ public partial class MainViewModel : ViewModelBase
             "Warehouse" => _sp.GetRequiredService<WarehouseViewModel>(),
             "Stages" => _sp.GetRequiredService<StagesViewModel>(),
             "Profile" => _sp.GetRequiredService<ProfileViewModel>(),
+            "Catalogs" => _sp.GetRequiredService<CatalogsViewModel>(),
             "Admin" => _sp.GetRequiredService<AdminViewModel>(),
             "Settings" => _sp.GetRequiredService<SettingsViewModel>(),
             _ => null
@@ -260,11 +289,48 @@ public partial class MainViewModel : ViewModelBase
             _ = loadable.LoadAsync();
 
         CurrentPageViewModel = vm;
+    }
 
-        // Обновляем счётчики синхронизации при навигации
-        _ = RefreshSyncCountsAsync();
+    private async Task RestoreProjectDetailAsync(Guid projectId)
+    {
+        var dbFactory = _sp.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var project = await db.Projects.FindAsync(projectId);
+        if (project is null)
+        {
+            RestoreStandardPage("Projects");
+            return;
+        }
 
-        // Показываем/скрываем PhotoViewerLayer и DocumentViewerLayer в зависимости от текущей страницы
+        var vm = _sp.GetRequiredService<ProjectDetailViewModel>();
+        vm.SetProject(project, () => GoBackCommand.Execute(null));
+        CurrentPageViewModel = vm;
+        await vm.LoadAsync();
+    }
+
+    private async Task RestoreStageDetailAsync(Guid stageId, Guid taskId)
+    {
+        var dbFactory = _sp.GetRequiredService<IDbContextFactory<LocalDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var stage = await db.TaskStages.FindAsync(stageId);
+        var task = await db.Tasks.FindAsync(taskId);
+        if (stage is null || task is null)
+        {
+            if (task?.ProjectId is Guid projectId)
+                await RestoreProjectDetailAsync(projectId);
+            else
+                RestoreStandardPage("Stages");
+            return;
+        }
+
+        var vm = _sp.GetRequiredService<StageDetailViewModel>();
+        vm.SetEditMode(stage, task, () => GoBackCommand.Execute(null));
+        CurrentPageViewModel = vm;
+        await vm.LoadAsync();
+    }
+
+    private static void ApplyPageViewerVisibility(string page)
+    {
         if (page == "Files")
         {
             MainWindow.Instance?.RestorePhotoViewerVisibility();
@@ -279,7 +345,7 @@ public partial class MainViewModel : ViewModelBase
 
     public void NavigateToProject(Models.LocalProject project)
     {
-        PushNavigationHistory("ProjectDetail");
+        PushCurrentToHistory();
         CurrentPage = "ProjectDetail";
         var vm = _sp.GetRequiredService<ProjectDetailViewModel>();
         vm.SetProject(project, () => GoBackCommand.Execute(null));
@@ -293,7 +359,7 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>Встроенный редактор этапа (полноэкранная страница, как карточка проекта).</summary>
     public void NavigateToStageEditor(StageDetailViewModel vm)
     {
-        PushNavigationHistory("StageDetail");
+        PushCurrentToHistory();
         CurrentPage = "StageDetail";
         CurrentPageViewModel = vm;
         _ = vm.LoadAsync();

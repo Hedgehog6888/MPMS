@@ -436,16 +436,12 @@
                                                         </Grid>
                                                     </Button>
 
-                                                    <Button Tag="{Binding}" Click="DeleteTask_Click"
+                                                    <Button ToolTip="Удалить задачу"
+                                                            Tag="{Binding}" Click="DeleteTask_Click"
                                                             Margin="0,0,4,0">
                                                         <Button.Style>
-                                                            <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                                            <Style TargetType="Button" BasedOn="{StaticResource DangerIconButton}">
                                                                 <Setter Property="Visibility" Value="{Binding Converter={StaticResource RoleToVis}, ConverterParameter='Project Manager,Administrator'}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsMarkedForDeletion}" Value="False">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </Button.Style>
                                                         <Image Width="14" Height="14" VerticalAlignment="Center">

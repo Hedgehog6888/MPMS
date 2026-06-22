@@ -397,7 +397,7 @@ public partial class TaskDetailOverlay : UserControl
         stageEditor.SetEditMode(
             stage,
             _vm.Task,
-            goBack: () => main.Navigate("Tasks"),
+            goBack: () => main.GoBackCommand.Execute(null),
             onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();
@@ -419,7 +419,7 @@ public partial class TaskDetailOverlay : UserControl
         stageEditor.SetEditMode(
             stage,
             _vm.Task,
-            goBack: () => main.Navigate("Tasks"),
+            goBack: () => main.GoBackCommand.Execute(null),
             onSavedAsync: async () =>
             {
                 await _vm.LoadAsync();

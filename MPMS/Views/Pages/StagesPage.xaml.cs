@@ -197,7 +197,7 @@ public partial class StagesPage : UserControl
         var main = App.Services.GetRequiredService<MainViewModel>();
         var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         stageEditor.SetEditMode(item.Stage, task,
-            goBack: () => main.Navigate("Stages"),
+            goBack: () => main.GoBackCommand.Execute(null),
             onSavedAsync: async () => { if (vm is not null) await vm.LoadAsync(); });
         main.NavigateToStageEditor(stageEditor);
     }

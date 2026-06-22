@@ -308,9 +308,8 @@ public partial class ProjectDetailPage : UserControl
         var main = App.Services.GetRequiredService<MainViewModel>();
         var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        var project = VM.Project!;
         stageEditor.SetEditMode(stage, task,
-            goBack: () => main.NavigateToProject(project),
+            goBack: () => main.GoBackCommand.Execute(null),
             onSavedAsync: async () =>
             {
                 if (vm != null)
@@ -331,9 +330,8 @@ public partial class ProjectDetailPage : UserControl
         var main = App.Services.GetRequiredService<MainViewModel>();
         var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        var project = VM.Project!;
         stageEditor.SetEditMode(item.Stage, task,
-            goBack: () => main.NavigateToProject(project),
+            goBack: () => main.GoBackCommand.Execute(null),
             onSavedAsync: async () =>
             {
                 if (vm is not null)
@@ -474,16 +472,14 @@ public partial class ProjectDetailPage : UserControl
     private void EditStageFromProject_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn || btn.Tag is not LocalTaskStage stage || VM is null) return;
+        e.Handled = true;
         if (!stage.CanEditStageDetails) return;
         var task = VM.Tasks.FirstOrDefault(t => t.Id == stage.TaskId);
         if (task is null) return;
-        var main = App.Services.GetRequiredService<MainViewModel>();
-        var stageEditor = App.Services.GetRequiredService<StageDetailViewModel>();
         var vm = VM;
-        var project = VM.Project!;
-        stageEditor.SetEditMode(stage, task,
-            goBack: () => main.NavigateToProject(project),
-            onSavedAsync: async () =>
+        var overlay = new CreateStageOverlay();
+        overlay.SetEditMode(stage, task,
+            onSaved: async () =>
             {
                 if (vm != null)
                 {
@@ -491,7 +487,7 @@ public partial class ProjectDetailPage : UserControl
                     _ = Dispatcher.InvokeAsync(UpdateMarkProjectButton);
                 }
             });
-        main.NavigateToStageEditor(stageEditor);
+        MainWindow.Instance?.ShowCenteredOverlay(overlay, MainWindow.WideFormOverlayWidth);
     }
 
     private void Task_Click(object sender, MouseButtonEventArgs e)
