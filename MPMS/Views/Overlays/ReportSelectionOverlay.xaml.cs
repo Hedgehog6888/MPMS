@@ -188,7 +188,7 @@ public partial class ReportSelectionOverlay : UserControl
                 _sidebarFooter.CompleteReportGeneration("Отчёт по складу создан");
                 MainWindow.Instance?.RefreshFilesPage();
             }
-            catch (Exception ex)
+            catch
             {
                 _sidebarFooter.CancelReportGeneration();
                 // TODO: Show error to user
@@ -225,7 +225,7 @@ public partial class ReportSelectionOverlay : UserControl
                 _sidebarFooter.CompleteReportGeneration("Прайс лист создан");
                 MainWindow.Instance?.RefreshFilesPage();
             }
-            catch (Exception ex)
+            catch
             {
                 _sidebarFooter.CancelReportGeneration();
                 // TODO: Show error to user

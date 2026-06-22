@@ -59,7 +59,6 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
     [ObservableProperty] private string _activeTab = "Main";
     [ObservableProperty] private bool _isCatalogEditMode;
     [ObservableProperty] private ObservableCollection<LocalMessage> _messages = [];
-    private bool _messagesLoaded;
 
     [ObservableProperty] private bool _showProjectTaskPickers;
     [ObservableProperty] private bool _showProjectNameRow;

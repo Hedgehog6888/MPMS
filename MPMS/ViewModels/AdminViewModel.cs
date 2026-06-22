@@ -261,11 +261,6 @@ public partial class AdminViewModel : ViewModelBase, ILoadable
         RestoreTabUi(CurrentTab);
     }
 
-    partial void OnCurrentTabChanging(string oldValue, string newValue)
-    {
-        if (!string.IsNullOrEmpty(oldValue))
-            SaveTabUi(oldValue);
-    }
 
     partial void OnCurrentTabChanged(string value)
     {
