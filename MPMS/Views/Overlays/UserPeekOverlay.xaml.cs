@@ -166,7 +166,6 @@ public partial class UserPeekOverlay : UserControl
                     ProjectName = t.ProjectName,
                     Status = t.Status,
                     EffectiveTaskMarkedForDeletion = t.IsMarkedForDeletion || projMarked,
-                    IsOverdue = t.IsOverdue,
                     DueDateLine = FormatDueDateLine(t.DueDate),
                 };
             }).ToList();
@@ -209,7 +208,6 @@ public partial class UserPeekOverlay : UserControl
                         ProjectName = x.Task.ProjectName,
                         Status = x.Stage.Status,
                         EffectiveMarkedForDeletion = x.Stage.IsMarkedForDeletion || x.Task.IsMarkedForDeletion || pr.IsMarkedForDeletion,
-                        IsOverdue = x.Stage.IsOverdue,
                         DueDateLine = FormatDueDateLine(x.Stage.DueDate),
                     });
                 }
@@ -683,7 +681,6 @@ public partial class UserPeekOverlay : UserControl
 
             TaskDetailDue.Text = dueStr;
             TaskDetailDayName.Text = dueDayStr;
-            TaskDetailOverdueBadge.Visibility = task.IsOverdue ? Visibility.Visible : Visibility.Collapsed;
 
             TaskDetailPriority.Text = prioText;
             TaskDetailPriority.Foreground = prioBrush;
@@ -739,7 +736,6 @@ public partial class UserPeekOverlay : UserControl
 
             StageDetailDue.Text = dueStr;
             StageDetailDayName.Text = dueDayStr;
-            StageDetailOverdueBadge.Visibility = stage.IsOverdue ? Visibility.Visible : Visibility.Collapsed;
 
             StageDetailDescription.Text = string.IsNullOrWhiteSpace(stage.Description)
                 ? "Описание не указано"
@@ -1067,7 +1063,6 @@ public partial class UserPeekOverlay : UserControl
         public string ProjectName { get; init; } = "";
         public TaskStatus Status { get; init; }
         public bool EffectiveTaskMarkedForDeletion { get; init; }
-        public bool IsOverdue { get; init; }
         public string DueDateLine { get; init; } = "";
     }
 
@@ -1081,7 +1076,6 @@ public partial class UserPeekOverlay : UserControl
         public string ProjectName { get; init; } = "";
         public StageStatus Status { get; init; }
         public bool EffectiveMarkedForDeletion { get; init; }
-        public bool IsOverdue { get; init; }
         public string DueDateLine { get; init; } = "";
     }
 

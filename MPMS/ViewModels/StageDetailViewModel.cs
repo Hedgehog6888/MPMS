@@ -1263,6 +1263,8 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         stage.Status = StageStatus.InProgress;
         stage.IsSynced = false;
         await db.SaveChangesAsync();
+        await LogActivityAsync(db, $"Статус этапа «{stage.Name}» изменён на Выполняется",
+            "Stage", stage.Id, ActivityActionKind.StageStatusChanged);
         StageStatus = StageStatus.InProgress;
         IsCatalogEditMode = false;
         CanStartStage = false;
@@ -1336,10 +1338,42 @@ public partial class StageDetailViewModel : ViewModelBase, ILoadable, INavigable
         stage.Status = StageStatus.Completed;
         stage.IsSynced = false;
         await db.SaveChangesAsync();
+        await LogActivityAsync(db, $"Статус этапа «{stage.Name}» изменён на Завершён",
+            "Stage", stage.Id, ActivityActionKind.StageStatusChanged);
         StageStatus = StageStatus.Completed;
         CanStartStage = false;
         CanCompleteStage = false;
         RefreshCatalogModeProperties();
+    }
+
+    private async Task LogActivityAsync(LocalDbContext db, string actionText, string entityType, Guid entityId, string? actionType = null)
+    {
+        var userName = _auth.UserName ?? "Система";
+        var userId = _auth.UserId;
+        var actorRole = _auth.UserRole;
+        var parts = userName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var initials = parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : userName.Length > 0 ? $"{userName[0]}" : "?";
+
+        var log = new LocalActivityLog
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            ActorRole = actorRole,
+            UserName = userName,
+            UserInitials = initials.ToUpper(),
+            UserColor = "#0F2038",
+            ActionType = actionType,
+            ActionText = actionText,
+            DetailsText = ActivityDetailsService.BuildGenericDetails(actionText, entityType, actionType),
+            EntityType = entityType,
+            EntityId = entityId,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.ActivityLogs.Add(log);
+        await db.SaveChangesAsync();
+        await _sp.GetRequiredService<ISyncService>().QueueLocalActivityLogAsync(log);
     }
 
     [RelayCommand]

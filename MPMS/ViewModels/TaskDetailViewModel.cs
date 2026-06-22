@@ -279,6 +279,7 @@ public partial class TaskDetailViewModel : ViewModelBase
                   .Select(u => u.Name).FirstOrDefaultAsync()
             : null;
 
+        var oldStatus = stage.Status;
         var hasOtherChanges = stage.Name != req.Name ||
             stage.Description != req.Description ||
             stage.Status != req.Status ||
@@ -331,6 +332,19 @@ public partial class TaskDetailViewModel : ViewModelBase
         {
             var details = ActivityDetailsService.BuildStageUpdateDetails(stage, req, assignedName, req.WorkTypeItems is not null);
             await LogActivityAsync(db, $"Обновлён этап «{req.Name}»", "Stage", id, ActivityActionKind.Updated, details);
+        }
+
+        if (oldStatus != req.Status)
+        {
+            var statusText = req.Status switch
+            {
+                StageStatus.Planned => "Запланирован",
+                StageStatus.InProgress => "Выполняется",
+                StageStatus.Completed => "Завершён",
+                _ => req.Status.ToString()
+            };
+            await LogActivityAsync(db, $"Статус этапа «{stage.Name}» изменён на {statusText}",
+                "Stage", id, ActivityActionKind.StageStatusChanged);
         }
 
         await LoadAsync();

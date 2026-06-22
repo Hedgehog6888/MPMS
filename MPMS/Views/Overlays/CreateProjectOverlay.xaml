@@ -278,7 +278,7 @@
                     <TextBlock Text="Работники" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
 
                     <Border Background="White" BorderBrush="#DFE1E6" BorderThickness="1"
-                            CornerRadius="8" MaxHeight="200">
+                            CornerRadius="8" MaxHeight="160">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       PreviewMouseWheel="NestedScrollViewer_PreviewMouseWheel">
                             <StackPanel>
